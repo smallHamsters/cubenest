@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>쌓기나무 · 3D 학습 도구</title>
+
+<!-- ===== SEO / 소셜 메타 (배포용 추가) ===== -->
+<meta name="description" content="초등 6학년 쌓기나무 학습을 위한 3D 웹 도구. 쌓기나무를 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 계산 과정과 함께 확인합니다.">
+<meta name="keywords" content="쌓기나무, 3D 학습, 초등 수학, 부피, 겉넓이, 디지털 교구, 위 앞 옆 보기">
+<meta name="author" content="쌓기나무 학습 도구">
+<meta name="robots" content="index,follow">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#3f3fbf">
+
+<!-- ===== 모바일 앱(홈 화면 추가) ===== -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="쌓기나무">
+
+<!-- ===== Open Graph / 카카오·페북 공유 ===== -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="쌓기나무 · 3D 학습 도구">
+<meta property="og:description" content="쌓기나무를 3D로 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 계산 과정과 함께 배웁니다.">
+<meta property="og:locale" content="ko_KR">
+<meta name="twitter:card" content="summary">
+
+<!-- ===== favicon (외부 파일 불필요, 인라인 SVG) ===== -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Cpath%20d='M16%203%20L28%209%20L16%2015%20L4%209%20Z'%20fill='%23e6b980'/%3E%3Cpath%20d='M4%209%20L16%2015%20L16%2029%20L4%2023%20Z'%20fill='%23c8965a'/%3E%3Cpath%20d='M28%209%20L16%2015%20L16%2029%20L28%2023%20Z'%20fill='%23d8a76e'/%3E%3C/svg%3E">
+
+<!-- ===== 외부 라이브러리 (CDN, 버전 고정) ===== -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  :root{
+    --panel:#ffffff;
+    --panel-2:#f7f9fc;
+    --ink:#182233;
+    --muted:#6a7789;
+    --line:#e5eaf1;
+    --line-2:#eef2f7;
+    --accent:#3f3fbf;
+    --accent-ink:#2d2d95;
+    --accent-soft:#ecebfb;
+    --add:#0f9d58;
+    --add-soft:#e6f5ec;
+    --del:#e0466b;
+    --del-soft:#fce9ee;
+    --shadow:0 6px 22px rgba(24,34,51,.12), 0 1px 3px rgba(24,34,51,.08);
+    --shadow-sm:0 2px 8px rgba(24,34,51,.10);
+    --r:16px;
+    --font:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;font-family:var(--font);color:var(--ink);
+    background:#e9eef4;overscroll-behavior:none;}
+  #app{position:fixed;top:0;left:0;width:100vw;height:100vh;}
+  #scene{position:absolute;top:0;left:0;width:100%;height:100%;display:block;touch-action:none;}
+
+  /* ---- top-left brand + compass ---- */
+  .topleft{position:absolute;top:calc(12px + env(safe-area-inset-top)) ;left:12px;display:flex;gap:10px;align-items:stretch;z-index:5;}
+  .brand{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);padding:9px 13px 9px 11px;
+    display:flex;align-items:center;gap:9px;}
+  .brand .glyph{width:26px;height:26px;flex:0 0 auto;}
+  .brand .t{line-height:1.05;}
+  .brand .t b{font-size:15px;font-weight:800;letter-spacing:-.02em;display:block;}
+  .brand .t span{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.01em;}
+  .compass{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);width:74px;height:74px;
+    position:relative;flex:0 0 auto;}
+  .compass svg{position:absolute;inset:0;width:100%;height:100%;}
+
+  /* ---- stats (signature) ---- */
+  .stats{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:7;width:min(280px,64vw);}
+  .stat-head{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);display:flex;overflow:hidden;cursor:pointer;}
+  .stat-head .cell{flex:1;padding:10px 8px 9px;text-align:center;position:relative;}
+  .stat-head .cell + .cell::before{content:"";position:absolute;left:0;top:22%;bottom:22%;width:1px;background:var(--line);}
+  .stat-head .cell .k{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.02em;}
+  .stat-head .cell .v{font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-top:1px;
+    font-variant-numeric:tabular-nums;}
+  .stat-head .cell .u{font-size:10px;color:var(--muted);font-weight:600;margin-left:1px;}
+  .chev{position:absolute;right:9px;bottom:-9px;width:20px;height:20px;background:var(--panel);border-radius:50%;
+    box-shadow:var(--shadow-sm);display:grid;place-items:center;color:var(--muted);transition:transform .25s;}
+  #app.calc-open .chev{transform:rotate(180deg);}
+
+  /* 계산 과정: 우측에서 슬라이드되는 패널 (열리면 3D 모델은 콘텐츠 사각형이 좁아져 왼쪽으로 재배치) */
+  .calc{position:absolute;top:calc(80px + env(safe-area-inset-top));right:0;bottom:0;z-index:9;
+    width:300px;max-width:78%;background:var(--panel);border-radius:20px 0 0 20px;
+    box-shadow:-10px 0 34px rgba(20,28,42,.16);padding:14px 16px calc(16px + env(safe-area-inset-bottom));
+    overflow-y:auto;transform:translateX(105%);transition:transform .26s cubic-bezier(.22,.61,.36,1);}
+  #app.calc-open .calc{transform:translateX(0);}
+  .calc-hd{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px;
+    font-size:11px;letter-spacing:.06em;color:var(--accent);font-weight:800;text-transform:uppercase;}
+  .calc-x{width:28px;height:28px;border:none;background:var(--panel-2);border-radius:8px;color:var(--muted);cursor:pointer;display:grid;place-items:center;}
+  .calc-x:active{background:var(--line-2);}
+  .calc .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:5px 0;border-top:1px dashed var(--line);}
+  .calc .row:first-of-type{border-top:none;}
+  .calc .row .lbl{font-size:12px;color:var(--muted);font-weight:700;}
+  .calc .row .exp{font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right;line-height:1.4;}
+  .calc .row .exp b{font-weight:800;color:var(--ink);}
+  .calc .row .exp .op{color:var(--muted);margin:0 2px;font-weight:600;}
+  .calc .row .exp .dir{color:var(--muted);font-weight:700;font-size:10.5px;margin-right:1px;}
+  .calc .exformula{margin:-2px 0 0;font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right;color:var(--muted);}
+  .calc .krformula{margin:1px 0 5px;font-size:11px;text-align:right;color:var(--muted);opacity:.72;line-height:1.35;}
+  .calc .krformula .op{margin:0 1px;}
+  .calc .exformula .dir{font-weight:800;font-size:10.5px;margin-right:1px;}
+  .calc .exformula b{font-weight:800;color:var(--ink);}
+  .calc .foot{font-size:10.5px;color:var(--muted);margin-top:9px;line-height:1.45;}
+
+  /* ---- right rail: zoom + layers ---- */
+  .rail{position:absolute;right:12px;top:calc(88px + env(safe-area-inset-top));z-index:5;display:flex;flex-direction:column;gap:10px;align-items:center;}
+  /* 계산 패널이 열리면 우측 세로 메뉴는 숨긴다 */
+  #app.calc-open .rail{display:none;}
+  .zoomcol{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;}
+  .zoomcol button{display:block;width:44px;height:44px;border:none;background:transparent;font-size:20px;color:var(--ink);cursor:pointer;font-weight:700;}
+  .zoomcol button:active{background:var(--panel-2);}
+  .zoomcol .div{height:1px;background:var(--line);margin:0 8px;}
+  .zoomcol button svg{width:22px;height:22px;display:block;margin:auto;}
+
+  .layers{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;}
+  .layers .cap{font-size:9.5px;color:var(--muted);font-weight:800;letter-spacing:.02em;}
+  .layers .ltrig{width:40px;height:34px;border:none;border-radius:9px;background:var(--panel-2);color:var(--ink);font-weight:800;font-size:12px;cursor:pointer;font-variant-numeric:tabular-nums;padding:0 2px;}
+  .layers .ltrig.on{background:var(--accent);color:#fff;box-shadow:0 2px 6px rgba(63,63,191,.35);}
+  .lpop{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);
+    background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:7px;
+    display:none;flex-direction:column;gap:4px;min-width:118px;max-height:260px;overflow-y:auto;z-index:9;}
+  .lpop.show{display:flex;animation:pop .18s ease;}
+  .lpop .prow{display:flex;align-items:center;gap:9px;height:38px;padding:0 11px;border-radius:9px;
+    background:var(--panel-2);color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
+  .lpop .prow .box{width:18px;height:18px;border-radius:5px;border:2px solid var(--line);flex:0 0 auto;display:grid;place-items:center;}
+  .lpop .prow .box svg{display:none;width:12px;height:12px;}
+  .lpop .prow.on{background:var(--accent-soft);color:var(--accent-ink);}
+  .lpop .prow.on .box{background:var(--accent);border-color:var(--accent);}
+  .lpop .prow.on .box svg{display:block;}
+  .lpop .prow.allrow{font-weight:800;}
+  .lpop .sep{height:1px;background:var(--line);margin:2px 4px;flex:0 0 auto;}
+  .lpop .lempty{font-size:12px;color:var(--muted);text-align:center;padding:7px 4px;font-weight:700;}
+
+  /* ---- bottom toolbar ---- */
+  .dock{position:absolute;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:6;
+    display:flex;flex-direction:column;align-items:flex-start;gap:10px;max-width:calc(100% - 24px);}
+  .dockrow{display:flex;gap:10px;align-items:center;flex-wrap:nowrap;}
+  .group{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);padding:6px;display:flex;gap:5px;align-items:center;}
+  .seg{display:flex;gap:3px;background:var(--panel-2);border-radius:11px;padding:3px;}
+  .seg button{min-width:44px;height:40px;padding:0 12px;border:none;border-radius:9px;background:transparent;color:var(--muted);
+    font-weight:800;font-size:13px;cursor:pointer;transition:.15s;letter-spacing:-.01em;}
+  .seg button.on{background:var(--panel);color:var(--accent-ink);box-shadow:var(--shadow-sm);}
+
+  .modebtn{height:46px;padding:0 14px;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;
+    display:flex;align-items:center;gap:7px;transition:.15s;}
+  .modebtn .cube{width:19px;height:19px;flex:0 0 auto;}
+  .modebtn.add{background:var(--add-soft);color:var(--add);}
+  .modebtn.del{background:var(--del-soft);color:var(--del);}
+
+  .iconbtn{width:44px;height:40px;border:none;border-radius:10px;background:transparent;color:var(--ink);cursor:pointer;
+    display:grid;place-items:center;}
+  .iconbtn:active{background:var(--panel-2);}
+  .iconbtn:disabled{opacity:.3;cursor:default;}
+  .iconbtn svg{width:21px;height:21px;}
+
+  /* ---- settings sheet ---- */
+  .scrim{position:absolute;inset:0;background:rgba(20,28,42,.34);z-index:9;opacity:0;pointer-events:none;transition:.22s;backdrop-filter:blur(1px);}
+  .scrim.show{opacity:1;pointer-events:auto;}
+  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:10;background:var(--panel);border-radius:22px 22px 0 0;
+    box-shadow:0 -8px 40px rgba(24,34,51,.22);padding:8px 20px calc(22px + env(safe-area-inset-bottom));
+    transform:translateY(105%);transition:transform .28s cubic-bezier(.3,.9,.3,1);max-height:82vh;overflow:auto;}
+  .sheet.show{transform:translateY(0);}
+  .grabber{width:38px;height:4px;border-radius:4px;background:var(--line);margin:8px auto 14px;}
+  .sheet-done{width:100%;margin-top:18px;height:50px;border:none;border-radius:14px;background:var(--accent);
+    color:#fff;font-size:15px;font-weight:800;letter-spacing:.01em;cursor:pointer;box-shadow:0 6px 18px rgba(63,63,191,.28);}
+  .sheet-done:active{transform:translateY(1px);}
+  .sheet h3{margin:0 0 3px;font-size:17px;font-weight:800;letter-spacing:-.02em;}
+  .sheet .sub{margin:0 0 18px;font-size:12.5px;color:var(--muted);}
+  .field{margin-bottom:20px;}
+  .field > .flabel{font-size:12.5px;font-weight:800;color:var(--ink);margin-bottom:3px;display:flex;justify-content:space-between;}
+  .field > .fhint{font-size:11.5px;color:var(--muted);margin-bottom:11px;line-height:1.45;}
+  /* 격자 크기 / 모서리 길이: 각 그룹의 컨트롤을 한 행(가로)으로 나란히 */
+  /* 격자 크기: 프리셋(2)과 축 박스(가로·높이·세로 세로 정렬)를 한 행에 나란히 */
+  .gridrow{display:flex;gap:9px;align-items:stretch;}
+  .row-presets{flex:1;display:flex;gap:9px;}
+  .preset{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px 8px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:13px;cursor:pointer;}
+  .preset svg{width:28px;height:28px;color:var(--accent);}
+  .preset span{font-size:12.5px;font-weight:800;color:var(--ink);}
+  .preset.on{background:var(--accent-soft);border-color:var(--accent);}
+  .axisbox{flex:1;display:flex;flex-direction:column;gap:5px;background:var(--panel-2);border:1px solid var(--line);border-radius:13px;padding:7px;}
+  .axisbox .axis{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 2px 8px;}
+  .axisbox .axis .an{font-size:12px;font-weight:800;color:var(--muted);}
+  .axisbox .axis .an em{font-style:normal;color:var(--accent);margin-left:2px;}
+  .stepper{display:flex;align-items:center;gap:3px;}
+  .stepper button{width:32px;height:32px;border:none;border-radius:9px;background:var(--panel);box-shadow:var(--shadow-sm);
+    font-size:18px;font-weight:700;color:var(--ink);cursor:pointer;}
+  .stepper button:disabled{opacity:.3;box-shadow:none;cursor:default;}
+  .stepper .num{min-width:24px;text-align:center;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
+  .edgerow{display:flex;gap:8px;align-items:stretch;}
+  .eseg{flex:1;height:46px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2);
+    font-weight:800;font-size:13.5px;color:var(--muted);cursor:pointer;}
+  .eseg.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink);}
+  .inputwrap{flex:1.2;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:0 10px;}
+  .inputwrap .cl{font-size:12px;font-weight:800;color:var(--muted);}
+  .inputwrap input{width:34px;border:none;background:transparent;font-size:16px;font-weight:800;color:var(--ink);text-align:center;font-variant-numeric:tabular-nums;outline:none;}
+  .inputwrap input::-webkit-outer-spin-button,.inputwrap input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+  .inputwrap input[type=number]{-moz-appearance:textfield;}
+  .inputwrap .unit{font-size:12px;font-weight:700;color:var(--muted);}
+
+  /* ---- toast ---- */
+  .toast{position:absolute;left:50%;bottom:calc(78px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(8px);
+    background:#26303f;color:#fff;font-size:13px;font-weight:600;padding:10px 16px;border-radius:12px;z-index:8;
+    box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s;max-width:80vw;text-align:center;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* observe-mode banner */
+  .observe{position:absolute;left:50%;top:calc(100px + env(safe-area-inset-top));transform:translateX(-50%);z-index:5;
+    background:rgba(38,48,63,.9);color:#fff;font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;
+    display:none;align-items:center;gap:7px;box-shadow:var(--shadow);}
+  .observe.show{display:flex;animation:pop .22s ease;}
+  .observe svg{width:14px;height:14px;}
+
+  /* 위 보기 칸별 개수 on/off 토글 (항상 노출, dock 한 줄에 배치) */
+  .counttoggle{display:inline-flex;align-items:center;gap:6px;background:var(--panel);color:var(--accent-ink);
+    border:none;border-radius:20px;box-shadow:var(--shadow);padding:8px 15px;font-weight:800;font-size:12.5px;cursor:pointer;}
+  .counttoggle svg{width:16px;height:16px;}
+  .counttoggle .eyeoff{display:none;}
+  .counttoggle.off{color:var(--muted);}
+  .counttoggle.off .eyeon{display:none;}
+  .counttoggle.off .eyeoff{display:inline;}
+
+  @keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ---- 모바일(터치)에서 세로로 잡아도 가로 서비스 강제 ---- */
+  /* 전체화면이 아니면 브라우저가 방향을 잠글 수 없으므로, 세로일 때 앱 전체를 90° 회전해 가로로 렌더한다. */
+  @media (pointer: coarse) and (orientation: portrait){
+    #app{width:100vh;height:100vw;transform-origin:top left;transform:translate(100vw,0) rotate(90deg);}
+  }
+
+  @media (max-width:560px){
+    .stats{width:56vw;}
+    .stat-head .cell .v{font-size:17px;}
+    .compass{width:64px;height:64px;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <canvas id="scene"></canvas>
+
+  <div class="topleft">
+    <div class="brand">
+      <svg class="glyph" viewBox="0 0 32 32" fill="none">
+        <path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/>
+        <path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/>
+        <path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/>
+      </svg>
+      <div class="t"><b>쌓기나무</b><span>3D 학습 도구</span></div>
+    </div>
+    <div class="compass"><svg id="compassSvg" viewBox="0 0 74 74"></svg></div>
+  </div>
+
+  <div class="stats" id="stats">
+    <div class="stat-head" id="statHead">
+      <div class="cell"><div class="k">개수</div><div class="v"><span id="sCount">0</span><span class="u">개</span></div></div>
+      <div class="cell"><div class="k">부피</div><div class="v"><span id="sVol">0</span><span class="u" id="sVolU">cm³</span></div></div>
+      <div class="cell"><div class="k">겉넓이</div><div class="v"><span id="sSurf">0</span><span class="u" id="sSurfU">cm²</span></div></div>
+      <div class="chev">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5 L6 8 L9.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="rail">
+    <div class="zoomcol">
+      <button id="zin" aria-label="확대"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="2"/><path d="M15.4 15.4 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10.5 7.6V13.4M7.6 10.5H13.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+      <div class="div"></div>
+      <button id="zout" aria-label="축소"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="2"/><path d="M15.4 15.4 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7.6 10.5H13.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="layers" id="layers">
+      <div class="cap">층</div>
+      <button class="ltrig" id="layerTrig" aria-label="관찰할 층 선택 (여러 개 가능)">전체</button>
+      <div class="lpop" id="layerPop"></div>
+    </div>
+  </div>
+
+  <div class="dock">
+    <div class="dockrow">
+      <button class="counttoggle" id="countToggle" aria-label="칸별 개수 표시 켜기/끄기">
+        <svg class="eyeon" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/></svg>
+        <svg class="eyeoff" viewBox="0 0 24 24" fill="none"><path d="M4 4l16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 12s3.5-7 10-7c1.7 0 3.2.45 4.5 1.15M22 12s-3.5 7-10 7c-1.7 0-3.2-.45-4.5-1.15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <span>칸별 개수</span>
+      </button>
+    </div>
+    <div class="dockrow">
+      <div class="group">
+        <button class="iconbtn" id="settings" aria-label="격자 조절">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 16 V4"/>
+            <path d="M8 16 H21"/>
+            <path d="M8 16 L2.5 20.5"/>
+            <path d="M8 4 l-1.7 2.4 M8 4 l1.7 2.4"/>
+            <path d="M21 16 l-2.4 -1.7 M21 16 l-2.4 1.7"/>
+            <path d="M2.5 20.5 l2.7 -.3 M2.5 20.5 l.3 -2.7"/>
+          </svg>
+        </button>
+      </div>
+      <div class="group">
+        <div class="seg" id="viewSeg">
+          <button data-view="top">위</button>
+          <button data-view="front">앞</button>
+          <button data-view="side">옆</button>
+        </div>
+      </div>
+      <div class="group">
+        <button class="modebtn add" id="modeBtn"><svg class="cube" viewBox="0 0 24 24" fill="none"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg><span id="modeLbl">추가</span></button>
+        <button class="iconbtn" id="undo" aria-label="되돌리기" disabled>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M9 7 4 12l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12h10a6 6 0 0 1 6 6v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="iconbtn" id="redo" aria-label="다시하기" disabled>
+          <svg viewBox="0 0 24 24" fill="none"><path d="M15 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12H10a6 6 0 0 0-6 6v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="iconbtn" id="clear" aria-label="전체 지우기">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="calc" id="calc">
+    <div class="calc-hd"><span>계산 과정</span><button class="calc-x" id="calcClose" aria-label="닫기"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
+    <div class="calc-body" id="calcBody"></div>
+  </div>
+
+  <div class="scrim" id="scrim"></div>
+  <div class="sheet" id="sheet">
+    <div class="grabber"></div>
+    <h3>설정</h3>
+    <p class="sub">격자 크기와 모서리 길이를 조정합니다.</p>
+
+    <div class="field">
+      <div class="flabel"><span>격자 크기</span></div>
+      <div class="fhint">기본 크기를 고르거나, 축(가로·높이·세로)마다 직접 조정하세요. 최대 10까지.</div>
+      <div class="gridrow">
+        <div class="row-presets" id="gridPresets">
+          <button class="preset" data-n="3" aria-label="3 × 3 × 3">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 3V21M15 3V21M3 9H21M3 15H21" stroke="currentColor" stroke-width="1.2"/></svg>
+            <span>3 × 3 × 3</span>
+          </button>
+          <button class="preset" data-n="4" aria-label="4 × 4 × 4">
+            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M7.5 3V21M12 3V21M16.5 3V21M3 7.5H21M3 12H21M3 16.5H21" stroke="currentColor" stroke-width="1.1"/></svg>
+            <span>4 × 4 × 4</span>
+          </button>
+        </div>
+        <div class="axisbox" id="axes"></div>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="flabel"><span>모서리 길이</span></div>
+      <div class="fhint">쌓기나무 한 개의 한 모서리 길이예요. 부피·겉넓이 계산에 쓰여요. 최대 10cm.</div>
+      <div class="edgerow">
+        <button class="eseg on" data-e="1">1 cm</button>
+        <button class="eseg" data-e="2">2 cm</button>
+        <div class="inputwrap"><span class="cl">직접</span><input type="number" id="edgeInput" min="1" max="10" step="1" value="1" inputmode="numeric"><span class="unit">cm</span></div>
+      </div>
+    </div>
+
+    <button class="sheet-done" id="sheetDone">완료</button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<noscript>
+  <div style="position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center;font-family:sans-serif;color:#182233;background:#e9eef4;">
+    <div>
+      <h1 style="font-size:18px;margin:0 0 8px;">쌓기나무 3D 학습 도구</h1>
+      <p style="font-size:14px;color:#6a7789;margin:0;">이 학습 도구를 사용하려면 자바스크립트를 켜 주세요.</p>
+    </div>
+  </div>
+</noscript>
+
+<script>
+"use strict";
+/* ============================================================
+   쌓기나무 3D 학습 도구 — MVP
+   좌표계:  x = 좌우(우:+x),  y = 위(위:+y, 층),  z = 앞뒤(앞:+z)
+   층 1 = 바닥(iy=0)
+   ============================================================ */
+
+const S = 1;                 // 큐브 한 변(월드 단위)
+const state = { gx:3, gy:3, gz:3, edge:1 };   // 격자 크기 + 모서리 길이(cm)
+const cells = new Set();     // 채워진 칸 키 "x,y,z"
+const key = (x,y,z)=>x+","+y+","+z;
+const has = (x,y,z)=>cells.has(key(x,y,z));
+const inBounds=(x,y,z)=>x>=0&&y>=0&&z>=0&&x<state.gx&&y<state.gy&&z<state.gz;
+
+/* ---------- Three 기본 세팅 ---------- */
+const canvas = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xe9eef4);
+
+const FOV = 45;   // 직교 프러스텀 크기(높이) 산정에만 사용
+const orthoCam = new THREE.OrthographicCamera(-1,1,1,-1,0.1,100);
+let activeCam = orthoCam;   // 원근 폐기: 자유·정렬 모두 직교(orthographic) 사용
+
+/* 조명 */
+scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa7b5, 0.85));
+const amb = new THREE.AmbientLight(0xffffff, 0.35); scene.add(amb);
+const dir = new THREE.DirectionalLight(0xffffff, 0.7);
+dir.position.set(6,11,4); dir.castShadow=true;
+dir.shadow.mapSize.set(1024,1024);
+dir.shadow.camera.near=1; dir.shadow.camera.far=40;
+dir.shadow.camera.left=-12; dir.shadow.camera.right=12; dir.shadow.camera.top=12; dir.shadow.camera.bottom=-12;
+scene.add(dir);
+
+/* 그룹: 큐브 + 바닥 */
+const cubeGroup = new THREE.Group(); scene.add(cubeGroup);
+let floor, gridHelper, floorShadow;
+
+/* 큐브 렌더 — InstancedMesh 2그룹(선택=불투명 / 흐림=반투명)으로 드로우콜을 격자 크기와 무관하게 고정 */
+const boxGeo = new THREE.BoxGeometry(S*0.98, S*0.98, S*0.98);
+const edgeGeo = new THREE.EdgesGeometry(boxGeo);
+const WOOD = 0xe4b878, WOOD_HI = 0xf2c98a;
+const CAP = 1000;   // 최대 인스턴스 수 = MAXG³ (MAXG=10). MAXG를 올리면 함께 조정할 것.
+
+// 두 그룹: on=선택/전체(불투명), off=흐린 층(반투명 0.14). 분리해야 불투명→반투명 순서가 맞아 딤 뒤 강조가 비쳐 보임.
+const matOn  = new THREE.MeshLambertMaterial({color:WOOD});
+const matOff = new THREE.MeshLambertMaterial({color:WOOD, transparent:true, opacity:0.14, depthWrite:false});
+const cubesOn  = new THREE.InstancedMesh(boxGeo, matOn,  CAP);
+const cubesOff = new THREE.InstancedMesh(boxGeo, matOff, CAP);
+for(const im of [cubesOn,cubesOff]){
+  im.count=0; im.frustumCulled=false;
+  im.castShadow=true; im.receiveShadow=true;
+  im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  cubeGroup.add(im);
+}
+
+// 모서리 선: 셀마다 edgeGeo를 옮겨 담은 하나의 LineSegments(그룹별 1드로우콜)
+const edgeMatOn  = new THREE.LineBasicMaterial({color:0x8a6a3c, transparent:true, opacity:0.55});
+const edgeMatOff = new THREE.LineBasicMaterial({color:0x8a6a3c, transparent:true, opacity:0.06});
+const edgeBase = edgeGeo.attributes.position.array;   // 로컬 모서리 좌표(원점 중심)
+const edgeVerts = edgeBase.length/3;                  // 큐브당 모서리 정점 수(24)
+function makeEdgeSeg(mat){
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(CAP*edgeBase.length),3));
+  g.setDrawRange(0,0);
+  const ls=new THREE.LineSegments(g,mat); ls.frustumCulled=false;
+  cubeGroup.add(ls); return ls;
+}
+const edgesOn=makeEdgeSeg(edgeMatOn), edgesOff=makeEdgeSeg(edgeMatOff);
+
+// 인스턴스 ↔ 셀 매핑 / 팝 애니메이션
+const onCells=[], offCells=[];        // instanceId → "x,y,z"
+const cellIndex=new Map();            // "x,y,z" → {mesh, i}
+cubesOn.userData.cells=onCells; cubesOff.userData.cells=offCells;
+const popList=[];                     // {key, t}
+
+const _pos=new THREE.Vector3(), _scl=new THREE.Vector3(), _q0=new THREE.Quaternion(), _m4=new THREE.Matrix4();
+function cellPos(x,y,z,out){
+  return out.set((x-(state.gx-1)/2)*S, (y+0.5)*S, (z-(state.gz-1)/2)*S);
+}
+function packGroup(mesh, list){
+  for(let i=0;i<list.length;i++){
+    const [x,y,z]=list[i].split(',').map(Number);
+    cellPos(x,y,z,_pos);
+    _m4.makeTranslation(_pos.x,_pos.y,_pos.z);
+    mesh.setMatrixAt(i,_m4);
+    cellIndex.set(list[i],{mesh,i});
+  }
+  mesh.count=list.length;
+  mesh.instanceMatrix.needsUpdate=true;
+}
+function buildEdges(seg, list){
+  const pos=seg.geometry.attributes.position.array;
+  let o=0;
+  for(let c=0;c<list.length;c++){
+    const [x,y,z]=list[c].split(',').map(Number);
+    cellPos(x,y,z,_pos);
+    for(let v=0;v<edgeVerts;v++){
+      pos[o++]=edgeBase[v*3]  +_pos.x;
+      pos[o++]=edgeBase[v*3+1]+_pos.y;
+      pos[o++]=edgeBase[v*3+2]+_pos.z;
+    }
+  }
+  seg.geometry.setDrawRange(0, list.length*edgeVerts);
+  seg.geometry.attributes.position.needsUpdate=true;
+}
+function setPopScale(k, sc){          // 팝 중 해당 셀 인스턴스 스케일만 갱신
+  const idx=cellIndex.get(k); if(!idx) return;
+  const [x,y,z]=k.split(',').map(Number);
+  cellPos(x,y,z,_pos); _scl.set(sc,sc,sc);
+  _m4.compose(_pos,_q0,_scl);
+  idx.mesh.setMatrixAt(idx.i,_m4);
+  idx.mesh.instanceMatrix.needsUpdate=true;
+}
+
+/* ---------- 바닥/격자 재생성 ---------- */
+function buildFloor(){
+  if(floor){ scene.remove(floor); floor.geometry.dispose(); }
+  if(gridHelper){ scene.remove(gridHelper); }
+  if(floorShadow){ scene.remove(floorShadow); floorShadow.geometry.dispose(); }
+  const w=state.gx*S, d=state.gz*S;
+  // 그림자 받는 얇은 바닥
+  const fg=new THREE.PlaneGeometry(w,d);
+  floorShadow=new THREE.Mesh(fg, new THREE.ShadowMaterial({opacity:0.14}));
+  floorShadow.rotation.x=-Math.PI/2; floorShadow.position.y=0.001; floorShadow.receiveShadow=true;
+  scene.add(floorShadow);
+  // 터치 판정용(보이지 않음)
+  const pg=new THREE.PlaneGeometry(w,d);
+  floor=new THREE.Mesh(pg, new THREE.MeshBasicMaterial({visible:false}));
+  floor.rotation.x=-Math.PI/2;
+  scene.add(floor);
+  // 격자선
+  const g=new THREE.GridHelper(Math.max(w,d), Math.max(state.gx,state.gz), 0xbcc7d6, 0xd3dbe6);
+  // GridHelper는 정사각이라 비대칭이면 잘라야 하므로 커스텀 라인으로 대체
+  scene.remove(g);
+  gridHelper=new THREE.Group();
+  const lineM=new THREE.LineBasicMaterial({color:0xc2ccd9});
+  const pts=[];
+  for(let i=0;i<=state.gx;i++){const X=(i-state.gx/2)*S; pts.push(X,0,-d/2, X,0,d/2);}
+  for(let k=0;k<=state.gz;k++){const Z=(k-state.gz/2)*S; pts.push(-w/2,0,Z, w/2,0,Z);}
+  const lg=new THREE.BufferGeometry();
+  lg.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
+  gridHelper.add(new THREE.LineSegments(lg,lineM));
+  gridHelper.position.y=0.002;
+  scene.add(gridHelper);
+  layoutLabels();
+}
+
+/* ---------- 방향 라벨 (위/앞/옆) ---------- */
+let dirLabels=null;
+function makeTextTexture(text, color){
+  const c=document.createElement('canvas'); c.width=256; c.height=160;
+  const g=c.getContext('2d');
+  const r=26, x=10,y=10,w=236,h=140;
+  g.beginPath();
+  g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r);
+  g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath();
+  g.fillStyle='rgba(255,255,255,0.94)'; g.fill();
+  g.lineWidth=7; g.strokeStyle=color; g.stroke();
+  g.fillStyle=color; g.textAlign='center'; g.textBaseline='middle';
+  g.font="800 92px 'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif";
+  g.fillText(text,128,84);
+  const tex=new THREE.CanvasTexture(c); tex.anisotropy=4; tex.needsUpdate=true; return tex;
+}
+function makeLabel(text,color){
+  const mat=new THREE.MeshBasicMaterial({map:makeTextTexture(text,color),transparent:true,depthWrite:false});
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(1.28,0.8),mat);
+  scene.add(m); return m;
+}
+function ensureLabels(){
+  if(dirLabels) return;
+  dirLabels={
+    top:  makeLabel('위','#3f8fd0'),   // 바닥에 눕혀 위(+y)를 향함 → 위에서 볼 때 읽힘
+    front:makeLabel('앞','#4fae72'),   // +z를 향함 → 앞에서 볼 때 읽힘
+    side: makeLabel('옆','#d0546f')    // +x(오른쪽)를 향함 → 옆에서 볼 때 읽힘
+  };
+  dirLabels.top.rotation.x=-Math.PI/2;
+  dirLabels.side.rotation.y=Math.PI/2;
+}
+function layoutLabels(){
+  ensureLabels();
+  const w=state.gx*S, d=state.gz*S;
+  dirLabels.front.position.set(0, -0.55, d/2+0.25);   // 격자 아래(바닥면보다 낮게) → 블록을 가리지 않음
+  dirLabels.side.position.set(w/2+0.25, -0.55, 0);
+  dirLabels.top.position.set(0, 0.02, -d/2-0.9);
+}
+
+/* ---------- 위에서 본 칸별 개수 (위 보기에서만 표시) ---------- */
+let topCountLabels=[];
+let showTopCounts=false;  // 위 보기 칸별 개수 표시 on/off (기본 off)
+function makeCountTexture(n){
+  const c=document.createElement('canvas'); c.width=128; c.height=128;
+  const g=c.getContext('2d');
+  g.fillStyle='rgba(28,36,51,0.5)';   // 옅은 글씨(반투명), 배경·테두리 없음
+  g.textAlign='center'; g.textBaseline='middle';
+  g.font="600 66px 'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif";
+  g.fillText(String(n),64,66);
+  const t=new THREE.CanvasTexture(c); t.anisotropy=4; t.needsUpdate=true; return t;
+}
+function clearTopCounts(){
+  topCountLabels.forEach(m=>{ scene.remove(m); m.material.map.dispose(); m.material.dispose(); m.geometry.dispose(); });
+  topCountLabels=[];
+}
+function updateTopCounts(){
+  clearTopCounts();
+  const cnt=new Map(), top=new Map();   // "x,z" -> 개수 / 스택 최상단 높이
+  for(const k of cells){
+    const [x,y,z]=k.split(',').map(Number);
+    const kk=x+','+z;
+    cnt.set(kk,(cnt.get(kk)||0)+1);
+    top.set(kk, Math.max(top.get(kk)||0, y+1));
+  }
+  for(const [kk,n] of cnt){
+    const [x,z]=kk.split(',').map(Number);
+    const mat=new THREE.MeshBasicMaterial({map:makeCountTexture(n),transparent:true,depthWrite:false});
+    const m=new THREE.Mesh(new THREE.PlaneGeometry(0.62,0.62),mat);
+    m.position.set((x-(state.gx-1)/2)*S, top.get(kk)*S+0.42, (z-(state.gz-1)/2)*S);  // 기둥 위에 띄움
+    m.renderOrder=6;
+    scene.add(m); topCountLabels.push(m);
+  }
+  refreshTopCountsVisibility();
+}
+function refreshTopCountsVisibility(){
+  topCountLabels.forEach(m=>m.visible = showTopCounts);   // 어느 보기에서든 토글 상태를 따름
+  const btn=document.getElementById('countToggle');
+  if(btn) btn.classList.toggle('off', !showTopCounts);    // 꺼짐 상태 표시
+}
+
+/* ---------- 큐브 렌더 동기화 (InstancedMesh) ---------- */
+function syncCubes(){                 // cells + layerSel → 두 그룹으로 분배·배치·모서리 재생성
+  clampLayerSel();
+  onCells.length=0; offCells.length=0; cellIndex.clear();
+  for(const k of cells){
+    const y=Number(k.split(',')[1]);
+    ((layerSel==='all'||layerSel.has(y))?onCells:offCells).push(k);
+  }
+  matOn.color.setHex(layerSel==='all'?WOOD:WOOD_HI);   // 전체=기본색 / 특정 층 선택 시 강조색
+  packGroup(cubesOn,onCells);  packGroup(cubesOff,offCells);
+  buildEdges(edgesOn,onCells); buildEdges(edgesOff,offCells);
+}
+const rebuildCubes = syncCubes;       // 전체 재생성
+function addCubeMesh(x,y,z,pop){
+  syncCubes();
+  if(pop) popList.push({key:key(x,y,z), t:0});
+}
+function removeCubeMesh(x,y,z){
+  const k=key(x,y,z);
+  for(let i=popList.length-1;i>=0;i--) if(popList[i].key===k) popList.splice(i,1);
+  syncCubes();
+}
+
+/* ---------- 층별 관찰 스타일 ---------- */
+let layerSel='all';   // 'all' 또는 선택된 층 인덱스들의 Set (다중 선택)
+function occupiedLayers(){                      // 실제로 블록이 쌓인 층(y) 집합
+  const s=new Set();
+  for(const k of cells) s.add(Number(k.split(',')[1]));
+  return s;
+}
+function clampLayerSel(){
+  if(layerSel==='all') return;
+  const occ=occupiedLayers();
+  for(const iy of [...layerSel]) if(!occ.has(iy)) layerSel.delete(iy);   // 블록 없는 층은 선택에서 제거
+  if(layerSel.size===0) layerSel='all';                                  // 모두 해제/사라지면 전체 (모두 선택은 유지)
+}
+function applyLayerStyle(){ syncCubes(); }   // 층 관찰 스타일 = 두 그룹 재분배(강조=불투명, 흐림=반투명)
+
+/* ============================================================
+   카메라 컨트롤러 (직접 구현)
+   ============================================================ */
+const sph = { theta:-0.7+Math.PI+Math.PI/2+Math.PI, phi:1.02, radius:8 };   // 구면 좌표 (초기 방향: 세로축 기준 회전 누적)
+let curUp = new THREE.Vector3(0,1,0);
+let desiredUp = new THREE.Vector3(0,1,0);
+const target = new THREE.Vector3(0,1.5,0);
+let aligned=false, alignedAxis=null;
+let tween=null;   // {from,to,upTo,t,dur,onEnd,proj}
+
+function gridMax(){ return Math.max(state.gx,state.gy,state.gz)*S; }
+
+/* 화면 위 UI(버튼)가 차지하는 대략적 여백(px, 앱 로컬 기준).
+   이 안쪽 '콘텐츠 사각형'에 모델을 맞춘다. 상:나침반·통계 / 하:dock(2행) / 우:우측 rail / 좌:여백. */
+const UI_INSETS = { t:92, b:122, l:14, r:66 };
+let calcOpen=false;                 // 계산 패널 열림 여부
+function effInsets(){               // 패널이 열리면 우측 여백을 패널 폭만큼 넓혀 모델을 왼쪽으로 밀어냄
+  if(!calcOpen) return UI_INSETS;
+  const W=canvas.clientWidth||window.innerWidth;
+  const pw=Math.min(300, 0.78*W);   // 패널 폭 (CSS: width:300px; max-width:78%)
+  return { t:UI_INSETS.t, b:UI_INSETS.b, l:UI_INSETS.l, r:pw+12 };  // 레일은 숨겨지므로 패널 자리만 확보
+}
+function contentRect(){
+  const W=canvas.clientWidth||window.innerWidth, H=canvas.clientHeight||window.innerHeight;
+  const ins=effInsets();
+  return { W, H,
+    wc: Math.max(60, W-ins.l-ins.r),
+    hc: Math.max(60, H-ins.t-ins.b) };
+}
+function modelRadiusWorld(){   // 격자 경계구 반경(회전과 무관한 최대 반경 → 어느 각도에서도 안 잘림)
+  return 0.5*Math.sqrt(state.gx*state.gx+state.gy*state.gy+state.gz*state.gz)*S;
+}
+const TAN_HALF_FOV = Math.tan(FOV*Math.PI/180/2);
+function fitRadius(){          // 콘텐츠 사각형에 모델이 알맞게 차도록 하는 카메라 반경
+  const {W,H,wc,hc}=contentRect();
+  const R=modelRadiusWorld(), fill=0.92;
+  const Hf = 2*R*H / (Math.min(wc,hc)*fill);   // 필요한 직교 프러스텀 높이(월드)
+  return Hf/(2*TAN_HALF_FOV);                   // Hf = 2·radius·tan(FOV/2)
+}
+function defaultRadius(){ return fitRadius(); }
+function updateTarget(){ target.set(0, state.gy*S/2, 0); }
+let userZoomed=false;   // 사용자가 직접 줌하면, 리사이즈 시 자동 재프레이밍하지 않는다
+
+function camPosFromSph(out){
+  const {theta,phi,radius}=sph;
+  out.set(
+    Math.sin(phi)*Math.sin(theta),
+    Math.cos(phi),
+    Math.sin(phi)*Math.cos(theta)
+  ).multiplyScalar(radius).add(target);
+  return out;
+}
+
+function applyCamera(){
+  const pos=camPosFromSph(new THREE.Vector3());
+  curUp.lerp(desiredUp,0.18); if(curUp.lengthSq()<1e-6) curUp.set(0,1,0); curUp.normalize();
+  orthoCam.position.copy(pos); orthoCam.up.copy(curUp); orthoCam.lookAt(target);
+}
+
+function setOrthoFrustum(){
+  const {W,H}=contentRect();
+  const aspect=W/H;
+  const Hf=2*sph.radius*TAN_HALF_FOV;
+  const wpp=Hf/H;                          // 월드/픽셀
+  const ins=effInsets();
+  const ox=(ins.l-ins.r)/2;    // 콘텐츠 중심의 캔버스 중심 대비 px 오프셋 (우:+)
+  const oy=(ins.t-ins.b)/2;    // (하:+)
+  const sx=-ox*wpp, sy=oy*wpp;             // 프러스텀을 옮겨 비대칭 투영 → 모델을 콘텐츠 중심에
+  const w=Hf*aspect;
+  orthoCam.left=-w/2+sx; orthoCam.right=w/2+sx;
+  orthoCam.top=Hf/2+sy; orthoCam.bottom=-Hf/2+sy;
+  orthoCam.updateProjectionMatrix();
+}
+
+/* 정렬 보기로 전환 */
+const VIEWS = {
+  top:   {theta:0,          phi:0.02,        up:new THREE.Vector3(0,0,-1), axis:'위'},
+  front: {theta:0,          phi:Math.PI/2,   up:new THREE.Vector3(0,1,0),  axis:'앞'},
+  side:  {theta:Math.PI/2,  phi:Math.PI/2,   up:new THREE.Vector3(0,1,0),  axis:'옆(오른쪽)'}
+};
+function gotoView(name){
+  if(name==='free'){ unlockToFree(true); return; }
+  const v=VIEWS[name];
+  // theta는 현재값에서 가장 가까운 등가각으로
+  let tt=v.theta;
+  while(tt-sph.theta>Math.PI) tt-=2*Math.PI;
+  while(tt-sph.theta<-Math.PI) tt+=2*Math.PI;
+  aligned=false; // 전환 중 (직교 유지)
+  activeCam=orthoCam;
+  desiredUp.copy(v.up);
+  userZoomed=false;   // 정렬 보기는 기본 프레이밍으로
+  tween={
+    from:{theta:sph.theta,phi:sph.phi,radius:sph.radius},
+    to:{theta:tt,phi:v.phi,radius:defaultRadius()},
+    t:0, dur:520,
+    onEnd:()=>{ aligned=true; alignedAxis=v.axis; setOrthoFrustum(); updateObserveUI(); refreshTopCountsVisibility(); }
+  };
+  setActiveViewBtn(name);
+  updateObserveUI();
+}
+function unlockToFree(animate){
+  aligned=false; alignedAxis=null; activeCam=orthoCam;
+  desiredUp.set(0,1,0);
+  setActiveViewBtn('free');
+  updateObserveUI();
+  refreshTopCountsVisibility();
+  if(animate){
+    userZoomed=false;
+    tween={from:{theta:sph.theta,phi:sph.phi,radius:sph.radius},
+      to:{theta:-0.7+Math.PI+Math.PI/2+Math.PI,phi:1.02,radius:defaultRadius()},t:0,dur:420,onEnd:null};
+  }
+}
+function setActiveViewBtn(name){
+  viewSeg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.view===name));
+}
+function updateObserveUI(){ /* 관찰 배너 제거됨 (no-op) */ }
+
+/* ============================================================
+   입력 (터치 + 마우스)
+   ============================================================ */
+let ptrDown=false, movedFar=false, downX=0, downY=0, lastX=0, lastY=0, downTime=0;
+const TAP_MOVE=10;
+let pinch=null;  // {dist, cx, cy}
+
+/* 모바일(터치) 세로일 때 앱을 90° 회전해 가로로 보여주므로,
+   화면 좌표(clientX/Y)를 회전된 앱의 로컬 좌표로 변환해야 레이캐스팅·회전·팬이 맞다.
+   변환: 뷰포트(vx,vy) → 로컬(vy, innerWidth - vx)  (CSS: translate(100vw,0) rotate(90deg)) */
+let forcedLandscape=false;
+function updateOrientationMode(){
+  forcedLandscape = window.matchMedia('(pointer: coarse) and (orientation: portrait)').matches;
+}
+function toLocal(cx,cy){
+  return forcedLandscape ? { x: cy, y: window.innerWidth - cx } : { x: cx, y: cy };
+}
+
+canvas.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(e.touches.length===1){
+    const p=toLocal(e.touches[0].clientX,e.touches[0].clientY);
+    startPointer(p.x,p.y);
+  }else if(e.touches.length===2){
+    ptrDown=false;
+    pinch=readPinch(e.touches);
+  }
+},{passive:false});
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(e.touches.length===2 && pinch){
+    const p=readPinch(e.touches);
+    // 줌
+    const ratio=p.dist/pinch.dist;
+    zoomBy(1/ratio);
+    // 이동(팬)
+    panScreen(p.cx-pinch.cx, p.cy-pinch.cy);
+    pinch=p;
+  }else if(e.touches.length===1 && ptrDown){
+    const p=toLocal(e.touches[0].clientX,e.touches[0].clientY);
+    movePointer(p.x,p.y);
+  }
+},{passive:false});
+canvas.addEventListener('touchend',e=>{
+  e.preventDefault();
+  if(pinch && e.touches.length<2){ pinch=null; }
+  if(ptrDown && e.touches.length===0){ endPointer(); }
+},{passive:false});
+
+canvas.addEventListener('mousedown',e=>{ const p=toLocal(e.clientX,e.clientY); startPointer(p.x,p.y); });
+window.addEventListener('mousemove',e=>{ if(ptrDown){ const p=toLocal(e.clientX,e.clientY); movePointer(p.x,p.y); } });
+window.addEventListener('mouseup',e=>{ if(ptrDown) endPointer(); });
+canvas.addEventListener('wheel',e=>{ e.preventDefault(); zoomBy(e.deltaY>0?1.1:0.9); },{passive:false});
+
+function readPinch(t){
+  const a=toLocal(t[0].clientX,t[0].clientY), b=toLocal(t[1].clientX,t[1].clientY);
+  const dx=a.x-b.x, dy=a.y-b.y;
+  return {dist:Math.hypot(dx,dy), cx:(a.x+b.x)/2, cy:(a.y+b.y)/2};
+}
+function startPointer(x,y){
+  ptrDown=true; movedFar=false; downX=lastX=x; downY=lastY=y; downTime=performance.now();
+}
+function movePointer(x,y){
+  const dx=x-lastX, dy=y-lastY;
+  if(Math.hypot(x-downX,y-downY)>TAP_MOVE) movedFar=true;
+  if(movedFar){
+    if(aligned) unlockToFree(false);   // 정렬 상태에서 회전하면 자유 3D로 복귀
+    tween=null;
+    sph.theta -= dx*0.008;
+    sph.phi   -= dy*0.008;
+    sph.phi = Math.max(0.12, Math.min(Math.PI-0.12, sph.phi));
+  }
+  lastX=x; lastY=y;
+}
+function endPointer(){
+  ptrDown=false;
+  const quick = performance.now()-downTime < 500;
+  if(!movedFar && quick) handleTap(downX,downY);
+}
+
+function zoomBy(f){
+  const base=fitRadius();
+  const rmin=base*0.45, rmax=base*3.2;
+  sph.radius=Math.max(rmin,Math.min(rmax,sph.radius*f));   // 직교 프러스텀 크기를 radius로 제어
+  userZoomed=true;
+}
+function panScreen(dx,dy){
+  const scale = (orthoCam.top-orthoCam.bottom) / canvas.clientHeight;
+  const right=new THREE.Vector3(), up=new THREE.Vector3();
+  activeCam.getWorldDirection(right); // temp
+  right.crossVectors(activeCam.up, right).normalize();  // camera-left
+  up.copy(activeCam.up).normalize();
+  target.addScaledVector(right, dx*scale);
+  target.addScaledVector(up, dy*scale);
+}
+
+/* ---------- 탭 → 편집 ---------- */
+const ray=new THREE.Raycaster();
+function ndc(x,y){   // x,y는 이미 앱 로컬 좌표(toLocal 적용됨); 캔버스는 풀스크린이라 원점 0
+  return new THREE.Vector2((x/canvas.clientWidth)*2-1, -(y/canvas.clientHeight)*2+1);
+}
+function handleTap(x,y){
+  if(aligned){ toast('관찰 모드예요. 화면을 돌리면 편집할 수 있어요'); return; }
+  ray.setFromCamera(ndc(x,y), activeCam);
+  const hitsCubes=ray.intersectObjects([cubesOn,cubesOff],false);
+  if(hitsCubes.length){
+    const h=hitsCubes[0];
+    const k=h.object.userData.cells[h.instanceId];
+    if(k){
+      const [cx,cy,cz]=k.split(',').map(Number);
+      if(addMode){
+        cellPos(cx,cy,cz,_pos);                          // 히트 지점과 큐브 중심으로 면 법선 도출
+        const dx=h.point.x-_pos.x, dy=h.point.y-_pos.y, dz=h.point.z-_pos.z;
+        const ax=Math.abs(dx),ay=Math.abs(dy),az=Math.abs(dz);
+        const n=(ax>=ay&&ax>=az)?{x:Math.sign(dx),y:0,z:0}
+               :(ay>=az)        ?{x:0,y:Math.sign(dy),z:0}
+                                :{x:0,y:0,z:Math.sign(dz)};
+        addFromFace(cx,cy,cz,n);
+      } else deleteCube(cx,cy,cz);
+    }
+    return;
+  }
+  const hitFloor=ray.intersectObject(floor,false);
+  if(hitFloor.length && addMode){
+    const p=hitFloor[0].point;
+    const ix=Math.round(p.x/S+(state.gx-1)/2);
+    const iz=Math.round(p.z/S+(state.gz-1)/2);
+    if(ix<0||iz<0||ix>=state.gx||iz>=state.gz){ toast('격자 밖입니다'); return; }
+    let iy=0; while(has(ix,iy,iz)) iy++;
+    if(iy>=state.gy){ toast('이 칸은 꽉 찼어요'); return; }
+    pushHistory(); cells.add(key(ix,iy,iz)); addCubeMesh(ix,iy,iz,true); postEdit();
+  }
+}
+function addFromFace(cx,cy,cz,normal){
+  const n={x:Math.round(normal.x),y:Math.round(normal.y),z:Math.round(normal.z)};
+  if(n.y<0){ toast('아래쪽으로는 붙일 수 없어요'); return; }   // 위·앞·뒤·좌·우만
+  const nx=cx+n.x, ny=cy+n.y, nz=cz+n.z;
+  if(!inBounds(nx,ny,nz)){ toast('격자 밖입니다'); return; }
+  if(has(nx,ny,nz)) return;
+  const supported = ny===0 || has(nx,ny-1,nz);
+  if(!supported){ toast('떠 있는 자리에는 놓을 수 없어요'); return; }
+  pushHistory(); cells.add(key(nx,ny,nz)); addCubeMesh(nx,ny,nz,true); postEdit();
+}
+function deleteCube(x,y,z){
+  if(has(x,y+1,z)){ toast('위 나무를 먼저 지워 주세요'); return; }   // 받침 나무 보호
+  pushHistory(); cells.delete(key(x,y,z)); removeCubeMesh(x,y,z); postEdit();
+}
+
+/* ============================================================
+   히스토리 (Undo / Redo)
+   ============================================================ */
+let undoStack=[], redoStack=[];
+function snapshot(){ return {cells:[...cells], gx:state.gx,gy:state.gy,gz:state.gz}; }
+function pushHistory(){ undoStack.push(snapshot()); redoStack.length=0; updateHistBtns(); }
+function restore(s){
+  cells.clear(); s.cells.forEach(k=>cells.add(k));
+  state.gx=s.gx; state.gy=s.gy; state.gz=s.gz;
+  updateTarget(); buildFloor(); rebuildCubes(); syncAxesUI(); renderStats(); refreshLayers(); updateTopCounts();
+}
+function undo(){ if(!undoStack.length)return; redoStack.push(snapshot()); restore(undoStack.pop()); updateHistBtns(); }
+function redo(){ if(!redoStack.length)return; undoStack.push(snapshot()); restore(redoStack.pop()); updateHistBtns(); }
+function updateHistBtns(){
+  document.getElementById('undo').disabled=!undoStack.length;
+  document.getElementById('redo').disabled=!redoStack.length;
+}
+
+/* ============================================================
+   통계 (개수 · 부피 · 겉넓이) + 계산 과정
+   ============================================================ */
+function computeStats(){
+  const N=cells.size;
+  // 방향별 노출면: 각 축은 +/-가 대칭이므로 한쪽만 세고 ×2 한다.
+  let up=0, side=0, front=0;   // 위(+y)·옆(+x)·앞(+z) 노출 개수
+  for(const k of cells){
+    const [x,y,z]=k.split(',').map(Number);
+    if(!has(x,y+1,z)) up++;     // 위쪽이 비면 노출 (아래도 같은 수 → ×2)
+    if(!has(x+1,y,z)) side++;   // 오른쪽(옆)이 비면 노출 (왼쪽도 같은 수 → ×2)
+    if(!has(x,y,z+1)) front++;  // 앞쪽이 비면 노출 (뒤도 같은 수 → ×2)
+  }
+  const exposed = 2*up + 2*side + 2*front;    // 위/아래 + 좌/우 + 앞/뒤
+  const pairs = (6*N - exposed)/2;            // 노출면에서 역산한 맞닿은 면 쌍 수
+  return {N, up, side, front, exposed, pairs};
+}
+function renderStats(){
+  const {N,up,side,front,exposed,pairs}=computeStats();
+  const e=state.edge;
+  const vol=N*e*e*e;
+  const surf=exposed*e*e;
+  document.getElementById('sCount').textContent=N;
+  document.getElementById('sVol').textContent=vol;
+  document.getElementById('sSurf').textContent=surf;
+  const cu = e===1?'cm³':'cm³', sq=e===1?'cm²':'cm²';
+  document.getElementById('sVolU').textContent=cu;
+  document.getElementById('sSurfU').textContent=sq;
+
+  const calc=document.getElementById('calcBody');
+  calc.innerHTML=`
+    <div class="row"><span class="lbl">쌓기나무</span>
+      <span class="exp"><b>${N}</b> 개</span></div>
+
+    <div class="row"><span class="lbl">부피</span>
+      <span class="exp"><b>${vol}</b> cm³</span></div>
+    <div class="exformula"><b>${N}</b> <span class="op">×</span> (${e}cm <span class="op">×</span> ${e}cm <span class="op">×</span> ${e}cm)</div>
+    <div class="krformula">쌓기나무 수 <span class="op">×</span> (가로 <span class="op">×</span> 세로 <span class="op">×</span> 높이)</div>
+
+    <div class="row"><span class="lbl">노출면</span>
+      <span class="exp"><b>${exposed}</b> 개</span></div>
+    <div class="exformula">2 <span class="op">×</span> ( <span class="dir" style="color:#3f8fd0">위</span><b>${up}</b> <span class="op">+</span> <span class="dir" style="color:#4fae72">앞</span><b>${front}</b> <span class="op">+</span> <span class="dir" style="color:#d0546f">옆</span><b>${side}</b> )</div>
+    <div class="krformula">2 <span class="op">×</span> ( 위 <span class="op">+</span> 앞 <span class="op">+</span> 옆 ) 면 수</div>
+
+    <div class="row"><span class="lbl">맞닿은 면</span>
+      <span class="exp"><b>${pairs}</b> 쌍</span></div>
+    <div class="exformula">( 6 <span class="op">×</span> <b>${N}</b> <span class="op">−</span> <b>${exposed}</b> ) <span class="op">÷</span> 2</div>
+    <div class="krformula">( 전체 면 <span class="op">−</span> 노출면 ) <span class="op">÷</span> 2</div>
+
+    <div class="row"><span class="lbl">겉넓이</span>
+      <span class="exp"><b>${surf}</b> cm²</span></div>
+    <div class="exformula"><b>${exposed}</b> <span class="op">×</span> (${e}cm <span class="op">×</span> ${e}cm)</div>
+    <div class="krformula">노출면 수 <span class="op">×</span> (가로 <span class="op">×</span> 세로)</div>
+
+    <div class="foot">겉넓이는 바닥에 닿는 면도 포함됩니다.</div>`;
+}
+function postEdit(mkLayers=true){
+  renderStats();
+  updateTopCounts();
+  if(mkLayers) refreshLayers();
+}
+
+/* ============================================================
+   UI: 모드 / 뷰 / 층 / 확대 / 설정
+   ============================================================ */
+let addMode=true;
+const modeBtn=document.getElementById('modeBtn'), modeLbl=document.getElementById('modeLbl');
+modeBtn.addEventListener('click',()=>{
+  addMode=!addMode;
+  modeBtn.classList.toggle('add',addMode);
+  modeBtn.classList.toggle('del',!addMode);
+  modeLbl.textContent=addMode?'추가':'삭제';
+});
+
+const viewSeg=document.getElementById('viewSeg');
+viewSeg.addEventListener('click',e=>{const b=e.target.closest('button'); if(b) gotoView(b.dataset.view);});
+
+document.getElementById('countToggle').addEventListener('click',()=>{
+  showTopCounts=!showTopCounts;
+  refreshTopCountsVisibility();
+});
+
+document.getElementById('undo').addEventListener('click',undo);
+document.getElementById('redo').addEventListener('click',redo);
+document.getElementById('clear').addEventListener('click',()=>{
+  if(!cells.size)return;
+  pushHistory(); cells.clear(); rebuildCubes(); postEdit(); toast('전체 지웠어요');
+});
+
+document.getElementById('zin').addEventListener('click',()=>zoomBy(0.85));
+document.getElementById('zout').addEventListener('click',()=>zoomBy(1.15));
+
+/* 층 다중 선택: 컴팩트 트리거 + 체크리스트 팝오버. 트리거는 '전체/N개' 요약만 보여 높이가 고정된다. */
+const layerTrig=document.getElementById('layerTrig');
+const layerPop=document.getElementById('layerPop');
+let popOpen=false;
+const CHK='<span class="box"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.5 9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
+
+function toggleLayer(iy){
+  if(layerSel==='all'){ layerSel=new Set([iy]); }        // 전체 상태에서 첫 탭 → 그 층만
+  else{
+    if(layerSel.has(iy)) layerSel.delete(iy); else layerSel.add(iy);
+    if(layerSel.size===0) layerSel='all';                // 모두 해제하면 전체 (모두 선택은 그대로 유지)
+  }
+  applyLayerStyle(); refreshLayers(); if(popOpen) buildPop();
+}
+function selectAllLayers(){ layerSel='all'; applyLayerStyle(); refreshLayers(); if(popOpen) buildPop(); }
+
+function refreshLayers(){
+  clampLayerSel();
+  layerTrig.textContent = layerSel==='all' ? '전체' : (layerSel.size+'개');
+  layerTrig.classList.toggle('on', layerSel!=='all');
+}
+function buildPop(){
+  layerPop.innerHTML='';
+  const all=document.createElement('div');
+  all.className='prow allrow'+(layerSel==='all'?' on':'');
+  all.innerHTML=CHK+'<span>전체</span>';
+  all.onclick=(e)=>{ e.stopPropagation(); selectAllLayers(); };
+  layerPop.appendChild(all);
+  const sep=document.createElement('div'); sep.className='sep'; layerPop.appendChild(sep);
+  const occ=[...occupiedLayers()].sort((a,b)=>b-a);      // 위 층이 목록 위 (쌓인 층만)
+  if(occ.length===0){
+    const empty=document.createElement('div'); empty.className='lempty'; empty.textContent='쌓인 블록 없음';
+    layerPop.appendChild(empty);
+  }
+  for(const L of occ){
+    const row=document.createElement('div');
+    const on = layerSel!=='all' && layerSel.has(L);
+    row.className='prow'+(on?' on':'');
+    row.innerHTML=CHK+'<span>'+(L+1)+'층</span>';
+    row.onclick=(e)=>{ e.stopPropagation(); toggleLayer(L); };
+    layerPop.appendChild(row);
+  }
+}
+function openPop(){ popOpen=true; buildPop(); layerPop.classList.add('show');
+  setTimeout(()=>document.addEventListener('pointerdown',outsidePop),0); }
+function closePop(){ popOpen=false; layerPop.classList.remove('show');
+  document.removeEventListener('pointerdown',outsidePop); }
+function outsidePop(e){ if(!layerPop.contains(e.target) && e.target!==layerTrig) closePop(); }
+layerTrig.addEventListener('click',(e)=>{ e.stopPropagation(); popOpen?closePop():openPop(); });
+
+/* 설정 시트 */
+const sheet=document.getElementById('sheet'), scrim=document.getElementById('scrim');
+function openSheet(){ sheet.classList.add('show'); scrim.classList.add('show'); }
+function closeSheet(){ sheet.classList.remove('show'); scrim.classList.remove('show'); }
+document.getElementById('sheetDone').addEventListener('click',closeSheet);
+document.getElementById('settings').addEventListener('click',openSheet);
+scrim.addEventListener('click',closeSheet);
+
+/* 격자 스테퍼 */
+const AXIS_META=[{k:'gx',n:'가로',e:'x',col:'우'},{k:'gy',n:'높이',e:'y',col:'위'},{k:'gz',n:'세로',e:'z',col:'앞'}];
+const MING=1, MAXG=10;
+function buildAxes(){
+  const box=document.getElementById('axes'); box.innerHTML='';
+  AXIS_META.forEach(a=>{
+    const el=document.createElement('div'); el.className='axis';
+    el.innerHTML=`<div class="an">${a.n} <em>${a.e}</em></div>
+      <div class="stepper">
+        <button data-a="${a.k}" data-d="-1">−</button>
+        <span class="num" id="num_${a.k}">${state[a.k]}</span>
+        <button data-a="${a.k}" data-d="1">+</button>
+      </div>`;
+    box.appendChild(el);
+  });
+  box.querySelectorAll('button').forEach(btn=>{
+    btn.onclick=()=>changeAxis(btn.dataset.a, +btn.dataset.d);
+  });
+  syncAxesUI();
+}
+function syncAxesUI(){
+  AXIS_META.forEach(a=>{ const n=document.getElementById('num_'+a.k); if(n) n.textContent=state[a.k]; });
+  document.querySelectorAll('#axes .stepper button').forEach(b=>{
+    const v=state[b.dataset.a], d=+b.dataset.d;
+    b.disabled = (d<0 && v<=MING) || (d>0 && v>=MAXG);
+  });
+  const cube = (state.gx===state.gy && state.gy===state.gz) ? state.gx : 0;
+  document.querySelectorAll('#gridPresets .preset').forEach(b=>b.classList.toggle('on', +b.dataset.n===cube));
+}
+function outOfBounds(nx,ny,nz){   // 새 격자 밖으로 나가는 나무가 있으면 true
+  for(const key0 of cells){ const [x,y,z]=key0.split(',').map(Number); if(x>=nx||y>=ny||z>=nz) return true; }
+  return false;
+}
+function applyGridChange(){
+  updateTarget(); buildFloor();
+  syncCubes();   // 격자 크기가 바뀌면 모든 인스턴스 위치·모서리 재계산
+  if(!aligned) sph.radius=defaultRadius();
+  userZoomed=false;   // 격자 변경 시 기본 프레이밍으로 재계산
+  syncAxesUI(); refreshLayers(); renderStats(); updateTopCounts();
+}
+function changeAxis(k,d){
+  const nv=state[k]+d;
+  if(nv<MING||nv>MAXG) return;
+  if(d<0){
+    const n={gx:state.gx,gy:state.gy,gz:state.gz}; n[k]=nv;
+    if(outOfBounds(n.gx,n.gy,n.gz)){ toast('밖으로 나가는 나무가 있어 줄일 수 없어요'); return; }
+  }
+  pushHistory();
+  state[k]=nv;
+  applyGridChange();
+}
+function setGrid(nx,ny,nz){       // 프리셋(정육면체 등) 한 번에 적용
+  nx=Math.max(MING,Math.min(MAXG,nx)); ny=Math.max(MING,Math.min(MAXG,ny)); nz=Math.max(MING,Math.min(MAXG,nz));
+  if(nx===state.gx&&ny===state.gy&&nz===state.gz) return;
+  if(outOfBounds(nx,ny,nz)){ toast('밖으로 나가는 나무가 있어 줄일 수 없어요'); return; }
+  pushHistory();
+  state.gx=nx; state.gy=ny; state.gz=nz;
+  applyGridChange();
+}
+document.getElementById('gridPresets').addEventListener('click',e=>{
+  const b=e.target.closest('.preset'); if(!b) return;
+  const n=+b.dataset.n; setGrid(n,n,n);
+});
+
+/* 모서리 길이 */
+function setEdge(v){
+  v=Math.round(v); if(!Number.isFinite(v)) v=state.edge;
+  v=Math.max(1,Math.min(10,v));
+  state.edge=v;
+  document.querySelectorAll('.eseg').forEach(b=>b.classList.toggle('on', +b.dataset.e===v));
+  const inp=document.getElementById('edgeInput');
+  if(inp && document.activeElement!==inp) inp.value=v;
+  renderStats();
+}
+document.querySelector('.edgerow').addEventListener('click',e=>{
+  const b=e.target.closest('.eseg'); if(!b)return;
+  setEdge(+b.dataset.e);
+});
+(()=>{ const inp=document.getElementById('edgeInput');
+  inp.addEventListener('input',()=>{ const v=parseInt(inp.value,10); if(!isNaN(v)) setEdge(v); });
+  inp.addEventListener('blur',()=>{ inp.value=state.edge; });
+})();
+
+/* 통계 카드 펼치기 */
+const appEl=document.getElementById('app');
+function setCalc(open){
+  calcOpen=open;
+  appEl.classList.toggle('calc-open', open);
+  userZoomed=false;            // 패널에 맞춰 모델을 다시 프레이밍(가려지지 않도록)
+  sph.radius=fitRadius();
+  setOrthoFrustum();
+}
+document.getElementById('statHead').addEventListener('click',()=>setCalc(!calcOpen));
+document.getElementById('calcClose').addEventListener('click',()=>setCalc(false));
+
+/* 토스트 */
+let toastT=null;
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1600);
+}
+
+/* ============================================================
+   나침반(축 gizmo)
+   ============================================================ */
+const compass=document.getElementById('compassSvg');
+const AXES3=[
+  {v:new THREE.Vector3(1,0,0), label:'옆', color:'#d0546f'},
+  {v:new THREE.Vector3(0,1,0), label:'위', color:'#3f8fd0'},
+  {v:new THREE.Vector3(0,0,1), label:'앞', color:'#4fae72'}
+];
+let compassEls=null;
+function initCompass(){
+  compass.innerHTML='<circle cx="37" cy="37" r="30" fill="#f7f9fc" stroke="#e5eaf1"/>';
+  compassEls=AXES3.map(()=>{
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('stroke-width','2.4'); line.setAttribute('stroke-linecap','round');
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle'); dot.setAttribute('r','8.5');
+    const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('text-anchor','middle'); txt.setAttribute('dominant-baseline','central');
+    txt.setAttribute('font-size','9'); txt.setAttribute('font-weight','800'); txt.setAttribute('fill','#fff');
+    compass.appendChild(line); compass.appendChild(dot); compass.appendChild(txt);
+    return {line,dot,txt};
+  });
+}
+function updateCompass(){
+  const q=activeCam.quaternion.clone().invert();
+  const cx=37,cy=37,R=19;
+  const items=AXES3.map((a,i)=>{
+    const v=a.v.clone().applyQuaternion(q);
+    return {i,a,sx:cx+v.x*R,sy:cy-v.y*R,z:v.z};
+  }).sort((p,q2)=>p.z-q2.z);
+  items.forEach(it=>{
+    const {line,dot,txt}=compassEls[it.i];
+    const near=(it.z+1)/2; const op=0.35+near*0.65;
+    line.setAttribute('x1',cx);line.setAttribute('y1',cy);
+    line.setAttribute('x2',it.sx);line.setAttribute('y2',it.sy);
+    line.setAttribute('stroke',it.a.color); line.setAttribute('opacity',op);
+    dot.setAttribute('cx',it.sx);dot.setAttribute('cy',it.sy);
+    dot.setAttribute('fill',it.a.color);dot.setAttribute('opacity',op);
+    txt.setAttribute('x',it.sx);txt.setAttribute('y',it.sy);
+    txt.setAttribute('opacity',op); txt.textContent=it.a.label;
+  });
+}
+
+/* ============================================================
+   렌더 루프
+   ============================================================ */
+let last=performance.now();
+function animate(now){
+  const dt=now-last; last=now;
+  // 뷰 트윈
+  if(tween){
+    tween.t+=dt/tween.dur;
+    const k=Math.min(1,tween.t), e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    sph.theta=tween.from.theta+(tween.to.theta-tween.from.theta)*e;
+    sph.phi  =tween.from.phi  +(tween.to.phi-tween.from.phi)*e;
+    sph.radius=tween.from.radius+(tween.to.radius-tween.from.radius)*e;
+    if(k>=1){ const cb=tween.onEnd; tween=null; if(cb)cb(); }
+  }
+  // 팝 애니메이션 (셀 키 기준 → 현재 인스턴스 스케일 갱신)
+  for(let i=popList.length-1;i>=0;i--){
+    const p=popList[i]; p.t+=dt/150;
+    const s=Math.min(1,p.t); const sc=0.55+(1-0.55)*(1-Math.pow(1-s,3));
+    setPopScale(p.key, sc);
+    if(s>=1){ setPopScale(p.key,1); popList.splice(i,1); }
+  }
+  applyCamera();
+  setOrthoFrustum();
+  if(showTopCounts){ for(const m of topCountLabels) m.quaternion.copy(activeCam.quaternion); }  // 숫자는 항상 카메라를 향함
+  updateCompass();
+  renderer.render(scene, activeCam);
+  requestAnimationFrame(animate);
+}
+
+/* ---------- 리사이즈 ---------- */
+function resize(){
+  updateOrientationMode();   // 세로↔가로 전환 시 강제 가로 여부 갱신
+  const w=canvas.clientWidth||window.innerWidth, h=canvas.clientHeight||window.innerHeight;
+  renderer.setSize(w,h,false);
+  if(!userZoomed && !tween) sph.radius=fitRadius();   // 화면 크기 변화 시 기본 프레이밍 재적용
+  setOrthoFrustum();
+}
+window.addEventListener('resize',resize);
+window.addEventListener('orientationchange',()=>setTimeout(resize,250));
+// 전체화면/독립 실행 시에는 실제 방향 잠금도 시도 (iframe 내에서는 조용히 실패)
+if(window.self===window.top && screen.orientation && screen.orientation.lock){
+  try{ screen.orientation.lock('landscape').catch(()=>{}); }catch(e){}
+}
+
+/* ============================================================
+   시드 & 시작
+   ============================================================ */
+function seed(){
+  ['0,0,0','1,0,0','2,0,0','0,0,1','0,1,0'].forEach(k=>{
+    const [x,y,z]=k.split(',').map(Number);
+    if(inBounds(x,y,z)) cells.add(k);
+  });
+}
+function init(){
+  updateTarget();
+  sph.radius=defaultRadius();
+  buildFloor();
+  seed();
+  rebuildCubes();
+  initCompass();
+  buildAxes();
+  refreshLayers();
+  renderStats();
+  updateTopCounts();
+  updateHistBtns();
+  resize();
+  requestAnimationFrame(animate);
+}
+init();
+</script>
+</body>
+</html>
