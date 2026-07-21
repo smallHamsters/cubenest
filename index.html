@@ -4,35 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>쌓기나무 · 3D 학습 도구</title>
-
-<!-- ===== SEO / 소셜 메타 (배포용 추가) ===== -->
-<meta name="description" content="초등 6학년 쌓기나무 학습을 위한 3D 웹 도구. 쌓기나무를 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 계산 과정과 함께 확인합니다.">
-<meta name="keywords" content="쌓기나무, 3D 학습, 초등 수학, 부피, 겉넓이, 디지털 교구, 위 앞 옆 보기">
-<meta name="author" content="쌓기나무 학습 도구">
-<meta name="robots" content="index,follow">
-<meta name="color-scheme" content="light">
-<meta name="theme-color" content="#3f3fbf">
-
-<!-- ===== 모바일 앱(홈 화면 추가) ===== -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="쌓기나무">
-
-<!-- ===== Open Graph / 카카오·페북 공유 ===== -->
-<meta property="og:type" content="website">
-<meta property="og:title" content="쌓기나무 · 3D 학습 도구">
-<meta property="og:description" content="쌓기나무를 3D로 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 계산 과정과 함께 배웁니다.">
-<meta property="og:locale" content="ko_KR">
-<meta name="twitter:card" content="summary">
-
-<!-- ===== favicon (외부 파일 불필요, 인라인 SVG) ===== -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2032%2032'%3E%3Cpath%20d='M16%203%20L28%209%20L16%2015%20L4%209%20Z'%20fill='%23e6b980'/%3E%3Cpath%20d='M4%209%20L16%2015%20L16%2029%20L4%2023%20Z'%20fill='%23c8965a'/%3E%3Cpath%20d='M28%209%20L16%2015%20L16%2029%20L28%2023%20Z'%20fill='%23d8a76e'/%3E%3C/svg%3E">
-
-<!-- ===== 외부 라이브러리 (CDN, 버전 고정) ===== -->
-<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
   :root{
@@ -57,7 +29,7 @@
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;overflow:hidden;font-family:var(--font);color:var(--ink);
     background:#e9eef4;overscroll-behavior:none;}
-  #app{position:fixed;top:0;left:0;width:100vw;height:100vh;}
+  #app{position:fixed;top:0;left:0;width:100vw;height:100vh;width:100dvw;height:100dvh;}
   #scene{position:absolute;top:0;left:0;width:100%;height:100%;display:block;touch-action:none;}
 
   /* ---- top-left brand + compass ---- */
@@ -232,7 +204,9 @@
   /* ---- 모바일(터치)에서 세로로 잡아도 가로 서비스 강제 ---- */
   /* 전체화면이 아니면 브라우저가 방향을 잠글 수 없으므로, 세로일 때 앱 전체를 90° 회전해 가로로 렌더한다. */
   @media (pointer: coarse) and (orientation: portrait){
-    #app{width:100vh;height:100vw;transform-origin:top left;transform:translate(100vw,0) rotate(90deg);}
+    /* JS(updateOrientationMode)가 실제 px로 덮어씀. 아래는 JS 실행 전/미지원 대비 폴백(dvh/dvw 우선). */
+    #app{width:100vh;height:100vw;width:100dvh;height:100dvw;transform-origin:top left;
+      transform:translate(100vw,0) rotate(90deg);transform:translate(100dvw,0) rotate(90deg);}
   }
 
   @media (max-width:560px){
@@ -369,15 +343,6 @@
 
   <div class="toast" id="toast"></div>
 </div>
-
-<noscript>
-  <div style="position:fixed;inset:0;display:grid;place-items:center;padding:24px;text-align:center;font-family:sans-serif;color:#182233;background:#e9eef4;">
-    <div>
-      <h1 style="font-size:18px;margin:0 0 8px;">쌓기나무 3D 학습 도구</h1>
-      <p style="font-size:14px;color:#6a7789;margin:0;">이 학습 도구를 사용하려면 자바스크립트를 켜 주세요.</p>
-    </div>
-  </div>
-</noscript>
 
 <script>
 "use strict";
@@ -780,6 +745,17 @@ let pinch=null;  // {dist, cx, cy}
 let forcedLandscape=false;
 function updateOrientationMode(){
   forcedLandscape = window.matchMedia('(pointer: coarse) and (orientation: portrait)').matches;
+  const app=document.getElementById('app');
+  if(forcedLandscape){
+    // 실제 표시 픽셀로 크기·회전을 지정 → 모바일 vh/dvh가 실제 영역과 어긋나 rail이 잘리는 문제 방지
+    const w=window.innerWidth, h=window.innerHeight;
+    app.style.width=h+'px'; app.style.height=w+'px';
+    app.style.transformOrigin='top left';
+    app.style.transform='translate('+w+'px,0) rotate(90deg)';
+  }else{
+    app.style.width=''; app.style.height='';
+    app.style.transform=''; app.style.transformOrigin='';
+  }
 }
 function toLocal(cx,cy){
   return forcedLandscape ? { x: cy, y: window.innerWidth - cx } : { x: cx, y: cy };
@@ -1268,6 +1244,8 @@ function resize(){
 }
 window.addEventListener('resize',resize);
 window.addEventListener('orientationchange',()=>setTimeout(resize,250));
+// 일부 브라우저는 주소창 표시/숨김을 visualViewport 리사이즈로만 알림
+if(window.visualViewport) window.visualViewport.addEventListener('resize',resize);
 // 전체화면/독립 실행 시에는 실제 방향 잠금도 시도 (iframe 내에서는 조용히 실패)
 if(window.self===window.top && screen.orientation && screen.orientation.lock){
   try{ screen.orientation.lock('landscape').catch(()=>{}); }catch(e){}
