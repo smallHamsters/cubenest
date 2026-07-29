@@ -2,33 +2,77 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>CubeNest · 쌓기나무 3D 학습</title>
-<meta name="description" content="쌓기나무(단위 정육면체)를 3D로 쌓고 돌려보며 개수·부피·겉넓이를 배우는 학습 도구. 만든 모양을 링크로 공유하면 똑같이 열려요.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>큐브네스트 · 쌓기나무 3D 학습 — 개수·부피·겉넓이</title>
+<meta name="description" content="쌓기나무(단위 정육면체)를 3D로 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 배우는 학습 도구. 초등 6학년 '공간과 입체'용. 설치 없이 브라우저에서 바로, 만든 모양은 링크로 그대로 공유돼요.">
 <meta name="theme-color" content="#e9eef4">
-<!-- ▼ 링크 미리보기(Open Graph). 배포 도메인: https://smallhamsters.github.io/cubenest/ · cubenest-og.png(1200×630)를 같은 경로에 올려 두세요. -->
+<link rel="canonical" href="https://smallhamsters.github.io/cubenest/">
+
+<!-- ▼ 링크 미리보기(Open Graph) · 마스터 브랜드 카드 재사용(마스터 2.1·7장). 공용 OG 이미지: public/cubenest-og.png(1200×630, 절대 URL 공유). canonical·og:url은 이 페이지 자기 URL(/cubenest/). -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CubeNest">
-<meta property="og:title" content="CubeNest · 쌓기나무 3D 학습">
-<meta property="og:description" content="쌓기나무를 3D로 쌓고 돌려보며 개수·부피·겉넓이를 배워요. 만든 모양을 링크로 공유하면 똑같이 열립니다.">
+<meta property="og:title" content="큐브네스트 · 쌓기나무 3D 학습">
+<meta property="og:description" content="쌓기나무를 3D로 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 배워요. 만든 모양은 링크 하나로 그대로 공유됩니다.">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:url" content="https://smallhamsters.github.io/cubenest/">
-<meta property="og:image" content="https://smallhamsters.github.io/cubenest/cubenest-og.png">
+<meta property="og:image" content="https://smallhamsters.github.io/cubenest/public/cubenest-og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="CubeNest — 쌓기나무 3D 학습">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="CubeNest · 쌓기나무 3D 학습">
-<meta name="twitter:description" content="쌓기나무를 3D로 쌓고 돌려보며 개수·부피·겉넓이를 배워요.">
-<meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/cubenest-og.png">
+<meta name="twitter:title" content="큐브네스트 · 쌓기나무 3D 학습">
+<meta name="twitter:description" content="쌓기나무를 3D로 쌓고 돌려 보며 개수·부피·겉넓이를 배워요.">
+<meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/public/cubenest-og.png">
+
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<!-- ▼ 교육용 구조화 데이터(JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://smallhamsters.github.io/cubenest/#website",
+      "name": "CubeNest",
+      "alternateName": "큐브네스트",
+      "url": "https://smallhamsters.github.io/cubenest/",
+      "inLanguage": "ko-KR",
+      "description": "쌓기나무를 3D로 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 배우는 웹 학습 도구."
+    },
+    {
+      "@type": "WebApplication",
+      "name": "CubeNest 쌓기나무 3D 학습",
+      "url": "https://smallhamsters.github.io/cubenest/playground/",
+      "image": "https://smallhamsters.github.io/cubenest/public/cubenest-og.png",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web browser",
+      "inLanguage": "ko-KR",
+      "browserRequirements": "WebGL 지원 브라우저",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
+      "learningResourceType": "3D 인터랙티브 학습 도구",
+      "educationalLevel": "초등학교 6학년",
+      "teaches": ["쌓기나무 개수 세기", "위·앞·옆 투상", "겉넓이 구하기", "부피 구하기", "공간과 입체"],
+      "audience": [
+        { "@type": "EducationalAudience", "educationalRole": "student" },
+        { "@type": "EducationalAudience", "educationalRole": "teacher" },
+        { "@type": "EducationalAudience", "educationalRole": "parent" }
+      ]
+    }
+  ]
+}
+</script>
+
 <style>
   :root{
     --panel:#ffffff;
     --panel-2:#f7f9fc;
+    --bg:#eef2f7;
+    --bg-2:#e9eef4;
     --ink:#182233;
     --muted:#6a7789;
+    --muted-2:#8a95a6;
     --line:#e5eaf1;
     --line-2:#eef2f7;
     --accent:#3f3fbf;
@@ -37,391 +81,534 @@
     --add:#0f9d58;
     --add-soft:#e6f5ec;
     --del:#e0466b;
-    --del-soft:#fce9ee;
+    --wood-top:#e6b980;
+    --wood-left:#c8965a;
+    --wood-right:#d8a76e;
+    --wood-edge:#b9834a;
     --shadow:0 6px 22px rgba(24,34,51,.12), 0 1px 3px rgba(24,34,51,.08);
     --shadow-sm:0 2px 8px rgba(24,34,51,.10);
+    --shadow-lg:0 18px 50px rgba(24,34,51,.16), 0 3px 10px rgba(24,34,51,.08);
     --r:16px;
+    --r-lg:22px;
     --font:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-  html,body{margin:0;height:100%;overflow:hidden;font-family:var(--font);color:var(--ink);
-    background:#e9eef4;overscroll-behavior:none;}
-  #app{position:fixed;top:0;left:0;width:100vw;height:100vh;width:100dvw;height:100dvh;}
-  #scene{position:absolute;top:0;left:0;width:100%;height:100%;display:block;touch-action:none;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);
+    -webkit-font-smoothing:antialiased;line-height:1.6;
+    text-rendering:optimizeLegibility;}
+  a{color:inherit;text-decoration:none;}
+  img,svg{display:block;max-width:100%;}
+  ::selection{background:var(--accent-soft);}
+  :focus-visible{outline:2.5px solid var(--accent);outline-offset:3px;border-radius:6px;}
 
-  /* ---- top-left brand + compass ---- */
-  .topleft{position:absolute;top:calc(12px + env(safe-area-inset-top)) ;left:12px;display:flex;gap:10px;align-items:stretch;z-index:5;}
-  .brand{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);padding:9px 13px 9px 11px;
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px;}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;color:var(--accent);
+    text-transform:uppercase;margin:0 0 12px;display:inline-flex;align-items:center;gap:8px;}
+  .eyebrow::before{content:"";width:18px;height:2px;background:var(--accent);border-radius:2px;opacity:.7;}
+  h2.sec{font-size:clamp(23px,4vw,33px);font-weight:800;letter-spacing:-.03em;
+    line-height:1.18;margin:0 0 14px;}
+  .lead{font-size:clamp(15px,2.2vw,17px);color:var(--muted);max-width:56ch;margin:0;line-height:1.72;}
+
+  /* ---------- top bar ---------- */
+  header.top{position:sticky;top:0;z-index:50;
+    backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);
+    background:rgba(238,242,247,.82);border-bottom:1px solid transparent;transition:border-color .2s,background .2s;}
+  header.top.scrolled{border-bottom-color:var(--line);background:rgba(238,242,247,.92);}
+  .topin{display:flex;align-items:center;justify-content:space-between;height:64px;}
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .glyph{width:30px;height:30px;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(160,110,50,.28));}
+  .brand .t b{font-size:16px;font-weight:800;letter-spacing:-.02em;display:block;line-height:1.05;}
+  .brand .t span{font-size:10.5px;color:var(--muted);font-weight:600;}
+  .top-cta{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 17px;
+    background:var(--accent);color:#fff;border-radius:12px;font-weight:800;font-size:13.5px;
+    box-shadow:0 3px 10px rgba(63,63,191,.28);transition:transform .12s,box-shadow .2s,background .2s;}
+  .top-cta:hover{background:var(--accent-ink);box-shadow:0 5px 16px rgba(63,63,191,.36);}
+  .top-cta:active{transform:translateY(1px);}
+  .top-cta svg{width:15px;height:15px;}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;overflow:hidden;
+    background:radial-gradient(120% 100% at 82% 12%, #e9eef4 0%, #eef2f7 46%, #eef2f7 100%);}
+  .hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:30px;align-items:center;
+    padding:clamp(40px,7vw,86px) 0 clamp(48px,8vw,92px);}
+  .hero-copy{max-width:34rem;}
+  .hero-tag{display:inline-flex;align-items:center;gap:8px;background:var(--panel);
+    border:1px solid var(--line);border-radius:999px;padding:6px 13px 6px 10px;
+    font-size:12px;font-weight:700;color:var(--accent-ink);box-shadow:var(--shadow-sm);margin-bottom:20px;}
+  .hero-tag .dot{width:16px;height:16px;flex:0 0 auto;}
+  h1.hero-h{font-size:clamp(30px,6.2vw,52px);font-weight:800;letter-spacing:-.038em;
+    line-height:1.08;margin:0 0 18px;}
+  h1.hero-h .hl{color:var(--accent);position:relative;white-space:nowrap;}
+  h1.hero-h .hl::after{content:"";position:absolute;left:-2px;right:-2px;bottom:.06em;height:.28em;
+    background:var(--accent-soft);z-index:-1;border-radius:4px;}
+  .hero-sub{font-size:clamp(15px,2.4vw,18px);color:var(--muted);line-height:1.72;margin:0 0 28px;max-width:33rem;}
+  .hero-btns{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;
+    height:52px;padding:0 26px;border-radius:14px;font-weight:800;font-size:16px;
+    transition:transform .12s,box-shadow .2s,background .2s;cursor:pointer;border:none;font-family:inherit;}
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(63,63,191,.32);}
+  .btn-primary:hover{background:var(--accent-ink);box-shadow:0 9px 26px rgba(63,63,191,.4);transform:translateY(-1px);}
+  .btn-primary:active{transform:translateY(0);}
+  .btn-primary svg{width:19px;height:19px;}
+  .btn-ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow-sm);}
+  .btn-ghost:hover{border-color:#d3dbe6;background:var(--panel-2);}
+  .hero-note{margin:18px 0 0;font-size:12.5px;color:var(--muted-2);display:flex;align-items:center;gap:7px;}
+  .hero-note svg{width:14px;height:14px;flex:0 0 auto;color:var(--add);}
+
+  /* hero visual: 나무 쌓기나무 스택 */
+  .hero-visual{position:relative;display:flex;align-items:center;justify-content:center;min-height:300px;}
+  .stack-card{position:relative;width:min(380px,100%);aspect-ratio:1/1;
+    background:linear-gradient(160deg,#ffffff 0%,#f4f7fb 100%);
+    border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow-lg);
+    display:grid;place-items:center;overflow:hidden;}
+  .stack-card::before{content:"";position:absolute;inset:0;
+    background-image:linear-gradient(var(--line-2) 1px,transparent 1px),linear-gradient(90deg,var(--line-2) 1px,transparent 1px);
+    background-size:34px 34px;background-position:center;opacity:.6;
+    -webkit-mask-image:radial-gradient(circle at 50% 42%,#000 40%,transparent 78%);
+            mask-image:radial-gradient(circle at 50% 42%,#000 40%,transparent 78%);}
+  .stack-float{position:relative;width:64%;animation:floaty 6s ease-in-out infinite;will-change:transform;}
+  .stack-float .shadow{position:absolute;left:50%;bottom:-6%;width:74%;height:14%;transform:translateX(-50%);
+    background:radial-gradient(ellipse at center,rgba(120,90,40,.28),transparent 70%);filter:blur(3px);z-index:0;}
+  #heroStack{position:relative;z-index:1;overflow:visible;filter:drop-shadow(0 8px 14px rgba(120,90,40,.22));}
+  #heroStack .cu{transform-origin:center;animation:cubeIn .5s cubic-bezier(.2,.7,.3,1) backwards;
+    animation-delay:calc(var(--i) * .085s + .15s);}
+  .stack-badge{position:absolute;right:14px;bottom:14px;z-index:2;background:var(--panel);
+    border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);
+    padding:8px 12px;display:flex;gap:14px;align-items:center;}
+  .stack-badge .m{text-align:center;line-height:1.05;}
+  .stack-badge .m .k{font-size:9.5px;color:var(--muted);font-weight:700;letter-spacing:.02em;}
+  .stack-badge .m .v{font-size:17px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
+  .stack-badge .m .v small{font-size:10px;color:var(--muted);font-weight:600;margin-left:1px;}
+  .stack-badge .sep{width:1px;align-self:stretch;background:var(--line);}
+
+  @keyframes cubeIn{from{opacity:0;transform:translateY(-16px) scale(.94);}to{opacity:1;transform:none;}}
+  @keyframes floaty{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-11px) rotate(.4deg);}}
+
+  /* ---------- section shell ---------- */
+  section.band{padding:clamp(56px,9vw,100px) 0;}
+  section.band.white{background:var(--panel);}
+  .sec-head{max-width:60ch;margin-bottom:clamp(30px,5vw,48px);}
+
+  /* ---------- features ---------- */
+  .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .fcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+    padding:24px 22px 22px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
+    transition:transform .18s,box-shadow .2s,border-color .2s;}
+  .fcard:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#d8e0ea;}
+  .fcard .ico{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;
+    margin-bottom:16px;background:var(--accent-soft);color:var(--accent);}
+  .fcard .ico svg{width:25px;height:25px;}
+  .fcard.g .ico{background:var(--add-soft);color:var(--add);}
+  .fcard.w .ico{background:#fbf1e3;color:#b9834a;}
+  .fcard h3{font-size:17px;font-weight:800;letter-spacing:-.02em;margin:0 0 7px;}
+  .fcard p{font-size:13.5px;color:var(--muted);margin:0;line-height:1.6;}
+  .fcard .soon{position:absolute;top:16px;right:16px;font-size:10px;font-weight:800;letter-spacing:.03em;
+    color:var(--muted);background:var(--line-2);border-radius:999px;padding:4px 9px;}
+
+  /* ---------- 위·앞·옆 explainer ---------- */
+  .explain{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(28px,5vw,54px);align-items:center;}
+  .views{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);
+    padding:26px;box-shadow:var(--shadow-sm);}
+  .views-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+  .vcell{text-align:center;}
+  .vcell .cap{font-size:12px;font-weight:800;color:var(--accent-ink);margin-bottom:8px;letter-spacing:.02em;}
+  .vgrid{background:var(--panel);border-radius:12px;padding:8px;box-shadow:var(--shadow-sm);}
+  .explain .txt h2{margin-top:0;}
+  .vlist{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:12px;}
+  .vlist li{display:flex;gap:12px;align-items:flex-start;font-size:14.5px;color:var(--ink);}
+  .vlist li b{font-weight:800;}
+  .vlist li .n{flex:0 0 auto;width:24px;height:24px;border-radius:8px;background:var(--accent-soft);
+    color:var(--accent);font-weight:800;font-size:12px;display:grid;place-items:center;margin-top:1px;}
+  .vlist li span{color:var(--muted);}
+
+  /* ---------- SEO 콘텐츠 ---------- */
+  .seo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(22px,4vw,40px) clamp(30px,5vw,56px);}
+  .seo-item h3{font-size:19px;font-weight:800;letter-spacing:-.02em;margin:0 0 10px;
     display:flex;align-items:center;gap:9px;}
-  .brand .glyph{width:26px;height:26px;flex:0 0 auto;}
-  .brand .t{line-height:1.05;}
-  .brand .t b{font-size:15px;font-weight:800;letter-spacing:-.02em;display:block;}
-  .brand .t span{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.01em;}
-  .compass{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);width:74px;height:74px;
-    position:relative;flex:0 0 auto;}
-  .compass svg{position:absolute;inset:0;width:100%;height:100%;}
+  .seo-item h3 .cube{width:20px;height:20px;flex:0 0 auto;}
+  .seo-item p{font-size:14.5px;color:var(--muted);line-height:1.75;margin:0;}
+  .seo-item p + p{margin-top:10px;}
+  .seo-item strong{color:var(--ink);font-weight:700;}
 
-  /* ---- stats (signature) ---- */
-  .stats{position:absolute;top:calc(12px + env(safe-area-inset-top));right:12px;z-index:7;width:min(280px,64vw);}
-  .stat-head{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);display:flex;overflow:hidden;cursor:pointer;}
-  .stat-head .cell{flex:1;padding:10px 8px 9px;text-align:center;position:relative;}
-  .stat-head .cell + .cell::before{content:"";position:absolute;left:0;top:22%;bottom:22%;width:1px;background:var(--line);}
-  .stat-head .cell .k{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.02em;}
-  .stat-head .cell .v{font-size:20px;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-top:1px;
-    font-variant-numeric:tabular-nums;}
-  .stat-head .cell .u{font-size:10px;color:var(--muted);font-weight:600;margin-left:1px;}
-  .chev{position:absolute;right:9px;bottom:-9px;width:20px;height:20px;background:var(--panel);border-radius:50%;
-    box-shadow:var(--shadow-sm);display:grid;place-items:center;color:var(--muted);transition:transform .25s;}
-  #app.calc-open .chev{transform:rotate(180deg);}
+  /* ---------- 대상별 ---------- */
+  .aud{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
+  .acard{border-radius:var(--r-lg);padding:30px 28px;position:relative;overflow:hidden;}
+  .acard.teacher{background:linear-gradient(155deg,#f3f2fe,#ecebfb);border:1px solid #ddd9f5;}
+  .acard.parent{background:linear-gradient(155deg,#eaf6ef,#e2f3ea);border:1px solid #cfe9d9;}
+  .acard .tag{font-size:11.5px;font-weight:800;letter-spacing:.04em;margin-bottom:12px;
+    display:inline-block;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.7);}
+  .acard.teacher .tag{color:var(--accent-ink);}
+  .acard.parent .tag{color:#0b7a45;}
+  .acard h3{font-size:19px;font-weight:800;letter-spacing:-.02em;margin:0 0 10px;}
+  .acard p{font-size:14px;color:#41506a;line-height:1.7;margin:0;}
+  .acard ul{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:9px;}
+  .acard li{display:flex;gap:9px;font-size:13.5px;color:#3a4863;align-items:flex-start;}
+  .acard li svg{width:17px;height:17px;flex:0 0 auto;margin-top:1px;}
+  .acard.teacher li svg{color:var(--accent);}
+  .acard.parent li svg{color:var(--add);}
 
-  /* 계산 과정: 우측에서 슬라이드되는 패널 (열리면 3D 모델은 콘텐츠 사각형이 좁아져 왼쪽으로 재배치) */
-  .calc{position:absolute;top:calc(80px + env(safe-area-inset-top));right:0;bottom:0;z-index:9;
-    width:300px;max-width:78%;background:var(--panel);border-radius:20px 0 0 20px;
-    box-shadow:-10px 0 34px rgba(20,28,42,.16);padding:14px 16px calc(16px + env(safe-area-inset-bottom));
-    overflow-y:auto;transform:translateX(105%);transition:transform .26s cubic-bezier(.22,.61,.36,1);}
-  #app.calc-open .calc{transform:translateX(0);}
-  .calc-hd{display:flex;align-items:center;justify-content:space-between;margin:0 0 8px;
-    font-size:11px;letter-spacing:.06em;color:var(--accent);font-weight:800;text-transform:uppercase;}
-  .calc-x{width:28px;height:28px;border:none;background:var(--panel-2);border-radius:8px;color:var(--muted);cursor:pointer;display:grid;place-items:center;}
-  .calc-x:active{background:var(--line-2);}
-  .calc .row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:5px 0;border-top:1px dashed var(--line);}
-  .calc .row:first-of-type{border-top:none;}
-  .calc .row .lbl{font-size:12px;color:var(--muted);font-weight:700;}
-  .calc .row .exp{font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right;line-height:1.4;}
-  .calc .row .exp b{font-weight:800;color:var(--ink);}
-  .calc .row .exp .op{color:var(--muted);margin:0 2px;font-weight:600;}
-  .calc .row .exp .dir{color:var(--muted);font-weight:700;font-size:10.5px;margin-right:1px;}
-  .calc .exformula{margin:-2px 0 0;font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right;color:var(--muted);}
-  .calc .krformula{margin:1px 0 5px;font-size:11px;text-align:right;color:var(--muted);opacity:.72;line-height:1.35;}
-  .calc .krformula .op{margin:0 1px;}
-  .calc .exformula .dir{font-weight:800;font-size:10.5px;margin-right:1px;}
-  .calc .exformula b{font-weight:800;color:var(--ink);}
-  .calc .foot{font-size:10.5px;color:var(--muted);margin-top:9px;line-height:1.45;}
+  /* ---------- final CTA ---------- */
+  .final{background:linear-gradient(160deg,#2f2f9e 0%,#3f3fbf 60%,#4a45c8 100%);color:#fff;
+    text-align:center;border-radius:0;position:relative;overflow:hidden;}
+  .final::before{content:"";position:absolute;inset:0;opacity:.16;
+    background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);
+    background-size:38px 38px;
+    -webkit-mask-image:radial-gradient(circle at 50% 30%,#000,transparent 72%);mask-image:radial-gradient(circle at 50% 30%,#000,transparent 72%);}
+  .final .wrap{position:relative;padding:clamp(56px,9vw,96px) 22px;}
+  .final h2{font-size:clamp(26px,4.6vw,40px);font-weight:800;letter-spacing:-.03em;margin:0 0 14px;line-height:1.16;}
+  .final p{font-size:clamp(14.5px,2.2vw,17px);color:#d6d6f5;margin:0 auto 30px;max-width:44ch;line-height:1.7;}
+  .btn-onaccent{background:#fff;color:var(--accent-ink);box-shadow:0 10px 30px rgba(0,0,0,.24);}
+  .btn-onaccent:hover{background:#f3f3ff;transform:translateY(-1px);}
 
-  /* ---- right rail: zoom + layers ---- */
-  .rail{position:absolute;right:12px;top:calc(88px + env(safe-area-inset-top));z-index:5;display:flex;flex-direction:column;gap:10px;align-items:center;}
-  /* 계산 패널이 열리면 우측 세로 메뉴는 숨긴다 */
-  #app.calc-open .rail{display:none;}
-  .zoomcol{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;}
-  .zoomcol button{display:block;width:44px;height:44px;border:none;background:transparent;font-size:20px;color:var(--ink);cursor:pointer;font-weight:700;}
-  .zoomcol button:active{background:var(--panel-2);}
-  .zoomcol .div{height:1px;background:var(--line);margin:0 8px;}
-  .zoomcol button svg{width:22px;height:22px;display:block;margin:auto;}
+  /* ---------- footer ---------- */
+  footer.foot{background:#1c2432;color:#c3ccdb;padding:clamp(40px,6vw,60px) 0 34px;}
+  .foot-top{display:flex;justify-content:space-between;gap:28px;flex-wrap:wrap;align-items:flex-start;
+    padding-bottom:26px;border-bottom:1px solid rgba(255,255,255,.1);}
+  .foot-brand .t b{color:#fff;font-size:16px;font-weight:800;letter-spacing:-.02em;display:block;}
+  .foot-brand .t span{font-size:11.5px;color:#8894a8;}
+  .foot-brand p{margin:12px 0 0;font-size:12.5px;color:#8894a8;max-width:34ch;line-height:1.6;}
+  .foot-links{display:flex;gap:40px;flex-wrap:wrap;}
+  .foot-col h4{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#71809b;margin:0 0 12px;font-weight:800;}
+  .foot-col a{display:block;font-size:13.5px;color:#c3ccdb;padding:4px 0;transition:color .15s;}
+  .foot-col a:hover{color:#fff;}
+  .foot-bottom{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    padding-top:22px;font-size:12px;color:#7a879b;}
+  .foot-bottom .privacy{display:inline-flex;align-items:center;gap:6px;}
+  .foot-bottom .privacy svg{width:14px;height:14px;color:#9aa6ba;}
 
-  .layers{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative;}
-  .layers .cap{font-size:9.5px;color:var(--muted);font-weight:800;letter-spacing:.02em;}
-  .layers .ltrig{width:40px;height:34px;border:none;border-radius:9px;background:var(--panel-2);color:var(--ink);font-weight:800;font-size:12px;cursor:pointer;font-variant-numeric:tabular-nums;padding:0 2px;}
-  .layers .ltrig.on{background:var(--accent);color:#fff;box-shadow:0 2px 6px rgba(63,63,191,.35);}
-  .lpop{position:absolute;right:calc(100% + 10px);top:50%;transform:translateY(-50%);
-    background:var(--panel);border-radius:14px;box-shadow:var(--shadow);padding:7px;
-    display:none;flex-direction:column;gap:4px;min-width:118px;max-height:260px;overflow-y:auto;z-index:9;}
-  .lpop.show{display:flex;animation:pop .18s ease;}
-  .lpop .prow{display:flex;align-items:center;gap:9px;height:38px;padding:0 11px;border-radius:9px;
-    background:var(--panel-2);color:var(--ink);font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;}
-  .lpop .prow .box{width:18px;height:18px;border-radius:5px;border:2px solid var(--line);flex:0 0 auto;display:grid;place-items:center;}
-  .lpop .prow .box svg{display:none;width:12px;height:12px;}
-  .lpop .prow.on{background:var(--accent-soft);color:var(--accent-ink);}
-  .lpop .prow.on .box{background:var(--accent);border-color:var(--accent);}
-  .lpop .prow.on .box svg{display:block;}
-  .lpop .prow.allrow{font-weight:800;}
-  .lpop .sep{height:1px;background:var(--line);margin:2px 4px;flex:0 0 auto;}
-  .lpop .lempty{font-size:12px;color:var(--muted);text-align:center;padding:7px 4px;font-weight:700;}
-
-  /* ---- bottom toolbar ---- */
-  .dock{position:absolute;left:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:6;
-    display:flex;flex-direction:column;align-items:flex-start;gap:10px;max-width:calc(100% - 24px);}
-  .dockrow{display:flex;gap:10px;align-items:center;flex-wrap:nowrap;}
-  .group{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);padding:6px;display:flex;gap:5px;align-items:center;}
-  .seg{display:flex;gap:3px;background:var(--panel-2);border-radius:11px;padding:3px;}
-  .seg button{min-width:44px;height:40px;padding:0 12px;border:none;border-radius:9px;background:transparent;color:var(--muted);
-    font-weight:800;font-size:13px;cursor:pointer;transition:.15s;letter-spacing:-.01em;}
-  .seg button.on{background:var(--panel);color:var(--accent-ink);box-shadow:var(--shadow-sm);}
-
-  .modebtn{height:46px;padding:0 14px;border:none;border-radius:12px;font-weight:800;font-size:14px;cursor:pointer;
-    display:flex;align-items:center;gap:7px;transition:.15s;}
-  .modebtn .cube{width:19px;height:19px;flex:0 0 auto;}
-  .modebtn.add{background:var(--add-soft);color:var(--add);}
-  .modebtn.del{background:var(--del-soft);color:var(--del);}
-
-  .iconbtn{width:44px;height:40px;border:none;border-radius:10px;background:transparent;color:var(--ink);cursor:pointer;
-    display:grid;place-items:center;}
-  .iconbtn:active{background:var(--panel-2);}
-  .iconbtn:disabled{opacity:.3;cursor:default;}
-  .iconbtn svg{width:21px;height:21px;}
-
-  /* ---- settings sheet ---- */
-  .scrim{position:absolute;inset:0;background:rgba(20,28,42,.34);z-index:9;opacity:0;pointer-events:none;transition:.22s;backdrop-filter:blur(1px);}
-  .scrim.show{opacity:1;pointer-events:auto;}
-  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:10;background:var(--panel);border-radius:22px 22px 0 0;
-    box-shadow:0 -8px 40px rgba(24,34,51,.22);padding:8px 20px calc(22px + env(safe-area-inset-bottom));
-    transform:translateY(105%);transition:transform .28s cubic-bezier(.3,.9,.3,1);max-height:82vh;overflow:auto;}
-  .sheet.show{transform:translateY(0);}
-  .grabber{width:38px;height:4px;border-radius:4px;background:var(--line);margin:8px auto 14px;}
-  .sheet-done{width:100%;margin-top:18px;height:50px;border:none;border-radius:14px;background:var(--accent);
-    color:#fff;font-size:15px;font-weight:800;letter-spacing:.01em;cursor:pointer;box-shadow:0 6px 18px rgba(63,63,191,.28);}
-  .sheet-done:active{transform:translateY(1px);}
-  .sheet h3{margin:0 0 3px;font-size:17px;font-weight:800;letter-spacing:-.02em;}
-  .sheet .sub{margin:0 0 18px;font-size:12.5px;color:var(--muted);}
-  .share-preview{background:var(--panel-2);border:1px solid var(--line);border-radius:14px;overflow:hidden;
-    display:flex;align-items:center;justify-content:center;height:150px;margin-bottom:14px;}
-  .share-preview img{max-width:100%;max-height:100%;display:block;}
-  .share-actions{display:flex;gap:9px;}
-  .share-act{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 8px;
-    background:var(--panel-2);border:1px solid var(--line);border-radius:13px;cursor:pointer;
-    font-weight:800;font-size:12.5px;color:var(--ink);}
-  .share-act svg{width:24px;height:24px;color:var(--accent);}
-  .share-act:active{background:var(--line-2);}
-  .field{margin-bottom:20px;}
-  .field > .flabel{font-size:12.5px;font-weight:800;color:var(--ink);margin-bottom:3px;display:flex;justify-content:space-between;}
-  .field > .fhint{font-size:11.5px;color:var(--muted);margin-bottom:11px;line-height:1.45;}
-  /* 격자 크기 / 모서리 길이: 각 그룹의 컨트롤을 한 행(가로)으로 나란히 */
-  /* 격자 크기: 프리셋(2)과 축 박스(가로·높이·세로 세로 정렬)를 한 행에 나란히 */
-  .gridrow{display:flex;gap:9px;align-items:stretch;}
-  .row-presets{flex:1;display:flex;gap:9px;}
-  .preset{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:10px 8px;
-    background:var(--panel-2);border:1px solid var(--line);border-radius:13px;cursor:pointer;}
-  .preset svg{width:28px;height:28px;color:var(--accent);}
-  .preset span{font-size:12.5px;font-weight:800;color:var(--ink);}
-  .preset.on{background:var(--accent-soft);border-color:var(--accent);}
-  .axisbox{flex:1;display:flex;flex-direction:column;gap:5px;background:var(--panel-2);border:1px solid var(--line);border-radius:13px;padding:7px;}
-  .axisbox .axis{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:2px 2px 2px 8px;}
-  .axisbox .axis .an{font-size:12px;font-weight:800;color:var(--muted);}
-  .axisbox .axis .an em{font-style:normal;color:var(--accent);margin-left:2px;}
-  .stepper{display:flex;align-items:center;gap:3px;}
-  .stepper button{width:32px;height:32px;border:none;border-radius:9px;background:var(--panel);box-shadow:var(--shadow-sm);
-    font-size:18px;font-weight:700;color:var(--ink);cursor:pointer;}
-  .stepper button:disabled{opacity:.3;box-shadow:none;cursor:default;}
-  .stepper .num{min-width:24px;text-align:center;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums;}
-  .edgerow{display:flex;gap:8px;align-items:stretch;}
-  .eseg{flex:1;height:46px;border:1px solid var(--line);border-radius:12px;background:var(--panel-2);
-    font-weight:800;font-size:13.5px;color:var(--muted);cursor:pointer;}
-  .eseg.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink);}
-  .inputwrap{flex:1.2;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:0 10px;}
-  .inputwrap .cl{font-size:12px;font-weight:800;color:var(--muted);}
-  .inputwrap input{width:34px;border:none;background:transparent;font-size:16px;font-weight:800;color:var(--ink);text-align:center;font-variant-numeric:tabular-nums;outline:none;}
-  .inputwrap input::-webkit-outer-spin-button,.inputwrap input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-  .inputwrap input[type=number]{-moz-appearance:textfield;}
-  .inputwrap .unit{font-size:12px;font-weight:700;color:var(--muted);}
-
-  /* 의견(피드백) — 우측 하단 */
-  .fab-feedback{position:absolute;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:6;
-    display:inline-flex;align-items:center;gap:6px;background:var(--panel);color:var(--muted);
-    border:none;border-radius:20px;box-shadow:var(--shadow);padding:8px 14px;font-weight:800;font-size:12.5px;cursor:pointer;}
-  .fab-feedback svg{width:16px;height:16px;}
-  #app.calc-open .fab-feedback{display:none;}
-
-  /* ---- toast ---- */
-  .toast{position:absolute;left:50%;bottom:calc(78px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(8px);
-    background:#26303f;color:#fff;font-size:13px;font-weight:600;padding:10px 16px;border-radius:12px;z-index:8;
-    box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s;max-width:80vw;text-align:center;}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-
-  /* 쿠키/분석 동의 배너 — #app 바깥(회전 영향 없음), 물리 화면 하단 고정 */
+  /* ---------- consent (playground와 동일 키·스타일) ---------- */
   .consent{position:fixed;left:0;right:0;bottom:0;z-index:100000;
     background:#26303f;color:#fff;padding:14px 16px calc(14px + env(safe-area-inset-bottom));
     display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;
-    font:500 13px/1.5 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-    box-shadow:0 -8px 30px rgba(0,0,0,.28);}
+    font:500 13px/1.5 var(--font);box-shadow:0 -8px 30px rgba(0,0,0,.28);}
   .consent[hidden]{display:none;}
   .consent .consent-msg{flex:1 1 260px;min-width:220px;color:#e8edf5;}
   .consent .consent-msg b{color:#fff;font-weight:800;}
   .consent .consent-btns{flex:0 0 auto;display:flex;gap:8px;margin-left:auto;}
-  .consent .consent-btns button{border:none;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13px;cursor:pointer;}
+  .consent .consent-btns button{border:none;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;}
   .consent #consentDeny{background:rgba(255,255,255,.14);color:#fff;}
   .consent #consentAccept{background:#5a5ad6;color:#fff;}
   .consent #consentAccept:active,.consent #consentDeny:active{transform:translateY(1px);}
 
-  /* observe-mode banner */
-  .observe{position:absolute;left:50%;top:calc(100px + env(safe-area-inset-top));transform:translateX(-50%);z-index:5;
-    background:rgba(38,48,63,.9);color:#fff;font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;
-    display:none;align-items:center;gap:7px;box-shadow:var(--shadow);}
-  .observe.show{display:flex;animation:pop .22s ease;}
-  .observe svg{width:14px;height:14px;}
+  /* ---------- reveal on scroll ---------- */
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.3,1);}
+  .reveal.in{opacity:1;transform:none;}
 
-  /* 위 보기 칸별 개수 on/off 토글 (항상 노출, dock 한 줄에 배치) */
-  .counttoggle{display:inline-flex;align-items:center;gap:6px;background:var(--panel);color:var(--accent-ink);    border:none;border-radius:20px;box-shadow:var(--shadow);padding:8px 15px;font-weight:800;font-size:12.5px;cursor:pointer;}
-  .counttoggle svg{width:16px;height:16px;}
-  .counttoggle .eyeoff{display:none;}
-  .counttoggle.off{color:var(--muted);}
-  .counttoggle.off .eyeon{display:none;}
-  .counttoggle.off .eyeoff{display:inline;}
-
-  @keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
-
-  /* ---- 모바일(터치)에서 세로로 잡아도 가로 서비스 강제 ---- */
-  /* 전체화면이 아니면 브라우저가 방향을 잠글 수 없으므로, 세로일 때 앱 전체를 90° 회전해 가로로 렌더한다. */
-  @media (pointer: coarse) and (orientation: portrait){
-    /* JS(updateOrientationMode)가 실제 px로 덮어씀. 아래는 JS 실행 전/미지원 대비 폴백(dvh/dvw 우선). */
-    #app{width:100vh;height:100vw;width:100dvh;height:100dvw;transform-origin:top left;
-      transform:translate(100vw,0) rotate(90deg);transform:translate(100dvw,0) rotate(90deg);}
+  /* ---------- responsive ---------- */
+  @media (max-width:860px){
+    .hero-grid{grid-template-columns:1fr;gap:8px;padding-top:34px;}
+    .hero-copy{max-width:none;order:1;}
+    .hero-visual{order:0;min-height:auto;margin-bottom:6px;}
+    .stack-card{width:min(320px,86%);aspect-ratio:1/.92;}
+    .fgrid{grid-template-columns:1fr 1fr;}
+    .explain{grid-template-columns:1fr;}
+    .seo-grid{grid-template-columns:1fr;}
+    .aud{grid-template-columns:1fr;}
   }
-
-  @media (max-width:560px){
-    .stats{width:56vw;}
-    .stat-head .cell .v{font-size:17px;}
-    .compass{width:64px;height:64px;}
+  @media (max-width:520px){
+    .fgrid{grid-template-columns:1fr;}
+    .brand .t span{display:none;}
+    .hero-btns{gap:10px;}
+    .btn{flex:1 1 auto;}
+    .stack-badge{padding:7px 10px;gap:10px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto;}
+    .stack-float{animation:none;}
+    #heroStack .cu{animation:none;}
+    .reveal{opacity:1;transform:none;transition:none;}
+    *{scroll-behavior:auto;}
   }
 </style>
 </head>
 <body>
-<div id="app">
-  <canvas id="scene"></canvas>
 
-  <div class="topleft">
-    <div class="brand">
-      <svg class="glyph" viewBox="0 0 32 32" fill="none">
+<!-- ===================== TOP BAR ===================== -->
+<header class="top" id="topbar">
+  <div class="wrap topin">
+    <a class="brand" href="./" aria-label="큐브네스트 홈">
+      <svg class="glyph" viewBox="0 0 32 32" fill="none" aria-hidden="true">
         <path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/>
         <path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/>
         <path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/>
       </svg>
-      <div class="t"><b id="brandName">CubeNest</b><span>쌓기나무 3D 학습</span></div>
-    </div>
-    <div class="compass"><svg id="compassSvg" viewBox="0 0 74 74"></svg></div>
+      <span class="t"><b id="brandName">CubeNest</b><span>쌓기나무 3D 학습</span></span>
+    </a>
+    <a class="top-cta" id="topCta" href="playground/">
+      바로 해보기
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
   </div>
+</header>
 
-  <div class="stats" id="stats">
-    <div class="stat-head" id="statHead">
-      <div class="cell"><div class="k">개수</div><div class="v"><span id="sCount">0</span><span class="u">개</span></div></div>
-      <div class="cell"><div class="k">부피</div><div class="v"><span id="sVol">0</span><span class="u" id="sVolU">cm³</span></div></div>
-      <div class="cell"><div class="k">겉넓이</div><div class="v"><span id="sSurf">0</span><span class="u" id="sSurfU">cm²</span></div></div>
-      <div class="chev">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5 L6 8 L9.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+<!-- ===================== HERO ===================== -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="hero-tag">
+        <svg class="dot" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/>
+        </svg>
+        초등 6학년 · 공간과 입체
+      </span>
+      <h1 class="hero-h">쌓고 돌려 보며 익히는 <span class="hl">쌓기나무</span></h1>
+      <p class="hero-sub">블록을 3D로 직접 쌓고 위·앞·옆에서 관찰하면 개수·부피·겉넓이가 바로 계산돼요. 만든 모양은 링크 하나로 그대로 열립니다. 설치도, 준비물도 없어요.</p>
+      <div class="hero-btns">
+        <a class="btn btn-primary" id="heroCta" href="playground/">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
+          바로 해보기
+        </a>
+        <a class="btn btn-ghost" href="#features">기능 살펴보기</a>
       </div>
+      <p class="hero-note">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        태블릿·휴대폰에서 잘 돌아가요 · 학생은 로그인 없이 사용
+      </p>
     </div>
-  </div>
 
-  <div class="rail">
-    <div class="zoomcol">
-      <button id="zin" aria-label="확대"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="2"/><path d="M15.4 15.4 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M10.5 7.6V13.4M7.6 10.5H13.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-      <div class="div"></div>
-      <button id="zout" aria-label="축소"><svg viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" stroke-width="2"/><path d="M15.4 15.4 21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7.6 10.5H13.4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
-    </div>
-    <div class="layers" id="layers">
-      <div class="cap">층</div>
-      <button class="ltrig" id="layerTrig" aria-label="관찰할 층 선택 (여러 개 가능)">전체</button>
-      <div class="lpop" id="layerPop"></div>
-    </div>
-  </div>
-
-  <div class="dock">
-    <div class="dockrow">
-      <button class="counttoggle" id="countToggle" aria-label="칸별 개수 표시 켜기/끄기">
-        <svg class="eyeon" viewBox="0 0 24 24" fill="none"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/></svg>
-        <svg class="eyeoff" viewBox="0 0 24 24" fill="none"><path d="M4 4l16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M2 12s3.5-7 10-7c1.7 0 3.2.45 4.5 1.15M22 12s-3.5 7-10 7c-1.7 0-3.2-.45-4.5-1.15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span>칸별 개수</span>
-      </button>
-      <button class="counttoggle" id="shareBtn" aria-label="공유">
-        <svg viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="2.6" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="2.6" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2.6" stroke="currentColor" stroke-width="2"/><path d="M8.3 10.8 15.7 6.4M8.3 13.2 15.7 17.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span>공유</span>
-      </button>
-    </div>
-    <div class="dockrow">
-      <div class="group">
-        <button class="iconbtn" id="settings" aria-label="격자 조절">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 16 V4"/>
-            <path d="M8 16 H21"/>
-            <path d="M8 16 L2.5 20.5"/>
-            <path d="M8 4 l-1.7 2.4 M8 4 l1.7 2.4"/>
-            <path d="M21 16 l-2.4 -1.7 M21 16 l-2.4 1.7"/>
-            <path d="M2.5 20.5 l2.7 -.3 M2.5 20.5 l.3 -2.7"/>
+    <div class="hero-visual" aria-hidden="false">
+      <div class="stack-card">
+        <div class="stack-float">
+          <div class="shadow"></div>
+          <svg id="heroStack" viewBox="-34 -83 128 194" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="쌓기나무 10개를 쌓아 만든 3D 입체 모양">
+<g class="cu" style="--i:0"><path d="M-30,0 L0,15 L0,47 L-30,32 Z" fill="#c8965a"/><path d="M30,0 L0,15 L0,47 L30,32 Z" fill="#d8a76e"/><path d="M0,-15 L30,0 L0,15 L-30,0 Z" fill="#e6b980"/><path d="M0,-15 L30,0 L0,15 L-30,0 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
+<g class="cu" style="--i:1"><path d="M-30,-32 L0,-17 L0,15 L-30,0 Z" fill="#c8965a"/><path d="M30,-32 L0,-17 L0,15 L30,0 Z" fill="#d8a76e"/><path d="M0,-47 L30,-32 L0,-17 L-30,-32 Z" fill="#e6b980"/><path d="M0,-47 L30,-32 L0,-17 L-30,-32 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
+<g class="cu" style="--i:2"><path d="M-30,-64 L0,-49 L0,-17 L-30,-32 Z" fill="#c8965a"/><path d="M30,-64 L0,-49 L0,-17 L30,-32 Z" fill="#d8a76e"/><path d="M0,-79 L30,-64 L0,-49 L-30,-64 Z" fill="#e6b980"/><path d="M0,-79 L30,-64 L0,-49 L-30,-64 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
+<g class="cu" style="--i:3"><path d="M0,15 L30,30 L30,62 L0,47 Z" fill="#c8965a"/><path d="M60,15 L30,30 L30,62 L60,47 Z" fill="#d8a76e"/><path d="M30,0 L60,15 L30,30 L0,15 Z" fill="#e6b980"/><path d="M30,0 L60,15 L30,30 L0,15 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
+<g class="cu" style="--i:4"><path d="M0,-17 L30,-2 L30,30 L0,15 Z" fill="#c8965a"/><path d="M60,-17 L30,-2 L30,30 L60,15 Z" fill="#d8a76e"/><path d="M30,-32 L60,-17 L30,-2 L0,-17 Z" fill="#e6b980"/><path d="M30,-32 L60,-17 L30,-2 L0,-17 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
+<g class="cu" style="--i:5"><path d="M-30,30 L0,45 L0,77 L-30,62 Z" fill="#c8965a"/><path d="M30,30 L0,45 L0,77 L30,62 Z" fill="#d8a76e"/><path d="M0,15 L30,30 L0,45 L-30,30 Z" fill="#e6b980"/><path d="M0,15 L30,30 L0,45 L-30,30 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
+<g class="cu" style="--i:6"><path d="M30,30 L60,45 L60,77 L30,62 Z" fill="#c8965a"/><path d="M90,30 L60,45 L60,77 L90,62 Z" fill="#d8a76e"/><path d="M60,15 L90,30 L60,45 L30,30 Z" fill="#e6b980"/><path d="M60,15 L90,30 L60,45 L30,30 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
+<g class="cu" style="--i:7"><path d="M-30,-2 L0,13 L0,45 L-30,30 Z" fill="#c8965a"/><path d="M30,-2 L0,13 L0,45 L30,30 Z" fill="#d8a76e"/><path d="M0,-17 L30,-2 L0,13 L-30,-2 Z" fill="#e6b980"/><path d="M0,-17 L30,-2 L0,13 L-30,-2 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
+<g class="cu" style="--i:8"><path d="M0,45 L30,60 L30,92 L0,77 Z" fill="#c8965a"/><path d="M60,45 L30,60 L30,92 L60,77 Z" fill="#d8a76e"/><path d="M30,30 L60,45 L30,60 L0,45 Z" fill="#e6b980"/><path d="M30,30 L60,45 L30,60 L0,45 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
+<g class="cu" style="--i:9"><path d="M-30,60 L0,75 L0,107 L-30,92 Z" fill="#c8965a"/><path d="M30,60 L0,75 L0,107 L30,92 Z" fill="#d8a76e"/><path d="M0,45 L30,60 L0,75 L-30,60 Z" fill="#e6b980"/><path d="M0,45 L30,60 L0,75 L-30,60 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
           </svg>
-        </button>
-      </div>
-      <div class="group">
-        <div class="seg" id="viewSeg">
-          <button data-view="top">위</button>
-          <button data-view="front">앞</button>
-          <button data-view="side">옆</button>
+        </div>
+        <div class="stack-badge" aria-hidden="true">
+          <div class="m"><div class="k">개수</div><div class="v">10<small>개</small></div></div>
+          <div class="sep"></div>
+          <div class="m"><div class="k">겉넓이</div><div class="v">36<small>㎠</small></div></div>
         </div>
       </div>
-      <div class="group">
-        <button class="modebtn add" id="modeBtn"><svg class="cube" viewBox="0 0 24 24" fill="none"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg><span id="modeLbl">추가</span></button>
-        <button class="iconbtn" id="undo" aria-label="되돌리기" disabled>
-          <svg viewBox="0 0 24 24" fill="none"><path d="M9 7 4 12l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12h10a6 6 0 0 1 6 6v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button class="iconbtn" id="redo" aria-label="다시하기" disabled>
-          <svg viewBox="0 0 24 24" fill="none"><path d="M15 7l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M20 12H10a6 6 0 0 0-6 6v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-        <button class="iconbtn" id="clear" aria-label="전체 지우기">
-          <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        </button>
-      </div>
     </div>
   </div>
+</section>
 
-  <div class="calc" id="calc">
-    <div class="calc-hd"><span>계산 과정</span><button class="calc-x" id="calcClose" aria-label="닫기"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
-    <div class="calc-body" id="calcBody"></div>
+<!-- ===================== FEATURES ===================== -->
+<section class="band white" id="features">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">할 수 있는 것</span>
+      <h2 class="sec">쌓고, 돌려 보고, 계산까지 한 화면에서</h2>
+      <p class="lead">교과서의 쌓기나무 활동을 그대로 화면으로 옮겼어요. 만들면서 관찰하고, 관찰하면서 수를 확인합니다.</p>
+    </div>
+    <div class="fgrid">
+      <article class="fcard reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5 21 7v10l-9 4.5L3 17V7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M3 7l9 4.5m0 0L21 7m-9 4.5V21.5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+        <h3>자유롭게 돌려 보기</h3>
+        <p>손끝으로 회전·확대·이동. 어느 방향에서든 입체를 뜯어보며 숨은 나무까지 확인해요.</p>
+      </article>
+      <article class="fcard reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.4" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="3" width="8" height="8" rx="1.4" stroke="currentColor" stroke-width="1.7"/><rect x="8" y="13" width="8" height="8" rx="1.4" stroke="currentColor" stroke-width="1.7"/></svg></div>
+        <h3>위·앞·옆에서 보기</h3>
+        <p>위·앞·옆 정렬 보기로 세 방향 투상을 그대로 확인. 입체를 평면 그림으로 읽는 눈을 길러요.</p>
+      </article>
+      <article class="fcard g reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+        <h3>개수·부피·겉넓이 자동</h3>
+        <p>모양을 바꾸면 값도 실시간으로. <strong>계산 과정</strong>까지 펼쳐 보여줘 왜 그런지 알 수 있어요.</p>
+      </article>
+      <article class="fcard reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5.5" r="2.6" stroke="currentColor" stroke-width="1.8"/><circle cx="6" cy="12" r="2.6" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="18.5" r="2.6" stroke="currentColor" stroke-width="1.8"/><path d="M8.3 10.7 15.7 6.8M8.3 13.3 15.7 17.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <h3>만든 모양 링크 공유</h3>
+        <p>링크 하나면 똑같은 모양이 상대 화면에 열려요. 과제로 내거나 친구에게 문제로 보내기 좋아요.</p>
+      </article>
+      <article class="fcard w reveal">
+        <span class="soon">곧 제공</span>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+        <h3>문제지 만들기</h3>
+        <p>문제지와 정답지를 PDF로. 학년·문항 수를 골라 수업·숙제용으로 출력할 수 있게 준비 중이에요.</p>
+      </article>
+      <article class="fcard w reveal">
+        <span class="soon">곧 제공</span>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M9 11.5 11 14l4.5-5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="4" width="17" height="16" rx="2.4" stroke="currentColor" stroke-width="1.7"/></svg></div>
+        <h3>자동채점 퀴즈</h3>
+        <p>개수·최소·최대·모양 만들기를 즉시 채점. 여러 정답이 있는 문제도 규칙으로 판정하게 준비 중이에요.</p>
+      </article>
+    </div>
   </div>
+</section>
 
-  <div class="scrim" id="scrim"></div>
-  <div class="sheet" id="sheet">
-    <div class="grabber"></div>
-    <h3>설정</h3>
-    <p class="sub">격자 크기와 모서리 길이를 조정합니다.</p>
-
-    <div class="field">
-      <div class="flabel"><span>격자 크기</span></div>
-      <div class="fhint">기본 크기를 고르거나, 축(가로·높이·세로)마다 직접 조정하세요. 최대 10까지.</div>
-      <div class="gridrow">
-        <div class="row-presets" id="gridPresets">
-          <button class="preset" data-n="3" aria-label="3 × 3 × 3">
-            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M9 3V21M15 3V21M3 9H21M3 15H21" stroke="currentColor" stroke-width="1.2"/></svg>
-            <span>3 × 3 × 3</span>
-          </button>
-          <button class="preset" data-n="4" aria-label="4 × 4 × 4">
-            <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M7.5 3V21M12 3V21M16.5 3V21M3 7.5H21M3 12H21M3 16.5H21" stroke="currentColor" stroke-width="1.1"/></svg>
-            <span>4 × 4 × 4</span>
-          </button>
+<!-- ===================== 위·앞·옆 EXPLAINER ===================== -->
+<section class="band" id="how">
+  <div class="wrap explain">
+    <div class="views reveal">
+      <div class="views-row">
+        <div class="vcell">
+          <div class="cap">위</div>
+          <!-- top view: 3x3, filled where h>=1 -->
+          <svg class="vgrid" width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="위에서 본 모양">
+            <g fill="none" stroke="#e5eaf1" stroke-width="1.5"><rect x="4" y="4" width="24" height="24"/><rect x="30" y="4" width="24" height="24"/><rect x="56" y="4" width="24" height="24"/><rect x="4" y="30" width="24" height="24"/><rect x="30" y="30" width="24" height="24"/><rect x="56" y="30" width="24" height="24"/><rect x="4" y="56" width="24" height="24"/><rect x="30" y="56" width="24" height="24"/><rect x="56" y="56" width="24" height="24"/></g>
+            <g fill="#e6b980" stroke="#c8965a" stroke-width="1.2">
+              <rect x="4" y="4" width="24" height="24" rx="2"/><rect x="30" y="4" width="24" height="24" rx="2"/><rect x="56" y="4" width="24" height="24" rx="2"/>
+              <rect x="30" y="30" width="24" height="24" rx="2"/><rect x="56" y="30" width="24" height="24" rx="2"/>
+              <rect x="56" y="56" width="24" height="24" rx="2"/>
+            </g>
+          </svg>
         </div>
-        <div class="axisbox" id="axes"></div>
+        <div class="vcell">
+          <div class="cap">앞</div>
+          <!-- front: cols x0..2 heights 3,2,1 -->
+          <svg class="vgrid" width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="앞에서 본 모양">
+            <g fill="none" stroke="#e5eaf1" stroke-width="1.5"><rect x="4" y="4" width="24" height="24"/><rect x="30" y="4" width="24" height="24"/><rect x="56" y="4" width="24" height="24"/><rect x="4" y="30" width="24" height="24"/><rect x="30" y="30" width="24" height="24"/><rect x="56" y="30" width="24" height="24"/><rect x="4" y="56" width="24" height="24"/><rect x="30" y="56" width="24" height="24"/><rect x="56" y="56" width="24" height="24"/></g>
+            <g fill="#d8a76e" stroke="#b9834a" stroke-width="1.2">
+              <rect x="4" y="4" width="24" height="24" rx="2"/><rect x="4" y="30" width="24" height="24" rx="2"/><rect x="4" y="56" width="24" height="24" rx="2"/>
+              <rect x="30" y="30" width="24" height="24" rx="2"/><rect x="30" y="56" width="24" height="24" rx="2"/>
+              <rect x="56" y="56" width="24" height="24" rx="2"/>
+            </g>
+          </svg>
+        </div>
+        <div class="vcell">
+          <div class="cap">옆</div>
+          <!-- side: cols z0..2 heights 3,2,1 -->
+          <svg class="vgrid" width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="옆에서 본 모양">
+            <g fill="none" stroke="#e5eaf1" stroke-width="1.5"><rect x="4" y="4" width="24" height="24"/><rect x="30" y="4" width="24" height="24"/><rect x="56" y="4" width="24" height="24"/><rect x="4" y="30" width="24" height="24"/><rect x="30" y="30" width="24" height="24"/><rect x="56" y="30" width="24" height="24"/><rect x="4" y="56" width="24" height="24"/><rect x="30" y="56" width="24" height="24"/><rect x="56" y="56" width="24" height="24"/></g>
+            <g fill="#c8965a" stroke="#b9834a" stroke-width="1.2">
+              <rect x="4" y="4" width="24" height="24" rx="2"/><rect x="4" y="30" width="24" height="24" rx="2"/><rect x="4" y="56" width="24" height="24" rx="2"/>
+              <rect x="30" y="30" width="24" height="24" rx="2"/><rect x="30" y="56" width="24" height="24" rx="2"/>
+              <rect x="56" y="56" width="24" height="24" rx="2"/>
+            </g>
+          </svg>
+        </div>
       </div>
     </div>
+    <div class="txt reveal">
+      <span class="eyebrow">배우는 원리</span>
+      <h2 class="sec">한 입체를 세 방향에서 읽습니다</h2>
+      <p class="lead">위·앞·옆에서 본 모양을 나란히 놓으면, 눈에 보이지 않는 뒤쪽 나무의 개수까지 따져 볼 수 있어요. 교과서가 다루는 '위에서 본 모양 + 높이'와 똑같은 방식입니다.</p>
+      <ul class="vlist">
+        <li><span class="n">위</span><span><b>위에서 본 모양</b>은 각 칸이 몇 층인지 알려줘요. 여기에 층수를 적으면 개수가 하나로 정해집니다.</span></li>
+        <li><span class="n">앞</span><span><b>앞·옆에서 본 모양</b>만 있으면 높이가 정해지지 않아, 가능한 <b>최소·최대 개수</b>가 생겨요.</span></li>
+        <li><span class="n">셈</span><span>그래서 "보이지 않는 쌓기나무"를 찾는 활동이 나옵니다. 도구가 그 범위를 바로 계산해 줘요.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
 
-    <div class="field">
-      <div class="flabel"><span>모서리 길이</span></div>
-      <div class="fhint">쌓기나무 한 개의 한 모서리 길이예요. 부피·겉넓이 계산에 쓰여요. 최대 10cm.</div>
-      <div class="edgerow">
-        <button class="eseg on" data-e="1">1 cm</button>
-        <button class="eseg" data-e="2">2 cm</button>
-        <div class="inputwrap"><span class="cl">직접</span><input type="number" id="edgeInput" min="1" max="10" step="1" value="1" inputmode="numeric"><span class="unit">cm</span></div>
+<!-- ===================== SEO 콘텐츠 ===================== -->
+<section class="band white" id="learn">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">개념 정리</span>
+      <h2 class="sec">쌓기나무, 이렇게 이해하면 쉬워요</h2>
+      <p class="lead">초등 6학년 '공간과 입체' 단원에서 자주 막히는 개념을 짧게 짚었어요. 읽고 나서 바로 도구로 확인해 보세요.</p>
+    </div>
+    <div class="seo-grid">
+      <div class="seo-item reveal">
+        <h3><svg class="cube" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/></svg>쌓기나무란?</h3>
+        <p><strong>쌓기나무</strong>는 모든 모서리 길이가 같은 <strong>단위 정육면체</strong>예요. 이 정육면체를 여러 개 쌓아 만든 입체를 위·앞·옆에서 관찰하고, 몇 개를 썼는지·부피·겉넓이가 얼마인지 알아보는 것이 이 단원의 핵심입니다.</p>
+        <p>공중에 뜬 나무는 없다고 보기 때문에, 각 자리의 나무는 바닥부터 층층이 쌓입니다. 그래서 '어디에 몇 층'만 정하면 모양이 완성돼요.</p>
+      </div>
+      <div class="seo-item reveal">
+        <h3><svg class="cube" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/></svg>위·앞·옆 보는 법</h3>
+        <p><strong>위</strong>에서 보면 바닥에 어떤 칸이 채워졌는지, 각 칸이 몇 층인지 보여요. <strong>앞</strong>과 <strong>옆</strong>에서 보면 각 줄에서 가장 높은 층만 그림자로 남습니다.</p>
+        <p>세 방향 그림을 맞추면 하나의 입체가 그려져요. 앞·옆만 주어질 때는 뒤에 숨은 나무 때문에 개수에 <strong>범위</strong>가 생기니, 최소와 최대를 함께 생각하는 연습이 중요합니다.</p>
+      </div>
+      <div class="seo-item reveal">
+        <h3><svg class="cube" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/></svg>겉넓이·부피 구하기</h3>
+        <p><strong>부피</strong>는 쉬워요. 나무 개수에 정육면체 한 개의 부피(모서리³)를 곱하면 됩니다. <strong>겉넓이</strong>는 바깥으로 드러난 면만 세는데, 위·앞·옆에서 보이는 면을 각각 세어 <strong>2 × (위 + 앞 + 옆)</strong>으로 구하면 바닥면까지 빠짐없이 계산돼요.</p>
+        <p>맞닿아 붙은 면은 겉으로 드러나지 않으니 빼야 합니다. 도구는 이 과정을 단계별로 펼쳐 보여줘요.</p>
+      </div>
+      <div class="seo-item reveal">
+        <h3><svg class="cube" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/></svg>공간과 입체 (초6)</h3>
+        <p>초등학교 6학년 <strong>공간과 입체</strong> 단원은 평면 그림과 입체를 오가는 힘을 기릅니다. 머릿속으로 돌려 보기 어렵다면, 실제로 돌려 보면서 감을 잡는 게 가장 빨라요.</p>
+        <p>큐브네스트는 화면에서 직접 쌓고 돌려 보며 이 감각을 연습하도록 만든 도구입니다. 개념을 읽었다면 이제 손으로 확인해 보세요.</p>
       </div>
     </div>
-
-    <button class="sheet-done" id="sheetDone">완료</button>
   </div>
+</section>
 
-  <div class="sheet" id="shareSheet">
-    <div class="grabber"></div>
-    <h3>공유</h3>
-    <p class="sub">지금 만든 모양을 링크나 이미지로 공유하세요. 링크를 열면 똑같은 모양이 나타나요.</p>
-    <div class="share-preview"><img id="sharePreview" alt="현재 모양 미리보기"></div>
-    <div class="share-actions">
-      <button class="share-act" id="shareCopyLink">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M9 15 15 9M10.5 6.5 12 5a4 4 0 0 1 6 6l-1.5 1.5M13.5 17.5 12 19a4 4 0 0 1-6-6l1.5-1.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>링크 복사</span>
-      </button>
-      <button class="share-act" id="shareSaveImg">
-        <svg viewBox="0 0 24 24" fill="none"><path d="M12 4v10m0 0 4-4m-4 4-4-4M5 18h14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>이미지 저장</span>
-      </button>
-      <button class="share-act" id="shareNative" hidden>
-        <svg viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="2.4" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="2.4" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2.4" stroke="currentColor" stroke-width="2"/><path d="M8.3 10.8 15.7 6.4M8.3 13.2 15.7 17.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-        <span>공유…</span>
-      </button>
+<!-- ===================== 대상별 ===================== -->
+<section class="band" id="for">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">이렇게 쓰여요</span>
+      <h2 class="sec">교실에서도, 집에서도</h2>
     </div>
-    <button class="sheet-done" id="shareDone">완료</button>
+    <div class="aud">
+      <article class="acard teacher reveal">
+        <span class="tag">교사용 · 수업 활용</span>
+        <h3>화면 하나로 함께 관찰</h3>
+        <p>모양을 만들어 큰 화면에 띄우고, 위·앞·옆을 함께 돌려 보며 설명해요. 만든 문제는 링크로 학생에게 그대로 배포할 수 있습니다.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>설치 없이 브라우저로 바로 시연</li>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>계산 과정 펼쳐 원리까지 설명</li>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>모양 링크로 과제·문제 배포</li>
+        </ul>
+      </article>
+      <article class="acard parent reveal">
+        <span class="tag">학부모용 · 집에서 학습</span>
+        <h3>아이와 함께, 준비물 없이</h3>
+        <p>태블릿이나 휴대폰만 있으면 돼요. 아이가 직접 쌓고 돌려 보며 스스로 개수를 세어 보고, 답이 맞는지 바로 확인합니다.</p>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>로그인·회원가입 없이 사용</li>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>손으로 돌려 보며 공간 감각 연습</li>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>정답·계산을 그 자리에서 확인</li>
+        </ul>
+      </article>
+    </div>
   </div>
+</section>
 
-  <button class="fab-feedback" id="feedbackBtn" aria-label="의견 보내기">
-    <svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>
-    <span>의견</span>
-  </button>
+<!-- ===================== FINAL CTA ===================== -->
+<section class="final">
+  <div class="wrap">
+    <h2>지금 바로 쌓아 보세요</h2>
+    <p>설치도, 로그인도 필요 없어요. 브라우저에서 열어 첫 번째 나무를 놓아 보면 됩니다.</p>
+    <a class="btn btn-onaccent" id="finalCta" href="playground/">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
+      쌓기나무 도구 열기
+    </a>
+  </div>
+</section>
 
-  <div class="toast" id="toast"></div>
-</div>
+<!-- ===================== FOOTER ===================== -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <div class="brand" style="gap:9px">
+          <svg class="glyph" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/></svg>
+          <span class="t"><b id="brandNameFoot">CubeNest</b><span>쌓기나무 3D 학습</span></span>
+        </div>
+        <p>쌓기나무를 3D로 쌓고 관찰하며 개수·부피·겉넓이를 배우는 웹 학습 도구.</p>
+      </div>
+      <nav class="foot-links" aria-label="바닥글">
+        <div class="foot-col">
+          <h4>학습 도구</h4>
+          <a id="footPlay" href="playground/">쌓기나무 도구</a>
+          <a href="#features">기능 소개</a>
+          <a href="#learn">개념 정리</a>
+        </div>
+        <div class="foot-col">
+          <h4>정보</h4>
+          <a href="#how">배우는 원리</a>
+          <a href="#for">활용 방법</a>
+          <a id="footFeedback" href="https://forms.gle/hnEmkt5k1PoANYGr6" target="_blank" rel="noopener">의견 보내기</a>
+        </div>
+      </nav>
+    </div>
+    <div class="foot-bottom">
+      <span>© <span id="yr">2026</span> CubeNest</span>
+      <span class="privacy">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 4 6v5c0 4.5 3.2 7.9 8 9 4.8-1.1 8-4.5 8-9V6l-8-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        학생은 로그인 없이 사용해요
+      </span>
+    </div>
+  </div>
+</footer>
 
+<!-- ===================== CONSENT BANNER ===================== -->
 <div class="consent" id="consent" hidden>
   <div class="consent-msg">CubeNest는 서비스 개선을 위해 <b>Google Analytics로 익명 사용 통계</b>(쿠키 포함)를 수집해요. 동의하시면 방문·사용 데이터가 수집되고, 거부하시면 수집하지 않습니다.</div>
   <div class="consent-btns">
@@ -431,28 +618,55 @@
 </div>
 
 <script>
-"use strict";
+/* ============================================================
+   CubeNest — landing (루트 /)
+   · playground와 같은 브랜드 언어 전환 · 동의(cubenest_consent) 키 공유
+   ============================================================ */
+
+/* ===== 배포 설정 (마스터 2.1·7장) ===== */
+/* 도구 경로 — 프로젝트 페이지 하위경로(/cubenest/) 함정 회피를 위해 반드시 '상대경로'.
+   루트 절대경로('/playground/')는 smallhamsters.github.io/playground/로 새어 깨지므로 금지. */
+const PLAYGROUND_URL  = 'playground/';
+const FEEDBACK_URL    = 'https://forms.gle/hnEmkt5k1PoANYGr6';
+/* GA4 측정 ID (playground와 동일). 빈 값이면 계측·배너 비활성. 동의 후에만 로드. */
+const GA4_ID          = 'G-1QX0F9RNGX';
+const CONSENT_DENY_TTL = 24*60*60*1000;  // 거부 만료: 24시간
+
+/* 도구 경로를 실제 버튼들에 반영 */
+['topCta','heroCta','finalCta','footPlay'].forEach(id=>{
+  const a=document.getElementById(id); if(a) a.setAttribute('href', PLAYGROUND_URL);
+});
+
 /* 브라우저 언어에 따라 브랜드 표기 전환: 한국어 → 큐브네스트 / 그 외 → CubeNest */
-let BRAND='CubeNest';
 (function(){
   const ko=(navigator.language||'').toLowerCase().startsWith('ko');
-  BRAND = ko ? '큐브네스트' : 'CubeNest';
-  const el=document.getElementById('brandName');
-  if(el) el.textContent = BRAND;
-  document.title = ko ? '큐브네스트 · 쌓기나무 3D 학습' : 'CubeNest · 3D unit-cube stacking';
+  const brand = ko ? '큐브네스트' : 'CubeNest';
+  ['brandName','brandNameFoot'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=brand; });
+  document.title = ko ? '큐브네스트 · 쌓기나무 3D 학습 — 개수·부피·겉넓이'
+                      : 'CubeNest · 3D unit-cube stacking — count·volume·surface area';
 })();
 
-/* ===== 배포 설정 (피드백 구글폼) ===== */
-const FEEDBACK_FORM_URL     = 'https://forms.gle/hnEmkt5k1PoANYGr6';   // 기본 열기(미리채우기 미설정 시)
-const FEEDBACK_VIEWFORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScvswwmCyEvMfiS3uuKfqiRSBqN58gdN0_w0MBjJJHLm4-8CQ/viewform'; // 미리채우기용 정식 주소
-/* 질문6(오류 신고)의 entry ID. 폼 편집 → ⋮ → '미리 채워진 링크 가져오기'로 얻어 넣으세요. 예: 'entry.123456789' (빈 값이면 미리채우기 없이 폼만 열림) */
-const FEEDBACK_ENTRY_BUG    = 'entry.1124217685';
+/* 연도 */
+document.getElementById('yr').textContent = new Date().getFullYear();
 
-/* ===== 배포 설정 (GA4 계측) ===== */
-/* GA4 측정 ID. 예: 'G-XXXXXXXXXX' (빈 값이면 계측 비활성). 동의 후에만 로드됩니다. */
-const GA4_ID = 'G-1QX0F9RNGX';
-/* 동의(opt-in): '동의' 전에는 GA 미로드. 동의는 영구, 거부는 24시간 후 만료(재질문). localStorage 저장. */
-const CONSENT_DENY_TTL = 24*60*60*1000;   // 거부 만료: 24시간
+/* 상단바 그림자(스크롤 시) */
+(function(){
+  const bar=document.getElementById('topbar');
+  const on=()=>bar.classList.toggle('scrolled', window.scrollY>8);
+  on(); window.addEventListener('scroll', on, {passive:true});
+})();
+
+/* 스크롤 등장 애니메이션 */
+(function(){
+  const items=document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){ items.forEach(el=>el.classList.add('in')); return; }
+  const io=new IntersectionObserver((es)=>{
+    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  },{threshold:.14, rootMargin:'0px 0px -8% 0px'});
+  items.forEach(el=>io.observe(el));
+})();
+
+/* ===== 동의(opt-in) · GA4 — playground와 동일 키(cubenest_consent) ===== */
 function getConsent(){
   try{
     const raw = localStorage.getItem('cubenest_consent');
@@ -460,7 +674,7 @@ function getConsent(){
     if(raw === 'granted') return 'granted';
     if(raw.indexOf('denied:') === 0){
       const t = Number(raw.slice(7));
-      return (Number.isFinite(t) && Date.now()-t < CONSENT_DENY_TTL) ? 'denied' : null;  // 만료 시 재질문
+      return (Number.isFinite(t) && Date.now()-t < CONSENT_DENY_TTL) ? 'denied' : null;
     }
     return null;
   }catch(e){ return null; }
@@ -484,1128 +698,17 @@ const consentEl=document.getElementById('consent');
 function consentDecide(v){
   setConsent(v);
   if(consentEl) consentEl.hidden=true;
-  if(v==='granted'){ loadGA(); try{ track('consent_granted'); }catch(e){} }
+  if(v==='granted') loadGA();
 }
 (function initConsent(){
   const accept=document.getElementById('consentAccept'), deny=document.getElementById('consentDeny');
   if(accept) accept.addEventListener('click',()=>consentDecide('granted'));
   if(deny)   deny.addEventListener('click',()=>consentDecide('denied'));
-  if(!GA4_ID) return;                                  // GA 미설정이면 배너 불필요
+  if(!GA4_ID) return;
   const c=getConsent();
-  if(c==='granted') loadGA();                          // 이전에 동의 → 바로 로드
-  else if(!c && consentEl) consentEl.hidden=false;     // 이력 없음(또는 거부 24시간 만료) → 배너 표시
+  if(c==='granted') loadGA();
+  else if(!c && consentEl) consentEl.hidden=false;
 })();
-
-/* ============================================================
-   쌓기나무 3D 학습 도구 — MVP
-   좌표계:  x = 좌우(우:+x),  y = 위(위:+y, 층),  z = 앞뒤(앞:+z)
-   층 1 = 바닥(iy=0)
-   ============================================================ */
-
-const S = 1;                 // 큐브 한 변(월드 단위)
-const state = { gx:3, gy:3, gz:3, edge:1 };   // 격자 크기 + 모서리 길이(cm)
-const cells = new Set();     // 채워진 칸 키 "x,y,z"
-const key = (x,y,z)=>x+","+y+","+z;
-const has = (x,y,z)=>cells.has(key(x,y,z));
-const inBounds=(x,y,z)=>x>=0&&y>=0&&z>=0&&x<state.gx&&y<state.gy&&z<state.gz;
-
-/* ---------- Three 기본 세팅 ---------- */
-const canvas = document.getElementById('scene');
-const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:false, preserveDrawingBuffer:true});
-renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xe9eef4);
-
-const FOV = 45;   // 직교 프러스텀 크기(높이) 산정에만 사용
-const orthoCam = new THREE.OrthographicCamera(-1,1,1,-1,0.1,100);
-let activeCam = orthoCam;   // 원근 폐기: 자유·정렬 모두 직교(orthographic) 사용
-
-/* 조명 */
-scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa7b5, 0.85));
-const amb = new THREE.AmbientLight(0xffffff, 0.35); scene.add(amb);
-const dir = new THREE.DirectionalLight(0xffffff, 0.7);
-dir.position.set(6,11,4); dir.castShadow=true;
-dir.shadow.mapSize.set(1024,1024);
-dir.shadow.camera.near=1; dir.shadow.camera.far=40;
-dir.shadow.camera.left=-12; dir.shadow.camera.right=12; dir.shadow.camera.top=12; dir.shadow.camera.bottom=-12;
-scene.add(dir);
-
-/* 그룹: 큐브 + 바닥 */
-const cubeGroup = new THREE.Group(); scene.add(cubeGroup);
-let floor, gridHelper, floorShadow;
-
-/* 큐브 렌더 — InstancedMesh 2그룹(선택=불투명 / 흐림=반투명)으로 드로우콜을 격자 크기와 무관하게 고정 */
-const boxGeo = new THREE.BoxGeometry(S*0.98, S*0.98, S*0.98);
-const edgeGeo = new THREE.EdgesGeometry(boxGeo);
-const WOOD = 0xe4b878, WOOD_HI = 0xf2c98a;
-const CAP = 1000;   // 최대 인스턴스 수 = MAXG³ (MAXG=10). MAXG를 올리면 함께 조정할 것.
-
-// 두 그룹: on=선택/전체(불투명), off=흐린 층(반투명 0.14). 분리해야 불투명→반투명 순서가 맞아 딤 뒤 강조가 비쳐 보임.
-const matOn  = new THREE.MeshLambertMaterial({color:WOOD});
-const matOff = new THREE.MeshLambertMaterial({color:WOOD, transparent:true, opacity:0.14, depthWrite:false});
-const cubesOn  = new THREE.InstancedMesh(boxGeo, matOn,  CAP);
-const cubesOff = new THREE.InstancedMesh(boxGeo, matOff, CAP);
-for(const im of [cubesOn,cubesOff]){
-  im.count=0; im.frustumCulled=false;
-  im.castShadow=true; im.receiveShadow=true;
-  im.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  cubeGroup.add(im);
-}
-
-// 모서리 선: 셀마다 edgeGeo를 옮겨 담은 하나의 LineSegments(그룹별 1드로우콜)
-const edgeMatOn  = new THREE.LineBasicMaterial({color:0x8a6a3c, transparent:true, opacity:0.55});
-const edgeMatOff = new THREE.LineBasicMaterial({color:0x8a6a3c, transparent:true, opacity:0.06});
-const edgeBase = edgeGeo.attributes.position.array;   // 로컬 모서리 좌표(원점 중심)
-const edgeVerts = edgeBase.length/3;                  // 큐브당 모서리 정점 수(24)
-function makeEdgeSeg(mat){
-  const g=new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(CAP*edgeBase.length),3));
-  g.setDrawRange(0,0);
-  const ls=new THREE.LineSegments(g,mat); ls.frustumCulled=false;
-  cubeGroup.add(ls); return ls;
-}
-const edgesOn=makeEdgeSeg(edgeMatOn), edgesOff=makeEdgeSeg(edgeMatOff);
-
-// 인스턴스 ↔ 셀 매핑 / 팝 애니메이션
-const onCells=[], offCells=[];        // instanceId → "x,y,z"
-const cellIndex=new Map();            // "x,y,z" → {mesh, i}
-cubesOn.userData.cells=onCells; cubesOff.userData.cells=offCells;
-const popList=[];                     // {key, t}
-
-const _pos=new THREE.Vector3(), _scl=new THREE.Vector3(), _q0=new THREE.Quaternion(), _m4=new THREE.Matrix4();
-function cellPos(x,y,z,out){
-  return out.set((x-(state.gx-1)/2)*S, (y+0.5)*S, (z-(state.gz-1)/2)*S);
-}
-function packGroup(mesh, list){
-  for(let i=0;i<list.length;i++){
-    const [x,y,z]=list[i].split(',').map(Number);
-    cellPos(x,y,z,_pos);
-    _m4.makeTranslation(_pos.x,_pos.y,_pos.z);
-    mesh.setMatrixAt(i,_m4);
-    cellIndex.set(list[i],{mesh,i});
-  }
-  mesh.count=list.length;
-  mesh.instanceMatrix.needsUpdate=true;
-}
-function buildEdges(seg, list){
-  const pos=seg.geometry.attributes.position.array;
-  let o=0;
-  for(let c=0;c<list.length;c++){
-    const [x,y,z]=list[c].split(',').map(Number);
-    cellPos(x,y,z,_pos);
-    for(let v=0;v<edgeVerts;v++){
-      pos[o++]=edgeBase[v*3]  +_pos.x;
-      pos[o++]=edgeBase[v*3+1]+_pos.y;
-      pos[o++]=edgeBase[v*3+2]+_pos.z;
-    }
-  }
-  seg.geometry.setDrawRange(0, list.length*edgeVerts);
-  seg.geometry.attributes.position.needsUpdate=true;
-}
-function setPopScale(k, sc){          // 팝 중 해당 셀 인스턴스 스케일만 갱신
-  const idx=cellIndex.get(k); if(!idx) return;
-  const [x,y,z]=k.split(',').map(Number);
-  cellPos(x,y,z,_pos); _scl.set(sc,sc,sc);
-  _m4.compose(_pos,_q0,_scl);
-  idx.mesh.setMatrixAt(idx.i,_m4);
-  idx.mesh.instanceMatrix.needsUpdate=true;
-}
-
-/* ---------- 바닥/격자 재생성 ---------- */
-function buildFloor(){
-  if(floor){ scene.remove(floor); floor.geometry.dispose(); }
-  if(gridHelper){ scene.remove(gridHelper); }
-  if(floorShadow){ scene.remove(floorShadow); floorShadow.geometry.dispose(); }
-  const w=state.gx*S, d=state.gz*S;
-  // 그림자 받는 얇은 바닥
-  const fg=new THREE.PlaneGeometry(w,d);
-  floorShadow=new THREE.Mesh(fg, new THREE.ShadowMaterial({opacity:0.14}));
-  floorShadow.rotation.x=-Math.PI/2; floorShadow.position.y=0.001; floorShadow.receiveShadow=true;
-  scene.add(floorShadow);
-  // 터치 판정용(보이지 않음)
-  const pg=new THREE.PlaneGeometry(w,d);
-  floor=new THREE.Mesh(pg, new THREE.MeshBasicMaterial({visible:false}));
-  floor.rotation.x=-Math.PI/2;
-  scene.add(floor);
-  // 격자선
-  const g=new THREE.GridHelper(Math.max(w,d), Math.max(state.gx,state.gz), 0xbcc7d6, 0xd3dbe6);
-  // GridHelper는 정사각이라 비대칭이면 잘라야 하므로 커스텀 라인으로 대체
-  scene.remove(g);
-  gridHelper=new THREE.Group();
-  const lineM=new THREE.LineBasicMaterial({color:0xc2ccd9});
-  const pts=[];
-  for(let i=0;i<=state.gx;i++){const X=(i-state.gx/2)*S; pts.push(X,0,-d/2, X,0,d/2);}
-  for(let k=0;k<=state.gz;k++){const Z=(k-state.gz/2)*S; pts.push(-w/2,0,Z, w/2,0,Z);}
-  const lg=new THREE.BufferGeometry();
-  lg.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));
-  gridHelper.add(new THREE.LineSegments(lg,lineM));
-  gridHelper.position.y=0.002;
-  scene.add(gridHelper);
-  layoutLabels();
-}
-
-/* ---------- 방향 라벨 (위/앞/옆) ---------- */
-let dirLabels=null;
-function makeTextTexture(text, color){
-  const c=document.createElement('canvas'); c.width=256; c.height=160;
-  const g=c.getContext('2d');
-  const r=26, x=10,y=10,w=236,h=140;
-  g.beginPath();
-  g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r);
-  g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath();
-  g.fillStyle='rgba(255,255,255,0.94)'; g.fill();
-  g.lineWidth=7; g.strokeStyle=color; g.stroke();
-  g.fillStyle=color; g.textAlign='center'; g.textBaseline='middle';
-  g.font="800 92px 'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif";
-  g.fillText(text,128,84);
-  const tex=new THREE.CanvasTexture(c); tex.anisotropy=4; tex.needsUpdate=true; return tex;
-}
-function makeLabel(text,color){
-  const mat=new THREE.MeshBasicMaterial({map:makeTextTexture(text,color),transparent:true,depthWrite:false});
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(1.28,0.8),mat);
-  scene.add(m); return m;
-}
-function ensureLabels(){
-  if(dirLabels) return;
-  dirLabels={
-    top:  makeLabel('위','#3f8fd0'),   // 바닥에 눕혀 위(+y)를 향함 → 위에서 볼 때 읽힘
-    front:makeLabel('앞','#4fae72'),   // +z를 향함 → 앞에서 볼 때 읽힘
-    side: makeLabel('옆','#d0546f')    // +x(오른쪽)를 향함 → 옆에서 볼 때 읽힘
-  };
-  dirLabels.top.rotation.x=-Math.PI/2;
-  dirLabels.side.rotation.y=Math.PI/2;
-}
-function layoutLabels(){
-  ensureLabels();
-  const w=state.gx*S, d=state.gz*S;
-  dirLabels.front.position.set(0, -0.55, d/2+0.25);   // 격자 아래(바닥면보다 낮게) → 블록을 가리지 않음
-  dirLabels.side.position.set(w/2+0.25, -0.55, 0);
-  dirLabels.top.position.set(0, 0.02, -d/2-0.9);
-}
-
-/* ---------- 위에서 본 칸별 개수 (위 보기에서만 표시) ---------- */
-let topCountLabels=[];
-let showTopCounts=false;  // 위 보기 칸별 개수 표시 on/off (기본 off)
-function makeCountTexture(n){
-  const c=document.createElement('canvas'); c.width=128; c.height=128;
-  const g=c.getContext('2d');
-  g.fillStyle='rgba(28,36,51,0.5)';   // 옅은 글씨(반투명), 배경·테두리 없음
-  g.textAlign='center'; g.textBaseline='middle';
-  g.font="600 66px 'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif";
-  g.fillText(String(n),64,66);
-  const t=new THREE.CanvasTexture(c); t.anisotropy=4; t.needsUpdate=true; return t;
-}
-function clearTopCounts(){
-  topCountLabels.forEach(m=>{ scene.remove(m); m.material.map.dispose(); m.material.dispose(); m.geometry.dispose(); });
-  topCountLabels=[];
-}
-function updateTopCounts(){
-  clearTopCounts();
-  const cnt=new Map(), top=new Map();   // "x,z" -> 개수 / 스택 최상단 높이
-  for(const k of cells){
-    const [x,y,z]=k.split(',').map(Number);
-    const kk=x+','+z;
-    cnt.set(kk,(cnt.get(kk)||0)+1);
-    top.set(kk, Math.max(top.get(kk)||0, y+1));
-  }
-  for(const [kk,n] of cnt){
-    const [x,z]=kk.split(',').map(Number);
-    const mat=new THREE.MeshBasicMaterial({map:makeCountTexture(n),transparent:true,depthWrite:false});
-    const m=new THREE.Mesh(new THREE.PlaneGeometry(0.62,0.62),mat);
-    m.position.set((x-(state.gx-1)/2)*S, top.get(kk)*S+0.42, (z-(state.gz-1)/2)*S);  // 기둥 위에 띄움
-    m.renderOrder=6;
-    scene.add(m); topCountLabels.push(m);
-  }
-  refreshTopCountsVisibility();
-}
-function refreshTopCountsVisibility(){
-  topCountLabels.forEach(m=>m.visible = showTopCounts);   // 어느 보기에서든 토글 상태를 따름
-  const btn=document.getElementById('countToggle');
-  if(btn) btn.classList.toggle('off', !showTopCounts);    // 꺼짐 상태 표시
-}
-
-/* ---------- 큐브 렌더 동기화 (InstancedMesh) ---------- */
-function syncCubes(){                 // cells + layerSel → 두 그룹으로 분배·배치·모서리 재생성
-  clampLayerSel();
-  onCells.length=0; offCells.length=0; cellIndex.clear();
-  for(const k of cells){
-    const y=Number(k.split(',')[1]);
-    ((layerSel==='all'||layerSel.has(y))?onCells:offCells).push(k);
-  }
-  matOn.color.setHex(layerSel==='all'?WOOD:WOOD_HI);   // 전체=기본색 / 특정 층 선택 시 강조색
-  packGroup(cubesOn,onCells);  packGroup(cubesOff,offCells);
-  buildEdges(edgesOn,onCells); buildEdges(edgesOff,offCells);
-}
-const rebuildCubes = syncCubes;       // 전체 재생성
-function addCubeMesh(x,y,z,pop){
-  syncCubes();
-  if(pop) popList.push({key:key(x,y,z), t:0});
-}
-function removeCubeMesh(x,y,z){
-  const k=key(x,y,z);
-  for(let i=popList.length-1;i>=0;i--) if(popList[i].key===k) popList.splice(i,1);
-  syncCubes();
-}
-
-/* ---------- 층별 관찰 스타일 ---------- */
-let layerSel='all';   // 'all' 또는 선택된 층 인덱스들의 Set (다중 선택)
-function occupiedLayers(){                      // 실제로 블록이 쌓인 층(y) 집합
-  const s=new Set();
-  for(const k of cells) s.add(Number(k.split(',')[1]));
-  return s;
-}
-function clampLayerSel(){
-  if(layerSel==='all') return;
-  const occ=occupiedLayers();
-  for(const iy of [...layerSel]) if(!occ.has(iy)) layerSel.delete(iy);   // 블록 없는 층은 선택에서 제거
-  if(layerSel.size===0) layerSel='all';                                  // 모두 해제/사라지면 전체 (모두 선택은 유지)
-}
-function applyLayerStyle(){ syncCubes(); }   // 층 관찰 스타일 = 두 그룹 재분배(강조=불투명, 흐림=반투명)
-
-/* ============================================================
-   카메라 컨트롤러 (직접 구현)
-   ============================================================ */
-const sph = { theta:-0.7+Math.PI+Math.PI/2+Math.PI, phi:1.02, radius:8 };   // 구면 좌표 (초기 방향: 세로축 기준 회전 누적)
-let curUp = new THREE.Vector3(0,1,0);
-let desiredUp = new THREE.Vector3(0,1,0);
-const target = new THREE.Vector3(0,1.5,0);
-let aligned=false, alignedAxis=null;
-let tween=null;   // {from,to,upTo,t,dur,onEnd,proj}
-
-function gridMax(){ return Math.max(state.gx,state.gy,state.gz)*S; }
-
-/* 화면 위 UI(버튼)가 차지하는 대략적 여백(px, 앱 로컬 기준).
-   이 안쪽 '콘텐츠 사각형'에 모델을 맞춘다. 상:나침반·통계 / 하:dock(2행) / 우:우측 rail / 좌:여백. */
-const UI_INSETS = { t:92, b:122, l:14, r:66 };
-let calcOpen=false;                 // 계산 패널 열림 여부
-function effInsets(){               // 패널이 열리면 우측 여백을 패널 폭만큼 넓혀 모델을 왼쪽으로 밀어냄
-  if(!calcOpen) return UI_INSETS;
-  const W=canvas.clientWidth||window.innerWidth;
-  const pw=Math.min(300, 0.78*W);   // 패널 폭 (CSS: width:300px; max-width:78%)
-  return { t:UI_INSETS.t, b:UI_INSETS.b, l:UI_INSETS.l, r:pw+12 };  // 레일은 숨겨지므로 패널 자리만 확보
-}
-function contentRect(){
-  const W=canvas.clientWidth||window.innerWidth, H=canvas.clientHeight||window.innerHeight;
-  const ins=effInsets();
-  return { W, H,
-    wc: Math.max(60, W-ins.l-ins.r),
-    hc: Math.max(60, H-ins.t-ins.b) };
-}
-function modelRadiusWorld(){   // 격자 경계구 반경(회전과 무관한 최대 반경 → 어느 각도에서도 안 잘림)
-  return 0.5*Math.sqrt(state.gx*state.gx+state.gy*state.gy+state.gz*state.gz)*S;
-}
-const TAN_HALF_FOV = Math.tan(FOV*Math.PI/180/2);
-function fitRadius(){          // 콘텐츠 사각형에 모델이 알맞게 차도록 하는 카메라 반경
-  const {W,H,wc,hc}=contentRect();
-  const R=modelRadiusWorld(), fill=0.92;
-  const Hf = 2*R*H / (Math.min(wc,hc)*fill);   // 필요한 직교 프러스텀 높이(월드)
-  return Hf/(2*TAN_HALF_FOV);                   // Hf = 2·radius·tan(FOV/2)
-}
-function defaultRadius(){ return fitRadius(); }
-function updateTarget(){ target.set(0, state.gy*S/2, 0); }
-let userZoomed=false;   // 사용자가 직접 줌하면, 리사이즈 시 자동 재프레이밍하지 않는다
-
-function camPosFromSph(out){
-  const {theta,phi,radius}=sph;
-  out.set(
-    Math.sin(phi)*Math.sin(theta),
-    Math.cos(phi),
-    Math.sin(phi)*Math.cos(theta)
-  ).multiplyScalar(radius).add(target);
-  return out;
-}
-
-function applyCamera(){
-  const pos=camPosFromSph(new THREE.Vector3());
-  curUp.lerp(desiredUp,0.18); if(curUp.lengthSq()<1e-6) curUp.set(0,1,0); curUp.normalize();
-  orthoCam.position.copy(pos); orthoCam.up.copy(curUp); orthoCam.lookAt(target);
-}
-
-function setOrthoFrustum(){
-  const {W,H}=contentRect();
-  const aspect=W/H;
-  const Hf=2*sph.radius*TAN_HALF_FOV;
-  const wpp=Hf/H;                          // 월드/픽셀
-  const ins=effInsets();
-  const ox=(ins.l-ins.r)/2;    // 콘텐츠 중심의 캔버스 중심 대비 px 오프셋 (우:+)
-  const oy=(ins.t-ins.b)/2;    // (하:+)
-  const sx=-ox*wpp, sy=oy*wpp;             // 프러스텀을 옮겨 비대칭 투영 → 모델을 콘텐츠 중심에
-  const w=Hf*aspect;
-  orthoCam.left=-w/2+sx; orthoCam.right=w/2+sx;
-  orthoCam.top=Hf/2+sy; orthoCam.bottom=-Hf/2+sy;
-  orthoCam.updateProjectionMatrix();
-}
-
-/* 정렬 보기로 전환 */
-const VIEWS = {
-  top:   {theta:0,          phi:0.02,        up:new THREE.Vector3(0,0,-1), axis:'위'},
-  front: {theta:0,          phi:Math.PI/2,   up:new THREE.Vector3(0,1,0),  axis:'앞'},
-  side:  {theta:Math.PI/2,  phi:Math.PI/2,   up:new THREE.Vector3(0,1,0),  axis:'옆(오른쪽)'}
-};
-function gotoView(name){
-  if(name==='free'){ unlockToFree(true); return; }
-  track('view_align', {view:name});
-  const v=VIEWS[name];
-  // theta는 현재값에서 가장 가까운 등가각으로
-  let tt=v.theta;
-  while(tt-sph.theta>Math.PI) tt-=2*Math.PI;
-  while(tt-sph.theta<-Math.PI) tt+=2*Math.PI;
-  aligned=false; // 전환 중 (직교 유지)
-  activeCam=orthoCam;
-  desiredUp.copy(v.up);
-  userZoomed=false;   // 정렬 보기는 기본 프레이밍으로
-  tween={
-    from:{theta:sph.theta,phi:sph.phi,radius:sph.radius},
-    to:{theta:tt,phi:v.phi,radius:defaultRadius()},
-    t:0, dur:520,
-    onEnd:()=>{ aligned=true; alignedAxis=v.axis; setOrthoFrustum(); updateObserveUI(); refreshTopCountsVisibility(); }
-  };
-  setActiveViewBtn(name);
-  updateObserveUI();
-}
-function unlockToFree(animate){
-  aligned=false; alignedAxis=null; activeCam=orthoCam;
-  desiredUp.set(0,1,0);
-  setActiveViewBtn('free');
-  updateObserveUI();
-  refreshTopCountsVisibility();
-  if(animate){
-    userZoomed=false;
-    tween={from:{theta:sph.theta,phi:sph.phi,radius:sph.radius},
-      to:{theta:-0.7+Math.PI+Math.PI/2+Math.PI,phi:1.02,radius:defaultRadius()},t:0,dur:420,onEnd:null};
-  }
-}
-function setActiveViewBtn(name){
-  viewSeg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.view===name));
-}
-function updateObserveUI(){ /* 관찰 배너 제거됨 (no-op) */ }
-
-/* ============================================================
-   입력 (터치 + 마우스)
-   ============================================================ */
-let ptrDown=false, movedFar=false, downX=0, downY=0, lastX=0, lastY=0, downTime=0;
-const TAP_MOVE=10;
-let pinch=null;  // {dist, cx, cy}
-
-/* 모바일(터치) 세로일 때 앱을 90° 회전해 가로로 보여주므로,
-   화면 좌표(clientX/Y)를 회전된 앱의 로컬 좌표로 변환해야 레이캐스팅·회전·팬이 맞다.
-   변환: 뷰포트(vx,vy) → 로컬(vy, innerWidth - vx)  (CSS: translate(100vw,0) rotate(90deg)) */
-let forcedLandscape=false;
-function updateOrientationMode(){
-  forcedLandscape = window.matchMedia('(pointer: coarse) and (orientation: portrait)').matches;
-  const app=document.getElementById('app');
-  if(forcedLandscape){
-    // 실제 표시 픽셀로 크기·회전을 지정 → 모바일 vh/dvh가 실제 영역과 어긋나 rail이 잘리는 문제 방지
-    const w=window.innerWidth, h=window.innerHeight;
-    app.style.width=h+'px'; app.style.height=w+'px';
-    app.style.transformOrigin='top left';
-    app.style.transform='translate('+w+'px,0) rotate(90deg)';
-  }else{
-    app.style.width=''; app.style.height='';
-    app.style.transform=''; app.style.transformOrigin='';
-  }
-}
-function toLocal(cx,cy){
-  return forcedLandscape ? { x: cy, y: window.innerWidth - cx } : { x: cx, y: cy };
-}
-
-canvas.addEventListener('touchstart',e=>{
-  e.preventDefault();
-  if(e.touches.length===1){
-    const p=toLocal(e.touches[0].clientX,e.touches[0].clientY);
-    startPointer(p.x,p.y);
-  }else if(e.touches.length===2){
-    ptrDown=false;
-    pinch=readPinch(e.touches);
-  }
-},{passive:false});
-canvas.addEventListener('touchmove',e=>{
-  e.preventDefault();
-  if(e.touches.length===2 && pinch){
-    const p=readPinch(e.touches);
-    // 줌
-    const ratio=p.dist/pinch.dist;
-    zoomBy(1/ratio);
-    // 이동(팬)
-    panScreen(p.cx-pinch.cx, p.cy-pinch.cy);
-    pinch=p;
-  }else if(e.touches.length===1 && ptrDown){
-    const p=toLocal(e.touches[0].clientX,e.touches[0].clientY);
-    movePointer(p.x,p.y);
-  }
-},{passive:false});
-canvas.addEventListener('touchend',e=>{
-  e.preventDefault();
-  if(pinch && e.touches.length<2){ pinch=null; }
-  if(ptrDown && e.touches.length===0){ endPointer(); }
-},{passive:false});
-
-canvas.addEventListener('mousedown',e=>{ const p=toLocal(e.clientX,e.clientY); startPointer(p.x,p.y); });
-window.addEventListener('mousemove',e=>{ if(ptrDown){ const p=toLocal(e.clientX,e.clientY); movePointer(p.x,p.y); } });
-window.addEventListener('mouseup',e=>{ if(ptrDown) endPointer(); });
-canvas.addEventListener('wheel',e=>{ e.preventDefault(); zoomBy(e.deltaY>0?1.1:0.9); },{passive:false});
-
-function readPinch(t){
-  const a=toLocal(t[0].clientX,t[0].clientY), b=toLocal(t[1].clientX,t[1].clientY);
-  const dx=a.x-b.x, dy=a.y-b.y;
-  return {dist:Math.hypot(dx,dy), cx:(a.x+b.x)/2, cy:(a.y+b.y)/2};
-}
-function startPointer(x,y){
-  ptrDown=true; movedFar=false; downX=lastX=x; downY=lastY=y; downTime=performance.now();
-}
-function movePointer(x,y){
-  const dx=x-lastX, dy=y-lastY;
-  if(Math.hypot(x-downX,y-downY)>TAP_MOVE) movedFar=true;
-  if(movedFar){
-    if(aligned) unlockToFree(false);   // 정렬 상태에서 회전하면 자유 3D로 복귀
-    tween=null;
-    sph.theta -= dx*0.008;
-    sph.phi   -= dy*0.008;
-    sph.phi = Math.max(0.12, Math.min(Math.PI-0.12, sph.phi));
-  }
-  lastX=x; lastY=y;
-}
-function endPointer(){
-  ptrDown=false;
-  const quick = performance.now()-downTime < 500;
-  if(!movedFar && quick) handleTap(downX,downY);
-}
-
-function zoomBy(f){
-  const base=fitRadius();
-  const rmin=base*0.45, rmax=base*3.2;
-  sph.radius=Math.max(rmin,Math.min(rmax,sph.radius*f));   // 직교 프러스텀 크기를 radius로 제어
-  userZoomed=true;
-}
-function panScreen(dx,dy){
-  const scale = (orthoCam.top-orthoCam.bottom) / canvas.clientHeight;
-  const right=new THREE.Vector3(), up=new THREE.Vector3();
-  activeCam.getWorldDirection(right); // temp
-  right.crossVectors(activeCam.up, right).normalize();  // camera-left
-  up.copy(activeCam.up).normalize();
-  target.addScaledVector(right, dx*scale);
-  target.addScaledVector(up, dy*scale);
-}
-
-/* ---------- 탭 → 편집 ---------- */
-const ray=new THREE.Raycaster();
-function ndc(x,y){   // x,y는 이미 앱 로컬 좌표(toLocal 적용됨); 캔버스는 풀스크린이라 원점 0
-  return new THREE.Vector2((x/canvas.clientWidth)*2-1, -(y/canvas.clientHeight)*2+1);
-}
-function handleTap(x,y){
-  if(aligned){ toast('관찰 모드예요. 화면을 돌리면 편집할 수 있어요'); return; }
-  ray.setFromCamera(ndc(x,y), activeCam);
-  const hitsCubes=ray.intersectObjects([cubesOn,cubesOff],false);
-  if(hitsCubes.length){
-    const h=hitsCubes[0];
-    const k=h.object.userData.cells[h.instanceId];
-    if(k){
-      const [cx,cy,cz]=k.split(',').map(Number);
-      if(addMode){
-        cellPos(cx,cy,cz,_pos);                          // 히트 지점과 큐브 중심으로 면 법선 도출
-        const dx=h.point.x-_pos.x, dy=h.point.y-_pos.y, dz=h.point.z-_pos.z;
-        const ax=Math.abs(dx),ay=Math.abs(dy),az=Math.abs(dz);
-        const n=(ax>=ay&&ax>=az)?{x:Math.sign(dx),y:0,z:0}
-               :(ay>=az)        ?{x:0,y:Math.sign(dy),z:0}
-                                :{x:0,y:0,z:Math.sign(dz)};
-        addFromFace(cx,cy,cz,n);
-      } else deleteCube(cx,cy,cz);
-    }
-    return;
-  }
-  const hitFloor=ray.intersectObject(floor,false);
-  if(hitFloor.length && addMode){
-    const p=hitFloor[0].point;
-    const ix=Math.round(p.x/S+(state.gx-1)/2);
-    const iz=Math.round(p.z/S+(state.gz-1)/2);
-    if(ix<0||iz<0||ix>=state.gx||iz>=state.gz){ toast('격자 밖입니다'); return; }
-    let iy=0; while(has(ix,iy,iz)) iy++;
-    if(iy>=state.gy){ toast('이 칸은 꽉 찼어요'); return; }
-    pushHistory(); cells.add(key(ix,iy,iz)); addCubeMesh(ix,iy,iz,true); postEdit();
-  }
-}
-function addFromFace(cx,cy,cz,normal){
-  const n={x:Math.round(normal.x),y:Math.round(normal.y),z:Math.round(normal.z)};
-  if(n.y<0){ toast('아래쪽으로는 붙일 수 없어요'); return; }   // 위·앞·뒤·좌·우만
-  const nx=cx+n.x, ny=cy+n.y, nz=cz+n.z;
-  if(!inBounds(nx,ny,nz)){ toast('격자 밖입니다'); return; }
-  if(has(nx,ny,nz)) return;
-  const supported = ny===0 || has(nx,ny-1,nz);
-  if(!supported){ toast('떠 있는 자리에는 놓을 수 없어요'); return; }
-  pushHistory(); cells.add(key(nx,ny,nz)); addCubeMesh(nx,ny,nz,true); postEdit();
-}
-function deleteCube(x,y,z){
-  if(has(x,y+1,z)){ toast('위 나무를 먼저 지워 주세요'); return; }   // 받침 나무 보호
-  pushHistory(); cells.delete(key(x,y,z)); removeCubeMesh(x,y,z); postEdit();
-}
-
-/* ============================================================
-   히스토리 (Undo / Redo)
-   ============================================================ */
-let undoStack=[], redoStack=[];
-function snapshot(){ return {cells:[...cells], gx:state.gx,gy:state.gy,gz:state.gz}; }
-function pushHistory(){ undoStack.push(snapshot()); redoStack.length=0; updateHistBtns(); }
-function restore(s){
-  cells.clear(); s.cells.forEach(k=>cells.add(k));
-  state.gx=s.gx; state.gy=s.gy; state.gz=s.gz;
-  updateTarget(); buildFloor(); rebuildCubes(); syncAxesUI(); renderStats(); refreshLayers(); updateTopCounts();
-}
-function undo(){ if(!undoStack.length)return; redoStack.push(snapshot()); restore(undoStack.pop()); updateHistBtns(); }
-function redo(){ if(!redoStack.length)return; undoStack.push(snapshot()); restore(redoStack.pop()); updateHistBtns(); }
-function updateHistBtns(){
-  document.getElementById('undo').disabled=!undoStack.length;
-  document.getElementById('redo').disabled=!redoStack.length;
-}
-
-/* ============================================================
-   통계 (개수 · 부피 · 겉넓이) + 계산 과정
-   ============================================================ */
-function computeStats(){
-  const N=cells.size;
-  // 방향별 노출면: 각 축은 +/-가 대칭이므로 한쪽만 세고 ×2 한다.
-  let up=0, side=0, front=0;   // 위(+y)·옆(+x)·앞(+z) 노출 개수
-  for(const k of cells){
-    const [x,y,z]=k.split(',').map(Number);
-    if(!has(x,y+1,z)) up++;     // 위쪽이 비면 노출 (아래도 같은 수 → ×2)
-    if(!has(x+1,y,z)) side++;   // 오른쪽(옆)이 비면 노출 (왼쪽도 같은 수 → ×2)
-    if(!has(x,y,z+1)) front++;  // 앞쪽이 비면 노출 (뒤도 같은 수 → ×2)
-  }
-  const exposed = 2*up + 2*side + 2*front;    // 위/아래 + 좌/우 + 앞/뒤
-  const pairs = (6*N - exposed)/2;            // 노출면에서 역산한 맞닿은 면 쌍 수
-  return {N, up, side, front, exposed, pairs};
-}
-function renderStats(){
-  const {N,up,side,front,exposed,pairs}=computeStats();
-  const e=state.edge;
-  const vol=N*e*e*e;
-  const surf=exposed*e*e;
-  document.getElementById('sCount').textContent=N;
-  document.getElementById('sVol').textContent=vol;
-  document.getElementById('sSurf').textContent=surf;
-  const cu = e===1?'cm³':'cm³', sq=e===1?'cm²':'cm²';
-  document.getElementById('sVolU').textContent=cu;
-  document.getElementById('sSurfU').textContent=sq;
-
-  const calc=document.getElementById('calcBody');
-  calc.innerHTML=`
-    <div class="row"><span class="lbl">쌓기나무</span>
-      <span class="exp"><b>${N}</b> 개</span></div>
-
-    <div class="row"><span class="lbl">부피</span>
-      <span class="exp"><b>${vol}</b> cm³</span></div>
-    <div class="exformula"><b>${N}</b> <span class="op">×</span> (${e}cm <span class="op">×</span> ${e}cm <span class="op">×</span> ${e}cm)</div>
-    <div class="krformula">쌓기나무 수 <span class="op">×</span> (가로 <span class="op">×</span> 세로 <span class="op">×</span> 높이)</div>
-
-    <div class="row"><span class="lbl">노출면</span>
-      <span class="exp"><b>${exposed}</b> 개</span></div>
-    <div class="exformula">2 <span class="op">×</span> ( <span class="dir" style="color:#3f8fd0">위</span><b>${up}</b> <span class="op">+</span> <span class="dir" style="color:#4fae72">앞</span><b>${front}</b> <span class="op">+</span> <span class="dir" style="color:#d0546f">옆</span><b>${side}</b> )</div>
-    <div class="krformula">2 <span class="op">×</span> ( 위 <span class="op">+</span> 앞 <span class="op">+</span> 옆 ) 면 수</div>
-
-    <div class="row"><span class="lbl">겉넓이</span>
-      <span class="exp"><b>${surf}</b> cm²</span></div>
-    <div class="exformula"><b>${exposed}</b> <span class="op">×</span> (${e}cm <span class="op">×</span> ${e}cm)</div>
-    <div class="krformula">노출면 수 <span class="op">×</span> (가로 <span class="op">×</span> 세로)</div>
-
-    <div class="row"><span class="lbl">맞닿은 면</span>
-      <span class="exp"><b>${pairs}</b> 쌍</span></div>
-    <div class="exformula">( 6 <span class="op">×</span> <b>${N}</b> <span class="op">−</span> <b>${exposed}</b> ) <span class="op">÷</span> 2</div>
-    <div class="krformula">( 전체 면 <span class="op">−</span> 노출면 ) <span class="op">÷</span> 2</div>
-
-    <div class="foot">겉넓이는 바닥에 닿는 면도 포함됩니다.</div>`;
-}
-function postEdit(mkLayers=true){
-  renderStats();
-  updateTopCounts();
-  if(mkLayers) refreshLayers();
-}
-
-/* ============================================================
-   UI: 모드 / 뷰 / 층 / 확대 / 설정
-   ============================================================ */
-let addMode=true;
-const modeBtn=document.getElementById('modeBtn'), modeLbl=document.getElementById('modeLbl');
-modeBtn.addEventListener('click',()=>{
-  addMode=!addMode;
-  modeBtn.classList.toggle('add',addMode);
-  modeBtn.classList.toggle('del',!addMode);
-  modeLbl.textContent=addMode?'추가':'삭제';
-});
-
-const viewSeg=document.getElementById('viewSeg');
-viewSeg.addEventListener('click',e=>{const b=e.target.closest('button'); if(b) gotoView(b.dataset.view);});
-
-document.getElementById('countToggle').addEventListener('click',()=>{
-  showTopCounts=!showTopCounts;
-  track('count_toggle', {on: showTopCounts});
-  refreshTopCountsVisibility();
-});
-
-document.getElementById('undo').addEventListener('click',undo);
-document.getElementById('redo').addEventListener('click',redo);
-document.getElementById('clear').addEventListener('click',()=>{
-  if(!cells.size)return;
-  pushHistory(); cells.clear(); rebuildCubes(); postEdit(); toast('전체 지웠어요');
-});
-
-document.getElementById('zin').addEventListener('click',()=>zoomBy(0.85));
-document.getElementById('zout').addEventListener('click',()=>zoomBy(1.15));
-
-/* 층 다중 선택: 컴팩트 트리거 + 체크리스트 팝오버. 트리거는 '전체/N개' 요약만 보여 높이가 고정된다. */
-const layerTrig=document.getElementById('layerTrig');
-const layerPop=document.getElementById('layerPop');
-let popOpen=false;
-const CHK='<span class="box"><svg viewBox="0 0 12 12" fill="none"><path d="M2.5 6.2 5 8.5 9.5 3.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span>';
-
-function toggleLayer(iy){
-  if(layerSel==='all'){ layerSel=new Set([iy]); }        // 전체 상태에서 첫 탭 → 그 층만
-  else{
-    if(layerSel.has(iy)) layerSel.delete(iy); else layerSel.add(iy);
-    if(layerSel.size===0) layerSel='all';                // 모두 해제하면 전체 (모두 선택은 그대로 유지)
-  }
-  applyLayerStyle(); refreshLayers(); if(popOpen) buildPop();
-}
-function selectAllLayers(){ layerSel='all'; applyLayerStyle(); refreshLayers(); if(popOpen) buildPop(); }
-
-function refreshLayers(){
-  clampLayerSel();
-  layerTrig.textContent = layerSel==='all' ? '전체' : (layerSel.size+'개');
-  layerTrig.classList.toggle('on', layerSel!=='all');
-}
-function buildPop(){
-  layerPop.innerHTML='';
-  const all=document.createElement('div');
-  all.className='prow allrow'+(layerSel==='all'?' on':'');
-  all.innerHTML=CHK+'<span>전체</span>';
-  all.onclick=(e)=>{ e.stopPropagation(); selectAllLayers(); };
-  layerPop.appendChild(all);
-  const sep=document.createElement('div'); sep.className='sep'; layerPop.appendChild(sep);
-  const occ=[...occupiedLayers()].sort((a,b)=>b-a);      // 위 층이 목록 위 (쌓인 층만)
-  if(occ.length===0){
-    const empty=document.createElement('div'); empty.className='lempty'; empty.textContent='쌓인 블록 없음';
-    layerPop.appendChild(empty);
-  }
-  for(const L of occ){
-    const row=document.createElement('div');
-    const on = layerSel!=='all' && layerSel.has(L);
-    row.className='prow'+(on?' on':'');
-    row.innerHTML=CHK+'<span>'+(L+1)+'층</span>';
-    row.onclick=(e)=>{ e.stopPropagation(); toggleLayer(L); };
-    layerPop.appendChild(row);
-  }
-}
-function openPop(){ popOpen=true; track('layer_open'); buildPop(); layerPop.classList.add('show');
-  setTimeout(()=>document.addEventListener('pointerdown',outsidePop),0); }
-function closePop(){ popOpen=false; layerPop.classList.remove('show');
-  document.removeEventListener('pointerdown',outsidePop); }
-function outsidePop(e){ if(!layerPop.contains(e.target) && e.target!==layerTrig) closePop(); }
-layerTrig.addEventListener('click',(e)=>{ e.stopPropagation(); popOpen?closePop():openPop(); });
-
-/* 설정 시트 */
-const sheet=document.getElementById('sheet'), scrim=document.getElementById('scrim');
-const shareSheet=document.getElementById('shareSheet');
-function closeSheet(){ sheet.classList.remove('show'); shareSheet.classList.remove('show'); scrim.classList.remove('show'); }
-function openSheet(){ closeSheet(); sheet.classList.add('show'); scrim.classList.add('show'); }
-document.getElementById('sheetDone').addEventListener('click',closeSheet);
-document.getElementById('settings').addEventListener('click',()=>{ track('axis_open'); openSheet(); });
-scrim.addEventListener('click',closeSheet);
-
-/* ============================================================
-   공유 (8) — F2 상태 직렬화 · F3 이미지 캡처 · 링크/이미지 공유
-   ============================================================ */
-function track(name, params){ try{ if(window.gtag) window.gtag('event', name, params||{}); }catch(e){} }  // GA4_ID 설정 시 자동 전송
-
-// F2: 모델 상태 ↔ URL-safe 문자열 (버전1 + 격자·모서리 헤더 + 채운 칸 비트마스크)
-function b64urlEnc(u8){ let s=''; for(let i=0;i<u8.length;i++) s+=String.fromCharCode(u8[i]);
-  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
-function b64urlDec(str){ str=str.replace(/-/g,'+').replace(/_/g,'/'); const s=atob(str);
-  const u8=new Uint8Array(s.length); for(let i=0;i<s.length;i++) u8[i]=s.charCodeAt(i); return u8; }
-function cellIdx(x,y,z){ return x*(state.gy*state.gz) + y*state.gz + z; }
-function serializeState(){
-  const {gx,gy,gz,edge}=state, total=gx*gy*gz;
-  const mask=new Uint8Array(Math.ceil(total/8));
-  for(const k of cells){ const [x,y,z]=k.split(',').map(Number);
-    const i=x*(gy*gz)+y*gz+z; mask[i>>3] |= (1<<(i&7)); }
-  const out=new Uint8Array(5+mask.length);
-  out.set([1,gx,gy,gz,edge]); out.set(mask,5);
-  return b64urlEnc(out);
-}
-function deserializeState(str){
-  try{
-    const a=b64urlDec(str);
-    if(a[0]!==1) return null;
-    const gx=a[1],gy=a[2],gz=a[3],edge=a[4];
-    const ok=v=>Number.isInteger(v)&&v>=1&&v<=10;
-    if(![gx,gy,gz,edge].every(ok)) return null;
-    const total=gx*gy*gz, mask=a.subarray(5), newCells=new Set();
-    for(let i=0;i<total;i++){
-      if((mask[i>>3]>>(i&7))&1){
-        const x=Math.floor(i/(gy*gz)), r=i%(gy*gz), y=Math.floor(r/gz), z=r%gz;
-        newCells.add(x+','+y+','+z);
-      }
-    }
-    return {gx,gy,gz,edge,cells:newCells};
-  }catch(e){ return null; }
-}
-function applyState(st){
-  state.gx=st.gx; state.gy=st.gy; state.gz=st.gz;
-  cells.clear(); st.cells.forEach(k=>cells.add(k));
-  undoStack.length=0; redoStack.length=0;
-  layerSel='all';
-  setEdge(st.edge);
-  updateTarget(); buildFloor(); rebuildCubes();
-  syncAxesUI(); refreshLayers(); renderStats(); updateTopCounts(); updateHistBtns();
-  sph.radius=defaultRadius(); userZoomed=false; setOrthoFrustum();
-}
-
-// F3: 현재 모양을 가운데 정렬해 PNG로 캡처 (UI inset 오프셋 없이)
-// 워터마크: 브랜드 큐브 글리프 + 이름 (우하단, 밝은 후광으로 가독성 확보)
-function drawGlyph(ctx, ox, oy, gs){
-  const p=(mx,my)=>[ox+mx/32*gs, oy+my/32*gs];
-  const face=(pts,fill)=>{ ctx.beginPath(); pts.forEach((pt,i)=>{const q=p(pt[0],pt[1]); i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}); ctx.closePath(); ctx.fillStyle=fill; ctx.fill(); };
-  face([[16,3],[28,9],[16,15],[4,9]], '#e6b980');
-  face([[4,9],[16,15],[16,29],[4,23]], '#c8965a');
-  face([[28,9],[16,15],[16,29],[28,23]], '#d8a76e');
-}
-function drawWatermark(ctx,w,h){
-  const s=Math.max(13, Math.round(h*0.038));
-  const gs=Math.round(s*1.15), gap=Math.round(s*0.34), pad=Math.round(s*1.05);
-  ctx.save();
-  ctx.font='700 '+s+'px system-ui, -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
-  ctx.textBaseline='middle';
-  const tw=ctx.measureText(BRAND).width;
-  const totalW=gs+gap+tw, x=w-pad-totalW, cy=h-pad-gs/2;
-  ctx.globalAlpha=0.5;                                    // 전체적으로 연하게
-  ctx.shadowColor='rgba(255,255,255,0.45)'; ctx.shadowBlur=s*0.35; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0;
-  drawGlyph(ctx, x, cy-gs/2, gs);
-  ctx.fillStyle='rgba(24,34,51,0.72)';
-  ctx.fillText(BRAND, x+gs+gap, cy);
-  ctx.restore();
-}
-function captureImage(){
-  const {W,H}=contentRect(), aspect=W/H, R=modelRadiusWorld();
-  const Hf=2*R*H/(Math.min(W,H)*0.82);          // 전체 캔버스에 대칭으로 꽉 차게
-  const w=Hf*aspect;
-  const sv={l:orthoCam.left,r:orthoCam.right,t:orthoCam.top,b:orthoCam.bottom};
-  orthoCam.left=-w/2; orthoCam.right=w/2; orthoCam.top=Hf/2; orthoCam.bottom=-Hf/2;
-  orthoCam.updateProjectionMatrix();
-  renderer.render(scene, activeCam);
-  // 3D 캔버스 위에 워터마크를 합성한 2D 캔버스로 출력
-  const src=renderer.domElement, cw=src.width, ch=src.height;
-  const c=document.createElement('canvas'); c.width=cw; c.height=ch;
-  const ctx=c.getContext('2d');
-  ctx.drawImage(src,0,0,cw,ch);
-  drawWatermark(ctx,cw,ch);
-  const url=c.toDataURL('image/png');
-  orthoCam.left=sv.l; orthoCam.right=sv.r; orthoCam.top=sv.t; orthoCam.bottom=sv.b;   // 원복
-  orthoCam.updateProjectionMatrix();
-  renderer.render(scene, activeCam);
-  return url;
-}
-
-function shareUrl(){ return location.origin + location.pathname + '?m=' + serializeState(); }
-let _shareImg='';
-function openShareSheet(){
-  closeSheet();
-  _shareImg = captureImage();
-  document.getElementById('sharePreview').src = _shareImg;
-  document.getElementById('shareNative').hidden = !(navigator.share);
-  shareSheet.classList.add('show'); scrim.classList.add('show');
-  track('share_open');
-}
-async function copyText(t){
-  try{ await navigator.clipboard.writeText(t); return true; }
-  catch(e){
-    try{ const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
-      document.body.appendChild(ta); ta.focus(); ta.select(); const ok=document.execCommand('copy'); ta.remove(); return ok; }
-    catch(_){ return false; }
-  }
-}
-document.getElementById('shareBtn').addEventListener('click',openShareSheet);
-document.getElementById('shareDone').addEventListener('click',closeSheet);
-// 버그 신고 미리채우기: 기기·브라우저·현재 모양을 질문6에 자동 입력
-function deviceInfo(){
-  const ua=navigator.userAgent||''; let m, br;
-  if(m=ua.match(/SamsungBrowser\/([\d.]+)/)) br='삼성인터넷 '+m[1];
-  else if(m=ua.match(/Edg\/([\d.]+)/)) br='Edge '+m[1];
-  else if(m=ua.match(/OPR\/([\d.]+)/)) br='Opera '+m[1];
-  else if(m=ua.match(/Firefox\/([\d.]+)/)) br='Firefox '+m[1];
-  else if(m=ua.match(/Chrome\/([\d.]+)/)) br='Chrome '+m[1];
-  else if(m=ua.match(/Version\/([\d.]+).*Safari/)) br='Safari '+m[1];
-  else br='알 수 없음';
-  let os;
-  if(m=ua.match(/Android[^;]*;\s*([^)]+)\)/)) os='Android · '+m[1].replace(/;.*/,'').replace(/\s*Build.*/i,'').trim();
-  else if(/iPhone/.test(ua)) os='iPhone (iOS)';
-  else if(/iPad/.test(ua)) os='iPad';
-  else if(/Windows/.test(ua)) os='Windows';
-  else if(/Mac OS X|Macintosh/.test(ua)) os='macOS';
-  else os='기타';
-  return os+' · '+br;
-}
-function bugContext(){
-  return '(오류 신고 시 아래 정보가 도움이 됩니다. 오류가 아니면 지워 주세요.)\n'
-    + '기기/브라우저: '+deviceInfo()+'\n'
-    + '화면: '+window.innerWidth+'×'+window.innerHeight
-    + ' · 격자 '+state.gx+'×'+state.gy+'×'+state.gz+' · 나무 '+cells.size+'개\n'
-    + '모양 링크: '+shareUrl()+'\n'
-    + 'UA: '+(navigator.userAgent||'')+'\n─────────\n오류 상황: ';
-}
-function feedbackHref(){
-  if(FEEDBACK_ENTRY_BUG && FEEDBACK_VIEWFORM_URL){
-    const id=/^entry\./.test(FEEDBACK_ENTRY_BUG)?FEEDBACK_ENTRY_BUG:('entry.'+FEEDBACK_ENTRY_BUG);
-    return FEEDBACK_VIEWFORM_URL+'?usp=pp_url&'+id+'='+encodeURIComponent(bugContext());
-  }
-  return FEEDBACK_FORM_URL;   // entry ID 미설정 시 기본 폼 열기
-}
-document.getElementById('feedbackBtn').addEventListener('click',()=>{
-  track('feedback_open', {prefill: !!FEEDBACK_ENTRY_BUG});
-  const href=feedbackHref();
-  if(!href){ toast('의견 폼이 아직 준비 중이에요'); return; }
-  window.open(href, '_blank', 'noopener');
-});
-document.getElementById('shareCopyLink').addEventListener('click',async()=>{
-  const ok=await copyText(shareUrl());
-  toast(ok?'링크를 복사했어요':'복사에 실패했어요');
-  track('share_copy_link', {ok});
-});
-document.getElementById('shareSaveImg').addEventListener('click',()=>{
-  const a=document.createElement('a'); a.href=_shareImg||captureImage(); a.download='cubenest.png';
-  document.body.appendChild(a); a.click(); a.remove();
-  toast('이미지를 저장했어요'); track('share_save_image');
-});
-document.getElementById('shareNative').addEventListener('click',async()=>{
-  try{
-    await navigator.share({
-      title: BRAND+' · 쌓기나무 3D 학습',
-      text: BRAND+'에서 만든 쌓기나무 모양이에요. 링크를 열면 똑같이 나타나요.',
-      url: shareUrl()
-    });
-    track('share_native');
-  }catch(e){}
-});
-
-/* 격자 스테퍼 */
-const AXIS_META=[{k:'gx',n:'가로',e:'x',col:'우'},{k:'gy',n:'높이',e:'y',col:'위'},{k:'gz',n:'세로',e:'z',col:'앞'}];
-const MING=1, MAXG=10;
-function buildAxes(){
-  const box=document.getElementById('axes'); box.innerHTML='';
-  AXIS_META.forEach(a=>{
-    const el=document.createElement('div'); el.className='axis';
-    el.innerHTML=`<div class="an">${a.n} <em>${a.e}</em></div>
-      <div class="stepper">
-        <button data-a="${a.k}" data-d="-1">−</button>
-        <span class="num" id="num_${a.k}">${state[a.k]}</span>
-        <button data-a="${a.k}" data-d="1">+</button>
-      </div>`;
-    box.appendChild(el);
-  });
-  box.querySelectorAll('button').forEach(btn=>{
-    btn.onclick=()=>changeAxis(btn.dataset.a, +btn.dataset.d);
-  });
-  syncAxesUI();
-}
-function syncAxesUI(){
-  AXIS_META.forEach(a=>{ const n=document.getElementById('num_'+a.k); if(n) n.textContent=state[a.k]; });
-  document.querySelectorAll('#axes .stepper button').forEach(b=>{
-    const v=state[b.dataset.a], d=+b.dataset.d;
-    b.disabled = (d<0 && v<=MING) || (d>0 && v>=MAXG);
-  });
-  const cube = (state.gx===state.gy && state.gy===state.gz) ? state.gx : 0;
-  document.querySelectorAll('#gridPresets .preset').forEach(b=>b.classList.toggle('on', +b.dataset.n===cube));
-}
-function outOfBounds(nx,ny,nz){   // 새 격자 밖으로 나가는 나무가 있으면 true
-  for(const key0 of cells){ const [x,y,z]=key0.split(',').map(Number); if(x>=nx||y>=ny||z>=nz) return true; }
-  return false;
-}
-function applyGridChange(){
-  updateTarget(); buildFloor();
-  syncCubes();   // 격자 크기가 바뀌면 모든 인스턴스 위치·모서리 재계산
-  if(!aligned) sph.radius=defaultRadius();
-  userZoomed=false;   // 격자 변경 시 기본 프레이밍으로 재계산
-  syncAxesUI(); refreshLayers(); renderStats(); updateTopCounts();
-}
-function changeAxis(k,d){
-  const nv=state[k]+d;
-  if(nv<MING||nv>MAXG) return;
-  if(d<0){
-    const n={gx:state.gx,gy:state.gy,gz:state.gz}; n[k]=nv;
-    if(outOfBounds(n.gx,n.gy,n.gz)){ toast('밖으로 나가는 나무가 있어 줄일 수 없어요'); return; }
-  }
-  pushHistory();
-  state[k]=nv;
-  applyGridChange();
-}
-function setGrid(nx,ny,nz){       // 프리셋(정육면체 등) 한 번에 적용
-  nx=Math.max(MING,Math.min(MAXG,nx)); ny=Math.max(MING,Math.min(MAXG,ny)); nz=Math.max(MING,Math.min(MAXG,nz));
-  if(nx===state.gx&&ny===state.gy&&nz===state.gz) return;
-  if(outOfBounds(nx,ny,nz)){ toast('밖으로 나가는 나무가 있어 줄일 수 없어요'); return; }
-  pushHistory();
-  state.gx=nx; state.gy=ny; state.gz=nz;
-  applyGridChange();
-}
-document.getElementById('gridPresets').addEventListener('click',e=>{
-  const b=e.target.closest('.preset'); if(!b) return;
-  const n=+b.dataset.n; setGrid(n,n,n);
-});
-
-/* 모서리 길이 */
-function setEdge(v){
-  v=Math.round(v); if(!Number.isFinite(v)) v=state.edge;
-  v=Math.max(1,Math.min(10,v));
-  state.edge=v;
-  document.querySelectorAll('.eseg').forEach(b=>b.classList.toggle('on', +b.dataset.e===v));
-  const inp=document.getElementById('edgeInput');
-  if(inp && document.activeElement!==inp) inp.value=v;
-  renderStats();
-}
-document.querySelector('.edgerow').addEventListener('click',e=>{
-  const b=e.target.closest('.eseg'); if(!b)return;
-  setEdge(+b.dataset.e);
-});
-(()=>{ const inp=document.getElementById('edgeInput');
-  inp.addEventListener('input',()=>{ const v=parseInt(inp.value,10); if(!isNaN(v)) setEdge(v); });
-  inp.addEventListener('blur',()=>{ inp.value=state.edge; });
-})();
-
-/* 통계 카드 펼치기 */
-const appEl=document.getElementById('app');
-function setCalc(open){
-  if(open && !calcOpen) track('calc_open');
-  calcOpen=open;
-  appEl.classList.toggle('calc-open', open);
-  userZoomed=false;            // 패널에 맞춰 모델을 다시 프레이밍(가려지지 않도록)
-  sph.radius=fitRadius();
-  setOrthoFrustum();
-}
-document.getElementById('statHead').addEventListener('click',()=>setCalc(!calcOpen));
-document.getElementById('calcClose').addEventListener('click',()=>setCalc(false));
-
-/* 토스트 */
-let toastT=null;
-function toast(msg){
-  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-  clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),1600);
-}
-
-/* ============================================================
-   나침반(축 gizmo)
-   ============================================================ */
-const compass=document.getElementById('compassSvg');
-const AXES3=[
-  {v:new THREE.Vector3(1,0,0), label:'옆', color:'#d0546f'},
-  {v:new THREE.Vector3(0,1,0), label:'위', color:'#3f8fd0'},
-  {v:new THREE.Vector3(0,0,1), label:'앞', color:'#4fae72'}
-];
-let compassEls=null;
-function initCompass(){
-  compass.innerHTML='<circle cx="37" cy="37" r="30" fill="#f7f9fc" stroke="#e5eaf1"/>';
-  compassEls=AXES3.map(()=>{
-    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
-    line.setAttribute('stroke-width','2.4'); line.setAttribute('stroke-linecap','round');
-    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle'); dot.setAttribute('r','8.5');
-    const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
-    txt.setAttribute('text-anchor','middle'); txt.setAttribute('dominant-baseline','central');
-    txt.setAttribute('font-size','9'); txt.setAttribute('font-weight','800'); txt.setAttribute('fill','#fff');
-    compass.appendChild(line); compass.appendChild(dot); compass.appendChild(txt);
-    return {line,dot,txt};
-  });
-}
-function updateCompass(){
-  const q=activeCam.quaternion.clone().invert();
-  const cx=37,cy=37,R=19;
-  const items=AXES3.map((a,i)=>{
-    const v=a.v.clone().applyQuaternion(q);
-    return {i,a,sx:cx+v.x*R,sy:cy-v.y*R,z:v.z};
-  }).sort((p,q2)=>p.z-q2.z);
-  items.forEach(it=>{
-    const {line,dot,txt}=compassEls[it.i];
-    const near=(it.z+1)/2; const op=0.35+near*0.65;
-    line.setAttribute('x1',cx);line.setAttribute('y1',cy);
-    line.setAttribute('x2',it.sx);line.setAttribute('y2',it.sy);
-    line.setAttribute('stroke',it.a.color); line.setAttribute('opacity',op);
-    dot.setAttribute('cx',it.sx);dot.setAttribute('cy',it.sy);
-    dot.setAttribute('fill',it.a.color);dot.setAttribute('opacity',op);
-    txt.setAttribute('x',it.sx);txt.setAttribute('y',it.sy);
-    txt.setAttribute('opacity',op); txt.textContent=it.a.label;
-  });
-}
-
-/* ============================================================
-   렌더 루프
-   ============================================================ */
-let last=performance.now();
-function animate(now){
-  const dt=now-last; last=now;
-  // 뷰 트윈
-  if(tween){
-    tween.t+=dt/tween.dur;
-    const k=Math.min(1,tween.t), e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
-    sph.theta=tween.from.theta+(tween.to.theta-tween.from.theta)*e;
-    sph.phi  =tween.from.phi  +(tween.to.phi-tween.from.phi)*e;
-    sph.radius=tween.from.radius+(tween.to.radius-tween.from.radius)*e;
-    if(k>=1){ const cb=tween.onEnd; tween=null; if(cb)cb(); }
-  }
-  // 팝 애니메이션 (셀 키 기준 → 현재 인스턴스 스케일 갱신)
-  for(let i=popList.length-1;i>=0;i--){
-    const p=popList[i]; p.t+=dt/150;
-    const s=Math.min(1,p.t); const sc=0.55+(1-0.55)*(1-Math.pow(1-s,3));
-    setPopScale(p.key, sc);
-    if(s>=1){ setPopScale(p.key,1); popList.splice(i,1); }
-  }
-  applyCamera();
-  setOrthoFrustum();
-  if(showTopCounts){ for(const m of topCountLabels) m.quaternion.copy(activeCam.quaternion); }  // 숫자는 항상 카메라를 향함
-  updateCompass();
-  renderer.render(scene, activeCam);
-  requestAnimationFrame(animate);
-}
-
-/* ---------- 리사이즈 ---------- */
-function resize(){
-  updateOrientationMode();   // 세로↔가로 전환 시 강제 가로 여부 갱신
-  const w=canvas.clientWidth||window.innerWidth, h=canvas.clientHeight||window.innerHeight;
-  renderer.setSize(w,h,false);
-  if(!userZoomed && !tween) sph.radius=fitRadius();   // 화면 크기 변화 시 기본 프레이밍 재적용
-  setOrthoFrustum();
-}
-window.addEventListener('resize',resize);
-window.addEventListener('orientationchange',()=>setTimeout(resize,250));
-// 일부 브라우저는 주소창 표시/숨김을 visualViewport 리사이즈로만 알림
-if(window.visualViewport) window.visualViewport.addEventListener('resize',resize);
-// 전체화면/독립 실행 시에는 실제 방향 잠금도 시도 (iframe 내에서는 조용히 실패)
-if(window.self===window.top && screen.orientation && screen.orientation.lock){
-  try{ screen.orientation.lock('landscape').catch(()=>{}); }catch(e){}
-}
-
-/* ============================================================
-   시드 & 시작
-   ============================================================ */
-function seed(){
-  ['0,0,0','1,0,0','2,0,0','0,0,1','0,1,0'].forEach(k=>{
-    const [x,y,z]=k.split(',').map(Number);
-    if(inBounds(x,y,z)) cells.add(k);
-  });
-}
-function init(){
-  updateTarget();
-  sph.radius=defaultRadius();
-  buildFloor();
-  seed();
-  rebuildCubes();
-  initCompass();
-  buildAxes();
-  refreshLayers();
-  renderStats();
-  updateTopCounts();
-  updateHistBtns();
-  resize();
-  const _m=new URLSearchParams(location.search).get('m');   // 공유 링크로 열렸으면 그 모양으로 대체
-  if(_m){ const st=deserializeState(_m); if(st){ applyState(st); track('open_shared'); } }
-  requestAnimationFrame(animate);
-}
-init();
 </script>
 </body>
 </html>
