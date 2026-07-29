@@ -425,6 +425,20 @@ const FEEDBACK_VIEWFORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScvswwmC
 /* 질문6(오류 신고)의 entry ID. 폼 편집 → ⋮ → '미리 채워진 링크 가져오기'로 얻어 넣으세요. 예: 'entry.123456789' (빈 값이면 미리채우기 없이 폼만 열림) */
 const FEEDBACK_ENTRY_BUG    = 'entry.1124217685';
 
+/* ===== 배포 설정 (GA4 계측) ===== */
+/* GA4 측정 ID. 예: 'G-XXXXXXXXXX' (빈 값이면 계측 비활성). 넣으면 자동으로 gtag.js 로드 + 페이지뷰·이벤트 수집 */
+const GA4_ID = 'G-1QX0F9RNGX';
+(function initGA(){
+  if(!GA4_ID) return;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = function(){ dataLayer.push(arguments); };
+  gtag('js', new Date());
+  gtag('config', GA4_ID);
+  const s=document.createElement('script'); s.async=true;
+  s.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(GA4_ID);
+  document.head.appendChild(s);
+})();
+
 /* ============================================================
    쌓기나무 3D 학습 도구 — MVP
    좌표계:  x = 좌우(우:+x),  y = 위(위:+y, 층),  z = 앞뒤(앞:+z)
@@ -1142,7 +1156,7 @@ scrim.addEventListener('click',closeSheet);
 /* ============================================================
    공유 (8) — F2 상태 직렬화 · F3 이미지 캡처 · 링크/이미지 공유
    ============================================================ */
-function track(name, params){ try{ if(window.gtag) window.gtag('event', name, params||{}); }catch(e){} }  // F1 자리(런칭 시 GA4 연결)
+function track(name, params){ try{ if(window.gtag) window.gtag('event', name, params||{}); }catch(e){} }  // GA4_ID 설정 시 자동 전송
 
 // F2: 모델 상태 ↔ URL-safe 문자열 (버전1 + 격자·모서리 헤더 + 채운 칸 비트마스크)
 function b64urlEnc(u8){ let s=''; for(let i=0;i<u8.length;i++) s+=String.fromCharCode(u8[i]);
