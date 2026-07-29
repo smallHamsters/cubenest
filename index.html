@@ -216,6 +216,21 @@
     box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s;max-width:80vw;text-align:center;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
+  /* 쿠키/분석 동의 배너 — #app 바깥(회전 영향 없음), 물리 화면 하단 고정 */
+  .consent{position:fixed;left:0;right:0;bottom:0;z-index:100000;
+    background:#26303f;color:#fff;padding:14px 16px calc(14px + env(safe-area-inset-bottom));
+    display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;
+    font:500 13px/1.5 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+    box-shadow:0 -8px 30px rgba(0,0,0,.28);}
+  .consent[hidden]{display:none;}
+  .consent .consent-msg{flex:1 1 260px;min-width:220px;color:#e8edf5;}
+  .consent .consent-msg b{color:#fff;font-weight:800;}
+  .consent .consent-btns{flex:0 0 auto;display:flex;gap:8px;margin-left:auto;}
+  .consent .consent-btns button{border:none;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13px;cursor:pointer;}
+  .consent #consentDeny{background:rgba(255,255,255,.14);color:#fff;}
+  .consent #consentAccept{background:#5a5ad6;color:#fff;}
+  .consent #consentAccept:active,.consent #consentDeny:active{transform:translateY(1px);}
+
   /* observe-mode banner */
   .observe{position:absolute;left:50%;top:calc(100px + env(safe-area-inset-top));transform:translateX(-50%);z-index:5;
     background:rgba(38,48,63,.9);color:#fff;font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;
@@ -407,6 +422,14 @@
   <div class="toast" id="toast"></div>
 </div>
 
+<div class="consent" id="consent" hidden>
+  <div class="consent-msg">CubeNest는 서비스 개선을 위해 <b>Google Analytics로 익명 사용 통계</b>(쿠키 포함)를 수집해요. 동의하시면 방문·사용 데이터가 수집되고, 거부하시면 수집하지 않습니다.</div>
+  <div class="consent-btns">
+    <button id="consentDeny" type="button">거부</button>
+    <button id="consentAccept" type="button">동의</button>
+  </div>
+</div>
+
 <script>
 "use strict";
 /* 브라우저 언어에 따라 브랜드 표기 전환: 한국어 → 큐브네스트 / 그 외 → CubeNest */
@@ -426,17 +449,33 @@ const FEEDBACK_VIEWFORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScvswwmC
 const FEEDBACK_ENTRY_BUG    = 'entry.1124217685';
 
 /* ===== 배포 설정 (GA4 계측) ===== */
-/* GA4 측정 ID. 예: 'G-XXXXXXXXXX' (빈 값이면 계측 비활성). 넣으면 자동으로 gtag.js 로드 + 페이지뷰·이벤트 수집 */
+/* GA4 측정 ID. 예: 'G-XXXXXXXXXX' (빈 값이면 계측 비활성). 동의 후에만 로드됩니다. */
 const GA4_ID = 'G-1QX0F9RNGX';
-(function initGA(){
-  if(!GA4_ID) return;
+/* 동의(opt-in): 사용자가 '동의'하기 전에는 GA를 로드하지 않는다. 선택은 localStorage에 저장. */
+function getConsent(){ try{ return localStorage.getItem('cubenest_consent'); }catch(e){ return null; } }
+function setConsent(v){ try{ localStorage.setItem('cubenest_consent', v); }catch(e){} }
+function loadGA(){
+  if(!GA4_ID || window.__gaLoaded) return;
+  window.__gaLoaded = true;
   window.dataLayer = window.dataLayer || [];
   window.gtag = function(){ dataLayer.push(arguments); };
   gtag('js', new Date());
+  gtag('consent','default',{ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied', analytics_storage:'granted'});
   gtag('config', GA4_ID);
   const s=document.createElement('script'); s.async=true;
   s.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(GA4_ID);
   document.head.appendChild(s);
+}
+(function initConsent(){
+  const el=document.getElementById('consent');
+  const accept=document.getElementById('consentAccept'), deny=document.getElementById('consentDeny');
+  function decide(v){ setConsent(v); if(el) el.hidden=true; if(v==='granted'){ loadGA(); try{ track('consent_granted'); }catch(e){} } }
+  if(accept) accept.addEventListener('click',()=>decide('granted'));
+  if(deny)   deny.addEventListener('click',()=>decide('denied'));
+  if(!GA4_ID) return;                                  // GA 미설정이면 배너 불필요
+  const c=getConsent();
+  if(c==='granted') loadGA();                          // 이전에 동의 → 바로 로드
+  else if(c!=='denied' && el) el.hidden=false;         // 첫 방문 → 배너 표시 (거부 이력이면 아무 것도 안 함)
 })();
 
 /* ============================================================
@@ -790,6 +829,7 @@ const VIEWS = {
 };
 function gotoView(name){
   if(name==='free'){ unlockToFree(true); return; }
+  track('view_align', {view:name});
   const v=VIEWS[name];
   // theta는 현재값에서 가장 가까운 등가각으로
   let tt=v.theta;
@@ -1081,6 +1121,7 @@ viewSeg.addEventListener('click',e=>{const b=e.target.closest('button'); if(b) g
 
 document.getElementById('countToggle').addEventListener('click',()=>{
   showTopCounts=!showTopCounts;
+  track('count_toggle', {on: showTopCounts});
   refreshTopCountsVisibility();
 });
 
@@ -1137,7 +1178,7 @@ function buildPop(){
     layerPop.appendChild(row);
   }
 }
-function openPop(){ popOpen=true; buildPop(); layerPop.classList.add('show');
+function openPop(){ popOpen=true; track('layer_open'); buildPop(); layerPop.classList.add('show');
   setTimeout(()=>document.addEventListener('pointerdown',outsidePop),0); }
 function closePop(){ popOpen=false; layerPop.classList.remove('show');
   document.removeEventListener('pointerdown',outsidePop); }
@@ -1413,6 +1454,7 @@ document.querySelector('.edgerow').addEventListener('click',e=>{
 /* 통계 카드 펼치기 */
 const appEl=document.getElementById('app');
 function setCalc(open){
+  if(open && !calcOpen) track('calc_open');
   calcOpen=open;
   appEl.classList.toggle('calc-open', open);
   userZoomed=false;            // 패널에 맞춰 모델을 다시 프레이밍(가려지지 않도록)
