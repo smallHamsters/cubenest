@@ -2,47 +2,59 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<!-- viewport: playground는 터치 드래그로 3D를 회전시키는 전체화면 앱이라 pinch-zoom을 막아 둠(브라우저 확대와 제스처가 충돌 방지). index.html은 일반 스크롤 페이지라 별도 제한 없음. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>CubeNest · 쌓기나무 3D 학습</title>
+<title>큐브네스트 · 쌓기나무 3D 학습</title>
 <meta name="description" content="쌓기나무(단위 정육면체)를 3D로 쌓고 돌려보며 개수·부피·겉넓이를 배우는 학습 도구. 만든 모양을 링크로 공유하면 똑같이 열려요.">
 <meta name="theme-color" content="#e9eef4">
-<!-- ▼ 링크 미리보기(Open Graph). 배포 위치: 이 페이지 = /cubenest/playground/ · OG 이미지 = /cubenest/public/cubenest-og.png (1200×630) -->
+<link rel="canonical" href="https://smallhamsters.github.io/cubenest/playground/">
+<!-- ▼ 링크 미리보기(Open Graph). 배포 위치: 이 페이지 = /cubenest/playground/ · OG 이미지 = /cubenest/assets/img/cubenest-og.png (1200×630) -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CubeNest">
-<meta property="og:title" content="CubeNest · 쌓기나무 3D 학습">
+<meta property="og:title" content="큐브네스트 · 쌓기나무 3D 학습">
 <meta property="og:description" content="쌓기나무를 3D로 쌓고 돌려보며 개수·부피·겉넓이를 배워요. 만든 모양을 링크로 공유하면 똑같이 열립니다.">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:url" content="https://smallhamsters.github.io/cubenest/playground/">
-<meta property="og:image" content="https://smallhamsters.github.io/cubenest/public/cubenest-og.png">
+<meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="CubeNest — 쌓기나무 3D 학습">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="CubeNest · 쌓기나무 3D 학습">
+<meta name="twitter:title" content="큐브네스트 · 쌓기나무 3D 학습">
 <meta name="twitter:description" content="쌓기나무를 3D로 쌓고 돌려보며 개수·부피·겉넓이를 배워요.">
-<meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/public/cubenest-og.png">
+<meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
+
+<!-- ▼ 교육용 구조화 데이터(JSON-LD). index.html의 WebApplication 노드와 같은 @id를 공유. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "@id": "https://smallhamsters.github.io/cubenest/playground/#webapp",
+  "name": "CubeNest 쌓기나무 3D 학습",
+  "url": "https://smallhamsters.github.io/cubenest/playground/",
+  "image": "https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Web browser",
+  "inLanguage": "ko-KR",
+  "browserRequirements": "WebGL 지원 브라우저",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
+  "learningResourceType": "3D 인터랙티브 학습 도구",
+  "educationalLevel": "초등학교 6학년",
+  "teaches": ["쌓기나무 개수 세기", "위·앞·옆 투상", "겉넓이 구하기", "부피 구하기", "공간과 입체"],
+  "audience": [
+    { "@type": "EducationalAudience", "educationalRole": "student" },
+    { "@type": "EducationalAudience", "educationalRole": "teacher" },
+    { "@type": "EducationalAudience", "educationalRole": "parent" }
+  ]
+}
+</script>
+
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/consent.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-  :root{
-    --panel:#ffffff;
-    --panel-2:#f7f9fc;
-    --ink:#182233;
-    --muted:#6a7789;
-    --line:#e5eaf1;
-    --line-2:#eef2f7;
-    --accent:#3f3fbf;
-    --accent-ink:#2d2d95;
-    --accent-soft:#ecebfb;
-    --add:#0f9d58;
-    --add-soft:#e6f5ec;
-    --del:#e0466b;
-    --del-soft:#fce9ee;
-    --shadow:0 6px 22px rgba(24,34,51,.12), 0 1px 3px rgba(24,34,51,.08);
-    --shadow-sm:0 2px 8px rgba(24,34,51,.10);
-    --r:16px;
-    --font:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
-  }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;overflow:hidden;font-family:var(--font);color:var(--ink);
     background:#e9eef4;overscroll-behavior:none;}
@@ -216,28 +228,6 @@
     box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s;max-width:80vw;text-align:center;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-  /* 쿠키/분석 동의 배너 — #app 바깥(회전 영향 없음), 물리 화면 하단 고정 */
-  .consent{position:fixed;left:0;right:0;bottom:0;z-index:100000;
-    background:#26303f;color:#fff;padding:14px 16px calc(14px + env(safe-area-inset-bottom));
-    display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;
-    font:500 13px/1.5 system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
-    box-shadow:0 -8px 30px rgba(0,0,0,.28);}
-  .consent[hidden]{display:none;}
-  .consent .consent-msg{flex:1 1 260px;min-width:220px;color:#e8edf5;}
-  .consent .consent-msg b{color:#fff;font-weight:800;}
-  .consent .consent-btns{flex:0 0 auto;display:flex;gap:8px;margin-left:auto;}
-  .consent .consent-btns button{border:none;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13px;cursor:pointer;}
-  .consent #consentDeny{background:rgba(255,255,255,.14);color:#fff;}
-  .consent #consentAccept{background:#5a5ad6;color:#fff;}
-  .consent #consentAccept:active,.consent #consentDeny:active{transform:translateY(1px);}
-
-  /* observe-mode banner */
-  .observe{position:absolute;left:50%;top:calc(100px + env(safe-area-inset-top));transform:translateX(-50%);z-index:5;
-    background:rgba(38,48,63,.9);color:#fff;font-size:12px;font-weight:700;padding:7px 14px;border-radius:20px;
-    display:none;align-items:center;gap:7px;box-shadow:var(--shadow);}
-  .observe.show{display:flex;animation:pop .22s ease;}
-  .observe svg{width:14px;height:14px;}
-
   /* 위 보기 칸별 개수 on/off 토글 (항상 노출, dock 한 줄에 배치) */
   .counttoggle{display:inline-flex;align-items:center;gap:6px;background:var(--panel);color:var(--accent-ink);    border:none;border-radius:20px;box-shadow:var(--shadow);padding:8px 15px;font-weight:800;font-size:12.5px;cursor:pointer;}
   .counttoggle svg{width:16px;height:16px;}
@@ -269,11 +259,7 @@
 
   <div class="topleft">
     <div class="brand">
-      <svg class="glyph" viewBox="0 0 32 32" fill="none">
-        <path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/>
-        <path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/>
-        <path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/>
-      </svg>
+      <img class="glyph" src="../assets/img/brand-glyph.svg" alt="" role="presentation">
       <div class="t"><b id="brandName">CubeNest</b><span>쌓기나무 3D 학습</span></div>
     </div>
     <div class="compass"><svg id="compassSvg" viewBox="0 0 74 74"></svg></div>
@@ -430,6 +416,7 @@
   </div>
 </div>
 
+<script src="../assets/js/consent.js"></script>
 <script>
 "use strict";
 /* 브라우저 언어에 따라 브랜드 표기 전환: 한국어 → 큐브네스트 / 그 외 → CubeNest */
@@ -447,54 +434,6 @@ const FEEDBACK_FORM_URL     = 'https://forms.gle/hnEmkt5k1PoANYGr6';   // 기본
 const FEEDBACK_VIEWFORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLScvswwmCyEvMfiS3uuKfqiRSBqN58gdN0_w0MBjJJHLm4-8CQ/viewform'; // 미리채우기용 정식 주소
 /* 질문6(오류 신고)의 entry ID. 폼 편집 → ⋮ → '미리 채워진 링크 가져오기'로 얻어 넣으세요. 예: 'entry.123456789' (빈 값이면 미리채우기 없이 폼만 열림) */
 const FEEDBACK_ENTRY_BUG    = 'entry.1124217685';
-
-/* ===== 배포 설정 (GA4 계측) ===== */
-/* GA4 측정 ID. 예: 'G-XXXXXXXXXX' (빈 값이면 계측 비활성). 동의 후에만 로드됩니다. */
-const GA4_ID = 'G-1QX0F9RNGX';
-/* 동의(opt-in): '동의' 전에는 GA 미로드. 동의는 영구, 거부는 24시간 후 만료(재질문). localStorage 저장. */
-const CONSENT_DENY_TTL = 24*60*60*1000;   // 거부 만료: 24시간
-function getConsent(){
-  try{
-    const raw = localStorage.getItem('cubenest_consent');
-    if(!raw) return null;
-    if(raw === 'granted') return 'granted';
-    if(raw.indexOf('denied:') === 0){
-      const t = Number(raw.slice(7));
-      return (Number.isFinite(t) && Date.now()-t < CONSENT_DENY_TTL) ? 'denied' : null;  // 만료 시 재질문
-    }
-    return null;
-  }catch(e){ return null; }
-}
-function setConsent(v){
-  try{ localStorage.setItem('cubenest_consent', v==='granted' ? 'granted' : ('denied:'+Date.now())); }catch(e){}
-}
-function loadGA(){
-  if(!GA4_ID || window.__gaLoaded) return;
-  window.__gaLoaded = true;
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function(){ dataLayer.push(arguments); };
-  gtag('js', new Date());
-  gtag('consent','default',{ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied', analytics_storage:'granted'});
-  gtag('config', GA4_ID);
-  const s=document.createElement('script'); s.async=true;
-  s.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(GA4_ID);
-  document.head.appendChild(s);
-}
-const consentEl=document.getElementById('consent');
-function consentDecide(v){
-  setConsent(v);
-  if(consentEl) consentEl.hidden=true;
-  if(v==='granted'){ loadGA(); try{ track('consent_granted'); }catch(e){} }
-}
-(function initConsent(){
-  const accept=document.getElementById('consentAccept'), deny=document.getElementById('consentDeny');
-  if(accept) accept.addEventListener('click',()=>consentDecide('granted'));
-  if(deny)   deny.addEventListener('click',()=>consentDecide('denied'));
-  if(!GA4_ID) return;                                  // GA 미설정이면 배너 불필요
-  const c=getConsent();
-  if(c==='granted') loadGA();                          // 이전에 동의 → 바로 로드
-  else if(!c && consentEl) consentEl.hidden=false;     // 이력 없음(또는 거부 24시간 만료) → 배너 표시
-})();
 
 /* ============================================================
    쌓기나무 3D 학습 도구 — MVP
@@ -861,16 +800,14 @@ function gotoView(name){
     from:{theta:sph.theta,phi:sph.phi,radius:sph.radius},
     to:{theta:tt,phi:v.phi,radius:defaultRadius()},
     t:0, dur:520,
-    onEnd:()=>{ aligned=true; alignedAxis=v.axis; setOrthoFrustum(); updateObserveUI(); refreshTopCountsVisibility(); }
+    onEnd:()=>{ aligned=true; alignedAxis=v.axis; setOrthoFrustum(); refreshTopCountsVisibility(); }
   };
   setActiveViewBtn(name);
-  updateObserveUI();
 }
 function unlockToFree(animate){
   aligned=false; alignedAxis=null; activeCam=orthoCam;
   desiredUp.set(0,1,0);
   setActiveViewBtn('free');
-  updateObserveUI();
   refreshTopCountsVisibility();
   if(animate){
     userZoomed=false;
@@ -881,8 +818,6 @@ function unlockToFree(animate){
 function setActiveViewBtn(name){
   viewSeg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.view===name));
 }
-function updateObserveUI(){ /* 관찰 배너 제거됨 (no-op) */ }
-
 /* ============================================================
    입력 (터치 + 마우스)
    ============================================================ */

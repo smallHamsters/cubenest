@@ -1,0 +1,24 @@
+/* CubeNest — 공유 디자인 토큰. index.html / playground/index.html 공용. */
+:root{
+  --panel:#ffffff;
+  --panel-2:#f7f9fc;
+  --bg:#eef2f7;
+  --ink:#182233;
+  --muted:#6a7789;
+  --muted-2:#8a95a6;
+  --line:#e5eaf1;
+  --line-2:#eef2f7;
+  --accent:#3f3fbf;
+  --accent-ink:#2d2d95;
+  --accent-soft:#ecebfb;
+  --add:#0f9d58;
+  --add-soft:#e6f5ec;
+  --del:#e0466b;
+  --del-soft:#fce9ee;
+  --shadow:0 6px 22px rgba(24,34,51,.12), 0 1px 3px rgba(24,34,51,.08);
+  --shadow-sm:0 2px 8px rgba(24,34,51,.10);
+  --shadow-lg:0 18px 50px rgba(24,34,51,.16), 0 3px 10px rgba(24,34,51,.08);
+  --r:16px;
+  --r-lg:22px;
+  --font:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+}

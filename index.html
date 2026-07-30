@@ -2,29 +2,34 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<!-- viewport: 일반 스크롤 페이지라 pinch-zoom 허용(확대/축소 제한 없음). playground는 터치 드래그 3D 앱이라 별도로 확대 방지 설정을 둠. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>큐브네스트 · 쌓기나무 3D 학습 — 개수·부피·겉넓이</title>
-<meta name="description" content="쌓기나무(단위 정육면체)를 3D로 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 배우는 학습 도구. 초등 6학년 '공간과 입체'용. 설치 없이 브라우저에서 바로, 만든 모양은 링크로 그대로 공유돼요.">
+<meta name="description" content="쌓기나무(단위 정육면체)를 3D로 돌려 보며 개수·부피·겉넓이를 배우는 학습 도구. 사고력 수학부터 초등 6학년 '공간과 입체' 교과까지 한 번에. 설치 없이 브라우저에서 바로, 만든 모양은 링크로 그대로 공유돼요.">
 <meta name="theme-color" content="#e9eef4">
 <link rel="canonical" href="https://smallhamsters.github.io/cubenest/">
 
-<!-- ▼ 링크 미리보기(Open Graph) · 마스터 브랜드 카드 재사용(마스터 2.1·7장). 공용 OG 이미지: public/cubenest-og.png(1200×630, 절대 URL 공유). canonical·og:url은 이 페이지 자기 URL(/cubenest/). -->
+<!-- ▼ 링크 미리보기(Open Graph) · 마스터 브랜드 카드 재사용(마스터 2.1·7장). 공용 OG 이미지: assets/img/cubenest-og.png(1200×630, 절대 URL 공유). canonical·og:url은 이 페이지 자기 URL(/cubenest/). -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CubeNest">
-<meta property="og:title" content="큐브네스트 · 쌓기나무 3D 학습">
+<meta property="og:title" content="큐브네스트 · 쌓기나무 3D 학습 — 개수·부피·겉넓이">
 <meta property="og:description" content="쌓기나무를 3D로 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 배워요. 만든 모양은 링크 하나로 그대로 공유됩니다.">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:url" content="https://smallhamsters.github.io/cubenest/">
-<meta property="og:image" content="https://smallhamsters.github.io/cubenest/public/cubenest-og.png">
+<meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="CubeNest — 쌓기나무 3D 학습">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="큐브네스트 · 쌓기나무 3D 학습">
+<meta name="twitter:title" content="큐브네스트 · 쌓기나무 3D 학습 — 개수·부피·겉넓이">
 <meta name="twitter:description" content="쌓기나무를 3D로 쌓고 돌려 보며 개수·부피·겉넓이를 배워요.">
-<meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/public/cubenest-og.png">
+<meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
 
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/consent.css">
+<!-- 히어로 3D 뷰어용 (playground 정본과 동일 버전) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <!-- ▼ 교육용 구조화 데이터(JSON-LD) -->
 <script type="application/ld+json">
@@ -44,7 +49,7 @@
       "@type": "WebApplication",
       "name": "CubeNest 쌓기나무 3D 학습",
       "url": "https://smallhamsters.github.io/cubenest/playground/",
-      "image": "https://smallhamsters.github.io/cubenest/public/cubenest-og.png",
+      "image": "https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png",
       "applicationCategory": "EducationalApplication",
       "operatingSystem": "Web browser",
       "inLanguage": "ko-KR",
@@ -65,33 +70,6 @@
 </script>
 
 <style>
-  :root{
-    --panel:#ffffff;
-    --panel-2:#f7f9fc;
-    --bg:#eef2f7;
-    --bg-2:#e9eef4;
-    --ink:#182233;
-    --muted:#6a7789;
-    --muted-2:#8a95a6;
-    --line:#e5eaf1;
-    --line-2:#eef2f7;
-    --accent:#3f3fbf;
-    --accent-ink:#2d2d95;
-    --accent-soft:#ecebfb;
-    --add:#0f9d58;
-    --add-soft:#e6f5ec;
-    --del:#e0466b;
-    --wood-top:#e6b980;
-    --wood-left:#c8965a;
-    --wood-right:#d8a76e;
-    --wood-edge:#b9834a;
-    --shadow:0 6px 22px rgba(24,34,51,.12), 0 1px 3px rgba(24,34,51,.08);
-    --shadow-sm:0 2px 8px rgba(24,34,51,.10);
-    --shadow-lg:0 18px 50px rgba(24,34,51,.16), 0 3px 10px rgba(24,34,51,.08);
-    --r:16px;
-    --r-lg:22px;
-    --font:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
-  }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html{scroll-behavior:smooth;}
   body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);
@@ -126,6 +104,10 @@
   .top-cta:hover{background:var(--accent-ink);box-shadow:0 5px 16px rgba(63,63,191,.36);}
   .top-cta:active{transform:translateY(1px);}
   .top-cta svg{width:15px;height:15px;}
+  .topnav{display:flex;gap:6px;margin:0 auto;}
+  .topnav a{font-size:14px;font-weight:700;color:var(--muted);padding:8px 12px;border-radius:9px;
+    transition:color .15s,background .15s;}
+  .topnav a:hover{color:var(--accent-ink);background:var(--accent-soft);}
 
   /* ---------- hero ---------- */
   .hero{position:relative;overflow:hidden;
@@ -156,34 +138,34 @@
   .hero-note{margin:18px 0 0;font-size:12.5px;color:var(--muted-2);display:flex;align-items:center;gap:7px;}
   .hero-note svg{width:14px;height:14px;flex:0 0 auto;color:var(--add);}
 
-  /* hero visual: 나무 쌓기나무 스택 */
+  /* hero visual: 돌려보는 3D 뷰어 + 아래 스탯 */
   .hero-visual{position:relative;display:flex;align-items:center;justify-content:center;min-height:300px;}
-  .stack-card{position:relative;width:min(380px,100%);aspect-ratio:1/1;
+  .viewer{width:min(400px,100%);display:flex;flex-direction:column;gap:12px;}
+  .viewer-card{position:relative;aspect-ratio:1/1;
     background:linear-gradient(160deg,#ffffff 0%,#f4f7fb 100%);
     border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow-lg);
-    display:grid;place-items:center;overflow:hidden;}
-  .stack-card::before{content:"";position:absolute;inset:0;
+    overflow:hidden;touch-action:none;cursor:grab;}
+  .viewer-card:active{cursor:grabbing;}
+  .viewer-card::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
     background-image:linear-gradient(var(--line-2) 1px,transparent 1px),linear-gradient(90deg,var(--line-2) 1px,transparent 1px);
     background-size:34px 34px;background-position:center;opacity:.6;
-    -webkit-mask-image:radial-gradient(circle at 50% 42%,#000 40%,transparent 78%);
-            mask-image:radial-gradient(circle at 50% 42%,#000 40%,transparent 78%);}
-  .stack-float{position:relative;width:64%;animation:floaty 6s ease-in-out infinite;will-change:transform;}
-  .stack-float .shadow{position:absolute;left:50%;bottom:-6%;width:74%;height:14%;transform:translateX(-50%);
-    background:radial-gradient(ellipse at center,rgba(120,90,40,.28),transparent 70%);filter:blur(3px);z-index:0;}
-  #heroStack{position:relative;z-index:1;overflow:visible;filter:drop-shadow(0 8px 14px rgba(120,90,40,.22));}
-  #heroStack .cu{transform-origin:center;animation:cubeIn .5s cubic-bezier(.2,.7,.3,1) backwards;
-    animation-delay:calc(var(--i) * .085s + .15s);}
-  .stack-badge{position:absolute;right:14px;bottom:14px;z-index:2;background:var(--panel);
-    border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow);
-    padding:8px 12px;display:flex;gap:14px;align-items:center;}
-  .stack-badge .m{text-align:center;line-height:1.05;}
-  .stack-badge .m .k{font-size:9.5px;color:var(--muted);font-weight:700;letter-spacing:.02em;}
-  .stack-badge .m .v{font-size:17px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums;}
-  .stack-badge .m .v small{font-size:10px;color:var(--muted);font-weight:600;margin-left:1px;}
-  .stack-badge .sep{width:1px;align-self:stretch;background:var(--line);}
-
-  @keyframes cubeIn{from{opacity:0;transform:translateY(-16px) scale(.94);}to{opacity:1;transform:none;}}
-  @keyframes floaty{0%,100%{transform:translateY(0) rotate(0);}50%{transform:translateY(-11px) rotate(.4deg);}}
+    -webkit-mask-image:radial-gradient(circle at 50% 46%,#000 42%,transparent 80%);
+            mask-image:radial-gradient(circle at 50% 46%,#000 42%,transparent 80%);}
+  #heroCanvas{position:relative;z-index:1;display:block;width:100%;height:100%;}
+  .viewer-hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:2;
+    display:inline-flex;align-items:center;gap:6px;pointer-events:none;
+    background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:999px;
+    padding:6px 12px;font-size:11.5px;font-weight:700;color:var(--muted);box-shadow:var(--shadow-sm);
+    transition:opacity .4s;}
+  .viewer-hint svg{width:14px;height:14px;color:var(--accent);}
+  .viewer-hint.hide{opacity:0;}
+  .viewer-stats{display:flex;gap:10px;}
+  .viewer-stats .vs{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    box-shadow:var(--shadow-sm);padding:11px 8px 10px;text-align:center;display:flex;flex-direction:column;gap:2px;}
+  .viewer-stats .vs .k{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.02em;}
+  .viewer-stats .vs .v{font-size:14px;font-weight:700;color:var(--muted);}
+  .viewer-stats .vs .v b{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;margin-right:1px;}
 
   /* ---------- section shell ---------- */
   section.band{padding:clamp(56px,9vw,100px) 0;}
@@ -277,30 +259,19 @@
   .foot-bottom .privacy{display:inline-flex;align-items:center;gap:6px;}
   .foot-bottom .privacy svg{width:14px;height:14px;color:#9aa6ba;}
 
-  /* ---------- consent (playground와 동일 키·스타일) ---------- */
-  .consent{position:fixed;left:0;right:0;bottom:0;z-index:100000;
-    background:#26303f;color:#fff;padding:14px 16px calc(14px + env(safe-area-inset-bottom));
-    display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;
-    font:500 13px/1.5 var(--font);box-shadow:0 -8px 30px rgba(0,0,0,.28);}
-  .consent[hidden]{display:none;}
-  .consent .consent-msg{flex:1 1 260px;min-width:220px;color:#e8edf5;}
-  .consent .consent-msg b{color:#fff;font-weight:800;}
-  .consent .consent-btns{flex:0 0 auto;display:flex;gap:8px;margin-left:auto;}
-  .consent .consent-btns button{border:none;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13px;cursor:pointer;font-family:inherit;}
-  .consent #consentDeny{background:rgba(255,255,255,.14);color:#fff;}
-  .consent #consentAccept{background:#5a5ad6;color:#fff;}
-  .consent #consentAccept:active,.consent #consentDeny:active{transform:translateY(1px);}
-
   /* ---------- reveal on scroll ---------- */
   .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.3,1);}
   .reveal.in{opacity:1;transform:none;}
 
   /* ---------- responsive ---------- */
+  @media (max-width:960px){
+    .topnav{display:none;}
+  }
   @media (max-width:860px){
-    .hero-grid{grid-template-columns:1fr;gap:8px;padding-top:34px;}
+    .hero-grid{grid-template-columns:1fr;gap:14px;padding-top:34px;}
     .hero-copy{max-width:none;order:1;}
     .hero-visual{order:0;min-height:auto;margin-bottom:6px;}
-    .stack-card{width:min(320px,86%);aspect-ratio:1/.92;}
+    .viewer{width:min(340px,88%);}
     .fgrid{grid-template-columns:1fr 1fr;}
     .explain{grid-template-columns:1fr;}
     .seo-grid{grid-template-columns:1fr;}
@@ -311,12 +282,9 @@
     .brand .t span{display:none;}
     .hero-btns{gap:10px;}
     .btn{flex:1 1 auto;}
-    .stack-badge{padding:7px 10px;gap:10px;}
   }
   @media (prefers-reduced-motion:reduce){
     html{scroll-behavior:auto;}
-    .stack-float{animation:none;}
-    #heroStack .cu{animation:none;}
     .reveal{opacity:1;transform:none;transition:none;}
     *{scroll-behavior:auto;}
   }
@@ -328,13 +296,15 @@
 <header class="top" id="topbar">
   <div class="wrap topin">
     <a class="brand" href="./" aria-label="큐브네스트 홈">
-      <svg class="glyph" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-        <path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/>
-        <path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/>
-        <path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/>
-      </svg>
+      <img class="glyph" src="assets/img/brand-glyph.svg" alt="" role="presentation">
       <span class="t"><b id="brandName">CubeNest</b><span>쌓기나무 3D 학습</span></span>
     </a>
+    <nav class="topnav" aria-label="주요 섹션">
+      <a href="#features">기능</a>
+      <a href="#coverage">학습 범위</a>
+      <a href="#how">배우는 원리</a>
+      <a href="#for">활용</a>
+    </nav>
     <a class="top-cta" id="topCta" href="playground/">
       바로 해보기
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -347,10 +317,8 @@
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <span class="hero-tag">
-        <svg class="dot" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-          <path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/>
-        </svg>
-        초등 6학년 · 공간과 입체
+        <img class="dot" src="assets/img/brand-glyph.svg" alt="" role="presentation">
+        사고력 수학부터 교과까지
       </span>
       <h1 class="hero-h">쌓고 돌려 보며 익히는 <span class="hl">쌓기나무</span></h1>
       <p class="hero-sub">블록을 3D로 직접 쌓고 위·앞·옆에서 관찰하면 개수·부피·겉넓이가 바로 계산돼요. 만든 모양은 링크 하나로 그대로 열립니다. 설치도, 준비물도 없어요.</p>
@@ -367,27 +335,20 @@
       </p>
     </div>
 
-    <div class="hero-visual" aria-hidden="false">
-      <div class="stack-card">
-        <div class="stack-float">
-          <div class="shadow"></div>
-          <svg id="heroStack" viewBox="-34 -83 128 194" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="쌓기나무 10개를 쌓아 만든 3D 입체 모양">
-<g class="cu" style="--i:0"><path d="M-30,0 L0,15 L0,47 L-30,32 Z" fill="#c8965a"/><path d="M30,0 L0,15 L0,47 L30,32 Z" fill="#d8a76e"/><path d="M0,-15 L30,0 L0,15 L-30,0 Z" fill="#e6b980"/><path d="M0,-15 L30,0 L0,15 L-30,0 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
-<g class="cu" style="--i:1"><path d="M-30,-32 L0,-17 L0,15 L-30,0 Z" fill="#c8965a"/><path d="M30,-32 L0,-17 L0,15 L30,0 Z" fill="#d8a76e"/><path d="M0,-47 L30,-32 L0,-17 L-30,-32 Z" fill="#e6b980"/><path d="M0,-47 L30,-32 L0,-17 L-30,-32 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
-<g class="cu" style="--i:2"><path d="M-30,-64 L0,-49 L0,-17 L-30,-32 Z" fill="#c8965a"/><path d="M30,-64 L0,-49 L0,-17 L30,-32 Z" fill="#d8a76e"/><path d="M0,-79 L30,-64 L0,-49 L-30,-64 Z" fill="#e6b980"/><path d="M0,-79 L30,-64 L0,-49 L-30,-64 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
-<g class="cu" style="--i:3"><path d="M0,15 L30,30 L30,62 L0,47 Z" fill="#c8965a"/><path d="M60,15 L30,30 L30,62 L60,47 Z" fill="#d8a76e"/><path d="M30,0 L60,15 L30,30 L0,15 Z" fill="#e6b980"/><path d="M30,0 L60,15 L30,30 L0,15 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
-<g class="cu" style="--i:4"><path d="M0,-17 L30,-2 L30,30 L0,15 Z" fill="#c8965a"/><path d="M60,-17 L30,-2 L30,30 L60,15 Z" fill="#d8a76e"/><path d="M30,-32 L60,-17 L30,-2 L0,-17 Z" fill="#e6b980"/><path d="M30,-32 L60,-17 L30,-2 L0,-17 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
-<g class="cu" style="--i:5"><path d="M-30,30 L0,45 L0,77 L-30,62 Z" fill="#c8965a"/><path d="M30,30 L0,45 L0,77 L30,62 Z" fill="#d8a76e"/><path d="M0,15 L30,30 L0,45 L-30,30 Z" fill="#e6b980"/><path d="M0,15 L30,30 L0,45 L-30,30 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
-<g class="cu" style="--i:6"><path d="M30,30 L60,45 L60,77 L30,62 Z" fill="#c8965a"/><path d="M90,30 L60,45 L60,77 L90,62 Z" fill="#d8a76e"/><path d="M60,15 L90,30 L60,45 L30,30 Z" fill="#e6b980"/><path d="M60,15 L90,30 L60,45 L30,30 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
-<g class="cu" style="--i:7"><path d="M-30,-2 L0,13 L0,45 L-30,30 Z" fill="#c8965a"/><path d="M30,-2 L0,13 L0,45 L30,30 Z" fill="#d8a76e"/><path d="M0,-17 L30,-2 L0,13 L-30,-2 Z" fill="#e6b980"/><path d="M0,-17 L30,-2 L0,13 L-30,-2 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
-<g class="cu" style="--i:8"><path d="M0,45 L30,60 L30,92 L0,77 Z" fill="#c8965a"/><path d="M60,45 L30,60 L30,92 L60,77 Z" fill="#d8a76e"/><path d="M30,30 L60,45 L30,60 L0,45 Z" fill="#e6b980"/><path d="M30,30 L60,45 L30,60 L0,45 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
-<g class="cu" style="--i:9"><path d="M-30,60 L0,75 L0,107 L-30,92 Z" fill="#c8965a"/><path d="M30,60 L0,75 L0,107 L30,92 Z" fill="#d8a76e"/><path d="M0,45 L30,60 L0,75 L-30,60 Z" fill="#e6b980"/><path d="M0,45 L30,60 L0,75 L-30,60 Z" fill="none" stroke="#b9834a" stroke-width="1" stroke-opacity=".35"/></g>
-          </svg>
+    <div class="hero-visual">
+      <div class="viewer">
+        <div class="viewer-card">
+          <canvas id="heroCanvas" aria-label="쌓기나무로 만든 입체를 끌어서 돌려볼 수 있는 3D 화면"></canvas>
+          <span class="viewer-hint" id="viewerHint">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3m13.5-6.5-2 2m-9 9 2-2m0-9-2-2m11 11-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            끌어서 돌려보기
+          </span>
         </div>
-        <div class="stack-badge" aria-hidden="true">
-          <div class="m"><div class="k">개수</div><div class="v">10<small>개</small></div></div>
-          <div class="sep"></div>
-          <div class="m"><div class="k">겉넓이</div><div class="v">36<small>㎠</small></div></div>
+        <!-- 아래 10/10/36은 heroViewer()의 CELLS와 같은 모양의 초기값. CELLS를 바꾸면 이 세 값도 같이 바꿀 것 (stats() IIFE가 실행 즉시 덮어쓰지만, JS 실행 전/실패 시 폴백으로 노출됨). -->
+        <div class="viewer-stats" role="group" aria-label="이 입체의 개수·부피·겉넓이">
+          <div class="vs"><span class="k">개수</span><span class="v"><b id="vsCount">10</b>개</span></div>
+          <div class="vs"><span class="k">부피</span><span class="v"><b id="vsVol">10</b>㎤</span></div>
+          <div class="vs"><span class="k">겉넓이</span><span class="v"><b id="vsSurf">36</b>㎠</span></div>
         </div>
       </div>
     </div>
@@ -495,35 +456,30 @@
   </div>
 </section>
 
-<!-- ===================== SEO 콘텐츠 ===================== -->
-<section class="band white" id="learn">
+<!-- ===================== 학습 범위 (사고력수학~교과) ===================== -->
+<section class="band white" id="coverage">
   <div class="wrap">
     <div class="sec-head reveal">
-      <span class="eyebrow">개념 정리</span>
-      <h2 class="sec">쌓기나무, 이렇게 이해하면 쉬워요</h2>
-      <p class="lead">초등 6학년 '공간과 입체' 단원에서 자주 막히는 개념을 짧게 짚었어요. 읽고 나서 바로 도구로 확인해 보세요.</p>
+      <span class="eyebrow">학습 범위</span>
+      <h2 class="sec">사고력 수학부터 학교 교과까지, 한 도구로</h2>
+      <p class="lead">쌓기나무 하나로 창의·사고력 문제부터 교과서 '공간과 입체'까지 이어서 익혀요. 학원·가정·학교 어디서든 같은 화면으로, 아이 수준에 맞춰 자연스럽게 넓혀 갑니다.</p>
     </div>
-    <div class="seo-grid">
-      <div class="seo-item reveal">
-        <h3><svg class="cube" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/></svg>쌓기나무란?</h3>
-        <p><strong>쌓기나무</strong>는 모든 모서리 길이가 같은 <strong>단위 정육면체</strong>예요. 이 정육면체를 여러 개 쌓아 만든 입체를 위·앞·옆에서 관찰하고, 몇 개를 썼는지·부피·겉넓이가 얼마인지 알아보는 것이 이 단원의 핵심입니다.</p>
-        <p>공중에 뜬 나무는 없다고 보기 때문에, 각 자리의 나무는 바닥부터 층층이 쌓입니다. 그래서 '어디에 몇 층'만 정하면 모양이 완성돼요.</p>
-      </div>
-      <div class="seo-item reveal">
-        <h3><svg class="cube" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/></svg>위·앞·옆 보는 법</h3>
-        <p><strong>위</strong>에서 보면 바닥에 어떤 칸이 채워졌는지, 각 칸이 몇 층인지 보여요. <strong>앞</strong>과 <strong>옆</strong>에서 보면 각 줄에서 가장 높은 층만 그림자로 남습니다.</p>
-        <p>세 방향 그림을 맞추면 하나의 입체가 그려져요. 앞·옆만 주어질 때는 뒤에 숨은 나무 때문에 개수에 <strong>범위</strong>가 생기니, 최소와 최대를 함께 생각하는 연습이 중요합니다.</p>
-      </div>
-      <div class="seo-item reveal">
-        <h3><svg class="cube" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/></svg>겉넓이·부피 구하기</h3>
-        <p><strong>부피</strong>는 쉬워요. 나무 개수에 정육면체 한 개의 부피(모서리³)를 곱하면 됩니다. <strong>겉넓이</strong>는 바깥으로 드러난 면만 세는데, 위·앞·옆에서 보이는 면을 각각 세어 <strong>2 × (위 + 앞 + 옆)</strong>으로 구하면 바닥면까지 빠짐없이 계산돼요.</p>
-        <p>맞닿아 붙은 면은 겉으로 드러나지 않으니 빼야 합니다. 도구는 이 과정을 단계별로 펼쳐 보여줘요.</p>
-      </div>
-      <div class="seo-item reveal">
-        <h3><svg class="cube" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/></svg>공간과 입체 (초6)</h3>
-        <p>초등학교 6학년 <strong>공간과 입체</strong> 단원은 평면 그림과 입체를 오가는 힘을 기릅니다. 머릿속으로 돌려 보기 어렵다면, 실제로 돌려 보면서 감을 잡는 게 가장 빨라요.</p>
-        <p>큐브네스트는 화면에서 직접 쌓고 돌려 보며 이 감각을 연습하도록 만든 도구입니다. 개념을 읽었다면 이제 손으로 확인해 보세요.</p>
-      </div>
+    <div class="fgrid">
+      <article class="fcard reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8.9.9 1.5l.2 1.1h4.8l.2-1.1c.1-.6.4-1.1.9-1.5A6 6 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9.5 20.5h5M10 18h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+        <h3>사고력·창의 수학</h3>
+        <p>규칙 없이 자유롭게 쌓고 돌려 보며 공간 감각과 추론력을 키워요. 영재·경시의 '보이지 않는 나무 찾기'까지 이어집니다.</p>
+      </article>
+      <article class="fcard reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v15H5.5A1.5 1.5 0 0 0 4 20.5V5.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v15h5.5A1.5 1.5 0 0 1 20 20.5V5.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+        <h3>교과 연계 · 공간과 입체</h3>
+        <p>위·앞·옆 투상과 개수·부피·겉넓이 등 초등 6학년 교과서 핵심 활동을 그대로. 수업 진도에 맞춰 바로 활용해요.</p>
+      </article>
+      <article class="fcard g reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 3 7.5 12 12l9-4.5L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M3 12l9 4.5L21 12M3 16.5 12 21l9-4.5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg></div>
+        <h3>심화 · 응용</h3>
+        <p>최소·최대 개수, 숨은 나무(은면)처럼 한 단계 깊은 문제까지. 같은 도구 안에서 매끄럽게 확장됩니다.</p>
+      </article>
     </div>
   </div>
 </section>
@@ -578,7 +534,7 @@
     <div class="foot-top">
       <div class="foot-brand">
         <div class="brand" style="gap:9px">
-          <svg class="glyph" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M16 3 L28 9 L16 15 L4 9 Z" fill="#e6b980"/><path d="M4 9 L16 15 L16 29 L4 23 Z" fill="#c8965a"/><path d="M28 9 L16 15 L16 29 L28 23 Z" fill="#d8a76e"/></svg>
+          <img class="glyph" src="assets/img/brand-glyph.svg" alt="" role="presentation">
           <span class="t"><b id="brandNameFoot">CubeNest</b><span>쌓기나무 3D 학습</span></span>
         </div>
         <p>쌓기나무를 3D로 쌓고 관찰하며 개수·부피·겉넓이를 배우는 웹 학습 도구.</p>
@@ -588,7 +544,7 @@
           <h4>학습 도구</h4>
           <a id="footPlay" href="playground/">쌓기나무 도구</a>
           <a href="#features">기능 소개</a>
-          <a href="#learn">개념 정리</a>
+          <a href="#coverage">학습 범위</a>
         </div>
         <div class="foot-col">
           <h4>정보</h4>
@@ -617,6 +573,7 @@
   </div>
 </div>
 
+<script src="assets/js/consent.js"></script>
 <script>
 /* ============================================================
    CubeNest — landing (루트 /)
@@ -628,10 +585,6 @@
    루트 절대경로('/playground/')는 smallhamsters.github.io/playground/로 새어 깨지므로 금지. */
 const PLAYGROUND_URL  = 'playground/';
 const FEEDBACK_URL    = 'https://forms.gle/hnEmkt5k1PoANYGr6';
-/* GA4 측정 ID (playground와 동일). 빈 값이면 계측·배너 비활성. 동의 후에만 로드. */
-const GA4_ID          = 'G-1QX0F9RNGX';
-const CONSENT_DENY_TTL = 24*60*60*1000;  // 거부 만료: 24시간
-
 /* 도구 경로를 실제 버튼들에 반영 */
 ['topCta','heroCta','finalCta','footPlay'].forEach(id=>{
   const a=document.getElementById(id); if(a) a.setAttribute('href', PLAYGROUND_URL);
@@ -666,49 +619,116 @@ document.getElementById('yr').textContent = new Date().getFullYear();
   items.forEach(el=>io.observe(el));
 })();
 
-/* ===== 동의(opt-in) · GA4 — playground와 동일 키(cubenest_consent) ===== */
-function getConsent(){
-  try{
-    const raw = localStorage.getItem('cubenest_consent');
-    if(!raw) return null;
-    if(raw === 'granted') return 'granted';
-    if(raw.indexOf('denied:') === 0){
-      const t = Number(raw.slice(7));
-      return (Number.isFinite(t) && Date.now()-t < CONSENT_DENY_TTL) ? 'denied' : null;
-    }
-    return null;
-  }catch(e){ return null; }
-}
-function setConsent(v){
-  try{ localStorage.setItem('cubenest_consent', v==='granted' ? 'granted' : ('denied:'+Date.now())); }catch(e){}
-}
-function loadGA(){
-  if(!GA4_ID || window.__gaLoaded) return;
-  window.__gaLoaded = true;
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function(){ dataLayer.push(arguments); };
-  gtag('js', new Date());
-  gtag('consent','default',{ad_storage:'denied', ad_user_data:'denied', ad_personalization:'denied', analytics_storage:'granted'});
-  gtag('config', GA4_ID);
-  const s=document.createElement('script'); s.async=true;
-  s.src='https://www.googletagmanager.com/gtag/js?id='+encodeURIComponent(GA4_ID);
-  document.head.appendChild(s);
-}
-const consentEl=document.getElementById('consent');
-function consentDecide(v){
-  setConsent(v);
-  if(consentEl) consentEl.hidden=true;
-  if(v==='granted') loadGA();
-}
-(function initConsent(){
-  const accept=document.getElementById('consentAccept'), deny=document.getElementById('consentDeny');
-  if(accept) accept.addEventListener('click',()=>consentDecide('granted'));
-  if(deny)   deny.addEventListener('click',()=>consentDecide('denied'));
-  if(!GA4_ID) return;
-  const c=getConsent();
-  if(c==='granted') loadGA();
-  else if(!c && consentEl) consentEl.hidden=false;
+/* ===== 히어로 3D 뷰어 — playground 렌더링 정본 재사용(직교·목재·조명) ===== */
+(function heroViewer(){
+  const canvas = document.getElementById('heroCanvas');
+  if(!canvas || !window.THREE) return;
+
+  /* 고정 모양: 히어로 스탯과 동일한 쌓기나무 10개 — h(x,z) */
+  const CELLS = [
+    [0,0,0],[0,1,0],[0,2,0],
+    [1,0,0],[1,1,0],
+    [1,0,1],[1,1,1],
+    [2,0,0],
+    [2,0,1],
+    [2,0,2]
+  ];
+
+  /* 스탯(정확식) 계산 → DOM 반영: 개수 / 부피 / 겉넓이 */
+  (function stats(){
+    const set=new Set(CELLS.map(c=>c.join(',')));
+    let pairs=0; const dirs=[[1,0,0],[0,1,0],[0,0,1]];
+    for(const [x,y,z] of CELLS) for(const [dx,dy,dz] of dirs)
+      if(set.has((x+dx)+','+(y+dy)+','+(z+dz))) pairs++;
+    const count=CELLS.length, edge=1;
+    const volume=count*edge*edge*edge;
+    const surface=(6*count-2*pairs)*edge*edge;
+    const put=(id,v)=>{const el=document.getElementById(id); if(el) el.textContent=v;};
+    put('vsCount',count); put('vsVol',volume); put('vsSurf',surface);
+  })();
+
+  const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, 2));
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const scene = new THREE.Scene();                 // 배경 투명(카드가 비침)
+  const cam = new THREE.OrthographicCamera(-1,1,1,-1,0.1,100);  // 직교(마스터 3.5)
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x9aa7b5, 0.85));
+  scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.7);
+  dir.position.set(6,11,4); dir.castShadow=true;
+  dir.shadow.mapSize.set(1024,1024);
+  dir.shadow.camera.near=1; dir.shadow.camera.far=40;
+  dir.shadow.camera.left=-8; dir.shadow.camera.right=8; dir.shadow.camera.top=8; dir.shadow.camera.bottom=-8;
+  scene.add(dir);
+
+  const group = new THREE.Group(); scene.add(group);
+  const S=1;
+  const boxGeo=new THREE.BoxGeometry(S*0.98,S*0.98,S*0.98);
+  const edgeGeo=new THREE.EdgesGeometry(boxGeo);
+  const mat=new THREE.MeshLambertMaterial({color:0xe4b878});          // playground WOOD
+  const edgeMat=new THREE.LineBasicMaterial({color:0x8a6a3c, transparent:true, opacity:0.5});
+  for(const [x,y,z] of CELLS){
+    const m=new THREE.Mesh(boxGeo, mat); m.position.set(x,y,z); m.castShadow=true; m.receiveShadow=true; group.add(m);
+    const e=new THREE.LineSegments(edgeGeo, edgeMat); e.position.set(x,y,z); group.add(e);
+  }
+  const box=new THREE.Box3().setFromObject(group);
+  const center=box.getCenter(new THREE.Vector3());
+  const sizeV=box.getSize(new THREE.Vector3());
+  group.position.sub(center);
+
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(40,40), new THREE.ShadowMaterial({opacity:0.15}));
+  floor.rotation.x=-Math.PI/2;
+  floor.position.y=box.min.y-center.y-0.001;
+  floor.receiveShadow=true; scene.add(floor);
+
+  const radius=0.5*Math.sqrt(sizeV.x*sizeV.x+sizeV.y*sizeV.y+sizeV.z*sizeV.z);
+  const R=Math.max(6, radius*3);
+  let theta=-0.7, phi=1.02;
+  function place(){
+    cam.position.set(R*Math.sin(phi)*Math.cos(theta), R*Math.cos(phi), R*Math.sin(phi)*Math.sin(theta));
+    cam.up.set(0,1,0); cam.lookAt(0,0,0);
+  }
+  function resize(){
+    const w=canvas.clientWidth||1, h=canvas.clientHeight||1;
+    renderer.setSize(w,h,false);
+    const a=w/h, half=radius*1.18; let hw=half, hh=half;
+    if(a>=1) hw=half*a; else hh=half/a;
+    cam.left=-hw; cam.right=hw; cam.top=hh; cam.bottom=-hh;
+    cam.near=0.1; cam.far=R*4; cam.updateProjectionMatrix();
+  }
+
+  let dragging=false, lastX=0, lastY=0, idleT=0;
+  const hint=document.getElementById('viewerHint');
+  function down(e){ dragging=true; if(hint) hint.classList.add('hide');
+    const p=e.touches?e.touches[0]:e; lastX=p.clientX; lastY=p.clientY; }
+  function move(e){
+    if(!dragging) return;
+    const p=e.touches?e.touches[0]:e;
+    const dx=p.clientX-lastX, dy=p.clientY-lastY; lastX=p.clientX; lastY=p.clientY;
+    theta-=dx*0.01; phi=Math.max(0.28, Math.min(Math.PI-0.28, phi-dy*0.01));
+    idleT=0; if(e.cancelable) e.preventDefault();
+  }
+  function up(){ dragging=false; }
+  canvas.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  canvas.addEventListener('touchstart',down,{passive:true}); canvas.addEventListener('touchmove',move,{passive:false}); window.addEventListener('touchend',up);
+  window.addEventListener('resize',resize);
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(canvas);
+
+  resize(); place();
+  let last=performance.now();
+  (function loop(now){
+    const dt=now-last; last=now;
+    if(!dragging && !reduce){ idleT+=dt; if(idleT>1400) theta-=0.00026*dt; }  // 유휴 시 천천히 자전
+    place(); renderer.render(scene,cam);
+    requestAnimationFrame(loop);
+  })(performance.now());
 })();
+
 </script>
 </body>
 </html>
