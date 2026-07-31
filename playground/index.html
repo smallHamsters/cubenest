@@ -64,7 +64,7 @@
   /* ---- top-left brand + compass ---- */
   .topleft{position:absolute;top:calc(12px + env(safe-area-inset-top)) ;left:12px;display:flex;gap:10px;align-items:stretch;z-index:5;}
   .brand{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);padding:9px 13px 9px 11px;
-    display:flex;align-items:center;gap:9px;}
+    display:flex;align-items:center;gap:9px;text-decoration:none;color:inherit;}
   .brand .glyph{width:26px;height:26px;flex:0 0 auto;}
   .brand .t{line-height:1.05;}
   .brand .t b{font-size:15px;font-weight:800;letter-spacing:-.02em;display:block;}
@@ -211,8 +211,8 @@
   .inputwrap{flex:1.2;display:flex;align-items:center;justify-content:center;gap:5px;background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:0 10px;}
   .inputwrap .cl{font-size:12px;font-weight:800;color:var(--muted);}
   .inputwrap input{width:34px;border:none;background:transparent;font-size:16px;font-weight:800;color:var(--ink);text-align:center;font-variant-numeric:tabular-nums;outline:none;}
-  .inputwrap input::-webkit-outer-spin-button,.inputwrap input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
-  .inputwrap input[type=number]{-moz-appearance:textfield;}
+  .inputwrap input::-webkit-outer-spin-button,.inputwrap input::-webkit-inner-spin-button{-webkit-appearance:none;appearance:none;margin:0;}
+  .inputwrap input[type=number]{-moz-appearance:textfield;appearance:textfield;}
   .inputwrap .unit{font-size:12px;font-weight:700;color:var(--muted);}
 
   /* 의견(피드백) — 우측 하단 */
@@ -235,6 +235,21 @@
   .counttoggle.off{color:var(--muted);}
   .counttoggle.off .eyeon{display:none;}
   .counttoggle.off .eyeoff{display:inline;}
+  .counttoggle.on{background:var(--accent);color:#fff;}
+  /* 펼쳐보기(삼투상) 몰입 모드: 메뉴를 화면 밖으로 물림 + 닫기 버튼 */
+  .topleft,.stats,.rail,.dock,.fab-feedback{transition:transform .34s cubic-bezier(.22,.61,.36,1);}
+  #app.explode-on .topleft{transform:translateX(calc(-100% - 24px));}
+  #app.explode-on .stats{transform:translateX(calc(100% + 24px));}
+  #app.explode-on .rail{transform:translateX(calc(100% + 24px));}
+  #app.explode-on .dock{transform:translateY(calc(100% + 44px));}
+  #app.explode-on .fab-feedback{transform:translateY(calc(100% + 44px));}
+  .explode-exit{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));
+    transform:translateX(-50%) translateY(160%);z-index:9;display:inline-flex;align-items:center;gap:7px;
+    background:var(--accent);color:#fff;border:none;border-radius:22px;box-shadow:var(--shadow-lg);
+    padding:12px 22px;font-weight:800;font-size:13.5px;cursor:pointer;opacity:0;pointer-events:none;
+    transition:.34s cubic-bezier(.22,.61,.36,1);}
+  .explode-exit svg{width:16px;height:16px;}
+  #app.explode-on .explode-exit{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto;}
 
   @keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 
@@ -258,10 +273,10 @@
   <canvas id="scene"></canvas>
 
   <div class="topleft">
-    <div class="brand">
+    <a class="brand" href="/">
       <img class="glyph" src="../assets/img/brand-glyph.svg" alt="" role="presentation">
       <div class="t"><b id="brandName">CubeNest</b><span>쌓기나무 3D 학습</span></div>
-    </div>
+    </a>
     <div class="compass"><svg id="compassSvg" viewBox="0 0 74 74"></svg></div>
   </div>
 
@@ -299,6 +314,10 @@
       <button class="counttoggle" id="shareBtn" aria-label="공유">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="2.6" stroke="currentColor" stroke-width="2"/><circle cx="6" cy="12" r="2.6" stroke="currentColor" stroke-width="2"/><circle cx="18" cy="19" r="2.6" stroke="currentColor" stroke-width="2"/><path d="M8.3 10.8 15.7 6.4M8.3 13.2 15.7 17.6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <span>공유</span>
+      </button>
+      <button class="counttoggle" id="explodeBtn" aria-label="위·앞·옆 펼쳐보기">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>펼쳐보기</span>
       </button>
     </div>
     <div class="dockrow">
@@ -405,6 +424,10 @@
     <span>의견</span>
   </button>
 
+  <button class="explode-exit" id="explodeExit" aria-label="펼쳐보기 닫기">
+    <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+    <span>펼쳐보기 닫기</span>
+  </button>
   <div class="toast" id="toast"></div>
 </div>
 
@@ -677,6 +700,7 @@ function syncCubes(){                 // cells + layerSel → 두 그룹으로 �
   matOn.color.setHex(layerSel==='all'?WOOD:WOOD_HI);   // 전체=기본색 / 특정 층 선택 시 강조색
   packGroup(cubesOn,onCells);  packGroup(cubesOff,offCells);
   buildEdges(edgesOn,onCells); buildEdges(edgesOff,offCells);
+  if(explodeOn){ buildProjections(); if(!userZoomed) sph.radius=fitRadius(); }
 }
 const rebuildCubes = syncCubes;       // 전체 재생성
 function addCubeMesh(x,y,z,pop){
@@ -733,13 +757,118 @@ function contentRect(){
     wc: Math.max(60, W-ins.l-ins.r),
     hc: Math.max(60, H-ins.t-ins.b) };
 }
+/* ============================================================
+   삼투상 '펼쳐보기' — 위/앞/옆 실루엣을 방향색으로 펼쳐 보여줌 (관찰 전용)
+   ============================================================ */
+const PROJ_COL = { top:0x3f8fd0, front:0x4fae72, side:0xd0546f };
+const projGroup = new THREE.Group(); projGroup.visible=false; scene.add(projGroup);
+const projLabels=[];
+let explodeOn=false, projRadius=0;
+const EXPLODE_GAP = 2.4;
+function pcellX(x){ return (x-(state.gx-1)/2)*S; }
+function pcellY(y){ return (y+0.5)*S; }
+function pcellZ(z){ return (z-(state.gz-1)/2)*S; }
+function pV(x,y,z){ return new THREE.Vector3(x,y,z); }
+function silhouettes(){
+  const top=new Set(), front=new Set(), side=new Set();   // top:"x,z" front:"x,y" side:"z,y"
+  for(const k of cells){ const a=k.split(',').map(Number);
+    top.add(a[0]+','+a[2]); front.add(a[0]+','+a[1]); side.add(a[2]+','+a[1]); }
+  return {top,front,side};
+}
+function disposeProj(g){
+  for(let i=g.children.length-1;i>=0;i--){ const o=g.children[i];
+    if(o.geometry) o.geometry.dispose();
+    if(o.material){ if(o.material.map) o.material.map.dispose(); o.material.dispose(); }
+    g.remove(o); }
+}
+const _pc=new THREE.Vector3();
+function buildPanel(cellsSet, centerFn, uAxis, vAxis, colorHex){
+  const half=0.46, uu=uAxis.clone().multiplyScalar(half), vv=vAxis.clone().multiplyScalar(half);
+  const pos=[], idx=[], ln=[]; let vb=0;
+  for(const key of cellsSet){
+    centerFn(key, _pc);
+    const a=_pc.clone().sub(uu).sub(vv), b=_pc.clone().add(uu).sub(vv),
+          c=_pc.clone().add(uu).add(vv), d=_pc.clone().sub(uu).add(vv);
+    pos.push(a.x,a.y,a.z, b.x,b.y,b.z, c.x,c.y,c.z, d.x,d.y,d.z);
+    idx.push(vb,vb+1,vb+2, vb,vb+2,vb+3);
+    ln.push(a.x,a.y,a.z,b.x,b.y,b.z, b.x,b.y,b.z,c.x,c.y,c.z, c.x,c.y,c.z,d.x,d.y,d.z, d.x,d.y,d.z,a.x,a.y,a.z);
+    vb+=4;
+  }
+  const fg=new THREE.BufferGeometry();
+  fg.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); fg.setIndex(idx);
+  projGroup.add(new THREE.Mesh(fg, new THREE.MeshBasicMaterial({color:colorHex, transparent:true, opacity:0.5, side:THREE.DoubleSide, depthWrite:false})));
+  const lg=new THREE.BufferGeometry();
+  lg.setAttribute('position', new THREE.Float32BufferAttribute(ln,3));
+  projGroup.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({color:colorHex})));
+}
+function pbounds(set){
+  let a0=1e9,a1=-1e9,b0=1e9,b1=-1e9;
+  for(const k of set){ const p=k.split(',').map(Number);
+    if(p[0]<a0)a0=p[0]; if(p[0]>a1)a1=p[0]; if(p[1]<b0)b0=p[1]; if(p[1]>b1)b1=p[1]; }
+  return {a0,a1,b0,b1};
+}
+function dashed(pairs, colorHex){
+  const pos=[]; for(const pr of pairs){ pos.push(pr[0].x,pr[0].y,pr[0].z, pr[1].x,pr[1].y,pr[1].z); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  const ls=new THREE.LineSegments(g, new THREE.LineDashedMaterial({color:colorHex, transparent:true, opacity:0.5, dashSize:0.3, gapSize:0.22}));
+  ls.computeLineDistances(); projGroup.add(ls);
+}
+function addProjLabel(text, colorHex, x,y,z){
+  const hex='#'+colorHex.toString(16).padStart(6,'0');
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(1.28,0.8), new THREE.MeshBasicMaterial({map:makeTextTexture(text,hex), transparent:true, depthWrite:false}));
+  m.position.set(x,y,z); projGroup.add(m); projLabels.push(m);
+}
+const _pbox=new THREE.Box3(), _pbv=new THREE.Vector3();
+function buildProjections(){
+  disposeProj(projGroup); projLabels.length=0; projRadius=0;
+  if(cells.size===0) return;
+  const {top,front,side}=silhouettes();
+  const yTop=state.gy*S+EXPLODE_GAP, zFront=state.gz*S/2+EXPLODE_GAP, xSide=state.gx*S/2+EXPLODE_GAP;
+  const AX=pV(1,0,0), AY=pV(0,1,0), AZ=pV(0,0,1);
+  buildPanel(top,  (k,o)=>{const q=k.split(',').map(Number); o.set(pcellX(q[0]),yTop,pcellZ(q[1]));}, AX, AZ, PROJ_COL.top);
+  buildPanel(front,(k,o)=>{const q=k.split(',').map(Number); o.set(pcellX(q[0]),pcellY(q[1]),zFront);}, AX, AY, PROJ_COL.front);
+  buildPanel(side, (k,o)=>{const q=k.split(',').map(Number); o.set(xSide,pcellY(q[1]),pcellZ(q[0]));}, AZ, AY, PROJ_COL.side);
+  let b=pbounds(top);
+  { const xs=[pcellX(b.a0)-0.46,pcellX(b.a1)+0.46], zs=[pcellZ(b.b0)-0.46,pcellZ(b.b1)+0.46], pr=[];
+    for(const X of xs) for(const Z of zs) pr.push([pV(X,state.gy*S,Z), pV(X,yTop,Z)]); dashed(pr, PROJ_COL.top); }
+  b=pbounds(front);
+  { const xs=[pcellX(b.a0)-0.46,pcellX(b.a1)+0.46], ys=[pcellY(b.b0)-0.46,pcellY(b.b1)+0.46], pr=[];
+    for(const X of xs) for(const Y of ys) pr.push([pV(X,Y,state.gz*S/2), pV(X,Y,zFront)]); dashed(pr, PROJ_COL.front); }
+  b=pbounds(side);
+  { const zs=[pcellZ(b.a0)-0.46,pcellZ(b.a1)+0.46], ys=[pcellY(b.b0)-0.46,pcellY(b.b1)+0.46], pr=[];
+    for(const Z of zs) for(const Y of ys) pr.push([pV(state.gx*S/2,Y,Z), pV(xSide,Y,Z)]); dashed(pr, PROJ_COL.side); }
+  addProjLabel('위', PROJ_COL.top,   0, yTop+0.9, 0);
+  addProjLabel('앞', PROJ_COL.front, 0, -0.9, zFront);
+  addProjLabel('옆', PROJ_COL.side,  xSide, -0.9, 0);
+  projGroup.updateMatrixWorld(true);
+  _pbox.setFromObject(projGroup);
+  _pbox.expandByPoint(_pbv.set(-state.gx*S/2,0,-state.gz*S/2));
+  _pbox.expandByPoint(_pbv.set(state.gx*S/2,state.gy*S,state.gz*S/2));
+  for(let i=0;i<8;i++){ _pbv.set(i&1?_pbox.max.x:_pbox.min.x, i&2?_pbox.max.y:_pbox.min.y, i&4?_pbox.max.z:_pbox.min.z); projRadius=Math.max(projRadius,_pbv.distanceTo(target)); }
+}
+function setExplode(on){
+  if(on===explodeOn) return;
+  explodeOn=on;
+  document.getElementById('app').classList.toggle('explode-on', on);
+  if(dirLabels){ dirLabels.top.visible=!on; dirLabels.front.visible=!on; dirLabels.side.visible=!on; }
+  const btn=document.getElementById('explodeBtn'); if(btn) btn.classList.toggle('on',on);
+  if(on){
+    try{ track('explode_open'); }catch(e){}
+    if(aligned) unlockToFree(false);
+    buildProjections(); projGroup.visible=true;
+    if(cells.size===0) toast('먼저 쌓기나무를 놓아 보세요');
+  } else {
+    projGroup.visible=false; disposeProj(projGroup); projLabels.length=0; projRadius=0;
+  }
+  userZoomed=false; sph.radius=fitRadius(); setOrthoFrustum();
+}
 function modelRadiusWorld(){   // 격자 경계구 반경(회전과 무관한 최대 반경 → 어느 각도에서도 안 잘림)
   return 0.5*Math.sqrt(state.gx*state.gx+state.gy*state.gy+state.gz*state.gz)*S;
 }
 const TAN_HALF_FOV = Math.tan(FOV*Math.PI/180/2);
 function fitRadius(){          // 콘텐츠 사각형에 모델이 알맞게 차도록 하는 카메라 반경
   const {W,H,wc,hc}=contentRect();
-  const R=modelRadiusWorld(), fill=0.92;
+  const R=(explodeOn&&projRadius>0)?projRadius:modelRadiusWorld(), fill=0.92;
   const Hf = 2*R*H / (Math.min(wc,hc)*fill);   // 필요한 직교 프러스텀 높이(월드)
   return Hf/(2*TAN_HALF_FOV);                   // Hf = 2·radius·tan(FOV/2)
 }
@@ -931,6 +1060,7 @@ function ndc(x,y){   // x,y는 이미 앱 로컬 좌표(toLocal 적용됨); 캔�
   return new THREE.Vector2((x/canvas.clientWidth)*2-1, -(y/canvas.clientHeight)*2+1);
 }
 function handleTap(x,y){
+  if(explodeOn){ toast('펼쳐보기 중이에요. 닫으면 편집할 수 있어요'); return; }
   if(aligned){ toast('관찰 모드예요. 화면을 돌리면 편집할 수 있어요'); return; }
   ray.setFromCamera(ndc(x,y), activeCam);
   const hitsCubes=ray.intersectObjects([cubesOn,cubesOff],false);
@@ -1259,6 +1389,8 @@ async function copyText(t){
   }
 }
 document.getElementById('shareBtn').addEventListener('click',openShareSheet);
+document.getElementById('explodeBtn').addEventListener('click',()=>setExplode(!explodeOn));
+document.getElementById('explodeExit').addEventListener('click',()=>setExplode(false));
 document.getElementById('shareDone').addEventListener('click',closeSheet);
 // 버그 신고 미리채우기: 기기·브라우저·현재 모양을 질문6에 자동 입력
 function deviceInfo(){
@@ -1492,6 +1624,7 @@ function animate(now){
   applyCamera();
   setOrthoFrustum();
   if(showTopCounts){ for(const m of topCountLabels) m.quaternion.copy(activeCam.quaternion); }  // 숫자는 항상 카메라를 향함
+  if(explodeOn){ for(const m of projLabels) m.quaternion.copy(activeCam.quaternion); }
   updateCompass();
   renderer.render(scene, activeCam);
   requestAnimationFrame(animate);

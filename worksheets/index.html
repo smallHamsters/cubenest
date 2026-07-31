@@ -25,20 +25,41 @@
 
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/nav.css">
 <style>
-  body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);
-    display:grid;place-items:center;min-height:100vh;text-align:center;padding:24px;box-sizing:border-box;}
+  body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);}
+  main{display:grid;place-items:center;min-height:calc(100vh - 64px);text-align:center;padding:24px;box-sizing:border-box;}
   .wrap{max-width:36ch;}
   h1{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 10px;}
   p{color:var(--muted);line-height:1.6;margin:0 0 20px;}
-  a{color:var(--accent);font-weight:700;}
+  a.home{color:var(--accent);font-weight:700;}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>문제지, 준비 중입니다</h1>
-  <p>쌓기나무 학습용 문제지를 만들고 인쇄할 수 있는 도구를 만들고 있어요. 곧 만나요.</p>
-  <a href="../">홈으로</a>
-</div>
+
+<header class="site-top" id="topbar">
+  <div class="site-topin">
+    <a class="site-brand" href="../" aria-label="큐브네스트 홈">
+      <img class="glyph" src="../assets/img/brand-glyph.svg" alt="" role="presentation">
+      <span class="t"><b>CubeNest</b><span>쌓기나무 3D 학습</span></span>
+    </a>
+    <nav class="site-nav" aria-label="주요 메뉴">
+      <a href="../">홈</a>
+      <a href="../guide/">가이드</a>
+      <a href="../playground/">플레이그라운드</a>
+      <a href="../quiz/">퀴즈</a>
+      <a href="./" aria-current="page">문제지 생성</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="wrap">
+    <h1>문제지, 준비 중입니다</h1>
+    <p>쌓기나무 학습용 문제지를 만들고 인쇄할 수 있는 도구를 만들고 있어요. 곧 만나요.</p>
+    <a class="home" href="../">홈으로</a>
+  </div>
+</main>
+
 </body>
 </html>

@@ -27,6 +27,7 @@
 
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <link rel="stylesheet" href="assets/css/tokens.css">
+<link rel="stylesheet" href="assets/css/nav.css">
 <link rel="stylesheet" href="assets/css/consent.css">
 <!-- 히어로 3D 뷰어용 (playground 정본과 동일 버전) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -89,25 +90,14 @@
   .lead{font-size:clamp(15px,2.2vw,17px);color:var(--muted);max-width:56ch;margin:0;line-height:1.72;}
 
   /* ---------- top bar ---------- */
-  header.top{position:sticky;top:0;z-index:50;
-    backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);
-    background:rgba(238,242,247,.82);border-bottom:1px solid transparent;transition:border-color .2s,background .2s;}
-  header.top.scrolled{border-bottom-color:var(--line);background:rgba(238,242,247,.92);}
-  .topin{display:flex;align-items:center;justify-content:space-between;height:64px;}
-  .brand{display:flex;align-items:center;gap:10px;}
-  .brand .glyph{width:30px;height:30px;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(160,110,50,.28));}
-  .brand .t b{font-size:16px;font-weight:800;letter-spacing:-.02em;display:block;line-height:1.05;}
-  .brand .t span{font-size:10.5px;color:var(--muted);font-weight:600;}
+  /* header.site-top / .site-topin / .site-brand / .site-nav 는 assets/css/nav.css 공용 정의 */
   .top-cta{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 17px;
     background:var(--accent);color:#fff;border-radius:12px;font-weight:800;font-size:13.5px;
-    box-shadow:0 3px 10px rgba(63,63,191,.28);transition:transform .12s,box-shadow .2s,background .2s;}
+    box-shadow:0 3px 10px rgba(63,63,191,.28);transition:transform .12s,box-shadow .2s,background .2s;
+    flex:0 0 auto;margin-left:auto;}
   .top-cta:hover{background:var(--accent-ink);box-shadow:0 5px 16px rgba(63,63,191,.36);}
   .top-cta:active{transform:translateY(1px);}
   .top-cta svg{width:15px;height:15px;}
-  .topnav{display:flex;gap:6px;margin:0 auto;}
-  .topnav a{font-size:14px;font-weight:700;color:var(--muted);padding:8px 12px;border-radius:9px;
-    transition:color .15s,background .15s;}
-  .topnav a:hover{color:var(--accent-ink);background:var(--accent-soft);}
 
   /* ---------- hero ---------- */
   .hero{position:relative;overflow:hidden;
@@ -138,10 +128,9 @@
   .hero-note{margin:18px 0 0;font-size:12.5px;color:var(--muted-2);display:flex;align-items:center;gap:7px;}
   .hero-note svg{width:14px;height:14px;flex:0 0 auto;color:var(--add);}
 
-  /* hero visual: 돌려보는 3D 뷰어 + 아래 스탯 */
-  .hero-visual{position:relative;display:flex;align-items:center;justify-content:center;min-height:300px;}
-  .viewer{width:min(400px,100%);display:flex;flex-direction:column;gap:12px;}
-  .viewer-card{position:relative;aspect-ratio:1/1;
+  /* hero visual: 돌려보는 3D 뷰어 (스탯은 캔버스 안쪽 하단에 오버레이) */
+  .hero-visual{position:relative;display:flex;align-items:center;justify-content:flex-end;min-height:300px;}
+  .viewer-card{position:relative;width:min(400px,100%);aspect-ratio:1/1;
     background:linear-gradient(160deg,#ffffff 0%,#f4f7fb 100%);
     border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow-lg);
     overflow:hidden;touch-action:none;cursor:grab;}
@@ -152,20 +141,23 @@
     -webkit-mask-image:radial-gradient(circle at 50% 46%,#000 42%,transparent 80%);
             mask-image:radial-gradient(circle at 50% 46%,#000 42%,transparent 80%);}
   #heroCanvas{position:relative;z-index:1;display:block;width:100%;height:100%;}
-  .viewer-hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);z-index:2;
+  .viewer-hint{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:2;
     display:inline-flex;align-items:center;gap:6px;pointer-events:none;
     background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:999px;
     padding:6px 12px;font-size:11.5px;font-weight:700;color:var(--muted);box-shadow:var(--shadow-sm);
     transition:opacity .4s;}
   .viewer-hint svg{width:14px;height:14px;color:var(--accent);}
   .viewer-hint.hide{opacity:0;}
-  .viewer-stats{display:flex;gap:10px;}
-  .viewer-stats .vs{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:14px;
-    box-shadow:var(--shadow-sm);padding:11px 8px 10px;text-align:center;display:flex;flex-direction:column;gap:2px;}
-  .viewer-stats .vs .k{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.02em;}
-  .viewer-stats .vs .v{font-size:14px;font-weight:700;color:var(--muted);}
-  .viewer-stats .vs .v b{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.02em;
-    font-variant-numeric:tabular-nums;margin-right:1px;}
+  /* 스탯 패널 — playground .stats/.stat-head와 같은 UI(하나의 둥근 패널 + 칸 구분선), 위치만 캔버스 하단 중앙 */
+  .viewer-stats{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:2;
+    display:flex;background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;
+    width:min(280px,86%);}
+  .viewer-stats .vs{flex:1;padding:10px 8px 9px;text-align:center;position:relative;}
+  .viewer-stats .vs + .vs::before{content:"";position:absolute;left:0;top:22%;bottom:22%;width:1px;background:var(--line);}
+  .viewer-stats .vs .k{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.02em;}
+  .viewer-stats .vs .v{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.02em;line-height:1.15;
+    margin-top:1px;font-variant-numeric:tabular-nums;}
+  .viewer-stats .vs .v .u{font-size:10px;color:var(--muted);font-weight:600;margin-left:1px;}
 
   /* ---------- section shell ---------- */
   section.band{padding:clamp(56px,9vw,100px) 0;}
@@ -264,14 +256,11 @@
   .reveal.in{opacity:1;transform:none;}
 
   /* ---------- responsive ---------- */
-  @media (max-width:960px){
-    .topnav{display:none;}
-  }
   @media (max-width:860px){
     .hero-grid{grid-template-columns:1fr;gap:14px;padding-top:34px;}
     .hero-copy{max-width:none;order:1;}
-    .hero-visual{order:0;min-height:auto;margin-bottom:6px;}
-    .viewer{width:min(340px,88%);}
+    .hero-visual{order:0;min-height:auto;margin-bottom:6px;justify-content:center;}
+    .viewer-card{width:min(340px,88%);}
     .fgrid{grid-template-columns:1fr 1fr;}
     .explain{grid-template-columns:1fr;}
     .seo-grid{grid-template-columns:1fr;}
@@ -293,17 +282,18 @@
 <body>
 
 <!-- ===================== TOP BAR ===================== -->
-<header class="top" id="topbar">
-  <div class="wrap topin">
-    <a class="brand" href="./" aria-label="큐브네스트 홈">
+<header class="site-top" id="topbar">
+  <div class="site-topin">
+    <a class="site-brand" href="./" aria-label="큐브네스트 홈">
       <img class="glyph" src="assets/img/brand-glyph.svg" alt="" role="presentation">
       <span class="t"><b id="brandName">CubeNest</b><span>쌓기나무 3D 학습</span></span>
     </a>
-    <nav class="topnav" aria-label="주요 섹션">
-      <a href="#features">기능</a>
-      <a href="#coverage">학습 범위</a>
-      <a href="#how">배우는 원리</a>
-      <a href="#for">활용</a>
+    <nav class="site-nav" aria-label="주요 메뉴">
+      <a href="./" aria-current="page">홈</a>
+      <a href="guide/">가이드</a>
+      <a href="playground/">플레이그라운드</a>
+      <a href="quiz/">퀴즈</a>
+      <a href="worksheets/">문제지 생성</a>
     </nav>
     <a class="top-cta" id="topCta" href="playground/">
       바로 해보기
@@ -336,19 +326,17 @@
     </div>
 
     <div class="hero-visual">
-      <div class="viewer">
-        <div class="viewer-card">
-          <canvas id="heroCanvas" aria-label="쌓기나무로 만든 입체를 끌어서 돌려볼 수 있는 3D 화면"></canvas>
-          <span class="viewer-hint" id="viewerHint">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3m13.5-6.5-2 2m-9 9 2-2m0-9-2-2m11 11-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-            끌어서 돌려보기
-          </span>
-        </div>
+      <div class="viewer-card">
+        <canvas id="heroCanvas" aria-label="쌓기나무로 만든 입체를 끌어서 돌려볼 수 있는 3D 화면"></canvas>
+        <span class="viewer-hint" id="viewerHint">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3m13.5-6.5-2 2m-9 9 2-2m0-9-2-2m11 11-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          끌어서 돌려보기
+        </span>
         <!-- 아래 10/10/36은 heroViewer()의 CELLS와 같은 모양의 초기값. CELLS를 바꾸면 이 세 값도 같이 바꿀 것 (stats() IIFE가 실행 즉시 덮어쓰지만, JS 실행 전/실패 시 폴백으로 노출됨). -->
         <div class="viewer-stats" role="group" aria-label="이 입체의 개수·부피·겉넓이">
-          <div class="vs"><span class="k">개수</span><span class="v"><b id="vsCount">10</b>개</span></div>
-          <div class="vs"><span class="k">부피</span><span class="v"><b id="vsVol">10</b>㎤</span></div>
-          <div class="vs"><span class="k">겉넓이</span><span class="v"><b id="vsSurf">36</b>㎠</span></div>
+          <div class="vs"><div class="k">개수</div><div class="v"><span id="vsCount">10</span><span class="u">개</span></div></div>
+          <div class="vs"><div class="k">부피</div><div class="v"><span id="vsVol">10</span><span class="u">cm³</span></div></div>
+          <div class="vs"><div class="k">겉넓이</div><div class="v"><span id="vsSurf">36</span><span class="u">cm²</span></div></div>
         </div>
       </div>
     </div>
@@ -688,17 +676,24 @@ document.getElementById('yr').textContent = new Date().getFullYear();
 
   const radius=0.5*Math.sqrt(sizeV.x*sizeV.x+sizeV.y*sizeV.y+sizeV.z*sizeV.z);
   const R=Math.max(6, radius*3);
-  let theta=-0.7, phi=1.02;
+  let theta=Math.PI/2+0.7, phi=1.02;  // playground camPosFromSph()와 동일한 x/z 공식(부호) — 좌우 드래그 방향 일치
   function place(){
-    cam.position.set(R*Math.sin(phi)*Math.cos(theta), R*Math.cos(phi), R*Math.sin(phi)*Math.sin(theta));
+    cam.position.set(R*Math.sin(phi)*Math.sin(theta), R*Math.cos(phi), R*Math.sin(phi)*Math.cos(theta));
     cam.up.set(0,1,0); cam.lookAt(0,0,0);
   }
+  /* playground의 effInsets()/setOrthoFrustum()과 같은 방식: 위 힌트·아래 스탯 패널이 차지하는 여백만큼
+     비대칭 직교 프러스텀을 써서 모델이 그 영역과 겹치지 않고 안전한 콘텐츠 영역 안에 들어오게 한다. */
+  const TOP_INSET=44, BOTTOM_INSET=92;
   function resize(){
     const w=canvas.clientWidth||1, h=canvas.clientHeight||1;
     renderer.setSize(w,h,false);
-    const a=w/h, half=radius*1.18; let hw=half, hh=half;
-    if(a>=1) hw=half*a; else hh=half/a;
-    cam.left=-hw; cam.right=hw; cam.top=hh; cam.bottom=-hh;
+    const hc=Math.max(60, h-TOP_INSET-BOTTOM_INSET);
+    const fill=radius*1.18*2;
+    const wpp=fill/Math.min(w,hc);
+    const Wf=wpp*w, Hf=wpp*h;
+    const oy=(TOP_INSET-BOTTOM_INSET)/2*wpp;
+    cam.left=-Wf/2; cam.right=Wf/2;
+    cam.top=Hf/2+oy; cam.bottom=-Hf/2+oy;
     cam.near=0.1; cam.far=R*4; cam.updateProjectionMatrix();
   }
 
