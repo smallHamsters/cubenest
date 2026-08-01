@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <meta name="theme-color" content="#3f3fbf" />
+    <title>페이지를 찾을 수 없어요 · CubeNest</title>
+    <!--
+  CubeNest 커스텀 404 (GitHub Pages 프로젝트 페이지용).
+  404는 어떤 깊이의 주소에서도 뜰 수 있어 상대경로 자산이 깨지므로,
+  CSS·SVG를 전부 인라인해 자립형으로 둔다. 홈 링크만 예외적으로
+  프로젝트 루트 절대경로(/cubenest/)를 쓴다(하단 스크립트가 실제 경로로 보정).
+-->
+    <style>
+      :root {
+        --bg: #eef2f7;
+        --panel: #ffffff;
+        --ink: #182233;
+        --muted: #6a7789;
+        --line: #e5eaf1;
+        --accent: #3f3fbf;
+        --accent-ink: #2d2d95;
+        --accent-soft: #ecebfb;
+        --r: 16px;
+        --r-lg: 22px;
+        --font: "Pretendard", "Pretendard Variable", -apple-system,
+          BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui,
+          sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        height: 100%;
+      }
+      body {
+        margin: 0;
+        font-family: var(--font);
+        color: var(--ink);
+        background: radial-gradient(
+          1200px 600px at 50% -10%,
+          #f4f6fb 0%,
+          var(--bg) 60%
+        );
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100dvh;
+        padding: 24px;
+        text-align: center;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 26px;
+      }
+      .brand .wm {
+        font-weight: 800;
+        font-size: 19px;
+        letter-spacing: -0.01em;
+        color: var(--ink);
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: var(--r-lg);
+        box-shadow: 0 18px 50px rgba(24, 34, 51, 0.1),
+          0 3px 10px rgba(24, 34, 51, 0.06);
+        padding: 38px 30px 34px;
+        max-width: 440px;
+        width: 100%;
+      }
+      .art {
+        margin: 0 auto 6px;
+        display: block;
+      }
+      .code {
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.22em;
+        color: var(--accent);
+        margin: 6px 0 4px;
+      }
+      h1 {
+        font-size: 22px;
+        line-height: 1.35;
+        margin: 6px 0 8px;
+        letter-spacing: -0.01em;
+      }
+      p {
+        font-size: 14.5px;
+        line-height: 1.6;
+        color: var(--muted);
+        margin: 0 auto 22px;
+        max-width: 330px;
+      }
+      .actions {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      a.btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 46px;
+        padding: 0 18px;
+        border-radius: 12px;
+        font-size: 14.5px;
+        font-weight: 700;
+        text-decoration: none;
+        border: 1px solid transparent;
+        transition: filter 0.15s, background 0.15s;
+      }
+      a.primary {
+        background: var(--accent);
+        color: #fff;
+      }
+      a.primary:hover {
+        filter: brightness(1.06);
+      }
+      a.ghost {
+        background: #fff;
+        color: var(--accent-ink);
+        border-color: var(--line);
+      }
+      a.ghost:hover {
+        background: var(--accent-soft);
+      }
+      .hint {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #8a95a6;
+      }
+      @media (max-width: 400px) {
+        .card {
+          padding: 30px 20px 26px;
+        }
+        h1 {
+          font-size: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- <div class="brand"> -->
+    <!-- 브랜드 글리프(나무 큐브) -->
+    <!-- <svg width="26" height="26" viewBox="0 0 40 40" aria-hidden="true">
+        <polygon points="20,5 33,12.5 20,20 7,12.5" fill="#f0cf98" />
+        <polygon points="7,12.5 20,20 20,35 7,27.5" fill="#d9a869" />
+        <polygon points="33,12.5 20,20 20,35 33,27.5" fill="#c8934f" />
+        <path
+          d="M20,5 33,12.5 20,20 7,12.5Z M7,12.5 20,20 20,35 M33,12.5 20,20"
+          fill="none"
+          stroke="#9a6b39"
+          stroke-width="1.4"
+          stroke-linejoin="round"
+        />
+      </svg>
+      <span class="wm" data-brand>CubeNest</span>
+    </div> -->
+
+    <main class="card">
+      <!-- 쌓기나무 스택: 맨 위 한 칸이 사라진(점선) 모습 = 없는 페이지 -->
+      <svg
+        class="art"
+        width="240"
+        height="210"
+        viewBox="0 0 340 240"
+        role="img"
+        aria-label="맨 위 쌓기나무 한 칸이 비어 있는 그림"
+      >
+        <ellipse cx="170" cy="224" rx="66" ry="13" fill="rgba(24,34,51,.07)" />
+
+        <!-- 아래 큐브 -->
+        <polygon points="170,154 202,170 170,186 138,170" fill="#f0cf98" />
+        <polygon points="138,170 170,186 170,220 138,204" fill="#d9a869" />
+        <polygon points="202,170 170,186 170,220 202,204" fill="#c8934f" />
+        <path
+          d="M170,154 202,170 170,186 138,170Z M138,170 170,186 170,220 M202,170 170,186 170,220"
+          fill="none"
+          stroke="#9a6b39"
+          stroke-width="1.6"
+          stroke-linejoin="round"
+        />
+
+        <!-- 가운데 큐브 -->
+        <polygon points="170,120 202,136 170,152 138,136" fill="#f0cf98" />
+        <polygon points="138,136 170,152 170,186 138,170" fill="#d9a869" />
+        <polygon points="202,136 170,152 170,186 202,170" fill="#c8934f" />
+        <path
+          d="M170,120 202,136 170,152 138,136Z M138,136 170,152 170,186 M202,136 170,152 170,186"
+          fill="none"
+          stroke="#9a6b39"
+          stroke-width="1.6"
+          stroke-linejoin="round"
+        />
+
+        <!-- 맨 위: 사라진 큐브(점선) -->
+        <polygon
+          points="170,86 202,102 170,118 138,102"
+          fill="var(--accent-soft)"
+          fill-opacity=".5"
+        />
+        <polygon
+          points="138,102 170,118 170,152 138,136"
+          fill="var(--accent-soft)"
+          fill-opacity=".35"
+        />
+        <polygon
+          points="202,102 170,118 170,152 202,136"
+          fill="var(--accent-soft)"
+          fill-opacity=".35"
+        />
+        <path
+          d="M170,86 202,102 170,118 138,102Z M138,102 170,118 170,152 M202,102 170,118 170,152"
+          fill="none"
+          stroke="var(--accent)"
+          stroke-width="1.8"
+          stroke-linejoin="round"
+          stroke-dasharray="5 5"
+        />
+        <text
+          x="170"
+          y="122"
+          text-anchor="middle"
+          font-size="26"
+          font-weight="800"
+          fill="var(--accent)"
+          font-family="var(--font)"
+        >
+          ?
+        </text>
+      </svg>
+
+      <div class="code">404</div>
+      <h1>찾을 수 없는 페이지입니다.</h1>
+      <p>
+        주소가 바뀌었거나 없는 페이지일 수 있어요.<br />쌓기나무를 다시 쌓으러
+        가볼까요?
+      </p>
+
+      <div class="actions">
+        <a id="home-link" class="btn primary" href="/cubenest/">홈으로 가기</a>
+        <a id="tool-link" class="btn ghost" href="/cubenest/playground/"
+          >3D 도구 열기</a
+        >
+      </div>
+
+      <div class="hint">CubeNest · 쌓기나무 3D 학습</div>
+    </main>
+
+    <script>
+      // 브랜드 언어 전환 (마스터 규칙: ko → 큐브네스트 / 그 외 → CubeNest)
+      if ((navigator.language || "").toLowerCase().indexOf("ko") === 0) {
+        document.querySelectorAll("[data-brand]").forEach(function (el) {
+          el.textContent = "큐브네스트";
+        });
+        document.documentElement.lang = "ko";
+      }
+      // 프로젝트 루트 경로를 실제 URL에서 계산(하위 깊이·리포명 변경에도 안전).
+      // 예: /cubenest/foo/bar → base = "/cubenest/"
+      try {
+        var seg = location.pathname.split("/").filter(Boolean)[0];
+        var base = seg ? "/" + seg + "/" : "/";
+        var home = document.getElementById("home-link");
+        var tool = document.getElementById("tool-link");
+        if (home) home.setAttribute("href", base);
+        if (tool) tool.setAttribute("href", base + "playground/");
+      } catch (e) {
+        /* 실패해도 HTML의 기본 링크(/cubenest/)로 동작 */
+      }
+    </script>
+  </body>
+</html>

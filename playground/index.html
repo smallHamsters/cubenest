@@ -250,6 +250,27 @@
     transition:.34s cubic-bezier(.22,.61,.36,1);}
   .explode-exit svg{width:16px;height:16px;}
   #app.explode-on .explode-exit{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto;}
+  /* 삼투상/육투상 토글: 좌상단 */
+  .explode-seg{position:absolute;left:12px;top:calc(12px + env(safe-area-inset-top));
+    transform:translateY(calc(-100% - 28px));z-index:9;display:flex;gap:4px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow);padding:4px;
+    opacity:0;pointer-events:none;transition:.34s cubic-bezier(.22,.61,.36,1);}
+  #app.explode-on .explode-seg{transform:translateY(0);opacity:1;pointer-events:auto;}
+  .explode-seg .segbtn{border:none;background:transparent;color:var(--muted);border-radius:11px;
+    padding:9px 18px;font-weight:800;font-size:13.5px;letter-spacing:-.01em;cursor:pointer;
+    transition:background .16s, color .16s;}
+  .explode-seg .segbtn.on{background:var(--accent-ink);color:#fff;box-shadow:0 3px 10px rgba(45,45,149,.45);}
+  /* 위아래/앞뒤/옆면 축 선택: 우상단 */
+  .explode-axes{position:absolute;right:12px;top:calc(12px + env(safe-area-inset-top));
+    transform:translateY(calc(-100% - 28px));z-index:9;display:flex;gap:7px;
+    opacity:0;pointer-events:none;transition:.34s cubic-bezier(.22,.61,.36,1);}
+  #app.explode-on .explode-axes{transform:translateY(0);opacity:1;pointer-events:auto;}
+  .axischip{display:inline-flex;align-items:center;gap:6px;background:var(--panel);color:var(--ink);
+    border:none;border-radius:18px;box-shadow:var(--shadow);padding:8px 13px;font-weight:800;font-size:12.5px;cursor:pointer;}
+  .axischip i{width:11px;height:11px;border-radius:50%;flex:0 0 auto;}
+  .axischip.axis-y i{background:#3f8fd0;} .axischip.axis-z i{background:#4fae72;} .axischip.axis-x i{background:#d0546f;}
+  .axischip.on{color:#fff;} .axischip.axis-y.on{background:#3f8fd0;} .axischip.axis-z.on{background:#4fae72;} .axischip.axis-x.on{background:#d0546f;}
+  .axischip.on i{background:#fff;}
 
   @keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 
@@ -273,7 +294,7 @@
   <canvas id="scene"></canvas>
 
   <div class="topleft">
-    <a class="brand" href="/">
+    <a class="brand" href="../">
       <img class="glyph" src="../assets/img/brand-glyph.svg" alt="" role="presentation">
       <div class="t"><b id="brandName">CubeNest</b><span>쌓기나무 3D 학습</span></div>
     </a>
@@ -424,6 +445,15 @@
     <span>의견</span>
   </button>
 
+  <div class="explode-seg" id="explodeSeg" role="group" aria-label="투상 방식">
+    <button class="segbtn on" id="seg3" type="button">삼투상</button>
+    <button class="segbtn" id="seg6" type="button">육투상</button>
+  </div>
+  <div class="explode-axes" id="explodeAxes">
+    <button class="axischip axis-y" id="axisY" type="button"><i></i><span>위아래</span></button>
+    <button class="axischip axis-z" id="axisZ" type="button"><i></i><span>앞뒤</span></button>
+    <button class="axischip axis-x" id="axisX" type="button"><i></i><span>옆면</span></button>
+  </div>
   <button class="explode-exit" id="explodeExit" aria-label="펼쳐보기 닫기">
     <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
     <span>펼쳐보기 닫기</span>
@@ -503,11 +533,21 @@ let floor, gridHelper, floorShadow;
 const boxGeo = new THREE.BoxGeometry(S*0.98, S*0.98, S*0.98);
 const edgeGeo = new THREE.EdgesGeometry(boxGeo);
 const WOOD = 0xe4b878, WOOD_HI = 0xf2c98a;
+/* 펼쳐보기용: 큐브 면을 축 방향색으로 (위/아래=파랑, 앞/뒤=초록, 좌/우=빨강). BoxGeometry 면 순서 +x,-x,+y,-y,+z,-z */
+const FACE_AXIS_COL = [0xd0546f,0xd0546f, 0x3f8fd0,0x3f8fd0, 0x4fae72,0x4fae72];
+(function bakeFaceColors(){
+  const cols=new Float32Array(24*3), _c=new THREE.Color();
+  for(let f=0; f<6; f++){ _c.setHex(FACE_AXIS_COL[f]);
+    for(let v=0; v<4; v++){ const i=(f*4+v)*3; cols[i]=_c.r; cols[i+1]=_c.g; cols[i+2]=_c.b; } }
+  boxGeo.setAttribute('color', new THREE.Float32BufferAttribute(cols,3));
+})();
 const CAP = 1000;   // 최대 인스턴스 수 = MAXG³ (MAXG=10). MAXG를 올리면 함께 조정할 것.
 
 // 두 그룹: on=선택/전체(불투명), off=흐린 층(반투명 0.14). 분리해야 불투명→반투명 순서가 맞아 딤 뒤 강조가 비쳐 보임.
 const matOn  = new THREE.MeshLambertMaterial({color:WOOD});
 const matOff = new THREE.MeshLambertMaterial({color:WOOD, transparent:true, opacity:0.14, depthWrite:false});
+const matFace    = new THREE.MeshLambertMaterial({vertexColors:true});
+const matFaceOff = new THREE.MeshLambertMaterial({vertexColors:true, transparent:true, opacity:0.14, depthWrite:false});
 const cubesOn  = new THREE.InstancedMesh(boxGeo, matOn,  CAP);
 const cubesOff = new THREE.InstancedMesh(boxGeo, matOff, CAP);
 for(const im of [cubesOn,cubesOff]){
@@ -700,7 +740,7 @@ function syncCubes(){                 // cells + layerSel → 두 그룹으로 �
   matOn.color.setHex(layerSel==='all'?WOOD:WOOD_HI);   // 전체=기본색 / 특정 층 선택 시 강조색
   packGroup(cubesOn,onCells);  packGroup(cubesOff,offCells);
   buildEdges(edgesOn,onCells); buildEdges(edgesOff,offCells);
-  if(explodeOn){ buildProjections(); if(!userZoomed) sph.radius=fitRadius(); }
+  if(explodeOn){ buildProjections(); if(cells.size>0) target.copy(explodeCenter); if(!userZoomed) sph.radius=fitRadius(); }
 }
 const rebuildCubes = syncCubes;       // 전체 재생성
 function addCubeMesh(x,y,z,pop){
@@ -745,6 +785,7 @@ function gridMax(){ return Math.max(state.gx,state.gy,state.gz)*S; }
 const UI_INSETS = { t:92, b:122, l:14, r:66 };
 let calcOpen=false;                 // 계산 패널 열림 여부
 function effInsets(){               // 패널이 열리면 우측 여백을 패널 폭만큼 넓혀 모델을 왼쪽으로 밀어냄
+  if(explodeOn) return { t:10, b:10, l:10, r:10 };   // 펼쳐보기: UI가 숨겨지므로 전체화면 대칭 중앙
   if(!calcOpen) return UI_INSETS;
   const W=canvas.clientWidth||window.innerWidth;
   const pw=Math.min(300, 0.78*W);   // 패널 폭 (CSS: width:300px; max-width:78%)
@@ -762,9 +803,10 @@ function contentRect(){
    ============================================================ */
 const PROJ_COL = { top:0x3f8fd0, front:0x4fae72, side:0xd0546f };
 const projGroup = new THREE.Group(); projGroup.visible=false; scene.add(projGroup);
+const explodeCenter = new THREE.Vector3();   // 펼친 전체(모델+3패널)의 중심 = 펼쳐보기 회전축
 const projLabels=[];
-let explodeOn=false, projRadius=0;
-const EXPLODE_GAP = 2.4;
+let explodeOn=false, explode6=false, projRadius=0, soloAxis=null;
+const EXPLODE_GAP = 3.6;   // 물체↔투상 평면 간격
 function pcellX(x){ return (x-(state.gx-1)/2)*S; }
 function pcellY(y){ return (y+0.5)*S; }
 function pcellZ(z){ return (z-(state.gz-1)/2)*S; }
@@ -813,38 +855,60 @@ function dashed(pairs, colorHex){
   const ls=new THREE.LineSegments(g, new THREE.LineDashedMaterial({color:colorHex, transparent:true, opacity:0.5, dashSize:0.3, gapSize:0.22}));
   ls.computeLineDistances(); projGroup.add(ls);
 }
+function buildGridLines(origin, uAxis, vAxis, uN, vN, colorHex){   // axis 크기의 전체 격자(답안지용)
+  const pos=[];
+  for(let i=0;i<=uN;i++){ const ax=origin.x+uAxis.x*i*S, ay=origin.y+uAxis.y*i*S, az=origin.z+uAxis.z*i*S;
+    pos.push(ax,ay,az, ax+vAxis.x*vN*S, ay+vAxis.y*vN*S, az+vAxis.z*vN*S); }
+  for(let j=0;j<=vN;j++){ const ax=origin.x+vAxis.x*j*S, ay=origin.y+vAxis.y*j*S, az=origin.z+vAxis.z*j*S;
+    pos.push(ax,ay,az, ax+uAxis.x*uN*S, ay+uAxis.y*uN*S, az+uAxis.z*uN*S); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+  projGroup.add(new THREE.LineSegments(g, new THREE.LineBasicMaterial({color:colorHex, transparent:true, opacity:0.35})));
+}
+/* 라벨 표시: 전체 보기에선 기본 라벨(위·앞·옆)만, 축(위아래/앞뒤/옆면) 솔로 선택 시엔 그 축 양쪽 라벨 */
+const PROJ_PRIMARY = ['위','앞','옆'];
 function addProjLabel(text, colorHex, x,y,z){
   const hex='#'+colorHex.toString(16).padStart(6,'0');
   const m=new THREE.Mesh(new THREE.PlaneGeometry(1.28,0.8), new THREE.MeshBasicMaterial({map:makeTextTexture(text,hex), transparent:true, depthWrite:false}));
-  m.position.set(x,y,z); projGroup.add(m); projLabels.push(m);
+  m.position.set(x,y,z); m.visible = (soloAxis!==null) || PROJ_PRIMARY.includes(text); projGroup.add(m); projLabels.push(m);
 }
 const _pbox=new THREE.Box3(), _pbv=new THREE.Vector3();
 function buildProjections(){
   disposeProj(projGroup); projLabels.length=0; projRadius=0;
   if(cells.size===0) return;
   const {top,front,side}=silhouettes();
-  const yTop=state.gy*S+EXPLODE_GAP, zFront=state.gz*S/2+EXPLODE_GAP, xSide=state.gx*S/2+EXPLODE_GAP;
   const AX=pV(1,0,0), AY=pV(0,1,0), AZ=pV(0,0,1);
-  buildPanel(top,  (k,o)=>{const q=k.split(',').map(Number); o.set(pcellX(q[0]),yTop,pcellZ(q[1]));}, AX, AZ, PROJ_COL.top);
-  buildPanel(front,(k,o)=>{const q=k.split(',').map(Number); o.set(pcellX(q[0]),pcellY(q[1]),zFront);}, AX, AY, PROJ_COL.front);
-  buildPanel(side, (k,o)=>{const q=k.split(',').map(Number); o.set(xSide,pcellY(q[1]),pcellZ(q[0]));}, AZ, AY, PROJ_COL.side);
-  let b=pbounds(top);
-  { const xs=[pcellX(b.a0)-0.46,pcellX(b.a1)+0.46], zs=[pcellZ(b.b0)-0.46,pcellZ(b.b1)+0.46], pr=[];
-    for(const X of xs) for(const Z of zs) pr.push([pV(X,state.gy*S,Z), pV(X,yTop,Z)]); dashed(pr, PROJ_COL.top); }
-  b=pbounds(front);
-  { const xs=[pcellX(b.a0)-0.46,pcellX(b.a1)+0.46], ys=[pcellY(b.b0)-0.46,pcellY(b.b1)+0.46], pr=[];
-    for(const X of xs) for(const Y of ys) pr.push([pV(X,Y,state.gz*S/2), pV(X,Y,zFront)]); dashed(pr, PROJ_COL.front); }
-  b=pbounds(side);
-  { const zs=[pcellZ(b.a0)-0.46,pcellZ(b.a1)+0.46], ys=[pcellY(b.b0)-0.46,pcellY(b.b1)+0.46], pr=[];
-    for(const Z of zs) for(const Y of ys) pr.push([pV(state.gx*S/2,Y,Z), pV(xSide,Y,Z)]); dashed(pr, PROJ_COL.side); }
-  addProjLabel('위', PROJ_COL.top,   0, yTop+0.9, 0);
-  addProjLabel('앞', PROJ_COL.front, 0, -0.9, zFront);
-  addProjLabel('옆', PROJ_COL.side,  xSide, -0.9, 0);
+  const yTop=state.gy*S+EXPLODE_GAP, yBot=-EXPLODE_GAP;
+  const zF=state.gz*S/2+EXPLODE_GAP, zB=-(state.gz*S/2+EXPLODE_GAP);
+  const xR=state.gx*S/2+EXPLODE_GAP, xL=-(state.gx*S/2+EXPLODE_GAP);
+  const gX=state.gx*S/2, gZ=state.gz*S/2, gY=state.gy*S;
+  function panelTop(yP, surfY, label){
+    buildGridLines(pV(-gX, yP, -gZ), AX, AZ, state.gx, state.gz, PROJ_COL.top);
+    buildPanel(top, (k,o)=>{const q=k.split(',').map(Number); o.set(pcellX(q[0]),yP,pcellZ(q[1]));}, AX, AZ, PROJ_COL.top);
+    const pr=[]; for(const X of [-gX,gX]) for(const Z of [-gZ,gZ]) pr.push([pV(X,surfY,Z), pV(X,yP,Z)]); dashed(pr, PROJ_COL.top);
+    addProjLabel(label, PROJ_COL.top, 0, yP + (yP>=surfY?0.9:-0.9), 0);
+  }
+  function panelZ(zP, surfZ, label){
+    buildGridLines(pV(-gX, 0, zP), AX, AY, state.gx, state.gy, PROJ_COL.front);
+    buildPanel(front, (k,o)=>{const q=k.split(',').map(Number); o.set(pcellX(q[0]),pcellY(q[1]),zP);}, AX, AY, PROJ_COL.front);
+    const pr=[]; for(const X of [-gX,gX]) for(const Y of [0,gY]) pr.push([pV(X,Y,surfZ), pV(X,Y,zP)]); dashed(pr, PROJ_COL.front);
+    addProjLabel(label, PROJ_COL.front, 0, -0.9, zP);
+  }
+  function panelX(xP, surfX, label){
+    buildGridLines(pV(xP, 0, -gZ), AZ, AY, state.gz, state.gy, PROJ_COL.side);
+    buildPanel(side, (k,o)=>{const q=k.split(',').map(Number); o.set(xP,pcellY(q[1]),pcellZ(q[0]));}, AZ, AY, PROJ_COL.side);
+    const pr=[]; for(const Z of [-gZ,gZ]) for(const Y of [0,gY]) pr.push([pV(surfX,Y,Z), pV(xP,Y,Z)]); dashed(pr, PROJ_COL.side);
+    addProjLabel(label, PROJ_COL.side, xP, -0.9, 0);
+  }
+  const sY=!soloAxis||soloAxis==='y', sZ=!soloAxis||soloAxis==='z', sX=!soloAxis||soloAxis==='x';
+  if(sY){ panelTop(yTop, state.gy*S, '위');  if(explode6) panelTop(yBot, 0, '아래'); }
+  if(sZ){ panelZ(zF, state.gz*S/2, '앞');    if(explode6) panelZ(zB, -state.gz*S/2, '뒤'); }
+  if(sX){ panelX(xR, state.gx*S/2, '옆');    if(explode6) panelX(xL, -state.gx*S/2, '왼쪽'); }
   projGroup.updateMatrixWorld(true);
   _pbox.setFromObject(projGroup);
   _pbox.expandByPoint(_pbv.set(-state.gx*S/2,0,-state.gz*S/2));
   _pbox.expandByPoint(_pbv.set(state.gx*S/2,state.gy*S,state.gz*S/2));
-  for(let i=0;i<8;i++){ _pbv.set(i&1?_pbox.max.x:_pbox.min.x, i&2?_pbox.max.y:_pbox.min.y, i&4?_pbox.max.z:_pbox.min.z); projRadius=Math.max(projRadius,_pbv.distanceTo(target)); }
+  _pbox.getCenter(explodeCenter);   // 펼친 전체의 중심 = 회전축
+  for(let i=0;i<8;i++){ _pbv.set(i&1?_pbox.max.x:_pbox.min.x, i&2?_pbox.max.y:_pbox.min.y, i&4?_pbox.max.z:_pbox.min.z); projRadius=Math.max(projRadius,_pbv.distanceTo(explodeCenter)); }
 }
 function setExplode(on){
   if(on===explodeOn) return;
@@ -856,11 +920,42 @@ function setExplode(on){
     try{ track('explode_open'); }catch(e){}
     if(aligned) unlockToFree(false);
     buildProjections(); projGroup.visible=true;
-    if(cells.size===0) toast('먼저 쌓기나무를 놓아 보세요');
+    cubesOn.material=matFace; cubesOff.material=matFaceOff;   // 면을 축 방향색으로
+    soloAxis=null; sync6Btn(); syncAxisChips();
+    if(cells.size>0) target.copy(explodeCenter);   // 회전축을 펼친 전체 중심으로
+    else toast('먼저 쌓기나무를 놓아 보세요');
   } else {
     projGroup.visible=false; disposeProj(projGroup); projLabels.length=0; projRadius=0;
+    cubesOn.material=matOn; cubesOff.material=matOff;   // 원래 노란 톤으로 복원
+    updateTarget();   // 회전축을 모델 중심으로 복원 → 모델이 화면 중앙에
   }
   userZoomed=false; sph.radius=fitRadius(); setOrthoFrustum();
+}
+function sync6Btn(){   // 삼투상/육투상 세그먼트 활성 표시
+  const s3=document.getElementById('seg3'), s6=document.getElementById('seg6');
+  if(s3) s3.classList.toggle('on', !explode6);
+  if(s6) s6.classList.toggle('on', explode6);
+}
+function setExplode6(on){
+  explode6=on; sync6Btn();
+  if(explodeOn){
+    buildProjections();
+    if(cells.size>0) target.copy(explodeCenter);
+    userZoomed=false; sph.radius=fitRadius(); setOrthoFrustum();
+  }
+}
+function syncAxisChips(){
+  const map=[['y','axisY'],['z','axisZ'],['x','axisX']];
+  for(const [ax,id] of map){ const b=document.getElementById(id); if(b) b.classList.toggle('on', soloAxis===ax); }
+}
+function setSolo(axis){
+  soloAxis = (soloAxis===axis) ? null : axis;   // 같은 축을 다시 누르면 전체 표시로
+  syncAxisChips();
+  if(explodeOn){
+    buildProjections();
+    if(cells.size>0) target.copy(explodeCenter);
+    userZoomed=false; sph.radius=fitRadius(); setOrthoFrustum();
+  }
 }
 function modelRadiusWorld(){   // 격자 경계구 반경(회전과 무관한 최대 반경 → 어느 각도에서도 안 잘림)
   return 0.5*Math.sqrt(state.gx*state.gx+state.gy*state.gy+state.gz*state.gz)*S;
@@ -1391,6 +1486,11 @@ async function copyText(t){
 document.getElementById('shareBtn').addEventListener('click',openShareSheet);
 document.getElementById('explodeBtn').addEventListener('click',()=>setExplode(!explodeOn));
 document.getElementById('explodeExit').addEventListener('click',()=>setExplode(false));
+document.getElementById('seg3').addEventListener('click',()=>setExplode6(false));
+document.getElementById('seg6').addEventListener('click',()=>setExplode6(true));
+document.getElementById('axisY').addEventListener('click',()=>setSolo('y'));
+document.getElementById('axisZ').addEventListener('click',()=>setSolo('z'));
+document.getElementById('axisX').addEventListener('click',()=>setSolo('x'));
 document.getElementById('shareDone').addEventListener('click',closeSheet);
 // 버그 신고 미리채우기: 기기·브라우저·현재 모양을 질문6에 자동 입력
 function deviceInfo(){
