@@ -103,7 +103,7 @@
   .hero{position:relative;overflow:hidden;
     background:radial-gradient(120% 100% at 82% 12%, #e9eef4 0%, #eef2f7 46%, #eef2f7 100%);}
   .hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:30px;align-items:center;
-    padding:clamp(40px,7vw,86px) 0 clamp(48px,8vw,92px);}
+    padding-top:clamp(40px,7vw,86px);padding-bottom:clamp(48px,8vw,92px);}
   .hero-copy{max-width:34rem;}
   .hero-tag{display:inline-flex;align-items:center;gap:8px;background:var(--panel);
     border:1px solid var(--line);border-radius:999px;padding:6px 13px 6px 10px;
@@ -311,7 +311,7 @@
         사고력 수학부터 교과까지
       </span>
       <h1 class="hero-h">쌓고 돌려 보며 익히는 <span class="hl">쌓기나무</span></h1>
-      <p class="hero-sub">블록을 3D로 직접 쌓고 위·앞·옆에서 관찰하면 개수·부피·겉넓이가 바로 계산돼요. 만든 모양은 링크 하나로 그대로 열립니다. 설치도, 준비물도 없어요.</p>
+      <p class="hero-sub">쌓기나무를 화면에서 직접 쌓고 돌려 보세요. 위·앞·옆 어디에서 봐도 개수·부피·겉넓이가 곧바로 계산됩니다. 만든 모양은 링크 하나로 그대로 공유되고, 설치나 준비물도 필요 없어요.</p>
       <div class="hero-btns">
         <a class="btn btn-primary" id="heroCta" href="playground/">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
@@ -321,7 +321,7 @@
       </div>
       <p class="hero-note">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        태블릿·휴대폰에서 잘 돌아가요 · 학생은 로그인 없이 사용
+        태블릿·휴대폰에서도 매끄럽게 · 학생은 로그인 없이 사용해요
       </p>
     </div>
 
@@ -349,40 +349,40 @@
     <div class="sec-head reveal">
       <span class="eyebrow">할 수 있는 것</span>
       <h2 class="sec">쌓고, 돌려 보고, 계산까지 한 화면에서</h2>
-      <p class="lead">교과서의 쌓기나무 활동을 그대로 화면으로 옮겼어요. 만들면서 관찰하고, 관찰하면서 수를 확인합니다.</p>
+      <p class="lead">교과서 속 쌓기나무 활동을 그대로 화면으로 옮겼어요. 직접 만들며 관찰하고, 관찰하며 개수를 확인하는 과정을 한자리에서 익힙니다.</p>
     </div>
     <div class="fgrid">
       <article class="fcard reveal">
         <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5 21 7v10l-9 4.5L3 17V7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M3 7l9 4.5m0 0L21 7m-9 4.5V21.5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
         <h3>자유롭게 돌려 보기</h3>
-        <p>손끝으로 회전·확대·이동. 어느 방향에서든 입체를 뜯어보며 숨은 나무까지 확인해요.</p>
+        <p>손끝으로 돌리고 확대하며 어느 방향에서든 살펴봐요. 뒤에 숨은 나무까지 직접 눈으로 확인할 수 있어요.</p>
       </article>
       <article class="fcard reveal">
         <div class="ico"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.4" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="3" width="8" height="8" rx="1.4" stroke="currentColor" stroke-width="1.7"/><rect x="8" y="13" width="8" height="8" rx="1.4" stroke="currentColor" stroke-width="1.7"/></svg></div>
         <h3>위·앞·옆에서 보기</h3>
-        <p>위·앞·옆 정렬 보기로 세 방향 투상을 그대로 확인. 입체를 평면 그림으로 읽는 눈을 길러요.</p>
+        <p>위·앞·옆에서 본 모양을 각각 확인하며, 입체를 평면 그림으로 읽는 눈을 길러요.</p>
       </article>
       <article class="fcard g reveal">
         <div class="ico"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
         <h3>개수·부피·겉넓이 자동</h3>
-        <p>모양을 바꾸면 값도 실시간으로. <strong>계산 과정</strong>까지 펼쳐 보여줘 왜 그런지 알 수 있어요.</p>
+        <p>모양을 바꿀 때마다 개수·부피·겉넓이가 곧바로 다시 계산돼요. <strong>계산 과정</strong>까지 펼쳐 보여줘 왜 그렇게 되는지 이해할 수 있어요.</p>
       </article>
       <article class="fcard reveal">
         <div class="ico"><svg viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5.5" r="2.6" stroke="currentColor" stroke-width="1.8"/><circle cx="6" cy="12" r="2.6" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="18.5" r="2.6" stroke="currentColor" stroke-width="1.8"/><path d="M8.3 10.7 15.7 6.8M8.3 13.3 15.7 17.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
         <h3>만든 모양 링크 공유</h3>
-        <p>링크 하나면 똑같은 모양이 상대 화면에 열려요. 과제로 내거나 친구에게 문제로 보내기 좋아요.</p>
+        <p>링크 하나만 보내면 똑같은 모양이 상대 화면에 그대로 열려요. 과제로 내주거나 친구에게 문제로 보내기 좋아요.</p>
       </article>
       <article class="fcard w reveal">
         <span class="soon">곧 제공</span>
         <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
         <h3>문제지 만들기</h3>
-        <p>문제지와 정답지를 PDF로. 학년·문항 수를 골라 수업·숙제용으로 출력할 수 있게 준비 중이에요.</p>
+        <p>학년과 문항 수를 골라 문제지와 정답지를 PDF로 만들어요. 수업·숙제용으로 바로 출력할 수 있게 준비하고 있어요.</p>
       </article>
       <article class="fcard w reveal">
         <span class="soon">곧 제공</span>
         <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M9 11.5 11 14l4.5-5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="4" width="17" height="16" rx="2.4" stroke="currentColor" stroke-width="1.7"/></svg></div>
         <h3>자동채점 퀴즈</h3>
-        <p>개수·최소·최대·모양 만들기를 즉시 채점. 여러 정답이 있는 문제도 규칙으로 판정하게 준비 중이에요.</p>
+        <p>개수·최소·최대·모양 만들기를 그 자리에서 채점해요. 정답이 여럿인 문제도 정확히 가려내도록 준비하고 있어요.</p>
       </article>
     </div>
   </div>
@@ -434,10 +434,10 @@
     <div class="txt reveal">
       <span class="eyebrow">배우는 원리</span>
       <h2 class="sec">한 입체를 세 방향에서 읽습니다</h2>
-      <p class="lead">위·앞·옆에서 본 모양을 나란히 놓으면, 눈에 보이지 않는 뒤쪽 나무의 개수까지 따져 볼 수 있어요. 교과서가 다루는 '위에서 본 모양 + 높이'와 똑같은 방식입니다.</p>
+      <p class="lead">위·앞·옆에서 본 모양을 나란히 놓으면, 눈에 보이지 않는 뒤쪽 나무의 개수까지 따져 볼 수 있어요. 교과서가 쓰는 '위에서 본 모양 + 높이' 방식 그대로예요.</p>
       <ul class="vlist">
         <li><span class="n">위</span><span><b>위에서 본 모양</b>은 각 칸이 몇 층인지 알려줘요. 여기에 층수를 적으면 개수가 하나로 정해집니다.</span></li>
-        <li><span class="n">앞</span><span><b>앞·옆에서 본 모양</b>만 있으면 높이가 정해지지 않아, 가능한 <b>최소·최대 개수</b>가 생겨요.</span></li>
+        <li><span class="n">앞</span><span><b>앞·옆에서 본 모양</b>만 있으면 높이를 알 수 없어, 개수가 <b>최소부터 최대까지</b> 여러 가지가 돼요.</span></li>
         <li><span class="n">셈</span><span>그래서 "보이지 않는 쌓기나무"를 찾는 활동이 나옵니다. 도구가 그 범위를 바로 계산해 줘요.</span></li>
       </ul>
     </div>
@@ -461,12 +461,12 @@
       <article class="fcard reveal">
         <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v15H5.5A1.5 1.5 0 0 0 4 20.5V5.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v15h5.5A1.5 1.5 0 0 1 20 20.5V5.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
         <h3>교과 연계 · 공간과 입체</h3>
-        <p>위·앞·옆 투상과 개수·부피·겉넓이 등 초등 6학년 교과서 핵심 활동을 그대로. 수업 진도에 맞춰 바로 활용해요.</p>
+        <p>위·앞·옆 보기와 개수·부피·겉넓이 구하기 등 초등 6학년 교과서의 핵심 활동을 그대로 담았어요. 수업 진도에 맞춰 바로 활용할 수 있어요.</p>
       </article>
       <article class="fcard g reveal">
         <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 3 7.5 12 12l9-4.5L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M3 12l9 4.5L21 12M3 16.5 12 21l9-4.5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg></div>
         <h3>심화 · 응용</h3>
-        <p>최소·최대 개수, 숨은 나무(은면)처럼 한 단계 깊은 문제까지. 같은 도구 안에서 매끄럽게 확장됩니다.</p>
+        <p>최소·최대 개수나 보이지 않는 숨은 나무처럼 한 단계 깊은 문제까지 다뤄요. 같은 도구 안에서 자연스럽게 확장됩니다.</p>
       </article>
     </div>
   </div>
@@ -718,7 +718,7 @@ document.getElementById('yr').textContent = new Date().getFullYear();
   let last=performance.now();
   (function loop(now){
     const dt=now-last; last=now;
-    if(!dragging && !reduce){ idleT+=dt; if(idleT>1400) theta-=0.00026*dt; }  // 유휴 시 천천히 자전
+    if(!dragging && !reduce){ idleT+=dt; if(idleT>1400) theta+=0.00026*dt; }  // 유휴 시 천천히 자전(반시계, top-down 기준)
     place(); renderer.render(scene,cam);
     requestAnimationFrame(loop);
   })(performance.now());

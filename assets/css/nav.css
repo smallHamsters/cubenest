@@ -16,8 +16,22 @@ header.site-top.scrolled{border-bottom-color:var(--line);background:rgba(238,242
 .site-nav a[aria-current="page"]{color:var(--accent-ink);background:var(--accent-soft);}
 
 @media (max-width:640px){
-  .site-topin{flex-wrap:wrap;justify-content:center;row-gap:6px;padding:10px 14px;gap:10px;}
-  .site-nav{flex:1 1 100%;}
-  .site-nav a{padding:6px 10px;font-size:13.5px;}
+  /* 모바일: 3행(브랜드/메뉴/버튼)으로 쌓이던 것을 2행으로.
+     1행 = 브랜드(정중앙) + 바로 해보기(우측, 축소) / 2행 = 메뉴.
+     brand·nav·cta를 grid-area로 배치해 소스 순서(브랜드→메뉴→버튼)와 무관하게 재배열한다. */
+  .site-topin{display:grid;grid-template-columns:1fr auto 1fr;
+    grid-template-areas:'edge brand cta' 'nav nav nav';
+    align-items:center;column-gap:8px;row-gap:6px;padding:8px 14px;min-height:0;}
+  /* 1행 가운데: 브랜드. 좌우 1fr이 대칭이라 버튼 폭과 무관하게 뷰포트 정중앙에 온다 */
+  .site-brand{grid-area:brand;justify-self:center;}
   .site-brand .t span{display:none;}
+  /* 1행 오른쪽: 바로 해보기(크기 축소) */
+  .site-topin > .top-cta{grid-area:cta;justify-self:end;align-self:center;margin-left:0;
+    height:34px;padding:0 12px;font-size:12.5px;}
+  .site-topin > .top-cta svg{width:14px;height:14px;}
+  /* 2행: 메뉴 5종 — 한 줄 가운데 정렬, 넘치면 가로 스크롤(다시 여러 줄로 쌓이지 않게) */
+  .site-nav{grid-area:nav;flex:1 1 auto;flex-wrap:nowrap;justify-content:center;gap:2px;
+    overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
+  .site-nav::-webkit-scrollbar{display:none;}
+  .site-nav a{padding:7px 9px;font-size:13px;}
 }
