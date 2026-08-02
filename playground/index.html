@@ -271,6 +271,33 @@
   .axischip.axis-y i{background:#3f8fd0;} .axischip.axis-z i{background:#4fae72;} .axischip.axis-x i{background:#d0546f;}
   .axischip.on{color:#fff;} .axischip.axis-y.on{background:#3f8fd0;} .axischip.axis-z.on{background:#4fae72;} .axischip.axis-x.on{background:#d0546f;}
   .axischip.on i{background:#fff;}
+  /* F4 정답 숨기기 / 타임게이트 */
+  .calc-hd{display:flex;align-items:center;justify-content:space-between;}
+  .calc-hd-r{display:flex;align-items:center;gap:2px;}
+  .calc-lock{background:none;border:none;color:var(--muted);cursor:pointer;padding:5px;border-radius:9px;display:inline-flex;}
+  .calc-lock:hover{background:var(--panel-2);color:var(--ink);}
+  .calc-lock svg{width:18px;height:18px;}
+  .calc-lock .ic-lock{display:none;}
+  .calc-lock.locked{color:var(--accent);}
+  .calc-lock.locked .ic-unlock{display:none;} .calc-lock.locked .ic-lock{display:block;}
+  .calc-gate{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:36px 22px;}
+  .calc-gate .lockic{width:44px;height:44px;color:var(--accent);}
+  .calc-gate .lockic svg{width:100%;height:100%;}
+  .calc-gate .gt{font-weight:800;font-size:15px;color:var(--ink);}
+  .calc-gate .gd{font-size:12.5px;color:var(--muted);line-height:1.6;}
+  .calc-gate .gate-btn{margin-top:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:12px;padding:10px 22px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:var(--shadow-sm);}
+  .calc-gate .gate-btn:hover{background:var(--panel-2);}
+  .calc-gate .gate-btn.accent{background:var(--accent);color:#fff;border-color:transparent;}
+  .calc-gate .gate-btn.accent:hover{background:var(--accent-ink);}
+  /* 무료 체험 카운트다운 */
+  .freetimer{position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);
+    z-index:6;display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);
+    border-radius:20px;box-shadow:var(--shadow-sm);padding:6px 13px;font-weight:800;font-size:12px;color:var(--muted);
+    white-space:nowrap;}
+  .freetimer[hidden]{display:none;}
+  .freetimer svg{width:13px;height:13px;color:var(--accent);}
+  .freetimer.warn{color:#d0546f;} .freetimer.warn svg{color:#d0546f;}
+  #app.explode-on .freetimer{display:none;}
 
   @keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 
@@ -292,6 +319,11 @@
 <body>
 <div id="app">
   <canvas id="scene"></canvas>
+
+  <div class="freetimer" id="freeTimer" hidden>
+    <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span id="freeTimerText">무료 체험 30:00 남음</span>
+  </div>
 
   <div class="topleft">
     <a class="brand" href="../">
@@ -377,7 +409,15 @@
   </div>
 
   <div class="calc" id="calc">
-    <div class="calc-hd"><span>계산 과정</span><button class="calc-x" id="calcClose" aria-label="닫기"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
+    <div class="calc-hd"><span>계산 과정</span>
+      <div class="calc-hd-r">
+        <button class="calc-lock" id="calcLockBtn" type="button" aria-label="정답 가리기">
+          <svg class="ic-unlock" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 7.5-1.9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <svg class="ic-lock" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+        <button class="calc-x" id="calcClose" aria-label="닫기"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+      </div>
+    </div>
     <div class="calc-body" id="calcBody"></div>
   </div>
 
@@ -806,6 +846,7 @@ const projGroup = new THREE.Group(); projGroup.visible=false; scene.add(projGrou
 const explodeCenter = new THREE.Vector3();   // 펼친 전체(모델+3패널)의 중심 = 펼쳐보기 회전축
 const projLabels=[];
 let explodeOn=false, explode6=false, projRadius=0, soloAxis=null;
+let answerHidden=false, calcLocked=false;   // F4 정답 숨기기 / calc 30분 타임게이트
 const EXPLODE_GAP = 3.6;   // 물체↔투상 평면 간격
 function pcellX(x){ return (x-(state.gx-1)/2)*S; }
 function pcellY(y){ return (y+0.5)*S; }
@@ -1250,7 +1291,7 @@ function renderStats(){
   document.getElementById('sSurfU').textContent=sq;
 
   const calc=document.getElementById('calcBody');
-  calc.innerHTML=`
+  const _calcHtml=`
     <div class="row"><span class="lbl">쌓기나무</span>
       <span class="exp"><b>${N}</b> 개</span></div>
 
@@ -1275,11 +1316,46 @@ function renderStats(){
     <div class="krformula">( 전체 면 <span class="op">−</span> 노출면 ) <span class="op">÷</span> 2</div>
 
     <div class="foot">겉넓이는 바닥에 닿는 면도 포함됩니다.</div>`;
+  calc.innerHTML = calcLocked ? calcLockHtml() : (answerHidden ? calcHideHtml() : _calcHtml);
 }
 function postEdit(mkLayers=true){
   renderStats();
   updateTopCounts();
   if(mkLayers) refreshLayers();
+}
+/* ===== F4 정답 숨기기 + calc 30분 타임게이트 (마스터 6.3.1) ===== */
+const LOCK_SVG='<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+const TIMEGATE_MS=30*60*1000, TIMEGATE_KEY='cubenest_pg_first';
+function markFirstInteract(){ try{ if(!localStorage.getItem(TIMEGATE_KEY)) localStorage.setItem(TIMEGATE_KEY, String(Date.now())); }catch(e){} }
+function timeGateElapsed(){ try{ const t=Number(localStorage.getItem(TIMEGATE_KEY)); return Number.isFinite(t)&&t>0&&(Date.now()-t>=TIMEGATE_MS); }catch(e){ return false; } }
+function checkTimeGate(){ const l=timeGateElapsed(); if(l!==calcLocked){ calcLocked=l; renderStats(); syncCalcLockBtn(); if(l){ try{track('calc_timegate_lock');}catch(e){} } } }
+function fmtMMSS(ms){ const s=Math.max(0,Math.ceil(ms/1000)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+function updateFreeTimer(){
+  const el=document.getElementById('freeTimer'); if(!el) return;
+  let first=0; try{ first=Number(localStorage.getItem(TIMEGATE_KEY))||0; }catch(e){}
+  const rem = first ? (TIMEGATE_MS-(Date.now()-first)) : 0;
+  if(!first || calcLocked || rem<=0){ el.hidden=true; return; }
+  el.hidden=false;
+  const t=document.getElementById('freeTimerText'); if(t) t.textContent='무료 체험 '+fmtMMSS(rem)+' 남음';
+  el.classList.toggle('warn', rem<=60000);
+}
+function setAnswerHidden(v){ answerHidden=!!v; syncCalcLockBtn(); renderStats(); try{ track(v?'answer_hide':'answer_reveal'); }catch(e){} }
+function syncCalcLockBtn(){
+  const b=document.getElementById('calcLockBtn'); if(!b) return;
+  b.style.display = calcLocked ? 'none' : '';
+  b.classList.toggle('locked', answerHidden);
+  b.setAttribute('aria-label', answerHidden?'정답 보기':'정답 가리기');
+}
+function calcHideHtml(){
+  return '<div class="calc-gate"><div class="lockic">'+LOCK_SVG+'</div>'
+    +'<div class="gt">정답이 가려져 있어요</div>'
+    +'<button class="gate-btn" type="button" data-action="reveal">정답 확인</button></div>';
+}
+function calcLockHtml(){
+  return '<div class="calc-gate"><div class="lockic">'+LOCK_SVG+'</div>'
+    +'<div class="gt">30분 무료 체험이 끝났어요</div>'
+    +'<div class="gd">편집·관찰·펼쳐보기는 계속 사용할 수 있어요.<br>계산 과정은 로그인을 하면 무료로 계속 볼 수 있어요!</div>'
+    +'<button class="gate-btn accent" type="button" data-action="login">로그인 · 회원가입</button></div>';
 }
 
 /* ============================================================
@@ -1639,6 +1715,7 @@ document.querySelector('.edgerow').addEventListener('click',e=>{
 /* 통계 카드 펼치기 */
 const appEl=document.getElementById('app');
 function setCalc(open){
+  if(open) checkTimeGate();
   if(open && !calcOpen) track('calc_open');
   calcOpen=open;
   appEl.classList.toggle('calc-open', open);
@@ -1648,6 +1725,11 @@ function setCalc(open){
 }
 document.getElementById('statHead').addEventListener('click',()=>setCalc(!calcOpen));
 document.getElementById('calcClose').addEventListener('click',()=>setCalc(false));
+document.getElementById('calcLockBtn').addEventListener('click',()=>{ if(!calcLocked) setAnswerHidden(!answerHidden); });
+document.getElementById('calcBody').addEventListener('click',(e)=>{ const a=e.target.closest('[data-action]'); if(!a) return; if(a.dataset.action==='reveal') setAnswerHidden(false); else if(a.dataset.action==='login'){ toast('로그인은 준비 중이에요. 곧 제공됩니다!'); try{track('calc_login_prompt');}catch(e){} } });
+(function(){ function onFirst(){ markFirstInteract(); updateFreeTimer(); checkTimeGate(); window.removeEventListener('pointerdown', onFirst, true); } window.addEventListener('pointerdown', onFirst, true); })();
+setInterval(()=>{ updateFreeTimer(); checkTimeGate(); }, 1000);
+syncCalcLockBtn();
 
 /* 토스트 */
 let toastT=null;
