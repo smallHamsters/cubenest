@@ -2,165 +2,142 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>큐브네스트 · 퀴즈</title>
-    <meta
-      name="description"
-      content="쌓기나무 퀴즈를 교육과정·난이도·차원·유형으로 골라 풀어요. 개수·부피·겉넓이·투상부터 사고력·경시까지."
-    />
+    <meta name="description" content="쌓기나무 퀴즈를 교육과정·난이도·차원·유형으로 골라 풀어요. 교과·사고력·경시까지." />
     <meta name="theme-color" content="#e9eef4" />
-    <link
-      rel="canonical"
-      href="https://smallhamsters.github.io/cubenest/quiz/"
-    />
-
+    <link rel="canonical" href="https://smallhamsters.github.io/cubenest/quiz/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="CubeNest" />
     <meta property="og:title" content="큐브네스트 · 퀴즈" />
-    <meta
-      property="og:description"
-      content="교육과정·난이도·차원·유형으로 골라 푸는 쌓기나무 퀴즈."
-    />
+    <meta property="og:description" content="교육과정·난이도·차원·유형으로 골라 푸는 쌓기나무 퀴즈." />
     <meta property="og:locale" content="ko_KR" />
-    <meta
-      property="og:url"
-      content="https://smallhamsters.github.io/cubenest/quiz/"
-    />
-    <meta
-      property="og:image"
-      content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png"
-    />
+    <meta property="og:url" content="https://smallhamsters.github.io/cubenest/quiz/" />
+    <meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="CubeNest — 쌓기나무 3D 학습" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="큐브네스트 · 퀴즈" />
-    <meta
-      name="twitter:description"
-      content="교육과정·난이도·차원·유형으로 골라 푸는 쌓기나무 퀴즈."
-    />
-    <meta
-      name="twitter:image"
-      content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png"
-    />
+    <meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png" />
 
-    <link
-      rel="stylesheet"
-      as="style"
-      crossorigin
-      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"
-    />
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+
+    <!-- 프리뷰 폴백(리포에선 아래 링크가 덮어씀): tokens.css 사본 + 최소 nav 스타일 -->
+    <style id="preview-fallback">
+      :root{
+        --panel:#ffffff; --panel-2:#f7f9fc; --bg:#eef2f7;
+        --ink:#182233; --muted:#6a7789; --muted-2:#8a95a6;
+        --line:#e5eaf1; --line-2:#eef2f7;
+        --accent:#3f3fbf; --accent-ink:#2d2d95; --accent-soft:#ecebfb;
+        --add:#0f9d58; --add-soft:#e6f5ec; --del:#e0466b; --del-soft:#fce9ee;
+        --shadow:0 6px 22px rgba(24,34,51,.12), 0 1px 3px rgba(24,34,51,.08);
+        --shadow-sm:0 2px 8px rgba(24,34,51,.10);
+        --shadow-lg:0 18px 50px rgba(24,34,51,.16), 0 3px 10px rgba(24,34,51,.08);
+        --r:16px; --r-lg:22px;
+        --font:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+      }
+      .site-top{display:flex;align-items:center;padding:12px clamp(16px,4vw,40px);border-bottom:1px solid var(--line);background:#fff}
+      .site-topin{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;max-width:1180px;margin:0 auto}
+      .site-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+      .site-brand .glyph{width:26px;height:26px}
+      .site-brand .t{display:flex;flex-direction:column;line-height:1.05}
+      .site-brand .t b{font-weight:800;font-size:15px}
+      .site-brand .t span{font-size:10.5px;color:var(--muted);font-weight:600}
+      .site-nav{display:flex;gap:4px;flex-wrap:wrap}
+      .site-nav a{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px}
+      .site-nav a[aria-current="page"]{color:var(--accent-ink);background:var(--accent-soft)}
+      .site-nav a:hover{color:var(--ink)}
+    </style>
     <link rel="stylesheet" href="../assets/css/tokens.css" />
     <link rel="stylesheet" href="../assets/css/nav.css" />
+
     <style>
-      /* 나무 큐브 모티프(글리프 전용, 토큰 아님) · 방향 색 언어(위=파랑·앞=add·옆=del) */
-      .glyph {
-        --w-top: #e6c9a0; --w-left: #d8a76e; --w-right: #c8965a;
-        --d-top: #3f8fd0; --d-front: var(--add); --d-side: var(--del);
-      }
-
+      .glyph { --w-top:#e6c9a0; --w-left:#d8a76e; --w-right:#c8965a; --d-top:#3f8fd0; --d-front:var(--add); --d-side:var(--del); }
       * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        font-family: var(--font);
-        color: var(--ink);
-        background: var(--bg);
-        -webkit-font-smoothing: antialiased;
-      }
-      main {
-        max-width: 1180px;
-        margin: 0 auto;
-        padding: clamp(16px, 3vw, 26px) clamp(16px, 4vw, 40px) 56px;
-      }
+      body { margin:0; font-family:var(--font); color:var(--ink); background:var(--bg); -webkit-font-smoothing:antialiased; }
+      main { max-width:1180px; margin:0 auto; padding:clamp(16px,3vw,26px) clamp(16px,4vw,40px) 56px; }
 
-      /* ---- hero ---- */
-      .hero { padding: 6px 0 4px; }
-      .hero-inner { border-left: 3px solid var(--accent); padding-left: 18px; }
-      .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; color: var(--accent); }
-      .hero h1 { font-size: clamp(23px, 4vw, 34px); line-height: 1.12; letter-spacing: -0.02em; margin: 0.28em 0 0.16em; font-weight: 800; }
-      .hero p { margin: 0; color: var(--muted); max-width: 52ch; font-size: clamp(14px, 1.6vw, 16px); line-height: 1.6; }
+      .hero { padding:6px 0 4px; }
+      .hero-inner { border-left:3px solid var(--accent); padding-left:18px; }
+      .eyebrow { font-size:12px; font-weight:700; letter-spacing:.06em; color:var(--accent); }
+      .hero h1 { font-size:clamp(23px,4vw,34px); line-height:1.12; letter-spacing:-.02em; margin:.28em 0 .16em; font-weight:800; }
+      .hero p { margin:0; color:var(--muted); max-width:52ch; font-size:clamp(14px,1.6vw,16px); line-height:1.6; }
 
-      /* ---- 필터바 (2줄) ---- */
-      .filters { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); margin: 18px 0; }
-      .frow { padding: 13px 16px; }
-      .frow + .frow { border-top: 1px solid var(--line); }
-      .frow-top { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; }
-      .fg { display: flex; align-items: center; gap: 10px; }
-      .fg > .label { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.02em; white-space: nowrap; }
-      .reset { border: none; background: none; color: var(--accent); font-weight: 600; font-size: 13px; cursor: pointer; padding: 7px 10px; border-radius: 9px; margin-left: auto; }
-      .reset:hover { background: var(--accent-soft); }
+      /* ---- 필터 폼 (2줄) ---- */
+      .filters { background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow-sm); margin:18px 0; padding:16px; display:flex; flex-direction:column; gap:14px; }
+      .frow { display:flex; flex-wrap:wrap; gap:14px 20px; align-items:flex-end; }
+      .fg { display:flex; flex-direction:column; gap:6px; }
+      .fg > .label { font-size:12px; font-weight:700; color:var(--muted); letter-spacing:.02em; }
 
-      .seg { display: inline-flex; gap: 5px; background: var(--panel-2); padding: 4px; border-radius: 12px; }
-      .seg button { border: none; background: none; cursor: pointer; padding: 7px 12px; border-radius: 9px; font-size: 13px; font-weight: 600; color: var(--muted); transition: 0.15s; white-space: nowrap; }
-      .seg button[aria-pressed="true"] { background: var(--panel); color: var(--accent-ink); box-shadow: var(--shadow-sm); }
-      .seg button:hover { color: var(--ink); }
+      /* 드롭다운 */
+      .dd { position:relative; }
+      .dd-btn { display:inline-flex; align-items:center; gap:10px; justify-content:space-between; min-width:150px; height:42px; padding:0 12px 0 14px; border:1px solid var(--line); background:var(--panel); border-radius:12px; font-family:inherit; font-size:14px; font-weight:600; color:var(--ink); cursor:pointer; box-shadow:var(--shadow-sm); transition:border-color .15s; }
+      .dd-btn:hover { border-color:#cfd8e6; }
+      .dd.open .dd-btn { border-color:var(--accent); }
+      .dd-btn .caret { width:14px; height:14px; color:var(--muted-2); transition:transform .15s; flex:none; }
+      .dd.open .dd-btn .caret { transform:rotate(180deg); }
+      .dd-pop { position:absolute; top:calc(100% + 6px); left:0; min-width:100%; z-index:30; background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow-lg); padding:6px; max-height:300px; overflow:auto; display:none; }
+      .dd.open .dd-pop { display:block; }
+      .dd-opt { display:flex; align-items:center; gap:9px; width:100%; padding:9px 11px; border:none; background:none; border-radius:9px; font-family:inherit; font-size:14px; font-weight:600; color:var(--ink); cursor:pointer; text-align:left; white-space:nowrap; }
+      .dd-opt:hover { background:var(--panel-2); }
+      .dd-opt[aria-selected="true"] { color:var(--accent-ink); }
+      .dd-opt .tick { width:16px; height:16px; flex:none; color:var(--accent); visibility:hidden; }
+      .dd-opt[aria-selected="true"] .tick { visibility:visible; }
+      /* 체크박스형(다중) */
+      .dd-opt .box { width:17px; height:17px; flex:none; border:1.5px solid #c3ccda; border-radius:5px; display:grid; place-items:center; }
+      .dd-opt[aria-selected="true"] .box { background:var(--accent); border-color:var(--accent); }
+      .dd-opt .box svg { width:11px; height:11px; color:#fff; visibility:hidden; }
+      .dd-opt[aria-selected="true"] .box svg { visibility:visible; }
+      .dd-grp { font-size:11px; font-weight:800; color:var(--muted-2); letter-spacing:.02em; padding:9px 11px 4px; }
+      .dd-sep { height:1px; background:var(--line); margin:5px 4px; }
 
-      .chips { display: inline-flex; flex-wrap: wrap; gap: 7px; }
-      .chip { border: 1px solid var(--line); background: var(--panel); cursor: pointer; padding: 7px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; transition: 0.15s; }
-      .chip:hover { border-color: var(--muted-2); }
-      .chip[aria-pressed="true"] { background: var(--accent-soft); border-color: transparent; color: var(--accent-ink); }
-      .chip .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--muted-2); }
-      .chip[aria-pressed="true"] .dot { background: var(--accent); }
-
-      .types-head { font-size: 12px; font-weight: 700; color: var(--muted); letter-spacing: 0.02em; margin-bottom: 10px; }
-      .tabs { display: inline-flex; flex-wrap: wrap; gap: 6px; background: var(--panel-2); padding: 4px; border-radius: 12px; }
-      .tabs button { border: none; background: none; cursor: pointer; padding: 8px 13px; border-radius: 9px; font-size: 13px; font-weight: 600; color: var(--muted); transition: 0.15s; white-space: nowrap; }
-      .tabs button[aria-pressed="true"] { background: var(--panel); color: var(--accent-ink); box-shadow: var(--shadow-sm); }
-      .tabs button:hover { color: var(--ink); }
-      .subrow { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-      .subrow .label { font-size: 12px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+      /* 스테퍼 */
+      .stepper { display:inline-flex; align-items:center; gap:4px; height:42px; padding:4px; border:1px solid var(--line); background:var(--panel); border-radius:12px; box-shadow:var(--shadow-sm); }
+      .stepper button { width:34px; height:34px; border:none; background:var(--panel-2); border-radius:9px; font-size:20px; font-weight:700; color:var(--accent-ink); cursor:pointer; display:grid; place-items:center; line-height:1; }
+      .stepper button:hover { background:var(--accent-soft); }
+      .stepper button:disabled { color:var(--muted-2); cursor:not-allowed; background:var(--panel-2); }
+      .stepper .val { min-width:64px; text-align:center; font-weight:800; font-size:15px; }
 
       /* ---- 결과 ---- */
-      .results-head { display: flex; align-items: baseline; gap: 10px; justify-content: space-between; margin: 2px 2px 14px; flex-wrap: wrap; }
-      .results-head .count { font-weight: 800; font-size: 15px; }
-      .results-head .count b { color: var(--accent-ink); }
-      .results-head .hint { font-size: 12.5px; color: var(--muted); }
+      .results-head { display:flex; align-items:baseline; gap:10px; justify-content:space-between; margin:2px 2px 14px; flex-wrap:wrap; }
+      .results-head .count { font-weight:800; font-size:15px; }
+      .results-head .count b { color:var(--accent-ink); }
+      .results-head .hint { font-size:12.5px; color:var(--muted); }
+      .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(228px,1fr)); gap:14px; }
+      .card { background:var(--panel); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:var(--shadow-sm); padding:16px; display:flex; flex-direction:column; gap:11px; transition:transform .16s,box-shadow .16s,border-color .16s; }
+      .card:hover { transform:translateY(-2px); box-shadow:var(--shadow); border-color:#dbe3ef; }
+      .card.soon { opacity:.92; }
+      .card-top { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
+      .glyph-box { width:46px; height:46px; flex:none; border-radius:var(--r); background:var(--panel-2); display:grid; place-items:center; }
+      .glyph-box svg { width:30px; height:30px; }
+      .badge { font-size:11px; font-weight:700; padding:4px 9px; border-radius:999px; white-space:nowrap; background:var(--panel-2); color:var(--muted); border:1px solid var(--line); }
+      .card h3 { margin:0; font-size:15.5px; letter-spacing:-.01em; }
+      .card .desc { margin:0; color:var(--muted); font-size:13px; min-height:2.6em; line-height:1.5; }
+      .tags { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+      .tag { font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:8px; background:var(--accent-soft); color:var(--accent-ink); }
+      .tag.think { background:var(--accent-soft); color:var(--accent-ink); }
+      .lv { display:inline-flex; gap:3px; }
+      .lv b { font-size:11px; font-weight:800; padding:2px 6px; border-radius:5px; background:var(--accent-soft); color:var(--accent-ink); line-height:1.25; }
+      .lv b.on { background:var(--accent-soft); color:var(--accent-ink); }
+      .card .cta { margin-top:auto; border:none; cursor:pointer; font-weight:700; font-size:14px; padding:10px 14px; border-radius:var(--r); background:var(--accent); color:#fff; transition:.15s; }
+      .card .cta:hover { background:var(--accent-ink); }
+      .card .cta.locked { background:var(--panel-2); color:var(--muted-2); cursor:not-allowed; }
+      .empty { grid-column:1/-1; text-align:center; padding:48px 20px; color:var(--muted); border:1.5px dashed var(--line); border-radius:var(--r-lg); background:var(--panel-2); }
+      .empty b { display:block; color:var(--ink); margin-bottom:6px; font-size:15px; }
 
-      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(228px, 1fr)); gap: 14px; }
-      .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow-sm); padding: 16px; display: flex; flex-direction: column; gap: 11px; transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease; }
-      .card:hover { transform: translateY(-2px); box-shadow: var(--shadow); border-color: var(--muted-2); }
-      .card.soon { opacity: 0.92; }
-      .card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
-      .glyph { width: 46px; height: 46px; flex: none; border-radius: var(--r); background: var(--panel-2); display: grid; place-items: center; }
-      .glyph svg { width: 30px; height: 30px; }
-      .badge { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px; white-space: nowrap; background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }
-      .card h3 { margin: 0; font-size: 15.5px; letter-spacing: -0.01em; }
-      .card .desc { margin: 0; color: var(--muted); font-size: 13px; min-height: 2.6em; line-height: 1.5; }
-      .tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-      .tag { font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 8px; background: var(--panel-2); color: var(--muted); }
-      .tag.think { background: var(--accent-soft); color: var(--accent-ink); }
-      .lv { display: inline-flex; gap: 3px; align-items: center; }
-      .lv b { font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 5px; background: var(--line-2); color: var(--muted-2); line-height: 1.25; }
-      .lv b.on { background: var(--accent-soft); color: var(--accent-ink); }
-      .card .cta { margin-top: auto; border: none; cursor: pointer; font-weight: 700; font-size: 14px; padding: 10px 14px; border-radius: var(--r); background: var(--accent); color: #fff; transition: 0.15s; }
-      .card .cta:hover { background: var(--accent-ink); }
-      .card .cta.locked { background: var(--panel-2); color: var(--muted-2); cursor: not-allowed; }
-
-      .empty { grid-column: 1/-1; text-align: center; padding: 48px 20px; color: var(--muted); border: 1.5px dashed var(--line); border-radius: var(--r-lg); background: var(--panel-2); }
-      .empty b { display: block; color: var(--ink); margin-bottom: 6px; font-size: 15px; }
-
-      .footnote { color: var(--muted-2); font-size: 12px; line-height: 1.7; margin: 22px 2px 0; }
-      .footnote code { background: var(--panel-2); padding: 1px 6px; border-radius: 6px; }
-
-      .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(16px); background: var(--ink); color: #fff; padding: 12px 18px; border-radius: var(--r); font-size: 14px; font-weight: 600; box-shadow: var(--shadow-lg); opacity: 0; pointer-events: none; transition: 0.25s; z-index: 40; max-width: 90vw; }
-      .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-      :focus-visible { outline: 2.5px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
-      @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+      .footnote { color:var(--muted-2); font-size:12px; line-height:1.7; margin:22px 2px 0; }
+      .footnote code { background:var(--panel-2); padding:1px 6px; border-radius:6px; }
+      .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(16px); background:var(--ink); color:#fff; padding:12px 18px; border-radius:var(--r); font-size:14px; font-weight:600; box-shadow:var(--shadow-lg); opacity:0; pointer-events:none; transition:.25s; z-index:60; max-width:90vw; }
+      .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+      :focus-visible { outline:2.5px solid var(--accent); outline-offset:2px; border-radius:6px; }
+      @media (prefers-reduced-motion:reduce){ * { transition:none !important; } }
     </style>
   </head>
   <body>
     <header class="site-top" id="topbar">
       <div class="site-topin">
         <a class="site-brand" href="../" aria-label="큐브네스트 홈">
-          <img
-            class="glyph"
-            src="../assets/img/brand-glyph.svg"
-            alt=""
-            role="presentation"
-          />
+          <img class="glyph" src="../assets/img/brand-glyph.svg" alt="" role="presentation" />
           <span class="t"><b>CubeNest</b><span>쌓기나무 3D 학습</span></span>
         </a>
         <nav class="site-nav" aria-label="주요 메뉴">
@@ -178,54 +155,26 @@
         <div class="hero-inner">
           <span class="eyebrow">교과수학 · 사고력수학 · 경시 대비</span>
           <h1>쌓기나무 퀴즈</h1>
-          <p>교육과정·난이도·차원·유형으로 골라 바로 풀어요. 개수부터 부피·겉넓이, 위·앞·옆 관찰까지.</p>
+          <p>교육과정·난이도·차원·유형과 문제 수를 골라 바로 풀어요.</p>
         </div>
       </section>
 
-      <section class="filters" aria-label="퀴즈 필터">
-        <!-- 1행 -->
-        <div class="frow frow-top">
-          <div class="fg">
-            <span class="label">교육과정</span>
-            <div class="seg" role="group" aria-label="교육과정" data-filter="edu">
-              <button type="button" data-val="all" aria-pressed="true">전체</button>
-              <button type="button" data-val="curr" aria-pressed="false">교과수학</button>
-              <button type="button" data-val="think" aria-pressed="false">사고력수학</button>
-            </div>
-          </div>
-          <div class="fg">
-            <span class="label">난이도</span>
-            <div class="chips" role="group" aria-label="난이도" data-filter="levels">
-              <button type="button" class="chip" data-val="하" aria-pressed="false"><span class="dot"></span>하</button>
-              <button type="button" class="chip" data-val="중" aria-pressed="true"><span class="dot"></span>중</button>
-              <button type="button" class="chip" data-val="상" aria-pressed="true"><span class="dot"></span>상</button>
-              <button type="button" class="chip" data-val="최상" aria-pressed="true"><span class="dot"></span>최상</button>
-            </div>
-          </div>
-          <div class="fg">
-            <span class="label">차원</span>
-            <div class="seg" role="group" aria-label="차원" data-filter="dim">
-              <button type="button" data-val="all" aria-pressed="true">전체</button>
-              <button type="button" data-val="3d" aria-pressed="false">3D만</button>
-              <button type="button" data-val="2d" aria-pressed="false">2D만</button>
-            </div>
-          </div>
-          <div class="fg">
-            <span class="label">퀴즈 수</span>
-            <div class="seg" role="group" aria-label="퀴즈 수" data-filter="count">
-              <button type="button" data-val="10" aria-pressed="true">10개 이하</button>
-              <button type="button" data-val="20" aria-pressed="false">20개 이하</button>
-              <button type="button" data-val="30" aria-pressed="false">30개 이하</button>
-            </div>
-          </div>
-          <button class="reset" id="reset" type="button">초기화</button>
-        </div>
-
-        <!-- 2행: 문제유형 -->
+      <!-- 필터 폼 -->
+      <section class="filters" aria-label="퀴즈 설정">
         <div class="frow">
-          <div class="types-head">문제유형</div>
-          <div class="tabs" id="catTabs" role="group" aria-label="문제유형 상위개념"></div>
-          <div class="subrow" id="subRow" hidden></div>
+          <div class="fg"><span class="label">교육과정</span><div class="dd" data-dd="edu"></div></div>
+          <div class="fg"><span class="label">난이도</span><div class="dd" data-dd="levels"></div></div>
+          <div class="fg"><span class="label">차원</span><div class="dd" data-dd="dim"></div></div>
+        </div>
+        <div class="frow">
+          <div class="fg"><span class="label">문제유형</span><div class="dd" data-dd="types"></div></div>
+          <div class="fg"><span class="label">문제 수</span>
+            <div class="stepper">
+              <button type="button" id="st-minus" aria-label="문제 수 줄이기">−</button>
+              <span class="val" id="st-val">10개</span>
+              <button type="button" id="st-plus" aria-label="문제 수 늘리기">+</button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -238,207 +187,203 @@
       </section>
 
       <p class="footnote">
-        작업본 <code>quiz_260731_0002</code> · 배포 시 <code>quiz/index.html</code>(상대경로·무로그인) · 필터는 주소(URL)로 공유돼요.<br />
-        교육과정(교과/사고력)은 <b>태그</b>라 한 유형이 둘 다 가질 수 있어요. 사고력·경시 유형은 전부 <b>자체 생성 문항</b>입니다.
+        이 곳의 <b>모든 문제는 CubeNest가 자체 제작·보유한 자산</b>입니다. 무단 복제·재배포를 금합니다.
       </p>
     </main>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script>
-      const LEVELS = ["하", "중", "상", "최상"];
-      const LVL_CODE = { 하: "1", 중: "2", 상: "3", 최상: "4" };
-      const CODE_LVL = { 1: "하", 2: "중", 3: "상", 4: "최상" };
-      const DEFAULT_LEVELS = ["중", "상", "최상"];
-      const DEFAULT_COUNT = 10;
-
-      /* 상위개념 (개념 묶음 · 트랙 없음) */
+      /* ===== 데이터 (문제 분류 체계 시드) ===== */
+      const LEVELS = ["하","중","상","최상"];
+      const LVL_CODE = {하:"1",중:"2",상:"3",최상:"4"}, CODE_LVL={1:"하",2:"중",3:"상",4:"최상"};
       const CATS = [
-        { id: "calc", name: "개수·부피·겉넓이", tag: "계산" },
-        { id: "views", name: "위·앞·옆", tag: "위·앞·옆" },
-        { id: "reason", name: "추론", tag: "추론" },
-        { id: "compose", name: "구성", tag: "구성" },
-        { id: "transform", name: "변환·합동", tag: "변환" },
-        { id: "enumerate", name: "세기", tag: "세기" },
+        { id:"calc", name:"개수·부피·겉넓이" }, { id:"views", name:"위·앞·옆" },
+        { id:"reason", name:"추론" }, { id:"compose", name:"구성" },
+        { id:"transform", name:"변환·합동" }, { id:"enumerate", name:"세기" },
       ];
-
-      /* 세부유형 (edu = 교육과정 태그, 다중 가능) */
       const TYPES = [
-        { id: "count", cat: "calc", name: "개수 세기", chip: "개수 세기", edu: ["curr", "think"], desc: "쌓은 나무가 몇 개인지 세요.", dim: "both", levels: ["하", "중", "상"], status: "live", glyph: "stack" },
-        { id: "volume", cat: "calc", name: "부피 구하기", chip: "부피", edu: ["curr", "think"], desc: "한 모서리 길이로 부피를 구해요.", dim: "both", levels: ["중", "상"], status: "live", glyph: "ruler" },
-        { id: "surface", cat: "calc", name: "겉넓이 구하기", chip: "겉넓이", edu: ["curr", "think"], desc: "바닥까지 포함해 겉넓이를 구해요.", dim: "both", levels: ["중", "상"], status: "live", glyph: "faces" },
-        { id: "facesMc", cat: "views", name: "위·앞·옆 모양 고르기", chip: "모양 고르기", edu: ["curr", "think"], desc: "맞는 앞/옆에서 본 모양을 골라요.", dim: "2d", levels: ["하", "중"], status: "live", glyph: "panels" },
-        { id: "heightmap", cat: "views", name: "위에서 본 수 쓰기", chip: "수 쓰기", edu: ["curr", "think"], desc: "겨냥도를 보고 위 모양 각 칸에 수를 써요.", dim: "3d", levels: ["하", "중"], status: "live", glyph: "topnum" },
-        { id: "facesDraw", cat: "views", name: "위·앞·옆 그리기", chip: "그리기", edu: ["curr", "think"], desc: "세 방향에서 본 모양을 칸으로 칠해요.", dim: "both", levels: ["중", "상"], status: "soon", glyph: "draw" },
-        { id: "minmax", cat: "reason", name: "최소·최대 개수", chip: "최소·최대", edu: ["curr", "think"], desc: "투상도만 보고 가능한 개수의 범위를 찾아요.", dim: "2d", levels: ["중", "상", "최상"], status: "soon", glyph: "range" },
-        { id: "hidden", cat: "reason", name: "안 보이는 나무", chip: "안 보이는 나무", edu: ["curr", "think"], desc: "겨냥도에서 가려진 나무 수를 헤아려요.", dim: "3d", levels: ["중", "상", "최상"], status: "soon", glyph: "hidden" },
-        { id: "shadow", cat: "reason", name: "그림자 추론", chip: "그림자", edu: ["think"], desc: "방향별 그림자로 가능한 모양을 좁혀요.", dim: "both", levels: ["상", "최상"], status: "soon", glyph: "shadow" },
-        { id: "build", cat: "compose", name: "모양 만들기", chip: "모양 만들기", edu: ["curr", "think"], desc: "조건에 맞게 직접 쌓아 만들어요.", dim: "3d", levels: ["중", "상", "최상"], status: "soon", glyph: "build" },
-        { id: "pieces", cat: "compose", name: "조각 맞추기", chip: "조각 맞추기", edu: ["think"], desc: "조각을 맞춰 주어진 입체를 완성해요.", dim: "3d", levels: ["상", "최상"], status: "soon", glyph: "pieces" },
-        { id: "sameShape", cat: "transform", name: "같은 모양 찾기", chip: "같은 모양", edu: ["think"], desc: "돌려서 겹치는(합동인) 모양을 찾아요.", dim: "3d", levels: ["중", "상"], status: "soon", glyph: "same" },
-        { id: "ways", cat: "enumerate", name: "가짓수 세기", chip: "가짓수", edu: ["think"], desc: "조건을 만족하는 모양이 몇 가지인지 세요.", dim: "both", levels: ["상", "최상"], status: "soon", glyph: "ways" },
+        { id:"count", cat:"calc", name:"개수 세기", edu:["curr","think"], desc:"쌓은 나무가 몇 개인지 세요.", dim:"both", levels:["하","중","상"], status:"live", glyph:"stack" },
+        { id:"volume", cat:"calc", name:"부피 구하기", edu:["curr","think"], desc:"한 모서리 길이로 부피를 구해요.", dim:"both", levels:["중","상"], status:"live", glyph:"ruler" },
+        { id:"surface", cat:"calc", name:"겉넓이 구하기", edu:["curr","think"], desc:"바닥까지 포함해 겉넓이를 구해요.", dim:"both", levels:["중","상"], status:"live", glyph:"faces" },
+        { id:"facesMc", cat:"views", name:"위·앞·옆 모양 고르기", edu:["curr","think"], desc:"맞는 앞/옆에서 본 모양을 골라요.", dim:"2d", levels:["하","중"], status:"live", glyph:"panels" },
+        { id:"heightmap", cat:"views", name:"위에서 본 수 쓰기", edu:["curr","think"], desc:"겨냥도를 보고 위 모양 각 칸에 수를 써요.", dim:"3d", levels:["하","중"], status:"live", glyph:"topnum" },
+        { id:"facesDraw", cat:"views", name:"위·앞·옆 그리기", edu:["curr","think"], desc:"세 방향에서 본 모양을 칸으로 칠해요. (가감 후 그리기 포함)", dim:"both", levels:["중","상","최상"], status:"soon", glyph:"draw" },
+        { id:"minmax", cat:"reason", name:"최소·최대 개수", edu:["curr","think"], desc:"투상도만 보고 가능한 개수의 범위를 찾아요.", dim:"2d", levels:["중","상","최상"], status:"soon", glyph:"range" },
+        { id:"hidden", cat:"reason", name:"안 보이는 나무", edu:["curr","think"], desc:"겨냥도에서 가려진 나무 수를 헤아려요.", dim:"3d", levels:["중","상","최상"], status:"soon", glyph:"hidden" },
+        { id:"shadow", cat:"reason", name:"그림자 추론", edu:["think"], desc:"방향별 그림자로 가능한 모양을 좁혀요.", dim:"both", levels:["상","최상"], status:"soon", glyph:"shadow" },
+        { id:"deltaFind", cat:"reason", name:"무엇을 바꿨나", edu:["think"], desc:"원본에서 무엇을 빼거나 더했는지 맞혀요.", dim:"3d", levels:["상","최상"], status:"soon", glyph:"delta" },
+        { id:"build", cat:"compose", name:"모양 만들기", edu:["curr","think"], desc:"조건에 맞게 직접 쌓아 만들어요.", dim:"3d", levels:["중","상","최상"], status:"soon", glyph:"build" },
+        { id:"pieces", cat:"compose", name:"조각 맞추기", edu:["think"], desc:"조각을 맞춰 주어진 입체를 완성해요.", dim:"3d", levels:["상","최상"], status:"soon", glyph:"pieces" },
+        { id:"sameShape", cat:"transform", name:"같은 모양 찾기", edu:["think"], desc:"돌려서 겹치는(합동인) 모양을 찾아요.", dim:"3d", levels:["중","상"], status:"soon", glyph:"same" },
+        { id:"ways", cat:"enumerate", name:"가짓수 세기", edu:["think"], desc:"조건을 만족하는 모양이 몇 가지인지 세요.", dim:"both", levels:["상","최상"], status:"soon", glyph:"ways" },
       ];
 
-      /* SVG 글리프 */
       const G = {
-        cube(x, y, s) {
-          return `
-            <path d="M${x} ${y - s} L${x + s} ${y - s / 2} L${x} ${y} L${x - s} ${y - s / 2}Z" fill="var(--w-top)"/>
-            <path d="M${x} ${y} L${x + s} ${y - s / 2} L${x + s} ${y + s / 2} L${x} ${y + s}Z" fill="var(--w-right)"/>
-            <path d="M${x} ${y} L${x - s} ${y - s / 2} L${x - s} ${y + s / 2} L${x} ${y + s}Z" fill="var(--w-left)"/>`;
-        },
-        stack() { return `<svg viewBox="0 0 40 40">${this.cube(20, 26, 7)}${this.cube(20, 16, 7)}${this.cube(13, 29.5, 7)}</svg>`; },
-        ruler() { return `<svg viewBox="0 0 40 40">${this.cube(18, 24, 8)}<path d="M29 12 L34 14.5 M34 14.5 L34 26 M29 24 L34 26" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="2 2.4"/><text x="35.5" y="21" font-size="7" fill="var(--accent)" font-weight="700">n</text></svg>`; },
-        faces() { return `<svg viewBox="0 0 40 40"><path d="M20 8 L31 13.5 L20 19 L9 13.5Z" fill="var(--d-top)"/><path d="M20 19 L31 13.5 L31 27 L20 32.5Z" fill="var(--d-side)"/><path d="M20 19 L9 13.5 L9 27 L20 32.5Z" fill="var(--d-front)"/><path d="M20 8 L31 13.5 L20 19 L9 13.5Z" fill="none" stroke="#fff" stroke-width="1"/></svg>`; },
-        topnum() { return `<svg viewBox="0 0 40 40"><rect x="9" y="9" width="22" height="22" rx="2" fill="#e7f1fb" stroke="var(--d-top)" stroke-width="1.4"/><g stroke="var(--d-top)" stroke-width="1" opacity=".7"><path d="M16.3 9v22M23.6 9v22M9 16.3h22M9 23.6h22"/></g><g fill="var(--accent-ink)" font-size="6.5" font-weight="800" text-anchor="middle"><text x="12.6" y="15">2</text><text x="19.9" y="15">1</text><text x="27.2" y="22.3">3</text><text x="12.6" y="29.6">1</text></g></svg>`; },
-        panels() { return `<svg viewBox="0 0 40 40" fill="none" stroke-width="1.6"><rect x="6" y="13" width="8" height="14" rx="1.5" fill="#e7f1fb" stroke="var(--d-top)"/><rect x="16" y="13" width="8" height="14" rx="1.5" fill="var(--add-soft)" stroke="var(--d-front)"/><rect x="26" y="13" width="8" height="14" rx="1.5" fill="var(--del-soft)" stroke="var(--d-side)"/></svg>`; },
-        draw() { return `<svg viewBox="0 0 40 40" fill="none" stroke="var(--accent)" stroke-width="1.4"><rect x="8" y="10" width="18" height="18" rx="2" fill="var(--panel-2)" stroke-dasharray="3 2.5"/><path d="M8 16h18M8 22h18M14 10v18M20 10v18" opacity=".8"/><path d="M23 27 L31 19 L34 22 L26 30 L22 31Z" fill="#fff" stroke-linejoin="round"/></svg>`; },
-        range() { return `<svg viewBox="0 0 40 40" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"><path d="M11 12v16M11 12h4M11 28h4M29 12v16M29 12h-4M29 28h-4"/><text x="20" y="24" font-size="12" fill="var(--accent)" font-weight="800" text-anchor="middle" stroke="none">?</text></svg>`; },
-        hidden() { return `<svg viewBox="0 0 40 40"><path d="M20 9 L30 14 L20 19 L10 14Z" fill="var(--w-top)"/><path d="M20 19 L30 14 L30 25 L20 30Z" fill="var(--w-right)"/><path d="M20 19 L10 14 L10 25 L20 30Z" fill="var(--w-left)"/><g fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-dasharray="2.4 2"><path d="M20 30 L20 40 M14 33 L14 40 M26 33 L26 40"/></g></svg>`; },
-        build() { return `<svg viewBox="0 0 40 40">${this.cube(15, 25, 6)}${this.cube(24, 28, 6)}<path d="M24 12 v7 M20.5 15.5 h7" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/></svg>`; },
-        shadow() { return `<svg viewBox="0 0 40 40"><ellipse cx="21" cy="32" rx="12" ry="3" fill="var(--accent)" opacity=".2"/>${this.cube(20, 21, 7)}</svg>`; },
-        pieces() { return `<svg viewBox="0 0 40 40">${this.cube(12, 25, 5)}${this.cube(12, 16, 5)}${this.cube(19, 28.5, 5)}<g opacity=".5">${this.cube(30, 20, 5)}${this.cube(30, 11, 5)}</g></svg>`; },
-        same() { return `<svg viewBox="0 0 40 40">${this.cube(10, 25, 5)}${this.cube(10, 16, 5)}<path d="M18 15 q3 -4 6.5 -2.5" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/><path d="M24.5 10 l1.3 3 -3.2 .3z" fill="var(--accent)"/>${this.cube(31, 25, 5)}${this.cube(31, 16, 5)}</svg>`; },
-        ways() { return `<svg viewBox="0 0 40 40">${this.cube(12, 26, 5.5)}<g stroke="var(--accent)" stroke-width="1.4" fill="none" opacity=".8"><path d="M20 20 L27 12 M20 20 L29 20 M20 20 L27 28"/></g><g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.2"><rect x="27" y="9" width="6.5" height="6.5" rx="1.3"/><rect x="29" y="16.7" width="6.5" height="6.5" rx="1.3"/><rect x="27" y="24.5" width="6.5" height="6.5" rx="1.3"/></g></svg>`; },
+        cube(x,y,s){ return `<path d="M${x} ${y-s} L${x+s} ${y-s/2} L${x} ${y} L${x-s} ${y-s/2}Z" fill="var(--w-top)"/><path d="M${x} ${y} L${x+s} ${y-s/2} L${x+s} ${y+s/2} L${x} ${y+s}Z" fill="var(--w-right)"/><path d="M${x} ${y} L${x-s} ${y-s/2} L${x-s} ${y+s/2} L${x} ${y+s}Z" fill="var(--w-left)"/>`; },
+        stack(){ return `<svg viewBox="0 0 40 40">${this.cube(20,26,7)}${this.cube(20,16,7)}${this.cube(13,29.5,7)}</svg>`; },
+        ruler(){ return `<svg viewBox="0 0 40 40">${this.cube(18,24,8)}<path d="M29 12 L34 14.5 M34 14.5 L34 26 M29 24 L34 26" fill="none" stroke="var(--accent)" stroke-width="1.4" stroke-linecap="round" stroke-dasharray="2 2.4"/><text x="35.5" y="21" font-size="7" fill="var(--accent)" font-weight="700">n</text></svg>`; },
+        faces(){ return `<svg viewBox="0 0 40 40"><path d="M20 8 L31 13.5 L20 19 L9 13.5Z" fill="var(--d-top)"/><path d="M20 19 L31 13.5 L31 27 L20 32.5Z" fill="var(--d-side)"/><path d="M20 19 L9 13.5 L9 27 L20 32.5Z" fill="var(--d-front)"/></svg>`; },
+        topnum(){ return `<svg viewBox="0 0 40 40"><rect x="9" y="9" width="22" height="22" rx="2" fill="#e7f1fb" stroke="var(--d-top)" stroke-width="1.4"/><g stroke="var(--d-top)" stroke-width="1" opacity=".7"><path d="M16.3 9v22M23.6 9v22M9 16.3h22M9 23.6h22"/></g><g fill="var(--accent-ink)" font-size="6.5" font-weight="800" text-anchor="middle"><text x="12.6" y="15">2</text><text x="19.9" y="15">1</text><text x="27.2" y="22.3">3</text><text x="12.6" y="29.6">1</text></g></svg>`; },
+        panels(){ return `<svg viewBox="0 0 40 40" fill="none" stroke-width="1.6"><rect x="6" y="13" width="8" height="14" rx="1.5" fill="#e7f1fb" stroke="var(--d-top)"/><rect x="16" y="13" width="8" height="14" rx="1.5" fill="var(--add-soft)" stroke="var(--d-front)"/><rect x="26" y="13" width="8" height="14" rx="1.5" fill="var(--del-soft)" stroke="var(--d-side)"/></svg>`; },
+        draw(){ return `<svg viewBox="0 0 40 40" fill="none" stroke="var(--accent)" stroke-width="1.4"><rect x="8" y="10" width="18" height="18" rx="2" fill="var(--panel-2)" stroke-dasharray="3 2.5"/><path d="M8 16h18M8 22h18M14 10v18M20 10v18" opacity=".8"/><path d="M23 27 L31 19 L34 22 L26 30 L22 31Z" fill="#fff" stroke-linejoin="round"/></svg>`; },
+        range(){ return `<svg viewBox="0 0 40 40" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round"><path d="M11 12v16M11 12h4M11 28h4M29 12v16M29 12h-4M29 28h-4"/><text x="20" y="24" font-size="12" fill="var(--accent)" font-weight="800" text-anchor="middle" stroke="none">?</text></svg>`; },
+        hidden(){ return `<svg viewBox="0 0 40 40"><path d="M20 9 L30 14 L20 19 L10 14Z" fill="var(--w-top)"/><path d="M20 19 L30 14 L30 25 L20 30Z" fill="var(--w-right)"/><path d="M20 19 L10 14 L10 25 L20 30Z" fill="var(--w-left)"/><g fill="none" stroke="var(--accent)" stroke-width="1.3" stroke-dasharray="2.4 2"><path d="M20 30 L20 40 M14 33 L14 40 M26 33 L26 40"/></g></svg>`; },
+        delta(){ return `<svg viewBox="0 0 40 40">${this.cube(16,25,6)}<text x="30" y="15" font-size="11" fill="var(--add)" font-weight="800" text-anchor="middle" stroke="none">+</text><text x="30" y="28" font-size="11" fill="var(--del)" font-weight="800" text-anchor="middle" stroke="none">−</text></svg>`; },
+        build(){ return `<svg viewBox="0 0 40 40">${this.cube(15,25,6)}${this.cube(24,28,6)}<path d="M24 12 v7 M20.5 15.5 h7" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round"/></svg>`; },
+        pieces(){ return `<svg viewBox="0 0 40 40">${this.cube(12,25,5)}${this.cube(12,16,5)}${this.cube(19,28.5,5)}<g opacity=".5">${this.cube(30,20,5)}${this.cube(30,11,5)}</g></svg>`; },
+        same(){ return `<svg viewBox="0 0 40 40">${this.cube(10,25,5)}${this.cube(10,16,5)}<path d="M18 15 q3 -4 6.5 -2.5" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/><path d="M24.5 10 l1.3 3 -3.2 .3z" fill="var(--accent)"/>${this.cube(31,25,5)}${this.cube(31,16,5)}</svg>`; },
+        ways(){ return `<svg viewBox="0 0 40 40">${this.cube(12,26,5.5)}<g stroke="var(--accent)" stroke-width="1.4" fill="none" opacity=".8"><path d="M20 20 L27 12 M20 20 L29 20 M20 20 L27 28"/></g><g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.2"><rect x="27" y="9" width="6.5" height="6.5" rx="1.3"/><rect x="29" y="16.7" width="6.5" height="6.5" rx="1.3"/><rect x="27" y="24.5" width="6.5" height="6.5" rx="1.3"/></g></svg>`; },
       };
 
-      /* 상태 */
-      const state = { edu: "all", dim: "all", count: DEFAULT_COUNT, levels: new Set(DEFAULT_LEVELS), cat: "all", sub: new Set() };
-      const kidsOf = (id) => TYPES.filter((t) => t.cat === id);
+      const CHECK = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5 L6.5 11.5 L12.5 4.5"/></svg>';
+      const CARET = '<svg class="caret" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6 L8 10 L12 6"/></svg>';
 
-      /* 1행 이벤트 */
-      document.querySelectorAll(".frow-top [data-filter]").forEach((group) => {
-        const kind = group.dataset.filter;
-        group.addEventListener("click", (e) => {
-          const btn = e.target.closest("button");
-          if (!btn) return;
-          const val = btn.dataset.val;
-          if (kind === "edu") {
-            state.edu = val; setSingle(group, btn);
-            if (state.cat !== "all" && !catHasEdu(state.cat)) { state.cat = "all"; state.sub = new Set(); }
-            renderTypeFilter();
-          } else if (kind === "dim") { state.dim = val; setSingle(group, btn); }
-          else if (kind === "count") { state.count = +val; setSingle(group, btn); }
-          else if (kind === "levels") { toggleSet(state.levels, val, btn); }
-          render();
+      /* ===== 상태 ===== */
+      const COUNT = { min:5, max:30, step:5, def:10 };
+      const state = {
+        edu:"all", dim:"all",
+        levels:new Set(LEVELS),               // 스케치대로 기본 전체(하 포함)
+        types:new Set(TYPES.map(t=>t.id)),     // 기본 전체
+        count:COUNT.def,
+      };
+
+      /* ===== 드롭다운 빌드 ===== */
+      function ddBtn(dd, text){
+        let b=dd.querySelector('.dd-btn');
+        if(!b){ b=document.createElement('button'); b.type='button'; b.className='dd-btn'; b.setAttribute('aria-haspopup','listbox'); b.setAttribute('aria-expanded','false'); dd.appendChild(b); b.addEventListener('click',e=>{ e.stopPropagation(); toggleDD(dd); }); }
+        b.innerHTML=`<span class="dd-val">${text}</span>${CARET}`;
+        return b;
+      }
+      function ddPop(dd){ let p=dd.querySelector('.dd-pop'); if(!p){ p=document.createElement('div'); p.className='dd-pop'; p.setAttribute('role','listbox'); dd.appendChild(p); p.addEventListener('click',e=>e.stopPropagation()); } return p; }
+      function toggleDD(dd){ const open=dd.classList.contains('open'); closeAll(); if(!open){ dd.classList.add('open'); dd.querySelector('.dd-btn').setAttribute('aria-expanded','true'); } }
+      function closeAll(){ document.querySelectorAll('.dd.open').forEach(d=>{ d.classList.remove('open'); d.querySelector('.dd-btn').setAttribute('aria-expanded','false'); }); }
+      document.addEventListener('click',closeAll);
+      document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAll(); });
+
+      const ddEdu=document.querySelector('[data-dd="edu"]');
+      const ddDim=document.querySelector('[data-dd="dim"]');
+      const ddLev=document.querySelector('[data-dd="levels"]');
+      const ddTyp=document.querySelector('[data-dd="types"]');
+
+      const EDU_OPTS=[{v:"all",t:"전체"},{v:"curr",t:"교과수학"},{v:"think",t:"사고력수학"}];
+      const DIM_OPTS=[{v:"all",t:"전체"},{v:"3d",t:"3D"},{v:"2d",t:"2D"}];
+      const eduLabel={all:"전체",curr:"교과수학",think:"사고력수학"};
+      const dimLabel={all:"전체","3d":"3D","2d":"2D"};
+
+      function renderSingle(dd, opts, cur, onPick){
+        ddBtn(dd, opts.find(o=>o.v===cur).t);
+        const pop=ddPop(dd); pop.innerHTML='';
+        opts.forEach(o=>{
+          const b=document.createElement('button'); b.type='button'; b.className='dd-opt'; b.setAttribute('aria-selected', o.v===cur?'true':'false');
+          b.innerHTML=`<span class="tick">${CHECK}</span>${o.t}`;
+          b.addEventListener('click',()=>{ onPick(o.v); closeAll(); });
+          pop.appendChild(b);
         });
-      });
-      function setSingle(group, btn) { group.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", b === btn ? "true" : "false")); }
-      function toggleSet(set, val, btn) { const on = !(btn.getAttribute("aria-pressed") === "true"); btn.setAttribute("aria-pressed", on ? "true" : "false"); on ? set.add(val) : set.delete(val); }
-      function catHasEdu(catId) { return state.edu === "all" || kidsOf(catId).some((t) => t.edu.includes(state.edu)); }
-
-      /* 2행: 상위개념 탭 + 세부유형 */
-      const catTabs = document.getElementById("catTabs");
-      const subRow = document.getElementById("subRow");
-      function renderTypeFilter() {
-        catTabs.innerHTML = "";
-        const mkTab = (id, label) => { const b = document.createElement("button"); b.type = "button"; b.dataset.cat = id; b.textContent = label; b.setAttribute("aria-pressed", state.cat === id ? "true" : "false"); b.addEventListener("click", () => selectCat(id)); return b; };
-        catTabs.appendChild(mkTab("all", "전체"));
-        CATS.forEach((c) => { if (!catHasEdu(c.id)) return; catTabs.appendChild(mkTab(c.id, c.name)); });
-
-        if (state.cat === "all") { subRow.hidden = true; subRow.innerHTML = ""; }
-        else {
-          subRow.hidden = false; subRow.innerHTML = "";
-          const lab = document.createElement("span"); lab.className = "label"; lab.textContent = "세부유형"; subRow.appendChild(lab);
-          const chips = document.createElement("div"); chips.className = "chips";
-          kidsOf(state.cat).forEach((t) => {
-            const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.dataset.val = t.id;
-            b.setAttribute("aria-pressed", state.sub.has(t.id) ? "true" : "false");
-            b.innerHTML = `<span class="dot"></span>${t.chip}`;
-            b.addEventListener("click", () => { state.sub.has(t.id) ? state.sub.delete(t.id) : state.sub.add(t.id); b.setAttribute("aria-pressed", state.sub.has(t.id) ? "true" : "false"); render(); });
-            chips.appendChild(b);
-          });
-          subRow.appendChild(chips);
-        }
       }
-      function selectCat(id) {
-        if (id !== "all") {
-          if (state.cat === id) state.sub = new Set(kidsOf(id).map((t) => t.id));
-          else { state.cat = id; state.sub = new Set(kidsOf(id).map((t) => t.id)); }
-        } else { state.cat = "all"; state.sub = new Set(); }
-        renderTypeFilter(); render();
+      function renderEdu(){ renderSingle(ddEdu, EDU_OPTS, state.edu, v=>{ state.edu=v; renderEdu(); syncTypesForEdu(); renderTypes(); render(); }); }
+      function renderDim(){ renderSingle(ddDim, DIM_OPTS, state.dim, v=>{ state.dim=v; renderDim(); render(); }); }
+
+      /* 난이도(다중) */
+      function levelsSummary(){ if(state.levels.size===LEVELS.length) return "전체"; if(state.levels.size===0) return "없음"; const arr=LEVELS.filter(l=>state.levels.has(l)); return arr.length<=3?arr.join("·"):arr.length+"개"; }
+      function renderLevels(){
+        ddBtn(ddLev, levelsSummary());
+        const pop=ddPop(ddLev); pop.innerHTML='';
+        const allOn=state.levels.size===LEVELS.length;
+        pop.appendChild(optCheck("전체", allOn, ()=>{ state.levels = allOn?new Set():new Set(LEVELS); renderLevels(); render(); }));
+        const sep=document.createElement('div'); sep.className='dd-sep'; pop.appendChild(sep);
+        LEVELS.forEach(l=>{ pop.appendChild(optCheck(l, state.levels.has(l), ()=>{ state.levels.has(l)?state.levels.delete(l):state.levels.add(l); renderLevels(); render(); })); });
+      }
+      function optCheck(text, on, onToggle){
+        const b=document.createElement('button'); b.type='button'; b.className='dd-opt'; b.setAttribute('aria-selected', on?'true':'false');
+        b.innerHTML=`<span class="box"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 6.3 L5 8.8 L9.5 3.5"/></svg></span>${text}`;
+        b.addEventListener('click',onToggle);
+        return b;
       }
 
-      document.getElementById("reset").addEventListener("click", () => {
-        state.edu = "all"; state.dim = "all"; state.count = DEFAULT_COUNT;
-        state.levels = new Set(DEFAULT_LEVELS); state.cat = "all"; state.sub = new Set();
-        syncTopDOM(); renderTypeFilter(); render();
-      });
+      /* 문제유형(다중, 상위개념 그룹) */
+      function typesSummary(){ if(state.types.size===TYPES.length) return "전체"; if(state.types.size===0) return "없음"; return state.types.size+"개 유형"; }
+      function eligibleTypes(){ return TYPES.filter(t=> state.edu==="all" || t.edu.includes(state.edu)); }
+      function syncTypesForEdu(){ /* 교육과정에 안 맞는 유형은 선택에서 자동 제외하지 않고 필터로만 반영 */ }
+      function renderTypes(){
+        ddBtn(ddTyp, typesSummary());
+        const pop=ddPop(ddTyp); pop.innerHTML='';
+        const all=TYPES.length, on=state.types.size===all;
+        pop.appendChild(optCheck("전체", on, ()=>{ state.types = on?new Set():new Set(TYPES.map(t=>t.id)); renderTypes(); render(); }));
+        CATS.forEach(c=>{
+          const kids=TYPES.filter(t=>t.cat===c.id);
+          if(state.edu!=="all" && !kids.some(t=>t.edu.includes(state.edu))) return; // 교육과정에 유형 없는 그룹 숨김
+          const h=document.createElement('div'); h.className='dd-grp'; h.textContent=c.name; pop.appendChild(h);
+          kids.forEach(t=>{ pop.appendChild(optCheck(t.name, state.types.has(t.id), ()=>{ state.types.has(t.id)?state.types.delete(t.id):state.types.add(t.id); renderTypes(); render(); })); });
+        });
+      }
 
-      /* 필터 로직 */
-      function match(t) {
-        if (state.cat !== "all") { if (t.cat !== state.cat) return false; if (!state.sub.has(t.id)) return false; }
-        if (state.edu !== "all" && !t.edu.includes(state.edu)) return false;
-        if (state.dim !== "all" && !(t.dim === "both" || t.dim === state.dim)) return false;
-        if (!t.levels.some((l) => state.levels.has(l))) return false;
+      /* 스테퍼 */
+      const stVal=document.getElementById('st-val'), stMinus=document.getElementById('st-minus'), stPlus=document.getElementById('st-plus');
+      function renderStepper(){ stVal.textContent=state.count+"개"; stMinus.disabled=state.count<=COUNT.min; stPlus.disabled=state.count>=COUNT.max; }
+      stMinus.addEventListener('click',()=>{ state.count=Math.max(COUNT.min,state.count-COUNT.step); renderStepper(); });
+      stPlus.addEventListener('click',()=>{ state.count=Math.min(COUNT.max,state.count+COUNT.step); renderStepper(); });
+
+      /* ===== 필터 · 결과 ===== */
+      function match(t){
+        if(state.edu!=="all" && !t.edu.includes(state.edu)) return false;
+        if(state.dim!=="all" && !(t.dim==="both"||t.dim===state.dim)) return false;
+        if(!t.levels.some(l=>state.levels.has(l))) return false;
+        if(!state.types.has(t.id)) return false;
         return true;
       }
-
-      /* 결과 렌더 */
-      const grid = document.getElementById("grid");
-      const countEl = document.getElementById("count");
-      const dimLabel = { both: "2D·3D", "2d": "2D", "3d": "3D" };
-      const eduLabel = { curr: "교과", think: "사고력" };
-      function render() {
-        const list = TYPES.filter(match);
-        countEl.innerHTML = `<b>${list.length}</b>개 유형`;
-        grid.innerHTML = "";
-        if (!list.length) { grid.innerHTML = `<div class="empty"><b>조건에 맞는 유형이 없어요</b>필터를 조금 줄여보세요.</div>`; syncURL(); return; }
-        list.forEach((t) => {
-          const soon = t.status === "soon";
-          const lv = LEVELS.map((l) => { const has = t.levels.includes(l), on = has && state.levels.has(l); return has ? `<b class="${on ? "on" : ""}">${l}</b>` : ""; }).join("");
-          const eduTags = t.edu.map((e) => `<span class="tag ${e === "think" ? "think" : ""}">${eduLabel[e]}</span>`).join("");
-          const card = document.createElement("article"); card.className = "card" + (soon ? " soon" : "");
-          card.innerHTML = `
-            <div class="card-top"><span class="glyph">${G[t.glyph]()}</span>${soon ? '<span class="badge">곧 공개</span>' : ""}</div>
-            <h3>${t.name}</h3>
-            <p class="desc">${t.desc}</p>
-            <div class="tags"><span class="tag">${dimLabel[t.dim]}</span>${eduTags}<span class="lv">${lv}</span></div>
-            <button class="cta ${soon ? "locked" : ""}" ${soon ? "disabled" : ""} data-id="${t.id}">${soon ? "준비 중" : "시작하기"}</button>`;
-          if (!soon) card.querySelector(".cta").addEventListener("click", () => start(t));
+      const grid=document.getElementById('grid'), countEl=document.getElementById('count');
+      const dimTag={both:"2D·3D","2d":"2D","3d":"3D"}, eduTag={curr:"교과",think:"사고력"};
+      function render(){
+        const list=TYPES.filter(match);
+        countEl.innerHTML=`<b>${list.length}</b>개 유형`;
+        grid.innerHTML='';
+        if(!list.length){ grid.innerHTML=`<div class="empty"><b>조건에 맞는 유형이 없어요</b></div>`; syncURL(); return; }
+        list.forEach(t=>{
+          const soon=t.status==="soon";
+          const lv=LEVELS.filter(l=>t.levels.includes(l)&&state.levels.has(l)).map(l=>`<b class="on">${l}</b>`).join('');
+          const eduTags=state.edu==="all"?`<span class="tag">전체</span>`:`<span class="tag ${state.edu==='think'?'think':''}">${eduTag[state.edu]}</span>`;
+          const dimText=state.dim==="all"?"2D·3D":(state.dim==="3d"?"3D":"2D");
+          const card=document.createElement('article'); card.className='card'+(soon?' soon':'');
+          card.innerHTML=`<div class="card-top"><span class="glyph-box glyph">${G[t.glyph]()}</span>${soon?'<span class="badge">곧 공개</span>':''}</div><h3>${t.name}</h3><p class="desc">${t.desc}</p><div class="tags"><span class="tag">${dimText}</span>${eduTags}<span class="lv">${lv}</span></div><button class="cta ${soon?'locked':''}" ${soon?'disabled':''}>${soon?'준비 중':'시작하기'}</button>`;
+          if(!soon) card.querySelector('.cta').addEventListener('click',()=>start(t));
           grid.appendChild(card);
         });
         syncURL();
       }
-
-      function start(t) {
-        const lvls = LEVELS.filter((l) => state.levels.has(l) && t.levels.includes(l));
-        showToast(`‘${t.name}’ 시작 · 난이도 ${lvls.join("·") || "전체"} · 최대 ${state.count}문항 (실행 화면 연결 예정)`);
-        // 배포: location.href = `./run/?type=${t.id}&lv=${lvls.map((l) => LVL_CODE[l]).join("")}&n=${state.count}`;
+      function start(t){
+        const lvls=LEVELS.filter(l=>state.levels.has(l)&&t.levels.includes(l));
+        const p=new URLSearchParams();
+        p.set('type', t.id);
+        if(lvls.length) p.set('lv', lvls.map(l=>LVL_CODE[l]).sort().join(''));
+        p.set('n', state.count);
+        if(state.edu!=='all') p.set('edu', state.edu);
+        if(state.dim!=='all') p.set('dim', state.dim);
+        location.href = './run/?' + p.toString();
       }
-      let toastTimer;
-      function showToast(msg) { const el = document.getElementById("toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove("show"), 2800); }
+      let toastTimer; function showToast(m){ const el=document.getElementById('toast'); el.textContent=m; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2800); }
 
       /* URL 동기화 */
-      function levelsDiffer() { if (state.levels.size !== DEFAULT_LEVELS.length) return true; return DEFAULT_LEVELS.some((l) => !state.levels.has(l)); }
-      function syncURL() {
-        const p = new URLSearchParams();
-        if (state.edu !== "all") p.set("edu", state.edu);
-        if (state.dim !== "all") p.set("dim", state.dim);
-        if (state.count !== DEFAULT_COUNT) p.set("n", state.count);
-        if (levelsDiffer()) p.set("lv", [...state.levels].map((l) => LVL_CODE[l]).sort().join(""));
-        if (state.cat !== "all") { p.set("cat", state.cat); const all = kidsOf(state.cat); if (state.sub.size < all.length) p.set("sub", [...state.sub].join(",")); }
-        const q = p.toString();
-        history.replaceState(null, "", q ? `?${q}` : location.pathname);
+      function syncURL(){
+        const p=new URLSearchParams();
+        if(state.edu!=="all")p.set('edu',state.edu);
+        if(state.dim!=="all")p.set('dim',state.dim);
+        if(state.count!==COUNT.def)p.set('n',state.count);
+        if(state.levels.size!==LEVELS.length)p.set('lv',[...state.levels].map(l=>LVL_CODE[l]).sort().join(''));
+        if(state.types.size!==TYPES.length)p.set('type',[...state.types].join(','));
+        const q=p.toString(); history.replaceState(null,'',q?`?${q}`:location.pathname);
       }
-      function loadURL() {
-        const p = new URLSearchParams(location.search);
-        if (p.get("edu")) state.edu = p.get("edu");
-        if (p.get("dim")) state.dim = p.get("dim");
-        if (p.get("n")) state.count = +p.get("n");
-        if (p.get("lv")) state.levels = new Set([...p.get("lv")].map((c) => CODE_LVL[c]).filter(Boolean));
-        if (p.get("cat")) { state.cat = p.get("cat"); state.sub = new Set(kidsOf(state.cat).map((t) => t.id)); if (p.get("sub")) state.sub = new Set(p.get("sub").split(",").filter(Boolean)); }
-        syncTopDOM();
-      }
-      function syncTopDOM() {
-        ["edu", "dim"].forEach((k) => document.querySelectorAll(`.frow-top [data-filter="${k}"] button`).forEach((b) => b.setAttribute("aria-pressed", b.dataset.val === state[k] ? "true" : "false")));
-        document.querySelectorAll('.frow-top [data-filter="count"] button').forEach((b) => b.setAttribute("aria-pressed", +b.dataset.val === state.count ? "true" : "false"));
-        document.querySelectorAll('.frow-top [data-filter="levels"] button').forEach((b) => b.setAttribute("aria-pressed", state.levels.has(b.dataset.val) ? "true" : "false"));
+      function loadURL(){
+        const p=new URLSearchParams(location.search);
+        if(p.get('edu'))state.edu=p.get('edu');
+        if(p.get('dim'))state.dim=p.get('dim');
+        if(p.get('n'))state.count=Math.min(COUNT.max,Math.max(COUNT.min,+p.get('n')));
+        if(p.get('lv'))state.levels=new Set([...p.get('lv')].map(c=>CODE_LVL[c]).filter(Boolean));
+        if(p.get('type'))state.types=new Set(p.get('type').split(',').filter(Boolean));
       }
 
       loadURL();
-      renderTypeFilter();
-      render();
+      renderEdu(); renderDim(); renderLevels(); renderTypes(); renderStepper(); render();
     </script>
   </body>
 </html>
