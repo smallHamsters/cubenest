@@ -296,7 +296,18 @@
     white-space:nowrap;}
   .freetimer[hidden]{display:none;}
   .freetimer svg{width:13px;height:13px;color:var(--accent);}
-  .freetimer.warn{color:#d0546f;} .freetimer.warn svg{color:#d0546f;}
+  .freetimer.warn{color:#d0546f;} .freetimer.warn > svg{color:#d0546f;}
+  .ft-info{background:none;border:none;color:var(--muted-2);cursor:pointer;padding:1px;margin-left:1px;display:inline-flex;border-radius:50%;}
+  .ft-info:hover{color:var(--accent);}
+  .ft-info svg{width:14px;height:14px;}
+  .ft-pop{position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);
+    width:min(264px,74vw);background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    box-shadow:var(--shadow-lg);padding:12px 14px;font-weight:600;font-size:12px;line-height:1.62;
+    color:var(--muted);white-space:normal;text-align:left;z-index:8;}
+  .ft-pop[hidden]{display:none;} .ft-pop b{color:var(--ink);font-weight:800;}
+  .ft-pop-btn{margin-top:11px;width:100%;border:none;background:var(--accent);color:#fff;border-radius:10px;
+    padding:9px 12px;font-weight:800;font-size:12.5px;cursor:pointer;}
+  .ft-pop-btn:hover{background:var(--accent-ink);}
   #app.explode-on .freetimer{display:none;}
 
   @keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
@@ -323,6 +334,13 @@
   <div class="freetimer" id="freeTimer" hidden>
     <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span id="freeTimerText">무료 체험 30:00 남음</span>
+    <button class="ft-info" id="freeTimerInfo" type="button" aria-label="무료 체험 안내">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 11v5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.2" fill="currentColor"/></svg>
+    </button>
+    <div class="ft-pop" id="freeTimerPop" hidden>
+      <div class="ft-pop-txt">무료 체험 시간이 끝나면 <b>계산 과정만</b> 가려져요. 편집·관찰·펼쳐보기는 계속 쓸 수 있고, <b>로그인하면 계산 과정도 무료로 계속</b> 볼 수 있어요.</div>
+      <button class="ft-pop-btn" id="freeTimerLogin" type="button">로그인하기</button>
+    </div>
   </div>
 
   <div class="topleft">
@@ -1334,11 +1352,12 @@ function updateFreeTimer(){
   const el=document.getElementById('freeTimer'); if(!el) return;
   let first=0; try{ first=Number(localStorage.getItem(TIMEGATE_KEY))||0; }catch(e){}
   const rem = first ? (TIMEGATE_MS-(Date.now()-first)) : 0;
-  if(!first || calcLocked || rem<=0){ el.hidden=true; return; }
+  if(!first || calcLocked || rem<=0){ el.hidden=true; const _p=document.getElementById('freeTimerPop'); if(_p) _p.hidden=true; return; }
   el.hidden=false;
   const t=document.getElementById('freeTimerText'); if(t) t.textContent='무료 체험 '+fmtMMSS(rem)+' 남음';
   el.classList.toggle('warn', rem<=60000);
 }
+function promptLogin(){ toast('로그인은 준비 중이에요. 곧 제공됩니다!'); try{ track('login_prompt'); }catch(e){} }   // 인증(P1.5) 연결 전 자리표시자
 function setAnswerHidden(v){ answerHidden=!!v; syncCalcLockBtn(); renderStats(); try{ track(v?'answer_hide':'answer_reveal'); }catch(e){} }
 function syncCalcLockBtn(){
   const b=document.getElementById('calcLockBtn'); if(!b) return;
@@ -1726,9 +1745,13 @@ function setCalc(open){
 document.getElementById('statHead').addEventListener('click',()=>setCalc(!calcOpen));
 document.getElementById('calcClose').addEventListener('click',()=>setCalc(false));
 document.getElementById('calcLockBtn').addEventListener('click',()=>{ if(!calcLocked) setAnswerHidden(!answerHidden); });
-document.getElementById('calcBody').addEventListener('click',(e)=>{ const a=e.target.closest('[data-action]'); if(!a) return; if(a.dataset.action==='reveal') setAnswerHidden(false); else if(a.dataset.action==='login'){ toast('로그인은 준비 중이에요. 곧 제공됩니다!'); try{track('calc_login_prompt');}catch(e){} } });
+document.getElementById('calcBody').addEventListener('click',(e)=>{ const a=e.target.closest('[data-action]'); if(!a) return; if(a.dataset.action==='reveal') setAnswerHidden(false); else if(a.dataset.action==='login'){ promptLogin(); } });
 (function(){ function onFirst(){ markFirstInteract(); updateFreeTimer(); checkTimeGate(); window.removeEventListener('pointerdown', onFirst, true); } window.addEventListener('pointerdown', onFirst, true); })();
 setInterval(()=>{ updateFreeTimer(); checkTimeGate(); }, 1000);
+(function(){ const info=document.getElementById('freeTimerInfo'), pop=document.getElementById('freeTimerPop');
+  if(info&&pop){ info.addEventListener('click',(e)=>{ e.stopPropagation(); pop.hidden=!pop.hidden; try{ if(!pop.hidden) track('free_info_open'); }catch(_){} });
+    document.addEventListener('click',(e)=>{ if(!pop.hidden && !pop.contains(e.target) && !info.contains(e.target)) pop.hidden=true; });
+    const lg=document.getElementById('freeTimerLogin'); if(lg) lg.addEventListener('click',()=>{ pop.hidden=true; promptLogin(); }); } })();
 syncCalcLockBtn();
 
 /* 토스트 */
