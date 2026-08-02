@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>큐브네스트 · 퀴즈 풀기</title>
+    <meta name="description" content="쌓기나무 퀴즈를 직접 풀어요. 개수·부피·겉넓이·위앞옆 관찰." />
+    <meta name="theme-color" content="#e9eef4" />
+    <link rel="canonical" href="https://smallhamsters.github.io/cubenest/quiz/run/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="큐브네스트 · 퀴즈 풀기" />
+    <meta property="og:url" content="https://smallhamsters.github.io/cubenest/quiz/run/" />
+    <meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <!-- 프리뷰 폴백(리포에선 아래 링크가 덮어씀) -->
+    <style id="preview-fallback">
+      :root{--panel:#fff;--panel-2:#f7f9fc;--bg:#eef2f7;--ink:#182233;--muted:#6a7789;--muted-2:#8a95a6;--line:#e5eaf1;--line-2:#eef2f7;--accent:#3f3fbf;--accent-ink:#2d2d95;--accent-soft:#ecebfb;--add:#0f9d58;--add-soft:#e6f5ec;--del:#e0466b;--del-soft:#fce9ee;--shadow:0 6px 22px rgba(24,34,51,.12),0 1px 3px rgba(24,34,51,.08);--shadow-sm:0 2px 8px rgba(24,34,51,.10);--shadow-lg:0 18px 50px rgba(24,34,51,.16),0 3px 10px rgba(24,34,51,.08);--r:16px;--r-lg:22px;--font:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;}
+      .site-top{display:flex;align-items:center;padding:12px clamp(16px,4vw,40px);border-bottom:1px solid var(--line);background:#fff}
+      .site-topin{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;max-width:1180px;margin:0 auto}
+      .site-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+      .site-brand .glyph{width:26px;height:26px}
+      .site-brand .t{display:flex;flex-direction:column;line-height:1.05}
+      .site-brand .t b{font-weight:800;font-size:15px}.site-brand .t span{font-size:10.5px;color:var(--muted);font-weight:600}
+      .site-nav{display:flex;gap:4px;flex-wrap:wrap}
+      .site-nav a{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:6px 10px;border-radius:8px}
+      .site-nav a[aria-current="page"]{color:var(--accent-ink);background:var(--accent-soft)}
+    </style>
+    <link rel="stylesheet" href="../../assets/css/tokens.css" />
+    <link rel="stylesheet" href="../../assets/css/nav.css" />
+    <style>
+      *{box-sizing:border-box}
+      body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+      main{max-width:720px;margin:0 auto;padding:clamp(14px,3vw,24px) clamp(16px,4vw,32px) 60px}
+
+      .topbar{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+      .exit{border:1px solid var(--line);background:var(--panel);color:var(--muted);font-weight:700;font-size:13px;padding:8px 12px;border-radius:10px;text-decoration:none;white-space:nowrap}
+      .exit:hover{border-color:#cfd8e6;color:var(--ink)}
+      .prog{flex:1}
+      .prog .lab{display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:5px}
+      .prog .bar{height:8px;background:var(--line-2);border-radius:99px;overflow:hidden}
+      .prog .fill{height:100%;background:var(--accent);border-radius:99px;transition:width .25s}
+
+      .qcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);padding:clamp(16px,3vw,24px)}
+      .qhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
+      .qhead .type{font-weight:800;font-size:15px}
+      .qhead .lv{font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent-ink)}
+      .qhead .edge{font-size:12px;font-weight:600;color:var(--muted);margin-left:auto}
+      .qtext{font-size:clamp(16px,2.4vw,18px);font-weight:700;margin:10px 0 14px;letter-spacing:-.01em}
+
+      .viewer{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px}
+      .viewer svg{width:100%;max-width:360px;height:auto;max-height:230px}
+      .rotrow{display:flex;gap:8px;align-items:center}
+      .rotrow button{width:36px;height:36px;border:1px solid var(--line);background:var(--panel);border-radius:10px;font-size:16px;cursor:pointer;color:var(--accent-ink);display:grid;place-items:center}
+      .rotrow button:hover{background:var(--accent-soft)}
+      .rotrow .cap{font-size:12px;color:var(--muted);font-weight:600}
+
+      .answer{margin-top:16px}
+      .numin{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+      .numin input{width:130px;height:48px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:20px;font-weight:800;text-align:center;color:var(--ink);background:var(--panel)}
+      .numin input:focus{border-color:var(--accent);outline:none}
+      .numin .unit{font-size:16px;font-weight:700;color:var(--muted)}
+
+      .hmgrid{display:inline-grid;gap:4px;background:var(--panel);padding:8px;border:1px solid var(--line);border-radius:12px}
+      .hmcell{width:42px;height:42px;border-radius:8px;display:grid;place-items:center}
+      .hmcell.empty{background:var(--line-2)}
+      .hmcell.fill{background:var(--accent-soft)}
+      .hmcell input{width:100%;height:100%;border:1.5px solid var(--accent);border-radius:8px;background:var(--panel);font-family:inherit;font-size:18px;font-weight:800;text-align:center;color:var(--accent-ink)}
+      .hmcell input:focus{outline:none;box-shadow:0 0 0 2px var(--accent-soft)}
+      .hint{font-size:12.5px;color:var(--muted);margin-top:8px}
+
+      .opts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+      .opt{border:1.5px solid var(--line);background:var(--panel);border-radius:14px;padding:12px;cursor:pointer;display:flex;justify-content:center;transition:.12s}
+      .opt:hover{border-color:#cfd8e6}
+      .opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+      .opt.correct{border-color:var(--add);background:var(--add-soft)}
+      .opt.wrong{border-color:var(--del);background:var(--del-soft)}
+      .opt svg{height:74px;width:auto}
+
+      .actions{margin-top:18px;display:flex;gap:10px}
+      .btn{border:none;cursor:pointer;font-weight:800;font-size:15px;padding:13px 18px;border-radius:14px;background:var(--accent);color:#fff;flex:1}
+      .btn:hover{background:var(--accent-ink)}
+      .btn:disabled{background:var(--panel-2);color:var(--muted-2);cursor:not-allowed}
+      .btn.ghost{background:var(--panel);color:var(--accent-ink);border:1px solid var(--line);flex:0 0 auto}
+      .btn.ghost:hover{background:var(--accent-soft)}
+
+      .fb{margin-top:16px;border-radius:14px;padding:14px 16px;font-weight:700;display:none}
+      .fb.show{display:block}
+      .fb.ok{background:var(--add-soft);color:#0b6e3e;border:1px solid #b7e2c7}
+      .fb.no{background:var(--del-soft);color:#a52a49;border:1px solid #f2c3cf}
+      .fb .sol{font-weight:600;font-size:13.5px;color:var(--ink);margin-top:6px;opacity:.9}
+
+      .result{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);padding:clamp(20px,4vw,32px);text-align:center;display:none}
+      .result.show{display:block}
+      .result h2{margin:0 0 6px;font-size:22px}
+      .score{font-size:44px;font-weight:900;color:var(--accent-ink);margin:6px 0}
+      .score small{font-size:20px;color:var(--muted-2);font-weight:800}
+      .dots{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:16px 0}
+      .dot{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff}
+      .dot.o{background:var(--add)}.dot.x{background:var(--del)}
+      .result .actions{max-width:420px;margin:18px auto 0}
+      .footnote{color:var(--muted-2);font-size:12px;line-height:1.7;margin:22px 2px 0;text-align:center}
+      :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;border-radius:6px}
+    </style>
+  </head>
+  <body>
+    <header class="site-top">
+      <div class="site-topin">
+        <a class="site-brand" href="../../" aria-label="큐브네스트 홈">
+          <img class="glyph" src="../../assets/img/brand-glyph.svg" alt="" role="presentation" />
+          <span class="t"><b>CubeNest</b><span>쌓기나무 3D 학습</span></span>
+        </a>
+        <nav class="site-nav" aria-label="주요 메뉴">
+          <a href="../../">홈</a>
+          <a href="../../guide/">가이드</a>
+          <a href="../../playground/">플레이그라운드</a>
+          <a href="../" aria-current="page">퀴즈</a>
+          <a href="../../worksheets/">문제지 생성</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <div class="topbar" id="topbar">
+        <a class="exit" href="../">← 나가기</a>
+        <div class="prog">
+          <div class="lab"><span id="pg-type">개수 세기</span><span id="pg-num">1 / 10</span></div>
+          <div class="bar"><div class="fill" id="pg-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <section class="qcard" id="qcard" aria-live="polite"></section>
+
+      <section class="result" id="result"></section>
+
+      <p class="footnote">모든 문제는 CubeNest가 자체 제작·보유한 자산입니다.</p>
+    </main>
+
+    <script>
+      /* ===== 시드 RNG ===== */
+      function xmur3(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return(h^=h>>>16)>>>0;};}
+      function mulberry32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+      function rngFrom(str){const s=xmur3(str);return mulberry32(s());}
+
+      /* ===== 유형 · 난이도 설정 ===== */
+      const TYPES={
+        count:{title:"개수 세기",ask:"쌓기나무는 모두 몇 개일까요?",form:"num",unit:"개"},
+        volume:{title:"부피 구하기",ask:"이 모양의 부피는 얼마일까요?",form:"num",unit:"cm³",edge:true},
+        surface:{title:"겉넓이 구하기",ask:"겉넓이는 얼마일까요? (바닥 포함)",form:"num",unit:"cm²",edge:true},
+        heightmap:{title:"위에서 본 수 쓰기",ask:"위에서 본 모양의 각 칸에 쌓인 나무 수를 쓰세요.",form:"hm"},
+        facesMc:{title:"위·앞·옆 모양 고르기",ask:"이 모양을 앞에서 본 모양을 고르세요.",form:"mc"},
+      };
+      const CFG={
+        "하":{gx:3,gz:3,maxH:2,fMin:3,fMax:4,nMin:4,nMax:6,edge:1},
+        "중":{gx:3,gz:3,maxH:3,fMin:4,fMax:5,nMin:6,nMax:9,edge:1},
+        "상":{gx:4,gz:4,maxH:3,fMin:5,fMax:7,nMin:9,nMax:14,edge:2},
+        "최상":{gx:4,gz:4,maxH:4,fMin:6,fMax:9,nMin:12,nMax:18,edge:2},
+      };
+      const LVCODE={1:"하",2:"중",3:"상",4:"최상"};
+
+      /* ===== 모양 생성 ===== */
+      function genShape(rng,cfg){
+        const {gx,gz,maxH}=cfg;
+        const ri=n=>Math.floor(rng()*n), rr=(a,b)=>a+Math.floor(rng()*(b-a+1));
+        let f=Math.min(rr(cfg.fMin,cfg.fMax),gx*gz);
+        const foot=new Set(); let sx=ri(gx),sz=ri(gz); foot.add(sx+","+sz);
+        while(foot.size<f){
+          const cand=[];
+          foot.forEach(k=>{const[x,z]=k.split(",").map(Number);[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dz])=>{const nx=x+dx,nz=z+dz;if(nx>=0&&nx<gx&&nz>=0&&nz<gz&&!foot.has(nx+","+nz))cand.push(nx+","+nz);});});
+          if(!cand.length)break; foot.add(cand[ri(cand.length)]);
+        }
+        const arr=[...foot].map(k=>k.split(",").map(Number));
+        const H={}; arr.forEach(([x,z])=>H[x+","+z]=1);
+        let N=Math.max(arr.length,Math.min(rr(cfg.nMin,cfg.nMax),arr.length*maxH));
+        let rem=N-arr.length;
+        let guard=0;
+        while(rem>0&&guard++<999){const opts=arr.filter(([x,z])=>H[x+","+z]<maxH);if(!opts.length)break;const[x,z]=opts[ri(opts.length)];H[x+","+z]++;rem--;}
+        const hmap=Array.from({length:gx},()=>Array(gz).fill(0));
+        const cells=[]; let count=0;
+        arr.forEach(([x,z])=>{const h=H[x+","+z];hmap[x][z]=h;count+=h;for(let y=0;y<h;y++)cells.push({x,y,z});});
+        const set=new Set(cells.map(c=>c.x+","+c.y+","+c.z));
+        let pairs=0; cells.forEach(c=>{[[1,0,0],[0,1,0],[0,0,1]].forEach(([a,b,d])=>{if(set.has((c.x+a)+","+(c.y+b)+","+(c.z+d)))pairs++;});});
+        const exposed=6*count-2*pairs;
+        return {gx,gz,maxH,hmap,cells,count,pairs,exposed,edge:cfg.edge};
+      }
+
+      /* ===== 아이소 뷰어 ===== */
+      function rot(p,k,gx,gz){const{x,y,z}=p;if(k===1)return{x:gz-1-z,y,z:x};if(k===2)return{x:gx-1-x,y,z:gz-1-z};if(k===3)return{x:z,y,z:gx-1-x};return{x,y,z};}
+      function renderIso(sh,k){
+        const a=20,b=10,c=24;
+        const cells=sh.cells.map(p=>rot(p,k,sh.gx,sh.gz));
+        cells.sort((p,q)=>(p.x+p.z)-(q.x+q.z)||p.y-q.y);
+        let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+        const P=(x,y,z)=>{const X=a*(x-z),Y=b*(x+z)-c*y;if(X<minX)minX=X;if(X>maxX)maxX=X;if(Y<minY)minY=Y;if(Y>maxY)maxY=Y;return X+","+Y;};
+        let poly="";
+        for(const{x,y,z}of cells){
+          const top=`${P(x,y+1,z)} ${P(x+1,y+1,z)} ${P(x+1,y+1,z+1)} ${P(x,y+1,z+1)}`;
+          const left=`${P(x,y,z+1)} ${P(x+1,y,z+1)} ${P(x+1,y+1,z+1)} ${P(x,y+1,z+1)}`;
+          const right=`${P(x+1,y,z)} ${P(x+1,y,z+1)} ${P(x+1,y+1,z+1)} ${P(x+1,y+1,z)}`;
+          poly+=`<polygon points="${left}" fill="#d8a76e" stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"/><polygon points="${right}" fill="#c8965a" stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"/><polygon points="${top}" fill="#e6c9a0" stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"/>`;
+        }
+        const pad=14,w=(maxX-minX)+pad*2,h=(maxY-minY)+pad*2;
+        return `<svg viewBox="${minX-pad} ${minY-pad} ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${poly}</svg>`;
+      }
+      function renderSil(heights,maxH){
+        const s=15,g=2,w=heights.length*(s+g)+g,h=maxH*(s+g)+g;let r="";
+        for(let x=0;x<heights.length;x++)for(let y=0;y<maxH;y++){const on=y<heights[x];r+=`<rect x="${g+x*(s+g)}" y="${g+(maxH-1-y)*(s+g)}" width="${s}" height="${s}" rx="3" fill="${on?'var(--accent)':'var(--line-2)'}"/>`;}
+        return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
+      }
+      function frontHeights(sh){const a=[];for(let x=0;x<sh.gx;x++){let m=0;for(let z=0;z<sh.gz;z++)m=Math.max(m,sh.hmap[x][z]);a.push(m);}return a;}
+
+      /* ===== 세션 구성 ===== */
+      function loadParams(){
+        const p=new URLSearchParams(location.search);
+        let type=p.get("type");if(!TYPES[type])type="count";
+        let levels=(p.get("lv")||"1234").split("").map(c=>LVCODE[c]).filter(Boolean);if(!levels.length)levels=["하","중","상","최상"];
+        let n=Math.min(30,Math.max(5,+(p.get("n")||10)));
+        let seed=p.get("seed")||Math.random().toString(36).slice(2,9);
+        return {type,levels,n,seed};
+      }
+      const PRM=loadParams();
+      const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[]};
+      (function build(){
+        const rngL=rngFrom(PRM.seed+":L");
+        for(let i=0;i<PRM.n;i++){
+          const lv=PRM.levels[Math.floor(rngL()*PRM.levels.length)];
+          const sh=genShape(rngFrom(PRM.seed+":"+i),CFG[lv]);
+          const pr={type:PRM.type,lv,sh};
+          if(PRM.type==="facesMc"){
+            const corr=frontHeights(sh),maxH=Math.max(...corr,1);
+            const cand=[corr.slice()],seen=new Set([corr.join(",")]);
+            const rngD=rngFrom(PRM.seed+":d"+i);const ri=n=>Math.floor(rngD()*n);
+            let g=0;
+            while(cand.length<4&&g++<40){
+              const v=corr.slice();const idx=ri(v.length);const mode=ri(3);
+              if(mode===0)v[idx]=Math.max(0,Math.min(maxH,v[idx]+(ri(2)?1:-1)));
+              else if(mode===1)v.reverse();
+              else{const j=ri(v.length);const t=v[idx];v[idx]=v[j];v[j]=t;}
+              const key=v.join(",");if(!seen.has(key)){seen.add(key);cand.push(v);}
+            }
+            while(cand.length<4){const v=corr.map(h=>Math.max(0,Math.min(maxH,h+(ri(3)-1))));const key=v.join(",");if(!seen.has(key)){seen.add(key);cand.push(v);}}
+            for(let k=cand.length-1;k>0;k--){const j=ri(k+1);[cand[k],cand[j]]=[cand[j],cand[k]];}
+            pr.opts=cand;pr.correct=cand.findIndex(v=>v.join(",")===corr.join(","));pr.maxH=maxH;
+          }
+          S.probs.push(pr);
+        }
+      })();
+
+      /* ===== 렌더 ===== */
+      const qcard=document.getElementById("qcard"),resultEl=document.getElementById("result");
+      let ROT=0,PICK=-1;
+      function renderProblem(){
+        ROT=0;PICK=-1;
+        const pr=S.probs[S.idx],T=TYPES[pr.type],sh=pr.sh;
+        document.getElementById("pg-type").textContent=T.title;
+        document.getElementById("pg-num").textContent=(S.idx+1)+" / "+S.n;
+        document.getElementById("pg-fill").style.width=(S.idx/S.n*100)+"%";
+        let ans="";
+        if(T.form==="num"){
+          ans=`<div class="numin"><input id="ans" type="number" inputmode="numeric" autocomplete="off" placeholder="?"/><span class="unit">${T.unit}</span></div>`;
+        }else if(T.form==="hm"){
+          let cells="";
+          for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++){
+            const h=sh.hmap[x][z];
+            cells+=`<div class="hmcell ${h>0?'fill':'empty'}" style="grid-column:${x+1};grid-row:${z+1}">${h>0?`<input data-x="${x}" data-z="${z}" type="number" inputmode="numeric" min="1" max="${sh.maxH}"/>`:''}</div>`;
+          }
+          ans=`<div class="hmgrid" style="grid-template-columns:repeat(${sh.gx},42px)">${cells}</div><div class="hint">색칠된 칸(위에서 보이는 칸)에만 수를 써요.</div>`;
+        }else if(T.form==="mc"){
+          ans=`<div class="opts">${pr.opts.map((v,i)=>`<button class="opt" data-i="${i}">${renderSil(v,pr.maxH)}</button>`).join("")}</div>`;
+        }
+        const edge=T.edge?`<span class="edge">쌓기나무 한 모서리 = ${sh.edge}cm</span>`:"";
+        const showRot=(T.form!=="hm");
+        qcard.innerHTML=`
+          <div class="qhead"><span class="type">${T.title}</span><span class="lv">${pr.lv}</span>${edge}</div>
+          <div class="qtext">${T.ask}</div>
+          <div class="viewer"><div id="iso">${renderIso(sh,0)}</div>${showRot?`<div class="rotrow"><button id="rl" aria-label="왼쪽으로 돌리기">◄</button><span class="cap">돌려보기</span><button id="rr" aria-label="오른쪽으로 돌리기">►</button></div>`:''}</div>
+          <div class="answer">${ans}</div>
+          <div class="fb" id="fb"></div>
+          <div class="actions"><button class="btn" id="submit">제출</button></div>`;
+        if(showRot){
+          document.getElementById("rl").onclick=()=>{ROT=(ROT+3)%4;document.getElementById("iso").innerHTML=renderIso(sh,ROT);};
+          document.getElementById("rr").onclick=()=>{ROT=(ROT+1)%4;document.getElementById("iso").innerHTML=renderIso(sh,ROT);};
+        }
+        if(T.form==="mc"){qcard.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.i;qcard.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
+        document.getElementById("submit").onclick=submit;
+        const first=qcard.querySelector("input");if(first)first.focus();
+      }
+
+      function submit(){
+        const pr=S.probs[S.idx],T=TYPES[pr.type],sh=pr.sh;
+        let ok=false,sol="";
+        if(T.form==="num"){
+          const v=parseInt(document.getElementById("ans").value,10);
+          if(isNaN(v)){document.getElementById("ans").focus();return;}
+          let a=sh.count;
+          if(pr.type==="volume"){a=sh.count*sh.edge**3;sol=`${sh.count}개 × (${sh.edge}cm)³ = ${a}cm³`;}
+          else if(pr.type==="surface"){a=sh.exposed*sh.edge**2;sol=`드러난 면 ${sh.exposed}개 × (${sh.edge}cm)² = ${a}cm²`;}
+          else sol=`채운 칸을 모두 세면 ${a}개예요.`;
+          ok=v===a;
+        }else if(T.form==="hm"){
+          ok=true;let bad=false;
+          qcard.querySelectorAll(".hmcell input").forEach(inp=>{const x=+inp.dataset.x,z=+inp.dataset.z;const v=parseInt(inp.value,10);if(isNaN(v)){bad=true;}if(v!==sh.hmap[x][z]){ok=false;inp.style.borderColor="var(--del)";}else{inp.style.borderColor="var(--add)";}inp.disabled=true;});
+          if(bad&&ok===true){/*빈칸 있으면 오답 처리*/}
+          if(bad)ok=false;
+          sol="각 칸의 수 = 그 자리에 쌓인 나무 층 수예요.";
+        }else if(T.form==="mc"){
+          if(PICK<0)return;
+          ok=PICK===pr.correct;
+          qcard.querySelectorAll(".opt").forEach((o,i)=>{o.classList.add("done");if(i===pr.correct)o.classList.add("correct");else if(i===PICK)o.classList.add("wrong");o.style.pointerEvents="none";});
+          sol="앞에서 볼 때 각 줄의 가장 높은 칸까지 보여요.";
+        }
+        S.answered[S.idx]=ok;
+        const fb=document.getElementById("fb");
+        fb.className="fb show "+(ok?"ok":"no");
+        fb.innerHTML=(ok?"⭕ 정답이에요!":"❌ 아쉬워요")+`<div class="sol">${sol}</div>`;
+        const act=qcard.querySelector(".actions");
+        act.innerHTML=`<button class="btn" id="next">${S.idx+1<S.n?"다음 →":"결과 보기"}</button>`;
+        document.getElementById("next").onclick=next;
+        document.getElementById("pg-fill").style.width=((S.idx+1)/S.n*100)+"%";
+      }
+      function next(){if(S.idx+1<S.n){S.idx++;renderProblem();window.scrollTo({top:0,behavior:"smooth"});}else showResult();}
+
+      function showResult(){
+        qcard.style.display="none";document.getElementById("topbar").style.display="none";
+        const score=S.answered.filter(Boolean).length;
+        const dots=S.answered.map((o,i)=>`<span class="dot ${o?'o':'x'}">${i+1}</span>`).join("");
+        try{localStorage.setItem("cubenest_quiz_last",JSON.stringify({type:S.type,seed:S.seed,n:S.n,score,ts:Date.now()}));}catch(e){}
+        resultEl.className="result show";
+        resultEl.innerHTML=`
+          <h2>${TYPES[S.type].title} 완료!</h2>
+          <div class="score">${score}<small> / ${S.n}</small></div>
+          <div class="dots">${dots}</div>
+          <div class="actions">
+            <a class="btn ghost" href="../">← 설정으로</a>
+            <button class="btn" id="again">다시 풀기</button>
+          </div>`;
+        document.getElementById("again").onclick=()=>{const u=new URL(location);u.searchParams.set("seed",Math.random().toString(36).slice(2,9));location.href=u.toString();};
+        window.scrollTo({top:0,behavior:"smooth"});
+      }
+
+      // 시드를 주소에 남겨 재현/공유 가능하게
+      (function(){const u=new URL(location);if(!u.searchParams.get("seed")){u.searchParams.set("seed",PRM.seed);u.searchParams.set("type",PRM.type);u.searchParams.set("n",PRM.n);history.replaceState(null,"",u.toString());}})();
+      renderProblem();
+    </script>
+  </body>
+</html>
