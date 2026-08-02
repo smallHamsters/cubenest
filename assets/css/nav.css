@@ -12,7 +12,11 @@ header.site-top.scrolled{border-bottom-color:var(--line);background:rgba(238,242
 .site-nav{display:flex;flex:1 1 auto;justify-content:center;gap:6px;flex-wrap:wrap;}
 .site-nav a{flex:0 0 auto;white-space:nowrap;font-size:14px;font-weight:700;color:var(--muted);
   padding:8px 12px;border-radius:9px;text-decoration:none;transition:color .15s,background .15s;}
-.site-nav a:hover{color:var(--accent-ink);background:var(--accent-soft);}
+/* hover는 실제 포인터 기기에서만 — 터치 탭 후 hover가 남아 '눌린 것처럼' 보이는 잔상 방지.
+   현재 페이지 표시는 aria-current만 담당한다(뒤로가기 시 2개가 동시에 눌려 보이던 버그 수정). */
+@media (hover:hover){
+  .site-nav a:hover{color:var(--accent-ink);background:var(--accent-soft);}
+}
 .site-nav a[aria-current="page"]{color:var(--accent-ink);background:var(--accent-soft);}
 
 @media (max-width:640px){
