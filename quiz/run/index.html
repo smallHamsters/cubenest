@@ -13,6 +13,7 @@
     <meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <!-- 프리뷰 폴백(리포에선 아래 링크가 덮어씀) -->
     <style id="preview-fallback">
       :root{--panel:#fff;--panel-2:#f7f9fc;--bg:#eef2f7;--ink:#182233;--muted:#6a7789;--muted-2:#8a95a6;--line:#e5eaf1;--line-2:#eef2f7;--accent:#3f3fbf;--accent-ink:#2d2d95;--accent-soft:#ecebfb;--add:#0f9d58;--add-soft:#e6f5ec;--del:#e0466b;--del-soft:#fce9ee;--shadow:0 6px 22px rgba(24,34,51,.12),0 1px 3px rgba(24,34,51,.08);--shadow-sm:0 2px 8px rgba(24,34,51,.10);--shadow-lg:0 18px 50px rgba(24,34,51,.16),0 3px 10px rgba(24,34,51,.08);--r:16px;--r-lg:22px;--font:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;}
@@ -50,10 +51,24 @@
 
       .viewer{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px}
       .viewer svg{width:100%;max-width:360px;height:auto;max-height:230px}
-      .rotrow{display:flex;gap:8px;align-items:center}
-      .rotrow button{width:36px;height:36px;border:1px solid var(--line);background:var(--panel);border-radius:10px;font-size:16px;cursor:pointer;color:var(--accent-ink);display:grid;place-items:center}
-      .rotrow button:hover{background:var(--accent-soft)}
-      .rotrow .cap{font-size:12px;color:var(--muted);font-weight:600}
+      .rotrow{display:flex;gap:14px;align-items:center;justify-content:center}
+      .rotbtn{width:46px;height:46px;border:1px solid var(--line);background:var(--panel);border-radius:12px;cursor:pointer;color:var(--accent-ink);display:grid;place-items:center}
+      .rotbtn:hover{background:var(--accent-soft);border-color:var(--accent)}
+      .rotbtn svg{width:22px;height:22px}
+      .compass{width:56px;height:56px;flex:none}
+      .compass svg{width:100%;height:100%;display:block}
+      .rotcap{font-size:12px;color:var(--muted);font-weight:600;text-align:center;margin-top:2px}
+      /* 3D 임베드 뷰어 */
+      .v3d{width:100%;height:230px;border-radius:var(--r);overflow:hidden;background:var(--panel-2);touch-action:none}
+      .v3d canvas{display:block;width:100%;height:100%}
+      .rotrow2{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:8px}
+      .compass3{width:56px;height:56px;flex:none}
+      .compass3 svg{width:100%;height:100%;display:block}
+      .rothint{font-size:12.5px;color:var(--muted);font-weight:600;text-align:center;line-height:1.35}
+      .rothint b{color:var(--accent-ink)}
+      .rothint span{font-size:11px;color:var(--muted-2);font-weight:600}
+      .rotbtn2{border:1px solid var(--line);background:var(--panel);color:var(--accent-ink);font-weight:800;font-size:12.5px;padding:9px 13px;border-radius:11px;cursor:pointer;white-space:nowrap}
+      .rotbtn2:hover{background:var(--accent-soft);border-color:var(--accent)}
 
       .answer{margin-top:16px}
       .numin{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -150,13 +165,22 @@
         heightmap:{title:"위에서 본 수 쓰기",ask:"위에서 본 모양의 각 칸에 쌓인 나무 수를 쓰세요.",form:"hm"},
         facesMc:{title:"위·앞·옆 모양 고르기",ask:"이 모양을 앞에서 본 모양을 고르세요.",form:"mc"},
       };
-      const CFG={
-        "하":{gx:3,gz:3,maxH:2,fMin:3,fMax:4,nMin:4,nMax:6,edge:1},
-        "중":{gx:3,gz:3,maxH:3,fMin:4,fMax:5,nMin:6,nMax:9,edge:1},
-        "상":{gx:4,gz:4,maxH:3,fMin:5,fMax:7,nMin:9,nMax:14,edge:2},
-        "최상":{gx:4,gz:4,maxH:4,fMin:6,fMax:9,nMin:12,nMax:18,edge:2},
+      /* gen_config (분류 체계 §7.3) — 정본은 assets/js/quiz/gen-config.json.
+         아래는 프리뷰/오프라인 폴백 사본(리포에선 fetch로 덮어씀). */
+      const INLINE_CONFIG={
+        version:"0.1.0",
+        levels:{
+          "하":{gx:3,gz:3,maxH:2,fMin:3,fMax:4,nMin:4,nMax:6,edge:1},
+          "중":{gx:3,gz:3,maxH:3,fMin:4,fMax:5,nMin:6,nMax:9,edge:1},
+          "상":{gx:4,gz:4,maxH:3,fMin:5,fMax:7,nMin:9,nMax:14,edge:2},
+          "최상":{gx:4,gz:4,maxH:4,fMin:6,fMax:9,nMin:12,nMax:18,edge:2},
+        }
       };
+      let GEN_CONFIG=INLINE_CONFIG;
       const LVCODE={1:"하",2:"중",3:"상",4:"최상"};
+
+      /* F1 계측 — 동의 후 로드된 gtag가 있을 때만(오리진 공유 consent 정본). */
+      function track(name,params){ try{ if(window.gtag) window.gtag('event',name,params||{}); }catch(e){} }
 
       /* ===== 모양 생성 ===== */
       function genShape(rng,cfg){
@@ -208,6 +232,73 @@
         return `<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
       }
       function frontHeights(sh){const a=[];for(let x=0;x<sh.gx;x++){let m=0;for(let z=0;z<sh.gz;z++)m=Math.max(m,sh.hmap[x][z]);a.push(m);}return a;}
+      // 나침반: 위에서 본 정사각형이 회전(원래 '앞'면=아래 굵은 선). 얼마나·어느 쪽으로 돌렸는지 직관 표시.
+      function renderCompass(k){
+        const ang=k*90;
+        return `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="30" cy="30" r="26" fill="var(--panel-2)" stroke="var(--line)"/>
+          <g transform="rotate(${ang} 30 30)">
+            <rect x="19" y="19" width="22" height="22" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
+            <line x1="19" y1="41" x2="41" y2="41" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/>
+            <path d="M30 47 l-3.4 -4.4 h6.8 z" fill="var(--accent)"/>
+          </g>
+          <text x="30" y="12" text-anchor="middle" font-size="8" font-weight="800" fill="var(--muted-2)">나</text>
+        </svg>`;
+      }
+      const ARC_CW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4.5v4.5h-4.5"/></svg>';
+      const ARC_CCW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5v4.5h4.5"/></svg>';
+
+      /* ===== 정본 3D 뷰어 (playground Three.js 재사용 · 관찰 전용) ===== */
+      // 축: 옆=+x, 위=+y, 앞=+z (마스터 3.2). 직교 투영(3.5). 편집 없음(3.6).
+      const AXES3=[
+        {v:[1,0,0],label:"옆",color:"#d0546f"},
+        {v:[0,1,0],label:"위",color:"#3f8fd0"},
+        {v:[0,0,1],label:"앞",color:"#4fae72"},
+      ];
+      const SPH0={theta:-0.7+Math.PI+Math.PI/2+Math.PI,phi:1.02};
+      let CURVIEW=null;
+      function mount3D(host,sh,compassSvg){
+        const S=1,gx=sh.gx,gz=sh.gz,gy=Math.max(...sh.cells.map(c=>c.y))+1;
+        const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+        host.innerHTML=""; host.appendChild(renderer.domElement);
+        const scene=new THREE.Scene();
+        scene.add(new THREE.HemisphereLight(0xffffff,0x9aa7b5,0.9));
+        scene.add(new THREE.AmbientLight(0xffffff,0.32));
+        const dl=new THREE.DirectionalLight(0xffffff,0.7); dl.position.set(6,11,4); scene.add(dl);
+        const cam=new THREE.OrthographicCamera(-1,1,1,-1,0.1,100);
+        const target=new THREE.Vector3(0,gy*S/2,0);
+        const group=new THREE.Group(); scene.add(group);
+        const geo=new THREE.BoxGeometry(S*0.98,S*0.98,S*0.98), egeo=new THREE.EdgesGeometry(geo);
+        const mat=new THREE.MeshLambertMaterial({color:0xe4b878});
+        const emat=new THREE.LineBasicMaterial({color:0x8a5a24,transparent:true,opacity:0.45});
+        sh.cells.forEach(c=>{
+          const px=(c.x-(gx-1)/2)*S,py=(c.y+0.5)*S,pz=(c.z-(gz-1)/2)*S;
+          const m=new THREE.Mesh(geo,mat); m.position.set(px,py,pz); group.add(m);
+          const e=new THREE.LineSegments(egeo,emat); e.position.set(px,py,pz); group.add(e);
+        });
+        const sph={theta:SPH0.theta,phi:SPH0.phi,radius:14}, maxDim=Math.max(gx,gy,gz);
+        function applyCam(){const p=new THREE.Vector3(Math.sin(sph.phi)*Math.sin(sph.theta),Math.cos(sph.phi),Math.sin(sph.phi)*Math.cos(sph.theta)).multiplyScalar(sph.radius).add(target);cam.position.copy(p);cam.up.set(0,1,0);cam.lookAt(target);}
+        function resize(){const w=host.clientWidth||320,h=host.clientHeight||220;renderer.setSize(w,h,false);const aspect=w/h,Hf=(maxDim+1.5)*S;cam.left=-Hf*aspect/2;cam.right=Hf*aspect/2;cam.top=Hf/2;cam.bottom=-Hf/2;cam.updateProjectionMatrix();}
+        // 나침반
+        let cels=null;
+        if(compassSvg){
+          compassSvg.innerHTML='<circle cx="37" cy="37" r="30" fill="var(--panel-2)" stroke="var(--line)"/>';
+          const ns="http://www.w3.org/2000/svg";
+          cels=AXES3.map(()=>{const line=document.createElementNS(ns,"line");line.setAttribute("stroke-width","2.4");line.setAttribute("stroke-linecap","round");const dot=document.createElementNS(ns,"circle");dot.setAttribute("r","8.5");const txt=document.createElementNS(ns,"text");txt.setAttribute("text-anchor","middle");txt.setAttribute("dominant-baseline","central");txt.setAttribute("font-size","9");txt.setAttribute("font-weight","800");txt.setAttribute("fill","#fff");compassSvg.appendChild(line);compassSvg.appendChild(dot);compassSvg.appendChild(txt);return {line,dot,txt};});
+        }
+        function updateCompass(){if(!cels)return;const q=cam.quaternion.clone().invert();const cx=37,cy=37,R=19;AXES3.map((a,i)=>{const v=new THREE.Vector3(a.v[0],a.v[1],a.v[2]).applyQuaternion(q);return{i,a,sx:cx+v.x*R,sy:cy-v.y*R,z:v.z};}).sort((p,r)=>p.z-r.z).forEach(it=>{const{line,dot,txt}=cels[it.i];const op=0.35+((it.z+1)/2)*0.65;line.setAttribute("x1",cx);line.setAttribute("y1",cy);line.setAttribute("x2",it.sx);line.setAttribute("y2",it.sy);line.setAttribute("stroke",it.a.color);line.setAttribute("opacity",op);dot.setAttribute("cx",it.sx);dot.setAttribute("cy",it.sy);dot.setAttribute("fill",it.a.color);dot.setAttribute("opacity",op);txt.setAttribute("x",it.sx);txt.setAttribute("y",it.sy);txt.setAttribute("opacity",op);txt.textContent=it.a.label;});}
+        // 드래그 회전
+        const el=renderer.domElement; el.style.cursor="grab"; let drag=false,lx=0,ly=0;
+        el.addEventListener("pointerdown",e=>{drag=true;lx=e.clientX;ly=e.clientY;el.style.cursor="grabbing";el.setPointerCapture&&el.setPointerCapture(e.pointerId);});
+        el.addEventListener("pointermove",e=>{if(!drag)return;const dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;sph.theta-=dx*0.008;sph.phi=Math.max(0.12,Math.min(Math.PI-0.12,sph.phi-dy*0.008));});
+        const end=()=>{drag=false;el.style.cursor="grab";};
+        el.addEventListener("pointerup",end); el.addEventListener("pointercancel",end); el.addEventListener("pointerleave",end);
+        let raf; function loop(){applyCam();updateCompass();renderer.render(scene,cam);raf=requestAnimationFrame(loop);}
+        const onR=()=>resize(); window.addEventListener("resize",onR);
+        resize(); loop();
+        return {dispose(){cancelAnimationFrame(raf);window.removeEventListener("resize",onR);geo.dispose();egeo.dispose();mat.dispose();emat.dispose();renderer.dispose();host.innerHTML="";},reset(){sph.theta=SPH0.theta;sph.phi=SPH0.phi;}};
+      }
 
       /* ===== 세션 구성 ===== */
       function loadParams(){
@@ -220,11 +311,12 @@
       }
       const PRM=loadParams();
       const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[]};
-      (function build(){
+      function buildSession(){
+        S.probs=[];
         const rngL=rngFrom(PRM.seed+":L");
         for(let i=0;i<PRM.n;i++){
           const lv=PRM.levels[Math.floor(rngL()*PRM.levels.length)];
-          const sh=genShape(rngFrom(PRM.seed+":"+i),CFG[lv]);
+          const sh=genShape(rngFrom(PRM.seed+":"+i),GEN_CONFIG.levels[lv]);
           const pr={type:PRM.type,lv,sh};
           if(PRM.type==="facesMc"){
             const corr=frontHeights(sh),maxH=Math.max(...corr,1);
@@ -244,7 +336,7 @@
           }
           S.probs.push(pr);
         }
-      })();
+      }
 
       /* ===== 렌더 ===== */
       const qcard=document.getElementById("qcard"),resultEl=document.getElementById("result");
@@ -269,17 +361,25 @@
           ans=`<div class="opts">${pr.opts.map((v,i)=>`<button class="opt" data-i="${i}">${renderSil(v,pr.maxH)}</button>`).join("")}</div>`;
         }
         const edge=T.edge?`<span class="edge">쌓기나무 한 모서리 = ${sh.edge}cm</span>`:"";
-        const showRot=(T.form!=="hm");
+        const has3D=!!window.THREE;
+        const viewerHTML=has3D
+          ? `<div class="viewer"><div id="v3d" class="v3d"></div><div class="rotrow2"><div class="compass3"><svg id="compassSvg" viewBox="0 0 74 74"></svg></div><div class="rothint">돌려서 <b>숨은 나무</b>를 확인해요<br><span>손가락·마우스로 회전</span></div><button id="reset3d" class="rotbtn2" type="button">정면</button></div></div>`
+          : `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotrow"><button id="rl" class="rotbtn" aria-label="반시계 방향으로 돌리기">${ARC_CCW}</button><div id="compass" class="compass" aria-hidden="true">${renderCompass(0)}</div><button id="rr" class="rotbtn" aria-label="시계 방향으로 돌리기">${ARC_CW}</button></div><div class="rotcap" id="rotcap">돌려서 숨은 나무를 확인해요 · 앞면 기준 0°</div></div>`;
         qcard.innerHTML=`
           <div class="qhead"><span class="type">${T.title}</span><span class="lv">${pr.lv}</span>${edge}</div>
           <div class="qtext">${T.ask}</div>
-          <div class="viewer"><div id="iso">${renderIso(sh,0)}</div>${showRot?`<div class="rotrow"><button id="rl" aria-label="왼쪽으로 돌리기">◄</button><span class="cap">돌려보기</span><button id="rr" aria-label="오른쪽으로 돌리기">►</button></div>`:''}</div>
+          ${viewerHTML}
           <div class="answer">${ans}</div>
           <div class="fb" id="fb"></div>
           <div class="actions"><button class="btn" id="submit">제출</button></div>`;
-        if(showRot){
-          document.getElementById("rl").onclick=()=>{ROT=(ROT+3)%4;document.getElementById("iso").innerHTML=renderIso(sh,ROT);};
-          document.getElementById("rr").onclick=()=>{ROT=(ROT+1)%4;document.getElementById("iso").innerHTML=renderIso(sh,ROT);};
+        if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;}
+        if(has3D){
+          CURVIEW=mount3D(document.getElementById("v3d"),sh,document.getElementById("compassSvg"));
+          const rb=document.getElementById("reset3d"); if(rb)rb.onclick=()=>{CURVIEW&&CURVIEW.reset();track("quiz_view_reset",{});};
+        }else{
+          const updRot=()=>{document.getElementById("iso").innerHTML=renderIso(sh,ROT);document.getElementById("compass").innerHTML=renderCompass(ROT);document.getElementById("rotcap").textContent=`돌려서 숨은 나무를 확인해요 · 앞면 기준 ${ROT*90}°`;};
+          document.getElementById("rl").onclick=()=>{ROT=(ROT+3)%4;updRot();track("quiz_rotate",{dir:"ccw",deg:ROT*90});};
+          document.getElementById("rr").onclick=()=>{ROT=(ROT+1)%4;updRot();track("quiz_rotate",{dir:"cw",deg:ROT*90});};
         }
         if(T.form==="mc"){qcard.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.i;qcard.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
         document.getElementById("submit").onclick=submit;
@@ -310,6 +410,7 @@
           sol="앞에서 볼 때 각 줄의 가장 높은 칸까지 보여요.";
         }
         S.answered[S.idx]=ok;
+        track("quiz_answer",{type:pr.type,level:pr.lv,correct:ok,idx:S.idx});
         const fb=document.getElementById("fb");
         fb.className="fb show "+(ok?"ok":"no");
         fb.innerHTML=(ok?"⭕ 정답이에요!":"❌ 아쉬워요")+`<div class="sol">${sol}</div>`;
@@ -321,10 +422,12 @@
       function next(){if(S.idx+1<S.n){S.idx++;renderProblem();window.scrollTo({top:0,behavior:"smooth"});}else showResult();}
 
       function showResult(){
+        if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;}
         qcard.style.display="none";document.getElementById("topbar").style.display="none";
         const score=S.answered.filter(Boolean).length;
         const dots=S.answered.map((o,i)=>`<span class="dot ${o?'o':'x'}">${i+1}</span>`).join("");
         try{localStorage.setItem("cubenest_quiz_last",JSON.stringify({type:S.type,seed:S.seed,n:S.n,score,ts:Date.now()}));}catch(e){}
+        track("quiz_run_complete",{type:S.type,n:S.n,score,seed:S.seed});
         resultEl.className="result show";
         resultEl.innerHTML=`
           <h2>${TYPES[S.type].title} 완료!</h2>
@@ -340,7 +443,14 @@
 
       // 시드를 주소에 남겨 재현/공유 가능하게
       (function(){const u=new URL(location);if(!u.searchParams.get("seed")){u.searchParams.set("seed",PRM.seed);u.searchParams.set("type",PRM.type);u.searchParams.set("n",PRM.n);history.replaceState(null,"",u.toString());}})();
-      renderProblem();
+
+      // gen_config 정본 로드(리포) → 폴백(인라인) → 세션 생성 → 시작
+      (async function init(){
+        try{ const r=await fetch("../../assets/js/quiz/gen-config.json",{cache:"no-store"}); if(r.ok){ const j=await r.json(); if(j&&j.levels) GEN_CONFIG=j; } }catch(e){}
+        buildSession();
+        track("quiz_run_start",{type:S.type,n:S.n,seed:S.seed});
+        renderProblem();
+      })();
     </script>
   </body>
 </html>
