@@ -50,6 +50,7 @@
     </style>
     <link rel="stylesheet" href="../assets/css/tokens.css" />
     <link rel="stylesheet" href="../assets/css/nav.css" />
+    <link rel="stylesheet" href="../assets/css/consent.css" />
 
     <style>
       .glyph { --w-top:#e6c9a0; --w-left:#d8a76e; --w-right:#c8965a; --d-top:#3f8fd0; --d-front:var(--add); --d-side:var(--del); }
@@ -195,9 +196,20 @@
       </p>
     </main>
 
+    <div class="consent" id="consent" hidden>
+      <div class="consent-msg">CubeNest는 서비스 개선을 위해 <b>Google Analytics로 익명 사용 통계</b>(쿠키 포함)를 수집해요. 동의하시면 방문·사용 데이터가 수집되고, 거부하시면 수집하지 않습니다.</div>
+      <div class="consent-btns">
+        <button id="consentDeny" type="button">거부</button>
+        <button id="consentAccept" type="button">동의</button>
+      </div>
+    </div>
+    <script src="../assets/js/consent.js"></script>
+
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script>
+      /* F1 계측 — 동의 후 로드된 gtag가 있을 때만(오리진 공유 consent.js 정본) */
+      function track(name,params){ try{ if(window.gtag) window.gtag('event',name,params||{}); }catch(e){} }
       /* ===== 데이터 (문제 분류 체계 시드) ===== */
       const LEVELS = ["하","중","상","최상"];
       const LVL_CODE = {하:"1",중:"2",상:"3",최상:"4"}, CODE_LVL={1:"하",2:"중",3:"상",4:"최상"};
@@ -285,8 +297,8 @@
           pop.appendChild(b);
         });
       }
-      function renderEdu(){ renderSingle(ddEdu, EDU_OPTS, state.edu, v=>{ state.edu=v; renderEdu(); syncTypesForEdu(); renderTypes(); render(); }); }
-      function renderDim(){ renderSingle(ddDim, DIM_OPTS, state.dim, v=>{ state.dim=v; renderDim(); render(); }); }
+      function renderEdu(){ renderSingle(ddEdu, EDU_OPTS, state.edu, v=>{ state.edu=v; track('filter_change',{filter:'edu',value:v}); renderEdu(); syncTypesForEdu(); renderTypes(); render(); }); }
+      function renderDim(){ renderSingle(ddDim, DIM_OPTS, state.dim, v=>{ state.dim=v; track('filter_change',{filter:'dim',value:v}); renderDim(); render(); }); }
 
       /* 난이도(다중) */
       function levelsSummary(){ if(state.levels.size===LEVELS.length) return "전체"; if(state.levels.size===0) return "없음"; const arr=LEVELS.filter(l=>state.levels.has(l)); return arr.length<=3?arr.join("·"):arr.length+"개"; }
@@ -294,9 +306,9 @@
         ddBtn(ddLev, levelsSummary());
         const pop=ddPop(ddLev); pop.innerHTML='';
         const allOn=state.levels.size===LEVELS.length;
-        pop.appendChild(optCheck("전체", allOn, ()=>{ state.levels = allOn?new Set():new Set(LEVELS); renderLevels(); render(); }));
+        pop.appendChild(optCheck("전체", allOn, ()=>{ state.levels = allOn?new Set():new Set(LEVELS); track('filter_change',{filter:'level'}); renderLevels(); render(); }));
         const sep=document.createElement('div'); sep.className='dd-sep'; pop.appendChild(sep);
-        LEVELS.forEach(l=>{ pop.appendChild(optCheck(l, state.levels.has(l), ()=>{ state.levels.has(l)?state.levels.delete(l):state.levels.add(l); renderLevels(); render(); })); });
+        LEVELS.forEach(l=>{ pop.appendChild(optCheck(l, state.levels.has(l), ()=>{ state.levels.has(l)?state.levels.delete(l):state.levels.add(l); track('filter_change',{filter:'level'}); renderLevels(); render(); })); });
       }
       function optCheck(text, on, onToggle){
         const b=document.createElement('button'); b.type='button'; b.className='dd-opt'; b.setAttribute('aria-selected', on?'true':'false');
@@ -313,20 +325,20 @@
         ddBtn(ddTyp, typesSummary());
         const pop=ddPop(ddTyp); pop.innerHTML='';
         const all=TYPES.length, on=state.types.size===all;
-        pop.appendChild(optCheck("전체", on, ()=>{ state.types = on?new Set():new Set(TYPES.map(t=>t.id)); renderTypes(); render(); }));
+        pop.appendChild(optCheck("전체", on, ()=>{ state.types = on?new Set():new Set(TYPES.map(t=>t.id)); track('filter_change',{filter:'type'}); renderTypes(); render(); }));
         CATS.forEach(c=>{
           const kids=TYPES.filter(t=>t.cat===c.id);
           if(state.edu!=="all" && !kids.some(t=>t.edu.includes(state.edu))) return; // 교육과정에 유형 없는 그룹 숨김
           const h=document.createElement('div'); h.className='dd-grp'; h.textContent=c.name; pop.appendChild(h);
-          kids.forEach(t=>{ pop.appendChild(optCheck(t.name, state.types.has(t.id), ()=>{ state.types.has(t.id)?state.types.delete(t.id):state.types.add(t.id); renderTypes(); render(); })); });
+          kids.forEach(t=>{ pop.appendChild(optCheck(t.name, state.types.has(t.id), ()=>{ state.types.has(t.id)?state.types.delete(t.id):state.types.add(t.id); track('filter_change',{filter:'type'}); renderTypes(); render(); })); });
         });
       }
 
       /* 스테퍼 */
       const stVal=document.getElementById('st-val'), stMinus=document.getElementById('st-minus'), stPlus=document.getElementById('st-plus');
       function renderStepper(){ stVal.textContent=state.count+"개"; stMinus.disabled=state.count<=COUNT.min; stPlus.disabled=state.count>=COUNT.max; }
-      stMinus.addEventListener('click',()=>{ state.count=Math.max(COUNT.min,state.count-COUNT.step); renderStepper(); });
-      stPlus.addEventListener('click',()=>{ state.count=Math.min(COUNT.max,state.count+COUNT.step); renderStepper(); });
+      stMinus.addEventListener('click',()=>{ state.count=Math.max(COUNT.min,state.count-COUNT.step); track('filter_change',{filter:'count',value:state.count}); renderStepper(); });
+      stPlus.addEventListener('click',()=>{ state.count=Math.min(COUNT.max,state.count+COUNT.step); track('filter_change',{filter:'count',value:state.count}); renderStepper(); });
 
       /* ===== 필터 · 결과 ===== */
       function match(t){
@@ -352,7 +364,7 @@
           const card=document.createElement('article'); card.className='card'+(soon?' soon':'');
           card.innerHTML=`<div class="card-top"><span class="glyph-box glyph">${G[t.glyph]()}</span>${soon?'<span class="badge">곧 공개</span>':''}</div><h3>${t.name}</h3><p class="desc">${t.desc}</p><div class="tags"><span class="tag">${dimText}</span>${eduTags}<span class="lv">${lv}</span>${wsTag}</div><button class="cta ${soon?'locked':''}" ${soon?'disabled':''}>${soon?'준비 중':'시작하기'}</button>`;
           if(!soon) card.querySelector('.cta').addEventListener('click',()=>start(t));
-          const wb=card.querySelector('.wsbtn'); if(wb) wb.addEventListener('click',(e)=>{e.stopPropagation();showToast('문제지(worksheets) 생성 기능은 개발 예약되어 있어요. 곧 열려요!');});
+          const wb=card.querySelector('.wsbtn'); if(wb) wb.addEventListener('click',(e)=>{e.stopPropagation();track('worksheet_click',{type:t.id});showToast('문제지(worksheets) 생성 기능은 개발 예약되어 있어요. 곧 열려요!');});
           grid.appendChild(card);
         });
         syncURL();
@@ -365,6 +377,7 @@
         p.set('n', state.count);
         if(state.edu!=='all') p.set('edu', state.edu);
         if(state.dim!=='all') p.set('dim', state.dim);
+        track('quiz_start_click',{type:t.id, n:state.count, lv:lvls.join('·')||'전체', edu:state.edu, dim:state.dim});
         location.href = './run/?' + p.toString();
       }
       let toastTimer; function showToast(m){ const el=document.getElementById('toast'); el.textContent=m; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2800); }
