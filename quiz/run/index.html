@@ -46,6 +46,7 @@
       .qhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px}
       .qhead .type{font-weight:800;font-size:15px}
       .qhead .lv{font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent-ink)}
+      .qhead .mode{font-size:11px;font-weight:800;padding:2px 8px;border-radius:99px;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
       .qhead .edge{font-size:12px;font-weight:600;color:var(--muted);margin-left:auto}
       .qtext{font-size:clamp(16px,2.4vw,18px);font-weight:700;margin:10px 0 14px;letter-spacing:-.01em}
 
@@ -307,7 +308,8 @@
         let levels=(p.get("lv")||"1234").split("").map(c=>LVCODE[c]).filter(Boolean);if(!levels.length)levels=["하","중","상","최상"];
         let n=Math.min(30,Math.max(5,+(p.get("n")||10)));
         let seed=p.get("seed")||Math.random().toString(36).slice(2,9);
-        return {type,levels,n,seed};
+        let dim=p.get("dim")||"all"; // 3d=3D 임베드 / 2d=2D 겨냥도 / all=기본(3D)
+        return {type,levels,n,seed,dim};
       }
       const PRM=loadParams();
       const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[]};
@@ -361,12 +363,13 @@
           ans=`<div class="opts">${pr.opts.map((v,i)=>`<button class="opt" data-i="${i}">${renderSil(v,pr.maxH)}</button>`).join("")}</div>`;
         }
         const edge=T.edge?`<span class="edge">쌓기나무 한 모서리 = ${sh.edge}cm</span>`:"";
-        const has3D=!!window.THREE;
+        const has3D=!!window.THREE && PRM.dim!=="2d";
+        const viewLabel=has3D?"3D 문제":"2D 겨냥도";
         const viewerHTML=has3D
           ? `<div class="viewer"><div id="v3d" class="v3d"></div><div class="rotrow2"><div class="compass3"><svg id="compassSvg" viewBox="0 0 74 74"></svg></div><div class="rothint">돌려서 <b>숨은 나무</b>를 확인해요<br><span>손가락·마우스로 회전</span></div><button id="reset3d" class="rotbtn2" type="button">정면</button></div></div>`
           : `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotrow"><button id="rl" class="rotbtn" aria-label="반시계 방향으로 돌리기">${ARC_CCW}</button><div id="compass" class="compass" aria-hidden="true">${renderCompass(0)}</div><button id="rr" class="rotbtn" aria-label="시계 방향으로 돌리기">${ARC_CW}</button></div><div class="rotcap" id="rotcap">돌려서 숨은 나무를 확인해요 · 앞면 기준 0°</div></div>`;
         qcard.innerHTML=`
-          <div class="qhead"><span class="type">${T.title}</span><span class="lv">${pr.lv}</span>${edge}</div>
+          <div class="qhead"><span class="type">${T.title}</span><span class="lv">${pr.lv}</span><span class="mode">${viewLabel}</span>${edge}</div>
           <div class="qtext">${T.ask}</div>
           ${viewerHTML}
           <div class="answer">${ans}</div>

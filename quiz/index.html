@@ -116,6 +116,10 @@
       .tags { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
       .tag { font-size:11.5px; font-weight:700; padding:3px 8px; border-radius:8px; background:var(--accent-soft); color:var(--accent-ink); }
       .tag.think { background:var(--accent-soft); color:var(--accent-ink); }
+      .tag.ws { background:var(--add-soft); color:#0b6e3e; }
+      .tag.off { background:var(--panel-2); color:var(--muted-2); }
+      button.wsbtn { border:none; font-family:inherit; cursor:pointer; transition:.12s; }
+      button.wsbtn:hover { background:#cdeed8; }
       .lv { display:inline-flex; gap:3px; }
       .lv b { font-size:11px; font-weight:800; padding:2px 6px; border-radius:5px; background:var(--accent-soft); color:var(--accent-ink); line-height:1.25; }
       .lv b.on { background:var(--accent-soft); color:var(--accent-ink); }
@@ -206,17 +210,17 @@
         { id:"count", cat:"calc", name:"개수 세기", edu:["curr","think"], desc:"쌓은 나무가 몇 개인지 세요.", dim:"both", levels:["하","중","상"], status:"live", glyph:"stack" },
         { id:"volume", cat:"calc", name:"부피 구하기", edu:["curr","think"], desc:"한 모서리 길이로 부피를 구해요.", dim:"both", levels:["중","상"], status:"live", glyph:"ruler" },
         { id:"surface", cat:"calc", name:"겉넓이 구하기", edu:["curr","think"], desc:"바닥까지 포함해 겉넓이를 구해요.", dim:"both", levels:["중","상"], status:"live", glyph:"faces" },
-        { id:"facesMc", cat:"views", name:"위·앞·옆 모양 고르기", edu:["curr","think"], desc:"맞는 앞/옆에서 본 모양을 골라요.", dim:"2d", levels:["하","중"], status:"live", glyph:"panels" },
-        { id:"heightmap", cat:"views", name:"위에서 본 수 쓰기", edu:["curr","think"], desc:"겨냥도를 보고 위 모양 각 칸에 수를 써요.", dim:"3d", levels:["하","중"], status:"live", glyph:"topnum" },
+        { id:"facesMc", cat:"views", name:"위·앞·옆 모양 고르기", edu:["curr","think"], desc:"맞는 앞/옆에서 본 모양을 골라요.", dim:"both", levels:["하","중"], status:"live", glyph:"panels" },
+        { id:"heightmap", cat:"views", name:"위에서 본 수 쓰기", edu:["curr","think"], desc:"겨냥도를 보고 위 모양 각 칸에 수를 써요.", dim:"both", levels:["하","중"], status:"live", glyph:"topnum" },
         { id:"facesDraw", cat:"views", name:"위·앞·옆 그리기", edu:["curr","think"], desc:"세 방향에서 본 모양을 칸으로 칠해요. (가감 후 그리기 포함)", dim:"both", levels:["중","상","최상"], status:"soon", glyph:"draw" },
         { id:"minmax", cat:"reason", name:"최소·최대 개수", edu:["curr","think"], desc:"투상도만 보고 가능한 개수의 범위를 찾아요.", dim:"2d", levels:["중","상","최상"], status:"soon", glyph:"range" },
-        { id:"hidden", cat:"reason", name:"안 보이는 나무", edu:["curr","think"], desc:"겨냥도에서 가려진 나무 수를 헤아려요.", dim:"3d", levels:["중","상","최상"], status:"soon", glyph:"hidden" },
-        { id:"shadow", cat:"reason", name:"그림자 추론", edu:["think"], desc:"방향별 그림자로 가능한 모양을 좁혀요.", dim:"both", levels:["상","최상"], status:"soon", glyph:"shadow" },
-        { id:"deltaFind", cat:"reason", name:"무엇을 바꿨나", edu:["think"], desc:"원본에서 무엇을 빼거나 더했는지 맞혀요.", dim:"3d", levels:["상","최상"], status:"soon", glyph:"delta" },
+        { id:"hidden", cat:"reason", name:"안 보이는 나무", edu:["curr","think"], desc:"겨냥도에서 가려진 나무 수를 헤아려요.", dim:"both", levels:["중","상","최상"], status:"soon", glyph:"hidden" },
+        { id:"shadow", cat:"reason", name:"그림자 추론", edu:["think"], desc:"방향별 그림자로 가능한 모양을 좁혀요.", dim:"2d", levels:["상","최상"], status:"soon", glyph:"shadow" },
+        { id:"deltaFind", cat:"reason", name:"무엇을 바꿨나", edu:["think"], desc:"원본에서 무엇을 빼거나 더했는지 맞혀요.", dim:"both", levels:["상","최상"], status:"soon", glyph:"delta" },
         { id:"build", cat:"compose", name:"모양 만들기", edu:["curr","think"], desc:"조건에 맞게 직접 쌓아 만들어요.", dim:"3d", levels:["중","상","최상"], status:"soon", glyph:"build" },
         { id:"pieces", cat:"compose", name:"조각 맞추기", edu:["think"], desc:"조각을 맞춰 주어진 입체를 완성해요.", dim:"3d", levels:["상","최상"], status:"soon", glyph:"pieces" },
-        { id:"sameShape", cat:"transform", name:"같은 모양 찾기", edu:["think"], desc:"돌려서 겹치는(합동인) 모양을 찾아요.", dim:"3d", levels:["중","상"], status:"soon", glyph:"same" },
-        { id:"ways", cat:"enumerate", name:"가짓수 세기", edu:["think"], desc:"조건을 만족하는 모양이 몇 가지인지 세요.", dim:"both", levels:["상","최상"], status:"soon", glyph:"ways" },
+        { id:"sameShape", cat:"transform", name:"같은 모양 찾기", edu:["think"], desc:"돌려서 겹치는(합동인) 모양을 찾아요.", dim:"both", levels:["중","상"], status:"soon", glyph:"same" },
+        { id:"ways", cat:"enumerate", name:"가짓수 세기", edu:["think"], desc:"조건을 만족하는 모양이 몇 가지인지 세요.", dim:"2d", levels:["상","최상"], status:"soon", glyph:"ways" },
       ];
 
       const G = {
@@ -267,7 +271,7 @@
       const ddTyp=document.querySelector('[data-dd="types"]');
 
       const EDU_OPTS=[{v:"all",t:"전체"},{v:"curr",t:"교과수학"},{v:"think",t:"사고력수학"}];
-      const DIM_OPTS=[{v:"all",t:"전체"},{v:"3d",t:"3D"},{v:"2d",t:"2D"}];
+      const DIM_OPTS=[{v:"all",t:"전체"},{v:"3d",t:"3D 문제"},{v:"2d",t:"2D 겨냥도"}];
       const eduLabel={all:"전체",curr:"교과수학",think:"사고력수학"};
       const dimLabel={all:"전체","3d":"3D","2d":"2D"};
 
@@ -333,7 +337,7 @@
         return true;
       }
       const grid=document.getElementById('grid'), countEl=document.getElementById('count');
-      const dimTag={both:"2D·3D","2d":"2D","3d":"3D"}, eduTag={curr:"교과",think:"사고력"};
+      const dimTag={both:"3D·2D","2d":"2D","3d":"3D"}, eduTag={curr:"교과",think:"사고력"};
       function render(){
         const list=TYPES.filter(match);
         countEl.innerHTML=`<b>${list.length}</b>개 유형`;
@@ -343,10 +347,12 @@
           const soon=t.status==="soon";
           const lv=LEVELS.filter(l=>t.levels.includes(l)&&state.levels.has(l)).map(l=>`<b class="on">${l}</b>`).join('');
           const eduTags=state.edu==="all"?`<span class="tag">전체</span>`:`<span class="tag ${state.edu==='think'?'think':''}">${eduTag[state.edu]}</span>`;
-          const dimText=state.dim==="all"?"2D·3D":(state.dim==="3d"?"3D":"2D");
+          const dimText=state.dim==="all"?dimTag[t.dim]:(state.dim==="3d"?"3D":"2D");
+          const wsTag=t.dim!=="3d"?`<button type="button" class="tag ws wsbtn">문제지 생성 →</button>`:`<span class="tag off">화면 전용</span>`;
           const card=document.createElement('article'); card.className='card'+(soon?' soon':'');
-          card.innerHTML=`<div class="card-top"><span class="glyph-box glyph">${G[t.glyph]()}</span>${soon?'<span class="badge">곧 공개</span>':''}</div><h3>${t.name}</h3><p class="desc">${t.desc}</p><div class="tags"><span class="tag">${dimText}</span>${eduTags}<span class="lv">${lv}</span></div><button class="cta ${soon?'locked':''}" ${soon?'disabled':''}>${soon?'준비 중':'시작하기'}</button>`;
+          card.innerHTML=`<div class="card-top"><span class="glyph-box glyph">${G[t.glyph]()}</span>${soon?'<span class="badge">곧 공개</span>':''}</div><h3>${t.name}</h3><p class="desc">${t.desc}</p><div class="tags"><span class="tag">${dimText}</span>${eduTags}<span class="lv">${lv}</span>${wsTag}</div><button class="cta ${soon?'locked':''}" ${soon?'disabled':''}>${soon?'준비 중':'시작하기'}</button>`;
           if(!soon) card.querySelector('.cta').addEventListener('click',()=>start(t));
+          const wb=card.querySelector('.wsbtn'); if(wb) wb.addEventListener('click',(e)=>{e.stopPropagation();showToast('문제지(worksheets) 생성 기능은 개발 예약되어 있어요. 곧 열려요!');});
           grid.appendChild(card);
         });
         syncURL();
