@@ -54,6 +54,8 @@
 <link rel="stylesheet" href="../assets/css/tokens.css">
 <link rel="stylesheet" href="../assets/css/consent.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../assets/js/cubenest-core.js?v=0.2.0"></script>   <!-- 공용 계산 코어(마스터 §5.1) -->
+<script src="../assets/js/cubenest-viewer.js?v=0.1.0"></script>   <!-- 공용 3D 뷰어·펼쳐보기(마스터 §5.1, core 의존) -->
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;overflow:hidden;font-family:var(--font);color:var(--ink);
@@ -866,108 +868,19 @@ const projLabels=[];
 let explodeOn=false, explode6=false, projRadius=0, soloAxis=null;
 let answerHidden=false, calcLocked=false;   // F4 정답 숨기기 / calc 30분 타임게이트
 const EXPLODE_GAP = 3.6;   // 물체↔투상 평면 간격
-function pcellX(x){ return (x-(state.gx-1)/2)*S; }
-function pcellY(y){ return (y+0.5)*S; }
-function pcellZ(z){ return (z-(state.gz-1)/2)*S; }
-function pV(x,y,z){ return new THREE.Vector3(x,y,z); }
-function silhouettes(){
-  const top=new Set(), front=new Set(), side=new Set();   // top:"x,z" front:"x,y" side:"z,y"
-  for(const k of cells){ const a=k.split(',').map(Number);
-    top.add(a[0]+','+a[2]); front.add(a[0]+','+a[1]); side.add(a[2]+','+a[1]); }
-  return {top,front,side};
-}
 function disposeProj(g){
   for(let i=g.children.length-1;i>=0;i--){ const o=g.children[i];
     if(o.geometry) o.geometry.dispose();
     if(o.material){ if(o.material.map) o.material.map.dispose(); o.material.dispose(); }
     g.remove(o); }
 }
-const _pc=new THREE.Vector3();
-function buildPanel(cellsSet, centerFn, uAxis, vAxis, colorHex){
-  const half=0.46, uu=uAxis.clone().multiplyScalar(half), vv=vAxis.clone().multiplyScalar(half);
-  const pos=[], idx=[], ln=[]; let vb=0;
-  for(const key of cellsSet){
-    centerFn(key, _pc);
-    const a=_pc.clone().sub(uu).sub(vv), b=_pc.clone().add(uu).sub(vv),
-          c=_pc.clone().add(uu).add(vv), d=_pc.clone().sub(uu).add(vv);
-    pos.push(a.x,a.y,a.z, b.x,b.y,b.z, c.x,c.y,c.z, d.x,d.y,d.z);
-    idx.push(vb,vb+1,vb+2, vb,vb+2,vb+3);
-    ln.push(a.x,a.y,a.z,b.x,b.y,b.z, b.x,b.y,b.z,c.x,c.y,c.z, c.x,c.y,c.z,d.x,d.y,d.z, d.x,d.y,d.z,a.x,a.y,a.z);
-    vb+=4;
-  }
-  const fg=new THREE.BufferGeometry();
-  fg.setAttribute('position', new THREE.Float32BufferAttribute(pos,3)); fg.setIndex(idx);
-  projGroup.add(new THREE.Mesh(fg, new THREE.MeshBasicMaterial({color:colorHex, transparent:true, opacity:0.5, side:THREE.DoubleSide, depthWrite:false})));
-  const lg=new THREE.BufferGeometry();
-  lg.setAttribute('position', new THREE.Float32BufferAttribute(ln,3));
-  projGroup.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({color:colorHex})));
-}
-function pbounds(set){
-  let a0=1e9,a1=-1e9,b0=1e9,b1=-1e9;
-  for(const k of set){ const p=k.split(',').map(Number);
-    if(p[0]<a0)a0=p[0]; if(p[0]>a1)a1=p[0]; if(p[1]<b0)b0=p[1]; if(p[1]>b1)b1=p[1]; }
-  return {a0,a1,b0,b1};
-}
-function dashed(pairs, colorHex){
-  const pos=[]; for(const pr of pairs){ pos.push(pr[0].x,pr[0].y,pr[0].z, pr[1].x,pr[1].y,pr[1].z); }
-  const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
-  const ls=new THREE.LineSegments(g, new THREE.LineDashedMaterial({color:colorHex, transparent:true, opacity:0.5, dashSize:0.3, gapSize:0.22}));
-  ls.computeLineDistances(); projGroup.add(ls);
-}
-function buildGridLines(origin, uAxis, vAxis, uN, vN, colorHex){   // axis 크기의 전체 격자(답안지용)
-  const pos=[];
-  for(let i=0;i<=uN;i++){ const ax=origin.x+uAxis.x*i*S, ay=origin.y+uAxis.y*i*S, az=origin.z+uAxis.z*i*S;
-    pos.push(ax,ay,az, ax+vAxis.x*vN*S, ay+vAxis.y*vN*S, az+vAxis.z*vN*S); }
-  for(let j=0;j<=vN;j++){ const ax=origin.x+vAxis.x*j*S, ay=origin.y+vAxis.y*j*S, az=origin.z+vAxis.z*j*S;
-    pos.push(ax,ay,az, ax+uAxis.x*uN*S, ay+uAxis.y*uN*S, az+uAxis.z*uN*S); }
-  const g=new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
-  projGroup.add(new THREE.LineSegments(g, new THREE.LineBasicMaterial({color:colorHex, transparent:true, opacity:0.35})));
-}
-/* 라벨 표시: 전체 보기에선 기본 라벨(위·앞·옆)만, 축(위아래/앞뒤/옆면) 솔로 선택 시엔 그 축 양쪽 라벨 */
-const PROJ_PRIMARY = ['위','앞','옆'];
-function addProjLabel(text, colorHex, x,y,z){
-  const hex='#'+colorHex.toString(16).padStart(6,'0');
-  const m=new THREE.Mesh(new THREE.PlaneGeometry(1.28,0.8), new THREE.MeshBasicMaterial({map:makeTextTexture(text,hex), transparent:true, depthWrite:false}));
-  m.position.set(x,y,z); m.visible = (soloAxis!==null) || PROJ_PRIMARY.includes(text); projGroup.add(m); projLabels.push(m);
-}
-const _pbox=new THREE.Box3(), _pbv=new THREE.Vector3();
-function buildProjections(){
-  disposeProj(projGroup); projLabels.length=0; projRadius=0;
-  if(cells.size===0) return;
-  const {top,front,side}=silhouettes();
-  const AX=pV(1,0,0), AY=pV(0,1,0), AZ=pV(0,0,1);
-  const yTop=state.gy*S+EXPLODE_GAP, yBot=-EXPLODE_GAP;
-  const zF=state.gz*S/2+EXPLODE_GAP, zB=-(state.gz*S/2+EXPLODE_GAP);
-  const xR=state.gx*S/2+EXPLODE_GAP, xL=-(state.gx*S/2+EXPLODE_GAP);
-  const gX=state.gx*S/2, gZ=state.gz*S/2, gY=state.gy*S;
-  function panelTop(yP, surfY, label){
-    buildGridLines(pV(-gX, yP, -gZ), AX, AZ, state.gx, state.gz, PROJ_COL.top);
-    buildPanel(top, (k,o)=>{const q=k.split(',').map(Number); o.set(pcellX(q[0]),yP,pcellZ(q[1]));}, AX, AZ, PROJ_COL.top);
-    const pr=[]; for(const X of [-gX,gX]) for(const Z of [-gZ,gZ]) pr.push([pV(X,surfY,Z), pV(X,yP,Z)]); dashed(pr, PROJ_COL.top);
-    addProjLabel(label, PROJ_COL.top, 0, yP + (yP>=surfY?0.9:-0.9), 0);
-  }
-  function panelZ(zP, surfZ, label){
-    buildGridLines(pV(-gX, 0, zP), AX, AY, state.gx, state.gy, PROJ_COL.front);
-    buildPanel(front, (k,o)=>{const q=k.split(',').map(Number); o.set(pcellX(q[0]),pcellY(q[1]),zP);}, AX, AY, PROJ_COL.front);
-    const pr=[]; for(const X of [-gX,gX]) for(const Y of [0,gY]) pr.push([pV(X,Y,surfZ), pV(X,Y,zP)]); dashed(pr, PROJ_COL.front);
-    addProjLabel(label, PROJ_COL.front, 0, -0.9, zP);
-  }
-  function panelX(xP, surfX, label){
-    buildGridLines(pV(xP, 0, -gZ), AZ, AY, state.gz, state.gy, PROJ_COL.side);
-    buildPanel(side, (k,o)=>{const q=k.split(',').map(Number); o.set(xP,pcellY(q[1]),pcellZ(q[0]));}, AZ, AY, PROJ_COL.side);
-    const pr=[]; for(const Z of [-gZ,gZ]) for(const Y of [0,gY]) pr.push([pV(surfX,Y,Z), pV(xP,Y,Z)]); dashed(pr, PROJ_COL.side);
-    addProjLabel(label, PROJ_COL.side, xP, -0.9, 0);
-  }
-  const sY=!soloAxis||soloAxis==='y', sZ=!soloAxis||soloAxis==='z', sX=!soloAxis||soloAxis==='x';
-  if(sY){ panelTop(yTop, state.gy*S, '위');  if(explode6) panelTop(yBot, 0, '아래'); }
-  if(sZ){ panelZ(zF, state.gz*S/2, '앞');    if(explode6) panelZ(zB, -state.gz*S/2, '뒤'); }
-  if(sX){ panelX(xR, state.gx*S/2, '옆');    if(explode6) panelX(xL, -state.gx*S/2, '왼쪽'); }
-  projGroup.updateMatrixWorld(true);
-  _pbox.setFromObject(projGroup);
-  _pbox.expandByPoint(_pbv.set(-state.gx*S/2,0,-state.gz*S/2));
-  _pbox.expandByPoint(_pbv.set(state.gx*S/2,state.gy*S,state.gz*S/2));
-  _pbox.getCenter(explodeCenter);   // 펼친 전체의 중심 = 회전축
-  for(let i=0;i<8;i++){ _pbv.set(i&1?_pbox.max.x:_pbox.min.x, i&2?_pbox.max.y:_pbox.min.y, i&4?_pbox.max.z:_pbox.min.z); projRadius=Math.max(projRadius,_pbv.distanceTo(explodeCenter)); }
+function buildProjections(){   // 공용 뷰어 위임(§5.1) — 펼쳐보기 투상 빌더
+  const res = CubeNest.viewer.buildExplodedProjections(THREE, projGroup,
+    {gx:state.gx, gy:state.gy, gz:state.gz, cells},
+    { gap:EXPLODE_GAP, explode6, soloAxis, colors:PROJ_COL, makeLabelTexture:makeTextTexture });
+  projLabels.length=0;
+  if(res){ for(const m of res.labels) projLabels.push(m); explodeCenter.copy(res.center); projRadius=res.radius; }
+  else { projRadius=0; }
 }
 function setExplode(on){
   if(on===explodeOn) return;
@@ -1282,19 +1195,9 @@ function updateHistBtns(){
 /* ============================================================
    통계 (개수 · 부피 · 겉넓이) + 계산 과정
    ============================================================ */
-function computeStats(){
-  const N=cells.size;
-  // 방향별 노출면: 각 축은 +/-가 대칭이므로 한쪽만 세고 ×2 한다.
-  let up=0, side=0, front=0;   // 위(+y)·옆(+x)·앞(+z) 노출 개수
-  for(const k of cells){
-    const [x,y,z]=k.split(',').map(Number);
-    if(!has(x,y+1,z)) up++;     // 위쪽이 비면 노출 (아래도 같은 수 → ×2)
-    if(!has(x+1,y,z)) side++;   // 오른쪽(옆)이 비면 노출 (왼쪽도 같은 수 → ×2)
-    if(!has(x,y,z+1)) front++;  // 앞쪽이 비면 노출 (뒤도 같은 수 → ×2)
-  }
-  const exposed = 2*up + 2*side + 2*front;    // 위/아래 + 좌/우 + 앞/뒤
-  const pairs = (6*N - exposed)/2;            // 노출면에서 역산한 맞닿은 면 쌍 수
-  return {N, up, side, front, exposed, pairs};
+function computeStats(){   // 공용 코어 위임(§5.1)
+  const s=CubeNest.core.stats({gx:state.gx,gy:state.gy,gz:state.gz,edge:state.edge,cells});
+  return {N:s.count, up:s.up, side:s.side, front:s.front, exposed:s.exposedFaces, pairs:s.touchingPairs};
 }
 function renderStats(){
   const {N,up,side,front,exposed,pairs}=computeStats();
@@ -1478,32 +1381,10 @@ function b64urlEnc(u8){ let s=''; for(let i=0;i<u8.length;i++) s+=String.fromCha
 function b64urlDec(str){ str=str.replace(/-/g,'+').replace(/_/g,'/'); const s=atob(str);
   const u8=new Uint8Array(s.length); for(let i=0;i<s.length;i++) u8[i]=s.charCodeAt(i); return u8; }
 function cellIdx(x,y,z){ return x*(state.gy*state.gz) + y*state.gz + z; }
-function serializeState(){
-  const {gx,gy,gz,edge}=state, total=gx*gy*gz;
-  const mask=new Uint8Array(Math.ceil(total/8));
-  for(const k of cells){ const [x,y,z]=k.split(',').map(Number);
-    const i=x*(gy*gz)+y*gz+z; mask[i>>3] |= (1<<(i&7)); }
-  const out=new Uint8Array(5+mask.length);
-  out.set([1,gx,gy,gz,edge]); out.set(mask,5);
-  return b64urlEnc(out);
+function serializeState(){   // 공용 코어 위임(§5.1) — ?m= 바이트 동일
+  return CubeNest.core.serialize({gx:state.gx,gy:state.gy,gz:state.gz,edge:state.edge,cells});
 }
-function deserializeState(str){
-  try{
-    const a=b64urlDec(str);
-    if(a[0]!==1) return null;
-    const gx=a[1],gy=a[2],gz=a[3],edge=a[4];
-    const ok=v=>Number.isInteger(v)&&v>=1&&v<=10;
-    if(![gx,gy,gz,edge].every(ok)) return null;
-    const total=gx*gy*gz, mask=a.subarray(5), newCells=new Set();
-    for(let i=0;i<total;i++){
-      if((mask[i>>3]>>(i&7))&1){
-        const x=Math.floor(i/(gy*gz)), r=i%(gy*gz), y=Math.floor(r/gz), z=r%gz;
-        newCells.add(x+','+y+','+z);
-      }
-    }
-    return {gx,gy,gz,edge,cells:newCells};
-  }catch(e){ return null; }
-}
+function deserializeState(str){ return CubeNest.core.deserialize(str); }   // 공용 코어 위임(§5.1)
 function applyState(st){
   state.gx=st.gx; state.gy=st.gy; state.gz=st.gz;
   cells.clear(); st.cells.forEach(k=>cells.add(k));
