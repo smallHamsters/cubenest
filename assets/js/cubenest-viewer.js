@@ -16,7 +16,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.2.1';
+  var VERSION = '0.2.3';
   var S = 1; // 단위 셀 크기
 
   function coreRef() {
@@ -50,7 +50,7 @@
    *   colors     {top,front,side} hex 숫자 (기본 파랑/초록/빨강)
    *   showLabels (기본 true)
    *   makeLabelTexture(text, hex) → THREE.Texture (없으면 내부 폴백)
-   *   primaryLabels (기본 ['위','앞','옆']) — 전체 보기에서 보일 라벨
+   *   primaryLabels — (v0.2.3부터 미사용) 만들어진 면의 라벨은 모두 표시
    *   labels     {top,bottom,front,back,right,left} (기본 위/아래/앞/뒤/옆/왼쪽)
    */
   function buildExplodedProjections(THREE, group, shape, opts) {
@@ -149,7 +149,7 @@
       var m = new THREE.Mesh(new THREE.PlaneGeometry(1.28, 0.8),
         new THREE.MeshBasicMaterial({ map: mkTex(text, hex), transparent: true, depthWrite: false }));
       m.position.set(x, y, z);
-      m.visible = (soloAxis !== null) || (primary.indexOf(text) >= 0);
+      m.visible = true;   // 만들어진 면의 라벨은 모두 표시(육투상=6면 전부, 솔로=양쪽)
       group.add(m); labels.push(m);
       expand(x - 0.64, y - 0.4, z); expand(x + 0.64, y + 0.4, z);   // 라벨 평면 크기 반영(빌드 시점 바운딩)
     }
@@ -242,6 +242,10 @@
     var matWood = new THREE.MeshLambertMaterial({ color: 0xe4b878 });
     var matFace = new THREE.MeshLambertMaterial({ vertexColors: true });
     var edgeMat = new THREE.LineBasicMaterial({ color: 0x8a6a3c, transparent: true, opacity: 0.55 });
+    // 특정 큐브 강조색(공용): 회전·펼쳐보기와 무관하게 유지
+    var highlight = new Set((opts.highlightCells || []).map(function (c) { return Array.isArray(c) ? c.join(',') : String(c); }));
+    var highlightColor = opts.highlightColor || '#e0455e';
+    var matHi = new THREE.MeshLambertMaterial({ color: new THREE.Color(highlightColor) });
     var floor = null, floorGrid = null;
 
     function cellPos(x, y, z, o) { return o.set((x - (state.gx - 1) / 2) * S, (y + 0.5) * S, (z - (state.gz - 1) / 2) * S); }
@@ -250,19 +254,26 @@
       for (var i = g.children.length - 1; i >= 0; i--) {
         var o = g.children[i];
         if (o.geometry && o.geometry !== boxGeo && o.geometry !== edgeGeo) o.geometry.dispose();
-        if (o.material && o.material !== matWood && o.material !== matFace && o.material !== edgeMat) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
+        if (o.material && o.material !== matWood && o.material !== matFace && o.material !== edgeMat && o.material !== matHi) { if (o.material.map) o.material.map.dispose(); o.material.dispose(); }
         g.remove(o);
       }
     }
 
     function rebuildCubes() {
       clearGroup(cubeGroup);
-      var mat = faceColors ? matFace : matWood, _p = new THREE.Vector3();
+      var base = (faceColors || explodeOn) ? matFace : matWood, _p = new THREE.Vector3();
       cells.forEach(function (k) {
         var q = k.split(',').map(Number);
+        var mat = highlight.has(k) ? matHi : base;
         var m = new THREE.Mesh(boxGeo, mat); cellPos(q[0], q[1], q[2], _p); m.position.copy(_p); cubeGroup.add(m);
         var e = new THREE.LineSegments(edgeGeo, edgeMat); e.position.copy(_p); cubeGroup.add(e);
       });
+    }
+    // 강조 큐브 지정/해제 (cells=[[x,y,z]...], color 선택). 없으면 해제.
+    function setHighlight(hcells, color) {
+      highlight = new Set((hcells || []).map(function (c) { return Array.isArray(c) ? c.join(',') : String(c); }));
+      if (color && color !== highlightColor) { highlightColor = color; matHi.color = new THREE.Color(color); matHi.needsUpdate = true; }
+      rebuildCubes();
     }
 
     function buildFloor() {
@@ -407,7 +418,7 @@
       window.removeEventListener('pointerup', onUp); window.removeEventListener('resize', onWinResize);
       clearGroup(cubeGroup); clearGroup(projGroup);
       dirLabels.forEach(function (m) { m.material.map.dispose(); m.material.dispose(); m.geometry.dispose(); });
-      boxGeo.dispose(); edgeGeo.dispose(); matWood.dispose(); matFace.dispose(); edgeMat.dispose();
+      boxGeo.dispose(); edgeGeo.dispose(); matWood.dispose(); matFace.dispose(); edgeMat.dispose(); matHi.dispose();
       if (floor) { floor.geometry.dispose(); floor.material.dispose(); }
       if (floorGrid) { floorGrid.geometry.dispose(); floorGrid.material.dispose(); }
       renderer.dispose(); if (canvas.parentNode) canvas.parentNode.removeChild(canvas);
@@ -420,7 +431,7 @@
 
     return {
       setShape: setShape, setExplode: setExplode, setExplode6: setExplode6, setSolo: setSolo,
-      reset: reset, resize: resize, dispose: dispose,
+      reset: reset, resize: resize, dispose: dispose, setHighlight: setHighlight,
       scene: scene, camera: cam, group: cubeGroup,
       get radius() { return sph.radius; }
     };

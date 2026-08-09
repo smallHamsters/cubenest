@@ -19,7 +19,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.2.0';
+  var VERSION = '0.3.0';
   var SER_VER = 1; // 직렬화 버전 바이트 (playground와 동일 — ?m= 링크 호환)
 
   // ---------- 유틸: 셀 정규화 ----------
@@ -256,6 +256,73 @@
     var hv = viewHeights(shape), sil = silhouettes(shape);
     return reverseCountsFromViews({ footprint: sil.top, front: hv.front, side: hv.side });
   }
+
+  // 매칭 결과(오른쪽→왼쪽 인덱스)를 반환하는 변형 — 최소 모양 재구성용
+  function maxMatchingPairs(adj, nRight) {
+    var matchR = new Array(nRight).fill(-1);
+    function tryK(u, seen) {
+      for (var j = 0; j < adj[u].length; j++) {
+        var v = adj[u][j];
+        if (!seen[v]) { seen[v] = true; if (matchR[v] === -1 || tryK(matchR[v], seen)) { matchR[v] = u; return true; } }
+      }
+      return false;
+    }
+    for (var u = 0; u < adj.length; u++) tryK(u, new Array(nRight).fill(false));
+    return matchR;
+  }
+
+  // 뷰 → 최소·최대 실제 높이지도. { min:{"x,z":h}, max:{"x,z":h} }
+  //   max: h(x,z)=min(앞[x],옆[z]). min: 봉우리를 겹쳐 실현(매칭 해)한 최소 배치.
+  function reverseShapesFromViews(views) {
+    var fp = toCellSet(views.footprint), front = views.front, side = views.side;
+    var max = {}, min = {};
+    fp.forEach(function (k) { var p = k.split(',').map(Number); max[k] = Math.min(front[p[0]], side[p[1]]); min[k] = 1; });
+
+    // 행/열별 셀 목록
+    var rows = {}, cols = {};
+    fp.forEach(function (k) { var p = k.split(',').map(Number); (rows[p[0]] = rows[p[0]] || []).push(p[1]); (cols[p[1]] = cols[p[1]] || []).push(p[0]); });
+
+    var Xp = Object.keys(front).map(Number).filter(function (x) { return front[x] >= 2; });
+    var Zp = Object.keys(side).map(Number).filter(function (z) { return side[z] >= 2; });
+    var coveredX = {}, coveredZ = {};
+
+    // 높이값 v별 이분 매칭 → 매칭된 (x,z)를 v로 세팅(봉우리 둘 동시 실현)
+    var values = {};
+    Xp.forEach(function (x) { values[front[x]] = true; });
+    Zp.forEach(function (z) { values[side[z]] = true; });
+    Object.keys(values).map(Number).forEach(function (v) {
+      var xs = Xp.filter(function (x) { return front[x] === v; });
+      var zs = Zp.filter(function (z) { return side[z] === v; });
+      var zIndex = {}; zs.forEach(function (z, i) { zIndex[z] = i; });
+      var adj = xs.map(function (x) { var row = []; zs.forEach(function (z) { if (fp.has(x + ',' + z)) row.push(zIndex[z]); }); return row; });
+      var matchR = maxMatchingPairs(adj, zs.length);
+      for (var zi = 0; zi < matchR.length; zi++) {
+        if (matchR[zi] !== -1) {
+          var x = xs[matchR[zi]], z = zs[zi];
+          min[x + ',' + z] = v; coveredX[x] = true; coveredZ[z] = true;
+        }
+      }
+    });
+
+    // 남은 열-봉우리: 같은 행에서 옆[z']≥앞[x]인 칸을 앞[x]로
+    Xp.forEach(function (x) {
+      if (coveredX[x]) return;
+      var list = rows[x] || [];
+      for (var i = 0; i < list.length; i++) { var z = list[i]; if (side[z] >= front[x]) { min[x + ',' + z] = Math.max(min[x + ',' + z] || 1, front[x]); coveredX[x] = true; break; } }
+    });
+    // 남은 행-봉우리: 같은 열에서 앞[x']≥옆[z]인 칸을 옆[z]로
+    Zp.forEach(function (z) {
+      if (coveredZ[z]) return;
+      var list = cols[z] || [];
+      for (var i = 0; i < list.length; i++) { var x = list[i]; if (front[x] >= side[z]) { min[x + ',' + z] = Math.max(min[x + ',' + z] || 1, side[z]); coveredZ[z] = true; break; } }
+    });
+
+    return { min: min, max: max };
+  }
+  function reverseShapes(shape) {
+    var hv = viewHeights(shape), sil = silhouettes(shape);
+    return reverseShapesFromViews({ footprint: sil.top, front: hv.front, side: hv.side });
+  }
   // 최대 개수만(하위호환)
   function maxCount(shape) { return reverseCounts(shape).maxCount; }
 
@@ -301,6 +368,7 @@
     heightMap: heightMap, viewHeights: viewHeights, silhouettes: silhouettes,
     // 4.4 (역방향: 최대·최소·은면)
     reverseCounts: reverseCounts, reverseCountsFromViews: reverseCountsFromViews, maxCount: maxCount,
+    reverseShapes: reverseShapes, reverseShapesFromViews: reverseShapesFromViews,
     // F5 (문제 스키마)
     schema: schema
   };
