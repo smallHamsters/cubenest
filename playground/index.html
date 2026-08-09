@@ -54,8 +54,8 @@
 <link rel="stylesheet" href="../assets/css/tokens.css">
 <link rel="stylesheet" href="../assets/css/consent.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="../assets/js/cubenest-core.js?v=0.2.0"></script>   <!-- 공용 계산 코어(마스터 §5.1) -->
-<script src="../assets/js/cubenest-viewer.js?v=0.1.0"></script>   <!-- 공용 3D 뷰어·펼쳐보기(마스터 §5.1, core 의존) -->
+<script src="../assets/js/cubenest-core.js?v=0.3.0"></script>   <!-- 공용 계산 코어(마스터 §5.1) -->
+<script src="../assets/js/cubenest-viewer.js?v=0.2.3"></script>   <!-- 공용 3D 뷰어·펼쳐보기(마스터 §5.1, core 의존) -->
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
   html,body{margin:0;height:100%;overflow:hidden;font-family:var(--font);color:var(--ink);
@@ -156,6 +156,8 @@
   .modebtn .cube{width:19px;height:19px;flex:0 0 auto;}
   .modebtn.add{background:var(--add-soft);color:var(--add);}
   .modebtn.del{background:var(--del-soft);color:var(--del);}
+  .modebtn.select{background:var(--panel-2);color:var(--accent-ink);}
+  .modebtn.select.on{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(63,63,191,.35);}
 
   .iconbtn{width:44px;height:40px;border:none;border-radius:10px;background:transparent;color:var(--ink);cursor:pointer;
     display:grid;place-items:center;}
@@ -282,15 +284,28 @@
   .calc-lock .ic-lock{display:none;}
   .calc-lock.locked{color:var(--accent);}
   .calc-lock.locked .ic-unlock{display:none;} .calc-lock.locked .ic-lock{display:block;}
-  .calc-gate{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:36px 22px;}
+  .calc-gate{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:34px 0 10px;}
   .calc-gate .lockic{width:44px;height:44px;color:var(--accent);}
   .calc-gate .lockic svg{width:100%;height:100%;}
   .calc-gate .gt{font-weight:800;font-size:15px;color:var(--ink);}
   .calc-gate .gd{font-size:12.5px;color:var(--muted);line-height:1.6;}
-  .calc-gate .gate-btn{margin-top:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:12px;padding:10px 22px;font-weight:800;font-size:13px;cursor:pointer;box-shadow:var(--shadow-sm);}
+  .calc-gate .gate-btn{width:100%;box-sizing:border-box;margin-top:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:14px;padding:12px 16px;font-weight:800;font-size:13.5px;cursor:pointer;box-shadow:var(--shadow-sm);}
   .calc-gate .gate-btn:hover{background:var(--panel-2);}
   .calc-gate .gate-btn.accent{background:var(--accent);color:#fff;border-color:transparent;}
   .calc-gate .gate-btn.accent:hover{background:var(--accent-ink);}
+  /* 퀴즈 풀러가기 (calc 패널 하단 고정, 로그인 여부·잠금 상태 무관 항상 표시) */
+  .calc-quiz{display:flex;box-sizing:border-box;width:100%;align-items:center;gap:11px;margin:16px 0 2px;padding:11px 13px;border-radius:14px;
+    background:var(--accent);color:#fff;text-decoration:none;box-shadow:0 4px 13px rgba(63,63,191,.22);
+    transition:transform .15s, background .15s, box-shadow .15s;}
+  .calc-quiz:hover{background:var(--accent-ink);transform:translateY(-1px);box-shadow:0 6px 16px rgba(45,45,149,.26);}
+  .calc-quiz:active{transform:translateY(0);}
+  .calc-quiz .cq-ic{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.18);
+    display:grid;place-items:center;flex:0 0 auto;}
+  .calc-quiz .cq-ic svg{width:15px;height:15px;}
+  .calc-quiz .cq-txt{flex:1 1 auto;display:flex;flex-direction:column;line-height:1.22;min-width:0;}
+  .calc-quiz .cq-txt b{font-weight:800;font-size:14px;}
+  .calc-quiz .cq-txt small{font-weight:600;font-size:11px;opacity:.82;margin-top:1px;}
+  .calc-quiz .arw{width:16px;height:16px;opacity:.85;flex:0 0 auto;}
   /* 무료 체험 카운트다운 */
   .freetimer{position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);
     z-index:6;display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);
@@ -415,6 +430,7 @@
       </div>
       <div class="group">
         <button class="modebtn add" id="modeBtn"><svg class="cube" viewBox="0 0 24 24" fill="none"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg><span id="modeLbl">추가</span></button>
+        <button class="modebtn select" id="selectBtn" aria-label="큐브 선택하기(색 표시)"><svg class="cube" viewBox="0 0 24 24" fill="none"><path d="M6 3l14 8-6 1.6L11 18 6 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg><span>선택</span></button>
         <button class="iconbtn" id="undo" aria-label="되돌리기" disabled>
           <svg viewBox="0 0 24 24" fill="none"><path d="M9 7 4 12l5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 12h10a6 6 0 0 1 6 6v1" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -439,6 +455,11 @@
       </div>
     </div>
     <div class="calc-body" id="calcBody"></div>
+    <a class="calc-quiz" id="calcQuizBtn" href="../quiz/">
+      <span class="cq-ic"><svg viewBox="0 0 24 24" fill="none"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
+      <span class="cq-txt"><b>퀴즈 풀러 가기</b><small>방금 배운 내용으로 도전해 봐요</small></span>
+      <svg class="arw" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
   </div>
 
   <div class="scrim" id="scrim"></div>
@@ -630,6 +651,15 @@ function makeEdgeSeg(mat){
   cubeGroup.add(ls); return ls;
 }
 const edgesOn=makeEdgeSeg(edgeMatOn), edgesOff=makeEdgeSeg(edgeMatOff);
+// 특정 큐브 강조 — 별도 InstancedMesh(항상 불투명 강조색). 층선택·흐림·펼쳐보기와 무관, 편집 가능.
+let HIGHLIGHT_COL = 0xe0455e;
+const highlight = new Set();          // 강조된 "x,y,z"
+const matHi = new THREE.MeshLambertMaterial({color:HIGHLIGHT_COL});
+const cubesHi = new THREE.InstancedMesh(boxGeo, matHi, CAP);
+cubesHi.count=0; cubesHi.frustumCulled=false; cubesHi.castShadow=true; cubesHi.receiveShadow=true;
+cubesHi.instanceMatrix.setUsage(THREE.DynamicDrawUsage); cubeGroup.add(cubesHi);
+const edgesHi = makeEdgeSeg(edgeMatOn);
+const hiCells=[]; cubesHi.userData.cells=hiCells;
 
 // 인스턴스 ↔ 셀 매핑 / 팝 애니메이션
 const onCells=[], offCells=[];        // instanceId → "x,y,z"
@@ -792,17 +822,33 @@ function refreshTopCountsVisibility(){
 /* ---------- 큐브 렌더 동기화 (InstancedMesh) ---------- */
 function syncCubes(){                 // cells + layerSel → 두 그룹으로 분배·배치·모서리 재생성
   clampLayerSel();
-  onCells.length=0; offCells.length=0; cellIndex.clear();
+  onCells.length=0; offCells.length=0; hiCells.length=0; cellIndex.clear();
   for(const k of cells){
+    if(highlight.has(k)){ hiCells.push(k); continue; }   // 강조 큐브는 별도 그룹(불투명 강조색)
     const y=Number(k.split(',')[1]);
     ((layerSel==='all'||layerSel.has(y))?onCells:offCells).push(k);
   }
   matOn.color.setHex(layerSel==='all'?WOOD:WOOD_HI);   // 전체=기본색 / 특정 층 선택 시 강조색
-  packGroup(cubesOn,onCells);  packGroup(cubesOff,offCells);
-  buildEdges(edgesOn,onCells); buildEdges(edgesOff,offCells);
+  packGroup(cubesOn,onCells);  packGroup(cubesOff,offCells);  packGroup(cubesHi,hiCells);
+  buildEdges(edgesOn,onCells); buildEdges(edgesOff,offCells); buildEdges(edgesHi,hiCells);
   if(explodeOn){ buildProjections(); if(cells.size>0) target.copy(explodeCenter); if(!userZoomed) sph.radius=fitRadius(); }
 }
 const rebuildCubes = syncCubes;       // 전체 재생성
+// 특정 큐브 강조색 지정/해제 (공용 기능). list=[[x,y,z]|"x,y,z"...], color 선택. 없으면 해제.
+function setHighlight(list, color){
+  highlight.clear();
+  (list||[]).forEach(c=>highlight.add(Array.isArray(c)?c.join(','):String(c)));
+  if(color!=null){ HIGHLIGHT_COL = (typeof color==='string')? new THREE.Color(color).getHex() : color; matHi.color.setHex(HIGHLIGHT_COL); }
+  syncCubes();
+  try{ track('highlight_set', {n:highlight.size}); }catch(e){}
+}
+window.setPlaygroundHighlight = setHighlight;   // 외부(교사 도구·URL 등)에서 호출
+function toggleHighlight(x,y,z){                 // 선택 모드에서 한 칸 강조 토글
+  const k=key(x,y,z);
+  if(highlight.has(k)) highlight.delete(k); else highlight.add(k);
+  syncCubes();
+  try{ track('highlight_toggle',{n:highlight.size}); }catch(e){}
+}
 function addCubeMesh(x,y,z,pop){
   syncCubes();
   if(pop) popList.push({key:key(x,y,z), t:0});
@@ -1130,13 +1176,14 @@ function handleTap(x,y){
   if(explodeOn){ toast('펼쳐보기 중이에요. 닫으면 편집할 수 있어요'); return; }
   if(aligned){ toast('관찰 모드예요. 화면을 돌리면 편집할 수 있어요'); return; }
   ray.setFromCamera(ndc(x,y), activeCam);
-  const hitsCubes=ray.intersectObjects([cubesOn,cubesOff],false);
+  const hitsCubes=ray.intersectObjects([cubesOn,cubesOff,cubesHi],false);
   if(hitsCubes.length){
     const h=hitsCubes[0];
     const k=h.object.userData.cells[h.instanceId];
     if(k){
       const [cx,cy,cz]=k.split(',').map(Number);
-      if(addMode){
+      if(selectMode){ toggleHighlight(cx,cy,cz); }
+      else if(addMode){
         cellPos(cx,cy,cz,_pos);                          // 히트 지점과 큐브 중심으로 면 법선 도출
         const dx=h.point.x-_pos.x, dy=h.point.y-_pos.y, dz=h.point.z-_pos.z;
         const ax=Math.abs(dx),ay=Math.abs(dy),az=Math.abs(dz);
@@ -1149,7 +1196,7 @@ function handleTap(x,y){
     return;
   }
   const hitFloor=ray.intersectObject(floor,false);
-  if(hitFloor.length && addMode){
+  if(hitFloor.length && addMode && !selectMode){
     const p=hitFloor[0].point;
     const ix=Math.round(p.x/S+(state.gx-1)/2);
     const iz=Math.round(p.z/S+(state.gz-1)/2);
@@ -1290,6 +1337,14 @@ modeBtn.addEventListener('click',()=>{
   modeBtn.classList.toggle('add',addMode);
   modeBtn.classList.toggle('del',!addMode);
   modeLbl.textContent=addMode?'추가':'삭제';
+});
+let selectMode=false;
+const selectBtn=document.getElementById('selectBtn');
+selectBtn.addEventListener('click',()=>{
+  selectMode=!selectMode;
+  selectBtn.classList.toggle('on',selectMode);
+  if(selectMode) toast('큐브를 눌러 색을 표시하거나 해제하세요');
+  try{ track(selectMode?'select_mode_on':'select_mode_off'); }catch(e){}
 });
 
 const viewSeg=document.getElementById('viewSeg');
@@ -1625,6 +1680,7 @@ function setCalc(open){
 }
 document.getElementById('statHead').addEventListener('click',()=>setCalc(!calcOpen));
 document.getElementById('calcClose').addEventListener('click',()=>setCalc(false));
+document.getElementById('calcQuizBtn').addEventListener('click',()=>{ try{ track('calc_go_quiz'); }catch(e){} });
 document.getElementById('calcLockBtn').addEventListener('click',()=>{ if(!calcLocked) setAnswerHidden(!answerHidden); });
 document.getElementById('calcBody').addEventListener('click',(e)=>{ const a=e.target.closest('[data-action]'); if(!a) return; if(a.dataset.action==='reveal') setAnswerHidden(false); else if(a.dataset.action==='login'){ promptLogin(); } });
 (function(){ function onFirst(){ markFirstInteract(); updateFreeTimer(); checkTimeGate(); window.removeEventListener('pointerdown', onFirst, true); } window.addEventListener('pointerdown', onFirst, true); })();
