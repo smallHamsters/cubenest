@@ -33,6 +33,11 @@
       const CORE=(window.CubeNest&&window.CubeNest.core)||null;
       const VIEWER=(window.CubeNest&&window.CubeNest.viewer)||null;
       function coreShape(sh){ return {gx:sh.gx, gy:sh.maxH, gz:sh.gz, edge:sh.edge, cells:sh.cells.map(c=>[c.x,c.y,c.z])}; }
+      // 높이지도({"x,z":h}) → core/viewer 모양
+      function hmapToShape(hm,edge){ const cells=[]; let gx=0,gz=0,gy=0; for(const k in hm){const p=k.split(",").map(Number),h=hm[k]; gx=Math.max(gx,p[0]+1); gz=Math.max(gz,p[1]+1); gy=Math.max(gy,h); for(let y=0;y<h;y++)cells.push([p[0],y,p[1]]);} return {gx,gy,gz,edge,cells}; }
+      // 해설 내부 3D 뷰어(최소·최대 모양, 안 보이는 나무 강조) — 문항 전환 시 dispose
+      let EXPVIEWS=[];
+      function disposeExpViews(){ EXPVIEWS.forEach(v=>{try{v&&v.dispose&&v.dispose();}catch(e){}}); EXPVIEWS=[]; }
       // 오목(노치) 판정 — 마스터 v1.5.2 4.2: 노출면 > 2×(위+앞+옆 실루엣 넓이). core 공용.
       function isConcave(csh){ if(!CORE)return false; const s=CORE.silhouettes(csh); const sum=s.top.size+s.front.size+s.side.size; return CORE.exposedFaces(csh) > 2*sum; }
       // 안 보이는 나무: occ=겨냥도 뒤쪽 가림(초등, (x+1,y+1,z+1) 채워짐) / surround=이웃 가림(유아, 앞·위·옆 모두 채워짐)
@@ -183,6 +188,19 @@
         const B="#3f8fd0",G="#4fae72",R="#d0546f";
         const pv=(sil,color,label)=>`<div class="pv">${renderSil(sil,color)}<span>${label}</span></div>`;
         return `<div class="threeviews">${pv(topSil(sh),B,"위")}${pv(frontSil(sh),G,"앞")}${pv(sideSil(sh),R,"옆")}</div>`;
+      }
+      // 최소·최대 해설: 위에서 본 모양 격자에 '불변 높이'(min==max)는 숫자, '변동 칸'(min≠max)은 색칠+범위
+      function renderMinMaxTop(mn,mx,gx,gz){
+        const c=26,p=6,w=gx*c,h=gz*c; let r="";
+        for(let z=0;z<gz;z++)for(let x=0;x<gx;x++){
+          const k=x+","+z; if(!(k in mn))continue;
+          const a=mn[k],b=mx[k],vary=a!==b,X=p+x*c,Y=p+z*c;
+          r+=`<rect x="${X}" y="${Y}" width="${c}" height="${c}" rx="3" fill="${vary?'#ffe6bd':'#eef2f7'}" stroke="${vary?'#e0932f':'#c3ccda'}" stroke-width="${vary?1.5:1}"/>`;
+          r+= vary
+            ? `<text x="${X+c/2}" y="${Y+c/2}" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="800" fill="#b5701a">${a}~${b}</text>`
+            : `<text x="${X+c/2}" y="${Y+c/2}" text-anchor="middle" dominant-baseline="central" font-size="13" font-weight="800" fill="#2d2d3a">${a}</text>`;
+        }
+        return `<svg viewBox="0 0 ${w+p*2} ${h+p*2}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
       }
       // 위에서 본 수(각 칸 높이) 격자 — 개수 세기 해설용 2D 그림
       function renderTopNums(sh){
@@ -347,7 +365,6 @@
         const edgeTxt=T.edge?`<br>쌓기나무 한 모서리 = ${sh.edge}cm`:"";
         const isViews=pr.type==="minmax";
         const isHidden=pr.type==="hidden";
-        const hasScratch=isViews||isHidden;
         const has3D=!!window.THREE && !!VIEWER && PRM.dim!=="2d" && !isViews && !isHidden;
         const viewLabel=isViews?"세 방향 본 모양":(isHidden?"2D 겨냥도":(has3D?"3D 문제":"2D 겨냥도"));
         const viewerHTML=isViews
@@ -361,11 +378,8 @@
           <div class="qhead"><span class="type">${T.title}</span><span class="lv">${pr.lv}</span><span class="mode">${viewLabel}</span><button type="button" id="feedbackBtn" class="qfb" aria-label="이 문제에 의견 보내기"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>의견</span></button></div>
           <div class="qtext">${askText}${edgeTxt}</div>
           ${viewerHTML}
-          <div class="answer">${ans}</div>
-          ${hasScratch?`<div class="scratch"><div class="scratch-bar"><span>✏️ 연습장</span><button type="button" id="scratchClear">지우기</button></div><canvas id="scratchpad"></canvas></div>`:""}
-          <div class="fb" id="fb"></div>
-          <div class="actions"><button class="btn" id="submit">제출</button></div>`;
-        if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;} if(EXPLODE&&EXPLODE.dispose){EXPLODE.dispose();EXPLODE=null;}
+          <div class="answer">${ans}</div>`;
+        if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;} if(EXPLODE&&EXPLODE.dispose){EXPLODE.dispose();EXPLODE=null;} disposeExpViews();
         if(!isViews && !isHidden){
         if(has3D){
           CURVIEW=VIEWER.createViewer(document.getElementById("v3d"),{THREE:window.THREE,shape:coreShape(sh),showLabels:true});
@@ -376,26 +390,41 @@
           document.getElementById("rr").onclick=()=>{ROT=(ROT+1)%4;updRot();track("quiz_rotate",{dir:"cw",deg:ROT*90});};
         }
         }
-        if(hasScratch) initScratch();
+        if(SCRATCH) SCRATCH.show();
+        const fb0=document.getElementById("fb"); fb0.className="fb"; fb0.innerHTML=""; fb0.hidden=false;
+        const act0=document.getElementById("actions"); act0.hidden=false; act0.innerHTML=`<button class="btn" id="submit">제출</button>`;
         if(T.form==="mc"){qcard.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.i;qcard.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
         document.getElementById("submit").onclick=submit;
         document.getElementById("feedbackBtn").onclick=openFeedback;
         const first=qcard.querySelector("input");if(first)first.focus();
       }
-      // 연습장 — 문제를 화면에 직접 쓰며 푸는 유형용 자유 필기 캔버스
+      // 연습장 — 정적 HTML(#scratch) 1회 초기화. 문제 표시 때 SCRATCH.show()로 크기 맞춤·초기화.
+      let SCRATCH=null;
       function initScratch(){
         const cv=document.getElementById("scratchpad"); if(!cv)return;
-        const dpr=Math.min(window.devicePixelRatio||1,2);
-        const w=cv.clientWidth||cv.parentElement.clientWidth, h=cv.clientHeight||190;
-        cv.width=w*dpr; cv.height=h*dpr;
-        const ctx=cv.getContext("2d"); ctx.scale(dpr,dpr);
-        ctx.lineCap="round"; ctx.lineJoin="round"; ctx.lineWidth=2.6; ctx.strokeStyle="#2d2d3a";
+        const box=document.getElementById("scratch");
+        const dpr=Math.min(window.devicePixelRatio||1,2), ctx=cv.getContext("2d");
+        let penColor="#2d2d3a", eraser=false; const PEN=2.6*dpr, ERA=18*dpr;
+        let undo=[]; // 되돌리기 스냅샷(최대 5획)
+        function snapshot(){ try{ undo.push(ctx.getImageData(0,0,cv.width,cv.height)); if(undo.length>5)undo.shift(); }catch(e){} }
+        function doUndo(){ if(!undo.length)return; ctx.putImageData(undo.pop(),0,0); }
+        function sizeCanvas(){ const r=cv.getBoundingClientRect(); if(r.width<1)return; cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr)); ctx.lineCap="round"; ctx.lineJoin="round"; undo=[]; } // 캔버스 재설정=초기화(되돌리기 비움)
+        const pos=e=>{const r=cv.getBoundingClientRect();return [(e.clientX-r.left)*cv.width/(r.width||1),(e.clientY-r.top)*cv.height/(r.height||1)];};
         let drawing=false,lx=0,ly=0;
-        const pos=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top];};
-        cv.addEventListener("pointerdown",e=>{drawing=true;[lx,ly]=pos(e);cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);});
+        cv.addEventListener("pointerdown",e=>{drawing=true;snapshot();[lx,ly]=pos(e);ctx.globalCompositeOperation=eraser?"destination-out":"source-over";ctx.lineWidth=eraser?ERA:PEN;ctx.strokeStyle=penColor;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);});
         cv.addEventListener("pointermove",e=>{if(!drawing)return;const [x,y]=pos(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.stroke();lx=x;ly=y;e.preventDefault();});
         const end=()=>{drawing=false;}; cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",end);cv.addEventListener("pointerleave",end);
-        const clr=document.getElementById("scratchClear"); if(clr)clr.onclick=()=>ctx.clearRect(0,0,cv.width,cv.height);
+        const er=document.getElementById("eraser");
+        box.querySelectorAll(".pen").forEach(b=>b.onclick=()=>{penColor=b.dataset.col;eraser=false;box.querySelectorAll(".pen").forEach(p=>p.classList.remove("on"));b.classList.add("on");if(er)er.classList.remove("on");});
+        if(er)er.onclick=()=>{eraser=!eraser;er.classList.toggle("on",eraser);if(eraser)box.querySelectorAll(".pen").forEach(p=>p.classList.remove("on"));else{const on=box.querySelector(".pen");if(on)on.classList.add("on");penColor=on?on.dataset.col:penColor;}};
+        const un=document.getElementById("scratchUndo"); if(un)un.onclick=doUndo;
+        const clr=document.getElementById("scratchClear"); if(clr)clr.onclick=()=>{snapshot();ctx.clearRect(0,0,cv.width,cv.height);};
+        // 접기 옵션(로컬 저장)
+        const fold=document.getElementById("scratchFold");
+        if(localStorage.getItem("cubenest_scratch_fold")==="1") box.classList.add("collapsed");
+        if(fold)fold.onclick=()=>{const c=box.classList.toggle("collapsed");localStorage.setItem("cubenest_scratch_fold",c?"1":"0");if(!c)requestAnimationFrame(sizeCanvas);};
+        window.addEventListener("resize",()=>{ if(!box.hidden && !box.classList.contains("collapsed")) sizeCanvas(); });
+        SCRATCH={ show(){ box.hidden=false; if(!box.classList.contains("collapsed")) requestAnimationFrame(sizeCanvas); }, hide(){ box.hidden=true; } };
       }
 
       /* ===== 효과음 + 음소거 ===== */
@@ -493,16 +522,32 @@
           if(pr.type==="minmax"||pr.type==="hidden"){
             a=pr.answer; const rc=pr.rc;
             if(pr.type==="minmax"){
-              sol = pr.which==="diff"
-                ? `최대와 최소의 차이 = <b>최대 ${rc.maxCount} − 최소 ${rc.minCount} = ${rc.hidden}개</b>. (안 보이게 숨길 수 있는 나무 수와 같아요)`
-                : pr.which==="max"
-                ? `최대 = 각 칸을 <b>앞·옆 높이 중 작은 값</b>까지 채우면 돼요 → <b>${rc.maxCount}개</b>. (최소는 ${rc.minCount}개)`
-                : `최소 = 겹칠 수 있는 봉우리를 <b>한 칸으로 모으면</b> 가장 적어요 → <b>${rc.minCount}개</b>. (최대는 ${rc.maxCount}개)`;
+              let vis="";
+              if(CORE){
+                const rs=CORE.reverseShapes(coreShape(sh));
+                const mn=hmapToShape(rs.min,sh.edge), mx=hmapToShape(rs.max,sh.edge);
+                pr._mn=mn; pr._mx=mx;
+                let vary=0; for(const k in rs.min) if(rs.min[k]!==rs.max[k]) vary++;
+                const topGrid=renderMinMaxTop(rs.min,rs.max,sh.gx,sh.gz);
+                const mark=`<b style="color:#c68a2e">색칠한 ${vary}칸</b>`;
+                const txt = pr.which==="max"
+                  ? `각 칸을 <b>앞·옆에서 본 높이 중 작은 값</b>까지 채우면 가장 많아요. 모두 더하면 최대 <b>${rc.maxCount}개</b>. ${mark}이 최대에서 더 쌓이는 자리예요.`
+                  : pr.which==="min"
+                  ? `${mark}을 <b>낮은 쪽 수</b>까지 낮추면 가장 적어요. 모두 더하면 최소 <b>${rc.minCount}개</b>. (나머지 칸은 항상 그 수예요)`
+                  : `최대 <b>${rc.maxCount}</b> − 최소 <b>${rc.minCount}</b> = <b>${rc.hidden}개</b>.`;
+                const grid3d = (VIEWER&&window.THREE)
+                  ? `<div class="mm-views"><div class="mmv"><div class="mmv-h">최소 ${rc.minCount}개</div><div class="expv" id="expMin"></div></div><div class="mmv"><div class="mmv-h">최대 ${rc.maxCount}개</div><div class="expv" id="expMax"></div></div></div>`
+                  : `<div class="mm-views"><div class="mmv"><div class="mmv-h">최소 ${rc.minCount}개</div>${renderIso(mn,0)}</div><div class="mmv"><div class="mmv-h">최대 ${rc.maxCount}개</div>${renderIso(mx,0)}</div></div>`;
+                vis = `<div class="mm-txt">${txt}</div><div class="mm-top"><div class="mmv-h">위에서 본 모양 · 숫자=항상 그 높이<br><span style="color:#c68a2e">색칠=최소·최대 달라지는 칸</span></div>${topGrid}</div>${grid3d}`;
+              }
+              sol = vis;
             }else{
               const hiSet=new Set(pr.hcells.map(c=>c.x+","+c.y+","+c.z));
               const why = pr.hmode==="surround" ? "앞·위·옆이 모두 다른 나무로 막힌" : "겨냥도에서 뒤쪽에 가려진";
-              sol = `<div class="sol-hidden"><div class="sol-pic">${renderIso(sh,0,hiSet)}<span>안 보이는 나무 = <b style="color:#c33a4f">빨강</b></span></div>`
-                + `<div class="sol-list">${why} 쌓기나무는 <b>${pr.answer}개</b>예요.</div></div>`;
+              const vis = (VIEWER&&window.THREE)
+                ? `<div class="expv expv-hi" id="expHidden"></div>`
+                : `<div class="sol-pic">${renderIso(sh,0,hiSet)}</div>`;
+              sol = `<div class="sol-hidden">${vis}<div class="sol-list">${why} 쌓기나무는 <b>${pr.answer}개</b>예요. <span style="color:#c33a4f;font-weight:800">빨강</span>이 안 보이는 나무예요.</div></div>`;
             }
           }else{
             const st = CORE ? CORE.stats(coreShape(sh)) : null;   // §4 정본 계산(공용 모듈)
@@ -552,19 +597,29 @@
         const fb=document.getElementById("fb");
         fb.className="fb show "+(ok?"ok":"no");
         fb.innerHTML=(ok?"⭕ 정답이에요!":"❌ 아쉬워요")+`<div class="sol">${sol}</div>`;
+        if(VIEWER && window.THREE){
+          if(pr.type==="minmax" && pr._mn){
+            const hMin=document.getElementById("expMin"), hMax=document.getElementById("expMax");
+            if(hMin) EXPVIEWS.push(VIEWER.createViewer(hMin,{THREE:window.THREE,shape:pr._mn,showLabels:false}));
+            if(hMax) EXPVIEWS.push(VIEWER.createViewer(hMax,{THREE:window.THREE,shape:pr._mx,showLabels:false}));
+          }else if(pr.type==="hidden"){
+            const hH=document.getElementById("expHidden");
+            if(hH) EXPVIEWS.push(VIEWER.createViewer(hH,{THREE:window.THREE,shape:coreShape(sh),highlightCells:pr.hcells.map(c=>[c.x,c.y,c.z]),highlightColor:"#e0455e",showLabels:true}));
+          }
+        }
         if(pr.type==="surface"){
-          const segs=qcard.querySelectorAll(".pseg"), host=qcard.querySelector("#explodeHost");
+          const segs=document.querySelectorAll(".pseg"), host=document.querySelector("#explodeHost");
           if(host && window.THREE && VIEWER){
             if(EXPLODE&&EXPLODE.dispose)EXPLODE.dispose();
             EXPLODE=VIEWER.createViewer(host,{THREE:window.THREE,shape:coreShape(sh),faceColors:true,showLabels:true});
             EXPLODE.setExplode(true);
             segs.forEach(b=>b.onclick=()=>{segs.forEach(s=>s.classList.remove("on"));b.classList.add("on");EXPLODE&&EXPLODE.setExplode6(b.dataset.set==="6");});
           }else{
-            const vw=qcard.querySelector(".proj-views");
+            const vw=document.querySelector(".proj-views");
             segs.forEach(b=>b.onclick=()=>{segs.forEach(s=>s.classList.remove("on"));b.classList.add("on");if(vw)vw.dataset.show=b.dataset.set;});
           }
         }
-        const act=qcard.querySelector(".actions");
+        const act=document.getElementById("actions");
         act.innerHTML=`<button class="btn" id="next">${S.idx+1<S.n?"다음 →":"결과 보기"}</button>`;
         document.getElementById("next").onclick=next;
         document.getElementById("pg-fill").style.width=((S.idx+1)/S.n*100)+"%";
@@ -573,7 +628,8 @@
       function next(){if(S.idx+1<S.n){S.idx++;renderProblem();window.scrollTo({top:0,behavior:"smooth"});}else showResult();}
 
       function showResult(){
-        if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;} if(EXPLODE&&EXPLODE.dispose){EXPLODE.dispose();EXPLODE=null;}
+        if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;} if(EXPLODE&&EXPLODE.dispose){EXPLODE.dispose();EXPLODE=null;} disposeExpViews(); if(SCRATCH)SCRATCH.hide();
+        const _fb=document.getElementById("fb"); if(_fb)_fb.hidden=true; const _ac=document.getElementById("actions"); if(_ac)_ac.hidden=true;
         qcard.style.display="none";document.getElementById("topbar").style.display="none";
         const score=S.answered.filter(Boolean).length;
         const dots=S.answered.map((o,i)=>`<span class="dot ${o?'o':'x'}">${i+1}</span>`).join("");
@@ -629,6 +685,7 @@
       (async function init(){
         try{ const r=await fetch("../../assets/js/quiz/gen-config.json",{cache:"no-store"}); if(r.ok){ const j=await r.json(); if(j&&j.levels) GEN_CONFIG=j; } }catch(e){}
         buildSession();
+        initScratch();
         track("quiz_run_start",{type:S.type,n:S.n,seed:S.seed});
         renderProblem();
       })();

@@ -14,8 +14,8 @@
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="../../assets/js/cubenest-core.js?v=0.2.0"></script>
-    <script src="../../assets/js/cubenest-viewer.js?v=0.2.1"></script>
+    <script src="../../assets/js/cubenest-core.js?v=0.3.0"></script>
+    <script src="../../assets/js/cubenest-viewer.js?v=0.2.3"></script>
     <!-- 프리뷰 폴백(리포에선 아래 링크가 덮어씀) -->
     <style id="preview-fallback">
       :root{--panel:#fff;--panel-2:#f7f9fc;--bg:#eef2f7;--ink:#182233;--muted:#6a7789;--muted-2:#8a95a6;--line:#e5eaf1;--line-2:#eef2f7;--accent:#3f3fbf;--accent-ink:#2d2d95;--accent-soft:#ecebfb;--add:#0f9d58;--add-soft:#e6f5ec;--del:#e0466b;--del-soft:#fce9ee;--shadow:0 6px 22px rgba(24,34,51,.12),0 1px 3px rgba(24,34,51,.08);--shadow-sm:0 2px 8px rgba(24,34,51,.10);--shadow-lg:0 18px 50px rgba(24,34,51,.16),0 3px 10px rgba(24,34,51,.08);--r:16px;--r-lg:22px;--font:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;}
@@ -142,6 +142,15 @@
       .fb .sol{font-weight:600;font-size:13.5px;color:var(--ink);margin-top:6px;opacity:.9}
       .sol-methods{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:4px}
       .sol-hidden{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:4px}
+      .mm-txt{margin-bottom:8px}
+      .mm-top{text-align:center;margin:8px 0}
+      .mm-top svg{max-width:170px;height:auto}
+      .mm-views{display:flex;gap:12px}
+      .mmv{flex:1;min-width:120px;text-align:center}
+      .mmv-h{font-size:12px;font-weight:800;color:var(--muted-2);margin-bottom:4px}
+      .mmv svg{width:100%;height:auto;max-height:150px}
+      .expv{width:100%;height:150px;border-radius:10px;overflow:hidden;background:var(--panel-2);touch-action:none}
+      .expv-hi{max-width:260px;height:190px;margin:2px auto}
       .sol-hidden .sol-pic{display:flex;flex-direction:column;align-items:center;gap:2px}
       .sol-hidden .sol-pic svg{width:150px;height:auto}
       .sol-hidden .sol-pic span{font-size:12px;font-weight:700;color:var(--muted-2)}
@@ -158,10 +167,18 @@
       .pseg.on{background:var(--panel);color:var(--accent-ink);box-shadow:var(--shadow-sm)}
       .proj-views{display:flex;flex-wrap:wrap;gap:12px}
       .threeviews{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin:4px 0 2px}
-      .scratch{margin-top:10px;border:1px dashed var(--line);border-radius:12px;background:var(--panel-2);overflow:hidden}
-      .scratch-bar{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;font-size:12px;font-weight:800;color:var(--muted-2)}
-      .scratch-bar button{font-size:12px;padding:3px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-weight:700;cursor:pointer}
-      #scratchpad{display:block;width:100%;height:clamp(140px,26vh,220px);touch-action:none;cursor:crosshair;background:#fff}
+      .scratch{margin-top:12px;border:1px dashed var(--line);border-radius:12px;background:var(--panel-2);overflow:hidden}
+      .scratch-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 10px;font-size:12px;font-weight:800;color:var(--muted-2)}
+      .scratch-left,.scratch-right{display:flex;align-items:center;gap:6px}
+      .scratch-left .fold{background:none;border:none;padding:2px;cursor:pointer;color:var(--muted-2);display:inline-flex;transition:transform .15s}
+      #scratch.collapsed .fold{transform:rotate(-90deg)}
+      #scratch.collapsed #scratchpad{display:none}
+      .scratch-left .pen{width:20px;height:20px;border-radius:50%;border:2px solid transparent;background:var(--c);cursor:pointer;padding:0}
+      .scratch-left .pen.on{border-color:var(--ink);box-shadow:0 0 0 2px #fff inset}
+      .scratch-right .tool{font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-weight:700;cursor:pointer;display:inline-flex;align-items:center}
+      .scratch-right .tool.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+      .scratch-right .ticon{padding:3px 7px}
+      #scratchpad{display:block;width:100%;height:clamp(170px,34vh,300px);touch-action:none;cursor:crosshair;background:#fff}
       .pv{display:flex;flex-direction:column;align-items:center;gap:3px}
       .pv svg{display:block;height:auto;max-height:66px}
       .pv span{font-size:11px;font-weight:800;color:var(--muted)}
@@ -222,6 +239,26 @@
       </div>
 
       <section class="qcard" id="qcard" aria-live="polite"></section>
+
+      <div class="scratch" id="scratch" hidden>
+        <div class="scratch-bar">
+          <div class="scratch-left"><button type="button" class="fold" id="scratchFold" aria-label="연습장 접기"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button><span>✏️ 연습장</span>
+            <button type="button" class="pen on" data-col="#2d2d3a" style="--c:#2d2d3a" aria-label="검정"></button>
+            <button type="button" class="pen" data-col="#2b6fe0" style="--c:#2b6fe0" aria-label="파랑"></button>
+            <button type="button" class="pen" data-col="#2f9e5f" style="--c:#2f9e5f" aria-label="초록"></button>
+            <button type="button" class="pen" data-col="#e0455e" style="--c:#e0455e" aria-label="빨강"></button>
+          </div>
+          <div class="scratch-right">
+            <button type="button" class="tool ticon" id="scratchUndo" title="되돌리기" aria-label="되돌리기"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg></button>
+            <button type="button" class="tool ticon" id="eraser" title="지우개" aria-label="지우개"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M6.5 16.5l7-7a2 2 0 0 1 2.8 0l1.2 1.2a2 2 0 0 1 0 2.8l-6 6H9z"/></svg></button>
+            <button type="button" class="tool" id="scratchClear">전체삭제</button>
+          </div>
+        </div>
+        <canvas id="scratchpad"></canvas>
+      </div>
+
+      <div class="fb" id="fb" hidden></div>
+      <div class="actions" id="actions" hidden><button class="btn" id="submit">제출</button></div>
 
       <section class="result" id="result"></section>
 
