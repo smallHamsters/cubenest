@@ -10,6 +10,8 @@
         surface:{title:"겉넓이 구하기",ask:"겉넓이는 얼마일까요? (바닥 포함)",form:"num",unit:"cm²",edge:true},
         heightmap:{title:"위에서 본 수 쓰기",ask:"위에서 본 모양의 각 칸에 쌓인 나무 수를 쓰세요.",form:"hm"},
         facesMc:{title:"위·앞·옆 모양 고르기",ask:"이 모양을 앞에서 본 모양을 고르세요.",form:"mc"},
+        minmax:{title:"최소·최대",ask:"세 방향에서 본 모양이 되는 쌓기나무 개수는?",form:"num",unit:"개"},
+        hidden:{title:"안 보이는 나무",ask:"안 보이게 숨길 수 있는 쌓기나무는 몇 개일까요?",form:"num",unit:"개"},
       };
       /* gen_config (분류 체계 §7.3) — 정본은 assets/js/quiz/gen-config.json.
          아래는 프리뷰/오프라인 폴백 사본(리포에선 fetch로 덮어씀). */
@@ -33,6 +35,14 @@
       function coreShape(sh){ return {gx:sh.gx, gy:sh.maxH, gz:sh.gz, edge:sh.edge, cells:sh.cells.map(c=>[c.x,c.y,c.z])}; }
       // 오목(노치) 판정 — 마스터 v1.5.2 4.2: 노출면 > 2×(위+앞+옆 실루엣 넓이). core 공용.
       function isConcave(csh){ if(!CORE)return false; const s=CORE.silhouettes(csh); const sum=s.top.size+s.front.size+s.side.size; return CORE.exposedFaces(csh) > 2*sum; }
+      // 안 보이는 나무: occ=겨냥도 뒤쪽 가림(초등, (x+1,y+1,z+1) 채워짐) / surround=이웃 가림(유아, 앞·위·옆 모두 채워짐)
+      function hiddenCells(sh,mode){
+        const set=new Set(sh.cells.map(c=>c.x+","+c.y+","+c.z));
+        const has=(x,y,z)=>set.has(x+","+y+","+z);
+        return sh.cells.filter(c=> mode==="surround"
+          ? (has(c.x,c.y,c.z+1)&&has(c.x,c.y+1,c.z)&&has(c.x+1,c.y,c.z))
+          : has(c.x+1,c.y+1,c.z+1));
+      }
       // 위/앞/옆 라벨: viewer의 라벨 평면이 가로:세로≈1.6이라, 정사각 텍스처면 글자가 납작해짐 → 같은 비율(128×80) 캔버스로 보정.
 
       /* ===== 의견·오류 신고 (playground 피드백 패턴 재사용) =====
@@ -116,8 +126,9 @@
 
       /* ===== 아이소 뷰어 ===== */
       function rot(p,k,gx,gz){const{x,y,z}=p;if(k===1)return{x:gz-1-z,y,z:x};if(k===2)return{x:gx-1-x,y,z:gz-1-z};if(k===3)return{x:z,y,z:gx-1-x};return{x,y,z};}
-      function renderIso(sh,k){
+      function renderIso(sh,k,hiSet){
         const a=20,b=10,c=24;
+        const ghost=!!hiSet;
         const cells=sh.cells.map(p=>rot(p,k,sh.gx,sh.gz));
         cells.sort((p,q)=>(p.x+p.z)-(q.x+q.z)||p.y-q.y);
         let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
@@ -136,7 +147,10 @@
           const top=`${P(x,y+1,z)} ${P(x+1,y+1,z)} ${P(x+1,y+1,z+1)} ${P(x,y+1,z+1)}`;
           const left=`${P(x,y,z+1)} ${P(x+1,y,z+1)} ${P(x+1,y+1,z+1)} ${P(x,y+1,z+1)}`;
           const right=`${P(x+1,y,z)} ${P(x+1,y,z+1)} ${P(x+1,y+1,z+1)} ${P(x+1,y+1,z)}`;
-          poly+=`<polygon points="${left}" fill="#d8a76e" stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"/><polygon points="${right}" fill="#c8965a" stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"/><polygon points="${top}" fill="#e6c9a0" stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"/>`;
+          const hi=ghost && hiSet.has(x+","+y+","+z);
+          const op=(ghost&&!hi)?0.28:1;
+          const cL=hi?"#d84a5e":"#d8a76e",cR=hi?"#b83346":"#c8965a",cT=hi?"#ef7f8e":"#e6c9a0",st=hi?"#7c1f2c":"#9c6b30";
+          poly+=`<polygon points="${left}" fill="${cL}" fill-opacity="${op}" stroke="${st}" stroke-width="1" stroke-linejoin="round"/><polygon points="${right}" fill="${cR}" fill-opacity="${op}" stroke="${st}" stroke-width="1" stroke-linejoin="round"/><polygon points="${top}" fill="${cT}" fill-opacity="${op}" stroke="${st}" stroke-width="1" stroke-linejoin="round"/>`;
         }
         // 위·앞·옆 라벨 — 회전과 함께 이동(원본 축 방향을 회전·투영)
         const ccx=(sh.gx-1)/2, ccz=(sh.gz-1)/2;
@@ -150,11 +164,11 @@
         return `<svg viewBox="${minX-pad} ${minY-pad} ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${grid}${poly}${labels}</svg>`;
       }
       // 실루엣(막대/격자)을 88×88 균일 박스에 중앙 배치 → 어떤 형태든 레이아웃 일정
-      function renderSil(sil){
+      function renderSil(sil,color){
         const cols=sil.t==="bars"?sil.a.length:sil.cols, rows=sil.rows;
         const box=88,pad=8,avail=box-pad*2,s=Math.min(avail/cols,avail/rows,20);
         const gw=cols*s,gh=rows*s,ox=(box-gw)/2,oy=(box-gh)/2,gap=1;
-        const cell=(cx,cy,on)=>`<rect x="${(cx+gap/2).toFixed(1)}" y="${(cy+gap/2).toFixed(1)}" width="${(s-gap).toFixed(1)}" height="${(s-gap).toFixed(1)}" rx="2.5" fill="${on?'var(--accent)':'var(--line-2)'}"/>`;
+        const cell=(cx,cy,on)=>`<rect x="${(cx+gap/2).toFixed(1)}" y="${(cy+gap/2).toFixed(1)}" width="${(s-gap).toFixed(1)}" height="${(s-gap).toFixed(1)}" rx="2.5" fill="${on?(color||'var(--accent)'):'var(--line-2)'}"/>`;
         let r="";
         if(sil.t==="bars"){ for(let x=0;x<cols;x++)for(let y=0;y<rows;y++) r+=cell(ox+x*s, oy+(rows-1-y)*s, y<sil.a[x]); }
         else { for(let z=0;z<sil.rows;z++)for(let x=0;x<sil.cols;x++) r+=cell(ox+x*s, oy+z*s, sil.g[z][x]); }
@@ -164,6 +178,12 @@
       function frontSil(sh){const a=[];for(let x=0;x<sh.gx;x++){let m=0;for(let z=0;z<sh.gz;z++)m=Math.max(m,sh.hmap[x][z]);a.push(m);}return {t:"bars",a,rows:Math.max(...a,1)};}
       function sideSil(sh){const a=[];for(let z=0;z<sh.gz;z++){let m=0;for(let x=0;x<sh.gx;x++)m=Math.max(m,sh.hmap[x][z]);a.push(m);}a.reverse();return {t:"bars",a,rows:Math.max(...a,1)};}
       function topSil(sh){const g=[];for(let z=0;z<sh.gz;z++){const row=[];for(let x=0;x<sh.gx;x++)row.push(sh.hmap[x][z]>0);g.push(row);}return {t:"grid",g,cols:sh.gx,rows:sh.gz};}
+      // 최소·최대/안 보이는 나무의 제시물: 위·앞·옆 세 방향 본 모양(2D)
+      function renderThreeViews(sh){
+        const B="#3f8fd0",G="#4fae72",R="#d0546f";
+        const pv=(sil,color,label)=>`<div class="pv">${renderSil(sil,color)}<span>${label}</span></div>`;
+        return `<div class="threeviews">${pv(topSil(sh),B,"위")}${pv(frontSil(sh),G,"앞")}${pv(sideSil(sh),R,"옆")}</div>`;
+      }
       // 위에서 본 수(각 칸 높이) 격자 — 개수 세기 해설용 2D 그림
       function renderTopNums(sh){
         const s=26,g=3,W=sh.gx*(s+g)+g,H=sh.gz*(s+g)+g;let r="";
@@ -263,6 +283,18 @@
             const want = lv==="최상" ? true : (lv==="상" ? null : false);
             if(want!==null){ let g=0; while(g++<60 && isConcave(coreShape(sh))!==want) sh=genShape(rng,cfg); }
           }
+          // 최소·최대 / 안 보이는 나무: max>min(범위 있는) 모양으로 재샘플
+          let rc=null;
+          if(PRM.type==="minmax" && CORE){
+            rc=CORE.reverseCounts(coreShape(sh)); let g=0;
+            while(g++<40 && rc.maxCount<=rc.minCount){ sh=genShape(rng,cfg); rc=CORE.reverseCounts(coreShape(sh)); }
+          }
+          let hmode=null,hcells=null;
+          if(PRM.type==="hidden"){
+            hmode = (PRM.edu==="think") ? "surround" : "occ";  // 교과=겨냥도 가림 / 사고력=이웃 가림
+            hcells=hiddenCells(sh,hmode); let g=0;
+            while(g++<60 && hcells.length<1){ sh=genShape(rng,cfg); hcells=hiddenCells(sh,hmode); }
+          }
           const pr={type:PRM.type,lv,sh};
           if(PRM.type==="facesMc"){
             const rngD=rngFrom(PRM.seed+":d"+i);
@@ -271,6 +303,19 @@
             const built=makeSilOpts(correct,rngD);
             pr.opts=built.opts; pr.correct=built.correct; pr.dir=dir;
             pr.ask=(dir==="front"?"앞":dir==="side"?"옆":"위")+"에서 본 모양을 고르세요.";
+          }
+          if(rc){
+            pr.rc=rc;
+            const r=rngFrom(PRM.seed+":q"+i)(); const mode=r<0.34?"min":(r<0.67?"max":"diff");
+            pr.which=mode;
+            if(mode==="diff"){ pr.answer=rc.hidden; pr.ask="세 방향 모양이 같도록 쌓을 때, <b>최대와 최소의 차이</b>는 몇 개일까요?"; }
+            else{ pr.answer=mode==="max"?rc.maxCount:rc.minCount; pr.ask="세 방향(위·앞·옆)에서 본 모양이 되려면, 쌓기나무는 <b>"+(mode==="max"?"최대":"최소")+"</b> 몇 개일까요?"; }
+          }
+          if(PRM.type==="hidden"){
+            pr.hmode=hmode; pr.hcells=hcells; pr.answer=hcells.length;
+            pr.ask = hmode==="surround"
+              ? "다른 나무에 가려 <b>보이지 않는</b> 쌓기나무는 몇 개일까요?"
+              : "겨냥도에서 뒤에 가려 <b>보이지 않는</b> 쌓기나무는 몇 개일까요?";
           }
           S.probs.push(pr);
         }
@@ -300,19 +345,28 @@
         }
         const askText=pr.ask||T.ask;
         const edgeTxt=T.edge?`<br>쌓기나무 한 모서리 = ${sh.edge}cm`:"";
-        const has3D=!!window.THREE && !!VIEWER && PRM.dim!=="2d";
-        const viewLabel=has3D?"3D 문제":"2D 겨냥도";
-        const viewerHTML=has3D
+        const isViews=pr.type==="minmax";
+        const isHidden=pr.type==="hidden";
+        const hasScratch=isViews||isHidden;
+        const has3D=!!window.THREE && !!VIEWER && PRM.dim!=="2d" && !isViews && !isHidden;
+        const viewLabel=isViews?"세 방향 본 모양":(isHidden?"2D 겨냥도":(has3D?"3D 문제":"2D 겨냥도"));
+        const viewerHTML=isViews
+          ? `<div class="viewer"><div class="rothint" style="text-align:center;margin-bottom:4px">위·앞·옆에서 본 모양이에요</div>${renderThreeViews(sh)}</div>`
+          : isHidden
+          ? `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotcap">겨냥도(위·앞·옆에서 본 그림)에서 <b>안 보이는 나무</b>를 세어보세요</div></div>`
+          : (has3D
           ? `<div class="viewer"><div id="v3d" class="v3d"></div><div class="rotrow2"><div class="rothint">손가락·마우스로 <b>돌려서</b> 위·앞·옆을 확인해요</div><button id="reset3d" class="rotbtn2" type="button">정면</button></div></div>`
-          : `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotrow"><button id="rl" class="rotbtn wide" type="button" aria-label="왼쪽으로 90도 돌리기">${ARC_CCW}<span>90°</span></button><div id="compass" class="compass" aria-hidden="true">${renderCompass(0)}</div><button id="rr" class="rotbtn wide" type="button" aria-label="오른쪽으로 90도 돌리기">${ARC_CW}<span>90°</span></button></div><div class="rotcap" id="rotcap">버튼으로 쌓기나무를 <b>돌려서</b> 뒤·옆면을 확인해요</div></div>`;
+          : `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotrow"><button id="rl" class="rotbtn wide" type="button" aria-label="왼쪽으로 90도 돌리기">${ARC_CCW}<span>90°</span></button><div id="compass" class="compass" aria-hidden="true">${renderCompass(0)}</div><button id="rr" class="rotbtn wide" type="button" aria-label="오른쪽으로 90도 돌리기">${ARC_CW}<span>90°</span></button></div><div class="rotcap" id="rotcap">버튼으로 쌓기나무를 <b>돌려서</b> 뒤·옆면을 확인해요</div></div>`);
         qcard.innerHTML=`
           <div class="qhead"><span class="type">${T.title}</span><span class="lv">${pr.lv}</span><span class="mode">${viewLabel}</span><button type="button" id="feedbackBtn" class="qfb" aria-label="이 문제에 의견 보내기"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>의견</span></button></div>
           <div class="qtext">${askText}${edgeTxt}</div>
           ${viewerHTML}
           <div class="answer">${ans}</div>
+          ${hasScratch?`<div class="scratch"><div class="scratch-bar"><span>✏️ 연습장</span><button type="button" id="scratchClear">지우기</button></div><canvas id="scratchpad"></canvas></div>`:""}
           <div class="fb" id="fb"></div>
           <div class="actions"><button class="btn" id="submit">제출</button></div>`;
         if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;} if(EXPLODE&&EXPLODE.dispose){EXPLODE.dispose();EXPLODE=null;}
+        if(!isViews && !isHidden){
         if(has3D){
           CURVIEW=VIEWER.createViewer(document.getElementById("v3d"),{THREE:window.THREE,shape:coreShape(sh),showLabels:true});
           const rb=document.getElementById("reset3d"); if(rb)rb.onclick=()=>{CURVIEW&&CURVIEW.reset();track("quiz_view_reset",{});};
@@ -321,10 +375,27 @@
           document.getElementById("rl").onclick=()=>{ROT=(ROT+3)%4;updRot();track("quiz_rotate",{dir:"ccw",deg:ROT*90});};
           document.getElementById("rr").onclick=()=>{ROT=(ROT+1)%4;updRot();track("quiz_rotate",{dir:"cw",deg:ROT*90});};
         }
+        }
+        if(hasScratch) initScratch();
         if(T.form==="mc"){qcard.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.i;qcard.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
         document.getElementById("submit").onclick=submit;
         document.getElementById("feedbackBtn").onclick=openFeedback;
         const first=qcard.querySelector("input");if(first)first.focus();
+      }
+      // 연습장 — 문제를 화면에 직접 쓰며 푸는 유형용 자유 필기 캔버스
+      function initScratch(){
+        const cv=document.getElementById("scratchpad"); if(!cv)return;
+        const dpr=Math.min(window.devicePixelRatio||1,2);
+        const w=cv.clientWidth||cv.parentElement.clientWidth, h=cv.clientHeight||190;
+        cv.width=w*dpr; cv.height=h*dpr;
+        const ctx=cv.getContext("2d"); ctx.scale(dpr,dpr);
+        ctx.lineCap="round"; ctx.lineJoin="round"; ctx.lineWidth=2.6; ctx.strokeStyle="#2d2d3a";
+        let drawing=false,lx=0,ly=0;
+        const pos=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top];};
+        cv.addEventListener("pointerdown",e=>{drawing=true;[lx,ly]=pos(e);cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);});
+        cv.addEventListener("pointermove",e=>{if(!drawing)return;const [x,y]=pos(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.stroke();lx=x;ly=y;e.preventDefault();});
+        const end=()=>{drawing=false;}; cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",end);cv.addEventListener("pointerleave",end);
+        const clr=document.getElementById("scratchClear"); if(clr)clr.onclick=()=>ctx.clearRect(0,0,cv.width,cv.height);
       }
 
       /* ===== 효과음 + 음소거 ===== */
@@ -418,29 +489,46 @@
         if(T.form==="num"){
           const v=parseInt(document.getElementById("ans").value,10);
           if(isNaN(v)){document.getElementById("ans").focus();return;}
-          const st = CORE ? CORE.stats(coreShape(sh)) : null;   // §4 정본 계산(공용 모듈)
-          let a = st ? st.count : sh.count;
-          if(pr.type==="volume"){
-            a = st ? st.volume : sh.count*sh.edge**3;
-            sol=`부피 = 쌓기나무 수 × 한 개의 부피 = ${st?st.count:sh.count} × (${sh.edge}cm × ${sh.edge}cm × ${sh.edge}cm) = <b>${a}cm³</b>`;
-          }else if(pr.type==="surface"){
-            if(st){
-              const up=st.up,front=st.front,side=st.side,pairs=st.touchingPairs,face=`${sh.edge}cm × ${sh.edge}cm`;
-              a=st.surfaceArea;
-              sol=`<div class="sol-surf"><div>① <b>위·앞·옆으로</b> : 2×(위 ${up} + 앞 ${front} + 옆 ${side}) × (${face}) = <b>${a}cm²</b></div>`
-                +`<div>② <b>다른 해설</b> : 겉넓이 = (전체 면 수 − 맞닿은 면 수) × 한 면의 넓이 = (6×${st.count} − 2×${pairs}) × (${face}) = <b>${a}cm²</b></div></div>`
-                +projPanel(sh);
+          let a;
+          if(pr.type==="minmax"||pr.type==="hidden"){
+            a=pr.answer; const rc=pr.rc;
+            if(pr.type==="minmax"){
+              sol = pr.which==="diff"
+                ? `최대와 최소의 차이 = <b>최대 ${rc.maxCount} − 최소 ${rc.minCount} = ${rc.hidden}개</b>. (안 보이게 숨길 수 있는 나무 수와 같아요)`
+                : pr.which==="max"
+                ? `최대 = 각 칸을 <b>앞·옆 높이 중 작은 값</b>까지 채우면 돼요 → <b>${rc.maxCount}개</b>. (최소는 ${rc.minCount}개)`
+                : `최소 = 겹칠 수 있는 봉우리를 <b>한 칸으로 모으면</b> 가장 적어요 → <b>${rc.minCount}개</b>. (최대는 ${rc.maxCount}개)`;
             }else{
-              a=sh.exposed*sh.edge**2;
-              sol=`겉넓이 = <b>${a}cm²</b>`+projPanel(sh);
+              const hiSet=new Set(pr.hcells.map(c=>c.x+","+c.y+","+c.z));
+              const why = pr.hmode==="surround" ? "앞·위·옆이 모두 다른 나무로 막힌" : "겨냥도에서 뒤쪽에 가려진";
+              sol = `<div class="sol-hidden"><div class="sol-pic">${renderIso(sh,0,hiSet)}<span>안 보이는 나무 = <b style="color:#c33a4f">빨강</b></span></div>`
+                + `<div class="sol-list">${why} 쌓기나무는 <b>${pr.answer}개</b>예요.</div></div>`;
             }
           }else{
-            const maxY=Math.max(...sh.cells.map(c=>c.y))+1, layer=Array(maxY).fill(0);
-            sh.cells.forEach(c=>layer[c.y]++);
-            const nums=[]; for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++){if(sh.hmap[x][z]>0)nums.push(sh.hmap[x][z]);}
-            sol=`<div class="sol-methods"><div class="sol-pic">${renderTopNums(sh)}<span>위에서 본 수</span></div>`
-              +`<div class="sol-list"><div>① <b>층별 세기</b> : ${layer.map((c,i)=>`${i+1}층 ${c}`).join(" + ")} = <b>${a}개</b></div>`
-              +`<div>② <b>위에서 본 수의 합</b> : ${nums.join(" + ")} = <b>${a}개</b></div></div></div>`;
+            const st = CORE ? CORE.stats(coreShape(sh)) : null;   // §4 정본 계산(공용 모듈)
+            a = st ? st.count : sh.count;
+            if(pr.type==="volume"){
+              a = st ? st.volume : sh.count*sh.edge**3;
+              sol=`부피 = 쌓기나무 수 × 한 개의 부피 = ${st?st.count:sh.count} × (${sh.edge}cm × ${sh.edge}cm × ${sh.edge}cm) = <b>${a}cm³</b>`;
+            }else if(pr.type==="surface"){
+              if(st){
+                const up=st.up,front=st.front,side=st.side,pairs=st.touchingPairs,face=`${sh.edge}cm × ${sh.edge}cm`;
+                a=st.surfaceArea;
+                sol=`<div class="sol-surf"><div>① <b>위·앞·옆으로</b> : 2×(위 ${up} + 앞 ${front} + 옆 ${side}) × (${face}) = <b>${a}cm²</b></div>`
+                  +`<div>② <b>다른 해설</b> : 겉넓이 = (전체 면 수 − 맞닿은 면 수) × 한 면의 넓이 = (6×${st.count} − 2×${pairs}) × (${face}) = <b>${a}cm²</b></div></div>`
+                  +projPanel(sh);
+              }else{
+                a=sh.exposed*sh.edge**2;
+                sol=`겉넓이 = <b>${a}cm²</b>`+projPanel(sh);
+              }
+            }else{
+              const maxY=Math.max(...sh.cells.map(c=>c.y))+1, layer=Array(maxY).fill(0);
+              sh.cells.forEach(c=>layer[c.y]++);
+              const nums=[]; for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++){if(sh.hmap[x][z]>0)nums.push(sh.hmap[x][z]);}
+              sol=`<div class="sol-methods"><div class="sol-pic">${renderTopNums(sh)}<span>위에서 본 수</span></div>`
+                +`<div class="sol-list"><div>① <b>층별 세기</b> : ${layer.map((c,i)=>`${i+1}층 ${c}`).join(" + ")} = <b>${a}개</b></div>`
+                +`<div>② <b>위에서 본 수의 합</b> : ${nums.join(" + ")} = <b>${a}개</b></div></div></div>`;
+            }
           }
           ok=v===a;
         }else if(T.form==="hm"){
