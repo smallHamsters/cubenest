@@ -12,6 +12,7 @@
         facesMc:{title:"위·앞·옆 모양 고르기",ask:"이 모양을 앞에서 본 모양을 고르세요.",form:"mc"},
         minmax:{title:"최소·최대",ask:"세 방향에서 본 모양이 되는 쌓기나무 개수는?",form:"num",unit:"개"},
         hidden:{title:"안 보이는 나무",ask:"안 보이게 숨길 수 있는 쌓기나무는 몇 개일까요?",form:"num",unit:"개"},
+        facesDraw:{title:"위·앞·옆 그리기",ask:"위·앞·옆에서 본 모양을 각 칸을 칠해 그리세요.",form:"draw"},
       };
       /* gen_config (분류 체계 §7.3) — 정본은 assets/js/quiz/gen-config.json.
          아래는 프리뷰/오프라인 폴백 사본(리포에선 fetch로 덮어씀). */
@@ -181,6 +182,22 @@
       }
       // 방향별 실루엣: 앞=x별 max_z, 옆=z별 max_x(막대) / 위=발자국(격자)
       function frontSil(sh){const a=[];for(let x=0;x<sh.gx;x++){let m=0;for(let z=0;z<sh.gz;z++)m=Math.max(m,sh.hmap[x][z]);a.push(m);}return {t:"bars",a,rows:Math.max(...a,1)};}
+      // 위·앞·옆 그리기: 빈 격자 입력 + 정답 셀 판정(display row r=0=위쪽)
+      function drawDims(sh){ const H=sh.maxH; return {H, top:{cols:sh.gx,rows:sh.gz}, front:{cols:sh.gx,rows:H}, side:{cols:sh.gz,rows:H}}; }
+      function drawCorrect(sh,view,c,r){ const H=sh.maxH;
+        if(view==="top") return topSil(sh).g[r][c];               // r=z, c=x
+        if(view==="front") return (H-1-r) < frontSil(sh).a[c];    // c=x, 아래부터 채움
+        return (H-1-r) < sideSil(sh).a[c];                        // side: c=옆에서 본 열(z 반전 반영)
+      }
+      function renderDrawInput(sh){
+        const d=drawDims(sh);
+        const grid=(view,cols,rows)=>{
+          let cells=""; for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)cells+=`<button type="button" class="dcell" data-c="${c}" data-r="${r}"></button>`;
+          const label=view==="top"?"위":view==="front"?"앞":"옆";
+          return `<div class="dview"><div class="dgrid" data-view="${view}" style="grid-template-columns:repeat(${cols},24px)">${cells}</div><span>${label}</span></div>`;
+        };
+        return `<div class="draw">${grid("top",d.top.cols,d.top.rows)}${grid("front",d.front.cols,d.front.rows)}${grid("side",d.side.cols,d.side.rows)}</div><div class="hint">각 칸을 눌러 칠하세요. 위=발자국, 앞·옆=높이만큼 아래에서 위로.</div>`;
+      }
       function sideSil(sh){const a=[];for(let z=0;z<sh.gz;z++){let m=0;for(let x=0;x<sh.gx;x++)m=Math.max(m,sh.hmap[x][z]);a.push(m);}a.reverse();return {t:"bars",a,rows:Math.max(...a,1)};}
       function topSil(sh){const g=[];for(let z=0;z<sh.gz;z++){const row=[];for(let x=0;x<sh.gx;x++)row.push(sh.hmap[x][z]>0);g.push(row);}return {t:"grid",g,cols:sh.gx,rows:sh.gz};}
       // 최소·최대/안 보이는 나무의 제시물: 위·앞·옆 세 방향 본 모양(2D)
@@ -293,7 +310,9 @@
         S.probs=[];
         const rngL=rngFrom(PRM.seed+":L");
         for(let i=0;i<PRM.n;i++){
-          const lv=PRM.levels[Math.floor(rngL()*PRM.levels.length)];
+          let lvPool=PRM.levels;
+          if(PRM.type==="facesDraw"){ lvPool=PRM.levels.filter(l=>l!=="최상"); if(!lvPool.length)lvPool=["상"]; } // 그리기: 최상(5×5×5) 제외, 4×4×4 이하
+          const lv=lvPool[Math.floor(rngL()*lvPool.length)];
           const rng=rngFrom(PRM.seed+":"+i), cfg=GEN_CONFIG.levels[lv];
           let sh=genShape(rng,cfg);
           // 겉넓이 오목 난이도 밴딩(마스터 v1.5.2 4.2). 하·중=오목없음 / 상=혼재 / 최상=오목있음
@@ -360,6 +379,8 @@
           ans=`<div class="hmgrid" style="grid-template-columns:repeat(${sh.gx},42px)">${cells}</div><div class="hint">색칠된 칸(위에서 보이는 칸)에만 수를 써요.</div>`;
         }else if(T.form==="mc"){
           ans=`<div class="opts">${pr.opts.map((v,i)=>`<button class="opt" data-i="${i}">${renderSil(v)}</button>`).join("")}</div>`;
+        }else if(T.form==="draw"){
+          ans=renderDrawInput(sh);
         }
         const askText=pr.ask||T.ask;
         const edgeTxt=T.edge?`<br>쌓기나무 한 모서리 = ${sh.edge}cm`:"";
@@ -394,6 +415,7 @@
         const fb0=document.getElementById("fb"); fb0.className="fb"; fb0.innerHTML=""; fb0.hidden=false;
         const act0=document.getElementById("actions"); act0.hidden=false; act0.innerHTML=`<button class="btn" id="submit">제출</button>`;
         if(T.form==="mc"){qcard.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.i;qcard.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
+        if(T.form==="draw"){qcard.querySelectorAll(".dcell").forEach(b=>b.onclick=()=>{if(!b.disabled)b.classList.toggle("on");});}
         document.getElementById("submit").onclick=submit;
         document.getElementById("feedbackBtn").onclick=openFeedback;
         const first=qcard.querySelector("input");if(first)first.focus();
@@ -589,6 +611,20 @@
               :pr.dir==="side"?"<b>옆</b>에서 보면 깊이 각 줄에서 <b>가장 높은 층</b>까지 보여요."
               :"<b>위</b>에서 보면 나무가 <b>있는 칸</b>이 모두 칠해져요(높이는 안 보여요).")
               +" 초록 테두리가 정답이에요.";
+        }else if(T.form==="draw"){
+          ok=true;
+          ["top","front","side"].forEach(view=>{
+            const g=qcard.querySelector(`.dgrid[data-view="${view}"]`);
+            g.querySelectorAll(".dcell").forEach(cell=>{
+              const c=+cell.dataset.c,r=+cell.dataset.r,should=drawCorrect(sh,view,c,r),has=cell.classList.contains("on");
+              cell.disabled=true;
+              if(should&&has)cell.classList.add("okcell");
+              else if(should&&!has){cell.classList.add("misscell");ok=false;}
+              else if(!should&&has){cell.classList.add("wrongcell");ok=false;}
+            });
+          });
+          const vis3d = (VIEWER&&window.THREE) ? `<div class="expv expv-hi" id="expDraw"></div>` : `<div class="sol-pic">${renderIso(sh,0)}</div>`;
+          sol=`<div class="sol-draw"><div class="sol-pic">${renderThreeViews(sh)}<span>정답</span></div>${vis3d}</div>`;
         }
         S.answered[S.idx]=ok;
         track("quiz_answer",{type:pr.type,level:pr.lv,correct:ok,idx:S.idx});
@@ -605,6 +641,9 @@
           }else if(pr.type==="hidden"){
             const hH=document.getElementById("expHidden");
             if(hH) EXPVIEWS.push(VIEWER.createViewer(hH,{THREE:window.THREE,shape:coreShape(sh),highlightCells:pr.hcells.map(c=>[c.x,c.y,c.z]),highlightColor:"#e0455e",showLabels:true}));
+          }else if(pr.type==="facesDraw"){
+            const hD=document.getElementById("expDraw");
+            if(hD) EXPVIEWS.push(VIEWER.createViewer(hD,{THREE:window.THREE,shape:coreShape(sh),showLabels:true}));
           }
         }
         if(pr.type==="surface"){
