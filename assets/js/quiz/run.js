@@ -411,7 +411,7 @@
           document.getElementById("rr").onclick=()=>{ROT=(ROT+1)%4;updRot();track("quiz_rotate",{dir:"cw",deg:ROT*90});};
         }
         }
-        if(SCRATCH) SCRATCH.show();
+        if(SCRATCH) SCRATCH.show(S.idx);
         const fb0=document.getElementById("fb"); fb0.className="fb"; fb0.innerHTML=""; fb0.hidden=false;
         const act0=document.getElementById("actions"); act0.hidden=false; act0.innerHTML=`<button class="btn" id="submit">제출</button>`;
         if(T.form==="mc"){qcard.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.i;qcard.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
@@ -427,26 +427,44 @@
         const box=document.getElementById("scratch");
         const dpr=Math.min(window.devicePixelRatio||1,2), ctx=cv.getContext("2d");
         let penColor="#2d2d3a", eraser=false; const PEN=2.6*dpr, ERA=18*dpr;
-        let undo=[]; // 되돌리기 스냅샷(최대 5획)
+        let undo=[];                 // 되돌리기 스냅샷(최대 5획)
+        const store={}; let curIdx=null;   // 문항별 풀이 보존(PNG dataURL) — PDF 병기용
         function snapshot(){ try{ undo.push(ctx.getImageData(0,0,cv.width,cv.height)); if(undo.length>5)undo.shift(); }catch(e){} }
-        function doUndo(){ if(!undo.length)return; ctx.putImageData(undo.pop(),0,0); }
-        function sizeCanvas(){ const r=cv.getBoundingClientRect(); if(r.width<1)return; cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr)); ctx.lineCap="round"; ctx.lineJoin="round"; undo=[]; } // 캔버스 재설정=초기화(되돌리기 비움)
+        function saveCur(){ if(curIdx!=null){ try{ store[curIdx]=cv.toDataURL("image/png"); }catch(e){} } }
+        function doUndo(){ if(!undo.length)return; ctx.putImageData(undo.pop(),0,0); saveCur(); }
+        function paint(url){ if(!url)return; const img=new Image(); img.onload=()=>{ try{ ctx.drawImage(img,0,0,cv.width,cv.height); }catch(e){} }; img.src=url; }
+        // 리사이즈: 크기 같으면 무동작(지우지 않음), 다르면 기존 그림 보존해 재설정
+        function fitKeep(){ const r=cv.getBoundingClientRect(); if(r.width<1)return;
+          const w=Math.max(1,Math.round(r.width*dpr)), h=Math.max(1,Math.round(r.height*dpr));
+          if(cv.width===w&&cv.height===h)return;
+          let snap=null; if(cv.width>0&&cv.height>0){ try{ snap=document.createElement("canvas"); snap.width=cv.width; snap.height=cv.height; snap.getContext("2d").drawImage(cv,0,0); }catch(e){} }
+          cv.width=w; cv.height=h; ctx.lineCap="round"; ctx.lineJoin="round"; undo=[];
+          if(snap){ try{ ctx.drawImage(snap,0,0,w,h); }catch(e){} } saveCur();
+        }
+        // 문항 진입: 크기 맞추고 그 문항의 저장 풀이를 복원(없으면 빈 캔버스)
+        function fitFor(idx){ const r=cv.getBoundingClientRect(); if(r.width<1)return;
+          cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr)); ctx.lineCap="round"; ctx.lineJoin="round"; undo=[]; paint(store[idx]);
+        }
         const pos=e=>{const r=cv.getBoundingClientRect();return [(e.clientX-r.left)*cv.width/(r.width||1),(e.clientY-r.top)*cv.height/(r.height||1)];};
         let drawing=false,lx=0,ly=0;
         cv.addEventListener("pointerdown",e=>{drawing=true;snapshot();[lx,ly]=pos(e);ctx.globalCompositeOperation=eraser?"destination-out":"source-over";ctx.lineWidth=eraser?ERA:PEN;ctx.strokeStyle=penColor;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);});
         cv.addEventListener("pointermove",e=>{if(!drawing)return;const [x,y]=pos(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.stroke();lx=x;ly=y;e.preventDefault();});
-        const end=()=>{drawing=false;}; cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",end);cv.addEventListener("pointerleave",end);
+        const end=()=>{ if(drawing){drawing=false;saveCur();} }; cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",end);cv.addEventListener("pointerleave",end);
         const er=document.getElementById("eraser");
         box.querySelectorAll(".pen").forEach(b=>b.onclick=()=>{penColor=b.dataset.col;eraser=false;box.querySelectorAll(".pen").forEach(p=>p.classList.remove("on"));b.classList.add("on");if(er)er.classList.remove("on");});
         if(er)er.onclick=()=>{eraser=!eraser;er.classList.toggle("on",eraser);if(eraser)box.querySelectorAll(".pen").forEach(p=>p.classList.remove("on"));else{const on=box.querySelector(".pen");if(on)on.classList.add("on");penColor=on?on.dataset.col:penColor;}};
         const un=document.getElementById("scratchUndo"); if(un)un.onclick=doUndo;
-        const clr=document.getElementById("scratchClear"); if(clr)clr.onclick=()=>{snapshot();ctx.clearRect(0,0,cv.width,cv.height);};
-        // 접기 옵션(로컬 저장)
+        const clr=document.getElementById("scratchClear"); if(clr)clr.onclick=()=>{snapshot();ctx.clearRect(0,0,cv.width,cv.height);saveCur();};
         const fold=document.getElementById("scratchFold");
         if(localStorage.getItem("cubenest_scratch_fold")==="1") box.classList.add("collapsed");
-        if(fold)fold.onclick=()=>{const c=box.classList.toggle("collapsed");localStorage.setItem("cubenest_scratch_fold",c?"1":"0");if(!c)requestAnimationFrame(sizeCanvas);};
-        window.addEventListener("resize",()=>{ if(!box.hidden && !box.classList.contains("collapsed")) sizeCanvas(); });
-        SCRATCH={ show(){ box.hidden=false; if(!box.classList.contains("collapsed")) requestAnimationFrame(sizeCanvas); }, hide(){ box.hidden=true; } };
+        if(fold)fold.onclick=()=>{const c=box.classList.toggle("collapsed");localStorage.setItem("cubenest_scratch_fold",c?"1":"0");if(!c)requestAnimationFrame(fitKeep);};
+        window.addEventListener("resize",()=>{ if(!box.hidden && !box.classList.contains("collapsed")) fitKeep(); });
+        SCRATCH={
+          show(idx){ if(curIdx!=null&&curIdx!==idx)saveCur(); box.hidden=false; curIdx=idx; if(!box.classList.contains("collapsed")) requestAnimationFrame(()=>fitFor(idx)); },
+          hide(){ saveCur(); box.hidden=true; },
+          get(idx){ return store[idx!=null?idx:curIdx]||null; },   // PDF/worksheets 연동용
+          all(){ saveCur(); return Object.assign({},store); }
+        };
       }
 
       /* ===== 효과음 + 음소거 ===== */
