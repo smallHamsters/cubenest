@@ -1,7 +1,4 @@
-      /* ===== 시드 RNG ===== */
-      function xmur3(s){let h=1779033703^s.length;for(let i=0;i<s.length;i++){h=Math.imul(h^s.charCodeAt(i),3432918353);h=h<<13|h>>>19;}return()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);return(h^=h>>>16)>>>0;};}
-      function mulberry32(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-      function rngFrom(str){const s=xmur3(str);return mulberry32(s());}
+      /* ===== 시드 RNG·생성기 = 공용 모듈 cubenest-gen (아래 GEN) ===== */
 
       /* ===== 유형 · 난이도 설정 ===== */
       const TYPES={
@@ -33,22 +30,14 @@
       /* 공용 모듈(§5.1): 계산=CubeNest.core, 뷰어/펼쳐보기=CubeNest.viewer. core 먼저 로드. */
       const CORE=(window.CubeNest&&window.CubeNest.core)||null;
       const VIEWER=(window.CubeNest&&window.CubeNest.viewer)||null;
+      const GEN=(window.CubeNest&&window.CubeNest.gen)||null;
       function coreShape(sh){ return {gx:sh.gx, gy:sh.maxH, gz:sh.gz, edge:sh.edge, cells:sh.cells.map(c=>[c.x,c.y,c.z])}; }
       // 높이지도({"x,z":h}) → core/viewer 모양
       function hmapToShape(hm,edge){ const cells=[]; let gx=0,gz=0,gy=0; for(const k in hm){const p=k.split(",").map(Number),h=hm[k]; gx=Math.max(gx,p[0]+1); gz=Math.max(gz,p[1]+1); gy=Math.max(gy,h); for(let y=0;y<h;y++)cells.push([p[0],y,p[1]]);} return {gx,gy,gz,edge,cells}; }
       // 해설 내부 3D 뷰어(최소·최대 모양, 안 보이는 나무 강조) — 문항 전환 시 dispose
       let EXPVIEWS=[];
       function disposeExpViews(){ EXPVIEWS.forEach(v=>{try{v&&v.dispose&&v.dispose();}catch(e){}}); EXPVIEWS=[]; }
-      // 오목(노치) 판정 — 마스터 v1.5.2 4.2: 노출면 > 2×(위+앞+옆 실루엣 넓이). core 공용.
-      function isConcave(csh){ if(!CORE)return false; const s=CORE.silhouettes(csh); const sum=s.top.size+s.front.size+s.side.size; return CORE.exposedFaces(csh) > 2*sum; }
-      // 안 보이는 나무: occ=겨냥도 뒤쪽 가림(초등, (x+1,y+1,z+1) 채워짐) / surround=이웃 가림(유아, 앞·위·옆 모두 채워짐)
-      function hiddenCells(sh,mode){
-        const set=new Set(sh.cells.map(c=>c.x+","+c.y+","+c.z));
-        const has=(x,y,z)=>set.has(x+","+y+","+z);
-        return sh.cells.filter(c=> mode==="surround"
-          ? (has(c.x,c.y,c.z+1)&&has(c.x,c.y+1,c.z)&&has(c.x+1,c.y,c.z))
-          : has(c.x+1,c.y+1,c.z+1));
-      }
+      // 오목·안 보이는 나무 판정 = 공용 모듈 GEN(isConcave·hiddenCells)
       // 위/앞/옆 라벨: viewer의 라벨 평면이 가로:세로≈1.6이라, 정사각 텍스처면 글자가 납작해짐 → 같은 비율(128×80) 캔버스로 보정.
 
       /* ===== 의견·오류 신고 (playground 피드백 패턴 재사용) =====
@@ -105,30 +94,7 @@
       }
 
       /* ===== 모양 생성 ===== */
-      function genShape(rng,cfg){
-        const {gx,gz,maxH}=cfg;
-        const ri=n=>Math.floor(rng()*n), rr=(a,b)=>a+Math.floor(rng()*(b-a+1));
-        let f=Math.min(rr(cfg.fMin,cfg.fMax),gx*gz);
-        const foot=new Set(); let sx=ri(gx),sz=ri(gz); foot.add(sx+","+sz);
-        while(foot.size<f){
-          const cand=[];
-          foot.forEach(k=>{const[x,z]=k.split(",").map(Number);[[1,0],[-1,0],[0,1],[0,-1]].forEach(([dx,dz])=>{const nx=x+dx,nz=z+dz;if(nx>=0&&nx<gx&&nz>=0&&nz<gz&&!foot.has(nx+","+nz))cand.push(nx+","+nz);});});
-          if(!cand.length)break; foot.add(cand[ri(cand.length)]);
-        }
-        const arr=[...foot].map(k=>k.split(",").map(Number));
-        const H={}; arr.forEach(([x,z])=>H[x+","+z]=1);
-        let N=Math.max(arr.length,Math.min(rr(cfg.nMin,cfg.nMax),arr.length*maxH));
-        let rem=N-arr.length;
-        let guard=0;
-        while(rem>0&&guard++<999){const opts=arr.filter(([x,z])=>H[x+","+z]<maxH);if(!opts.length)break;const[x,z]=opts[ri(opts.length)];H[x+","+z]++;rem--;}
-        const hmap=Array.from({length:gx},()=>Array(gz).fill(0));
-        const cells=[]; let count=0;
-        arr.forEach(([x,z])=>{const h=H[x+","+z];hmap[x][z]=h;count+=h;for(let y=0;y<h;y++)cells.push({x,y,z});});
-        const set=new Set(cells.map(c=>c.x+","+c.y+","+c.z));
-        let pairs=0; cells.forEach(c=>{[[1,0,0],[0,1,0],[0,0,1]].forEach(([a,b,d])=>{if(set.has((c.x+a)+","+(c.y+b)+","+(c.z+d)))pairs++;});});
-        const exposed=6*count-2*pairs;
-        return {gx,gz,maxH,hmap,cells,count,pairs,exposed,edge:cfg.edge};
-      }
+      /* ===== 문제 생성기 = 공용 모듈 GEN.genShape / GEN.genSession ===== */
 
       /* ===== 아이소 뷰어 ===== */
       function rot(p,k,gx,gz){const{x,y,z}=p;if(k===1)return{x:gz-1-z,y,z:x};if(k===2)return{x:gx-1-x,y,z:gz-1-z};if(k===3)return{x:z,y,z:gx-1-x};return{x,y,z};}
@@ -305,57 +271,59 @@
         return {type,levels,n,seed,dim};
       }
       const PRM=loadParams();
-      const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[]};
+      const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[],state:[]};
+      // 세션 지속(새로고침 이어풀기): 진행 위치·문항별 답·정오·연습장 저장
+      const SKEY="cubenest_quiz_sess_"+[PRM.seed,PRM.type,PRM.n,(PRM.levels||[]).join(""),PRM.edu||"",PRM.dim||""].join("_");
+      function saveSession(){
+        try{
+          const state=S.state.map(s=>s?{answered:!!s.answered,ok:!!s.ok,raw:s.raw}:null);
+          localStorage.setItem(SKEY,JSON.stringify({idx:S.idx,state,ts:Date.now()}));
+          try{ if(SCRATCH) localStorage.setItem(SKEY+"_sc",JSON.stringify(SCRATCH.all())); }catch(e){/* 용량 초과 시 연습장만 생략 */}
+        }catch(e){}
+      }
+      function loadSession(){ try{ const r=localStorage.getItem(SKEY); if(!r)return null; return JSON.parse(r); }catch(e){ return null; } }
+      // 답 캡처(제출 시) / 복원(문항 재방문 시)
+      function readAnswer(pr){
+        const T=TYPES[pr.type];
+        if(T.form==="num"){ const v=parseInt(document.getElementById("ans").value,10); return isNaN(v)?null:v; }
+        if(T.form==="mc"){ return PICK<0?null:PICK; }
+        if(T.form==="hm"){ const a=[]; let bad=false; qcard.querySelectorAll(".hmcell input").forEach(inp=>{const v=parseInt(inp.value,10); if(isNaN(v))bad=true; a.push({x:+inp.dataset.x,z:+inp.dataset.z,v:isNaN(v)?null:v});}); return bad?null:a; }
+        if(T.form==="draw"){ const a=[]; qcard.querySelectorAll(".dcell.on").forEach(c=>{a.push(c.closest(".dgrid").dataset.view+","+c.dataset.c+","+c.dataset.r);}); return a; }
+        return null;
+      }
+      function applyAnswer(pr,raw){
+        const T=TYPES[pr.type]; if(raw==null)return;
+        if(T.form==="num"){ const el=document.getElementById("ans"); if(el)el.value=raw; }
+        else if(T.form==="mc"){ PICK=raw; qcard.querySelectorAll(".opt").forEach((o,i)=>o.classList.toggle("sel",i===raw)); }
+        else if(T.form==="hm"){ raw.forEach(c=>{const inp=qcard.querySelector('.hmcell input[data-x="'+c.x+'"][data-z="'+c.z+'"]'); if(inp&&c.v!=null)inp.value=c.v;}); }
+        else if(T.form==="draw"){ const set=new Set(raw); qcard.querySelectorAll(".dcell").forEach(cell=>{cell.classList.toggle("on",set.has(cell.closest(".dgrid").dataset.view+","+cell.dataset.c+","+cell.dataset.r));}); }
+      }
       function buildSession(){
         S.probs=[];
-        const rngL=rngFrom(PRM.seed+":L");
-        for(let i=0;i<PRM.n;i++){
-          let lvPool=PRM.levels;
-          if(PRM.type==="facesDraw"){ lvPool=PRM.levels.filter(l=>l!=="최상"); if(!lvPool.length)lvPool=["상"]; } // 그리기: 최상(5×5×5) 제외, 4×4×4 이하
-          const lv=lvPool[Math.floor(rngL()*lvPool.length)];
-          const rng=rngFrom(PRM.seed+":"+i), cfg=GEN_CONFIG.levels[lv];
-          let sh=genShape(rng,cfg);
-          // 겉넓이 오목 난이도 밴딩(마스터 v1.5.2 4.2). 하·중=오목없음 / 상=혼재 / 최상=오목있음
-          if(PRM.type==="surface" && CORE){
-            const want = lv==="최상" ? true : (lv==="상" ? null : false);
-            if(want!==null){ let g=0; while(g++<60 && isConcave(coreShape(sh))!==want) sh=genShape(rng,cfg); }
-          }
-          // 최소·최대 / 안 보이는 나무: max>min(범위 있는) 모양으로 재샘플
-          let rc=null;
-          if(PRM.type==="minmax" && CORE){
-            rc=CORE.reverseCounts(coreShape(sh)); let g=0;
-            while(g++<40 && rc.maxCount<=rc.minCount){ sh=genShape(rng,cfg); rc=CORE.reverseCounts(coreShape(sh)); }
-          }
-          let hmode=null,hcells=null;
-          if(PRM.type==="hidden"){
-            hmode = (PRM.edu==="think") ? "surround" : "occ";  // 교과=겨냥도 가림 / 사고력=이웃 가림
-            hcells=hiddenCells(sh,hmode); let g=0;
-            while(g++<60 && hcells.length<1){ sh=genShape(rng,cfg); hcells=hiddenCells(sh,hmode); }
-          }
+        const gprobs=GEN.genSession({type:PRM.type,levels:PRM.levels,seed:PRM.seed,n:PRM.n,config:GEN_CONFIG,edu:PRM.edu,core:CORE});
+        gprobs.forEach((gp,i)=>{
+          const sh=gp.sh, lv=gp.level;
           const pr={type:PRM.type,lv,sh};
           if(PRM.type==="facesMc"){
-            const rngD=rngFrom(PRM.seed+":d"+i);
-            const dir=["front","side","top"][Math.floor(rngD()*3)];
+            const dir=gp.dir;
             const correct=dir==="front"?frontSil(sh):dir==="side"?sideSil(sh):topSil(sh);
-            const built=makeSilOpts(correct,rngD);
+            const built=makeSilOpts(correct,GEN.rngFrom(PRM.seed+":o"+i));   // 보기(오답)는 quiz 전용 스트림 ":o"
             pr.opts=built.opts; pr.correct=built.correct; pr.dir=dir;
             pr.ask=(dir==="front"?"앞":dir==="side"?"옆":"위")+"에서 본 모양을 고르세요.";
           }
-          if(rc){
-            pr.rc=rc;
-            const r=rngFrom(PRM.seed+":q"+i)(); const mode=r<0.34?"min":(r<0.67?"max":"diff");
-            pr.which=mode;
-            if(mode==="diff"){ pr.answer=rc.hidden; pr.ask="세 방향 모양이 같도록 쌓을 때, <b>최대와 최소의 차이</b>는 몇 개일까요?"; }
-            else{ pr.answer=mode==="max"?rc.maxCount:rc.minCount; pr.ask="세 방향(위·앞·옆)에서 본 모양이 되려면, 쌓기나무는 <b>"+(mode==="max"?"최대":"최소")+"</b> 몇 개일까요?"; }
+          if(PRM.type==="minmax"){
+            pr.rc=gp.rc; pr.which=gp.which;
+            if(gp.which==="diff"){ pr.answer=gp.rc.hidden; pr.ask="세 방향 모양이 같도록 쌓을 때, <b>최대와 최소의 차이</b>는 몇 개일까요?"; }
+            else{ pr.answer=gp.which==="max"?gp.rc.maxCount:gp.rc.minCount; pr.ask="세 방향(위·앞·옆)에서 본 모양이 되려면, 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?"; }
           }
           if(PRM.type==="hidden"){
-            pr.hmode=hmode; pr.hcells=hcells; pr.answer=hcells.length;
-            pr.ask = hmode==="surround"
+            pr.hmode=gp.hmode; pr.hcells=gp.hcells; pr.answer=gp.hcells.length;
+            pr.ask = gp.hmode==="surround"
               ? "다른 나무에 가려 <b>보이지 않는</b> 쌓기나무는 몇 개일까요?"
               : "겨냥도에서 뒤에 가려 <b>보이지 않는</b> 쌓기나무는 몇 개일까요?";
           }
           S.probs.push(pr);
-        }
+        });
       }
 
       /* ===== 렌더 ===== */
@@ -365,8 +333,7 @@
         ROT=0;PICK=-1;
         const pr=S.probs[S.idx],T=TYPES[pr.type],sh=pr.sh;
         document.getElementById("pg-type").textContent=T.title;
-        document.getElementById("pg-num").textContent=(S.idx+1)+" / "+S.n;
-        document.getElementById("pg-fill").style.width=(S.idx/S.n*100)+"%";
+        updateProgress();
         let ans="";
         if(T.form==="num"){
           ans=`<div class="numin"><input id="ans" type="number" inputmode="numeric" autocomplete="off" placeholder="?"/><span class="unit">${T.unit}</span></div>`;
@@ -396,8 +363,9 @@
           ? `<div class="viewer"><div id="v3d" class="v3d"></div><div class="rotrow2"><div class="rothint">손가락·마우스로 <b>돌려서</b> 위·앞·옆을 확인해요</div><button id="reset3d" class="rotbtn2" type="button">정면</button></div></div>`
           : `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotrow"><button id="rl" class="rotbtn wide" type="button" aria-label="왼쪽으로 90도 돌리기">${ARC_CCW}<span>90°</span></button><div id="compass" class="compass" aria-hidden="true">${renderCompass(0)}</div><button id="rr" class="rotbtn wide" type="button" aria-label="오른쪽으로 90도 돌리기">${ARC_CW}<span>90°</span></button></div><div class="rotcap" id="rotcap">버튼으로 쌓기나무를 <b>돌려서</b> 뒤·옆면을 확인해요</div></div>`);
         qcard.innerHTML=`
-          <div class="qhead"><span class="type">${T.title}</span><span class="lv">${pr.lv}</span><span class="mode">${viewLabel}</span><button type="button" id="feedbackBtn" class="qfb" aria-label="이 문제에 의견 보내기"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>의견</span></button></div>
-          <div class="qtext">${askText}${edgeTxt}</div>
+          <div class="qhead"><span class="lv">${pr.lv}</span><span class="mode">${viewLabel}</span><button type="button" id="feedbackBtn" class="qfb" aria-label="이 문제에 의견 보내기"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>의견</span></button></div>
+          <div class="qnav"><div class="qnav-dots" id="palette"></div><button class="qnav-result" id="resultBtn" type="button" disabled>결과 보기</button></div>
+          <div class="qtext"><b class="qnum">${S.idx+1}번</b> ${askText}${edgeTxt}</div>
           ${viewerHTML}
           <div class="answer">${ans}</div>`;
         if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;} if(EXPLODE&&EXPLODE.dispose){EXPLODE.dispose();EXPLODE=null;} disposeExpViews();
@@ -413,12 +381,18 @@
         }
         if(SCRATCH) SCRATCH.show(S.idx);
         const fb0=document.getElementById("fb"); fb0.className="fb"; fb0.innerHTML=""; fb0.hidden=false;
-        const act0=document.getElementById("actions"); act0.hidden=false; act0.innerHTML=`<button class="btn" id="submit">제출</button>`;
         if(T.form==="mc"){qcard.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.i;qcard.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
         if(T.form==="draw"){qcard.querySelectorAll(".dcell").forEach(b=>b.onclick=()=>{if(!b.disabled)b.classList.toggle("on");});}
-        document.getElementById("submit").onclick=submit;
         document.getElementById("feedbackBtn").onclick=openFeedback;
-        const first=qcard.querySelector("input");if(first)first.focus();
+        const st=S.state[S.idx];
+        if(st && st.answered){          // 이미 푼 문항: 답 복원 + 채점 상태 재구성(잠금)
+          applyAnswer(pr,st.raw);
+          submit(true);
+        }else{                          // 새 문항: 답 가능
+          document.getElementById("actions").hidden=false;
+          setActions();
+          const first=qcard.querySelector("input");if(first)first.focus();
+        }
       }
       // 연습장 — 정적 HTML(#scratch) 1회 초기화. 문제 표시 때 SCRATCH.show()로 크기 맞춤·초기화.
       let SCRATCH=null;
@@ -455,15 +429,18 @@
         if(er)er.onclick=()=>{eraser=!eraser;er.classList.toggle("on",eraser);if(eraser)box.querySelectorAll(".pen").forEach(p=>p.classList.remove("on"));else{const on=box.querySelector(".pen");if(on)on.classList.add("on");penColor=on?on.dataset.col:penColor;}};
         const un=document.getElementById("scratchUndo"); if(un)un.onclick=doUndo;
         const clr=document.getElementById("scratchClear"); if(clr)clr.onclick=()=>{snapshot();ctx.clearRect(0,0,cv.width,cv.height);saveCur();};
-        const fold=document.getElementById("scratchFold");
+        const fold=document.getElementById("scratchFold"), foldtxt=document.getElementById("foldtxt");
+        const setFoldTxt=()=>{ if(foldtxt) foldtxt.textContent=box.classList.contains("collapsed")?"펼치기":"접기"; };
         if(localStorage.getItem("cubenest_scratch_fold")==="1") box.classList.add("collapsed");
-        if(fold)fold.onclick=()=>{const c=box.classList.toggle("collapsed");localStorage.setItem("cubenest_scratch_fold",c?"1":"0");if(!c)requestAnimationFrame(fitKeep);};
+        setFoldTxt();
+        if(fold)fold.onclick=()=>{const c=box.classList.toggle("collapsed");localStorage.setItem("cubenest_scratch_fold",c?"1":"0");setFoldTxt();if(!c)requestAnimationFrame(fitKeep);};
         window.addEventListener("resize",()=>{ if(!box.hidden && !box.classList.contains("collapsed")) fitKeep(); });
         SCRATCH={
           show(idx){ if(curIdx!=null&&curIdx!==idx)saveCur(); box.hidden=false; curIdx=idx; if(!box.classList.contains("collapsed")) requestAnimationFrame(()=>fitFor(idx)); },
           hide(){ saveCur(); box.hidden=true; },
           get(idx){ return store[idx!=null?idx:curIdx]||null; },   // PDF/worksheets 연동용
-          all(){ saveCur(); return Object.assign({},store); }
+          all(){ saveCur(); return Object.assign({},store); },
+          load(obj){ try{ Object.assign(store,obj||{}); }catch(e){} }
         };
       }
 
@@ -552,8 +529,13 @@
         qcard.appendChild(fx);
         setTimeout(()=>{ fx.remove(); }, 1400);
       }
-      function submit(){
+      function submit(revisit){
         const pr=S.probs[S.idx],T=TYPES[pr.type],sh=pr.sh;
+        if(!revisit){
+          const raw=readAnswer(pr);
+          if(raw===null){ const el=document.getElementById("ans"); if(el)el.focus(); return; }
+          S.state[S.idx]={answered:true,raw:raw,ok:false};
+        }
         let ok=false,sol="";
         if(T.form==="num"){
           const v=parseInt(document.getElementById("ans").value,10);
@@ -645,7 +627,8 @@
           sol=`<div class="sol-draw"><div class="sol-pic">${renderThreeViews(sh)}<span>정답</span></div>${vis3d}</div>`;
         }
         S.answered[S.idx]=ok;
-        track("quiz_answer",{type:pr.type,level:pr.lv,correct:ok,idx:S.idx});
+        if(!revisit){ S.state[S.idx].ok=ok; track("quiz_answer",{type:pr.type,level:pr.lv,correct:ok,idx:S.idx}); }
+        const ai=document.getElementById("ans"); if(ai)ai.disabled=true;
         const sb=document.getElementById("submit"); if(sb)sb.disabled=true;
         // 답안 즉시 표시 + 애니메이션·사운드 동시
         const fb=document.getElementById("fb");
@@ -676,17 +659,52 @@
             segs.forEach(b=>b.onclick=()=>{segs.forEach(s=>s.classList.remove("on"));b.classList.add("on");if(vw)vw.dataset.show=b.dataset.set;});
           }
         }
-        const act=document.getElementById("actions");
-        act.innerHTML=`<button class="btn" id="next">${S.idx+1<S.n?"다음 →":"결과 보기"}</button>`;
-        document.getElementById("next").onclick=next;
-        document.getElementById("pg-fill").style.width=((S.idx+1)/S.n*100)+"%";
-        playGrade(ok); playSound(ok);
+        setActions();
+        updateProgress();
+        if(!revisit){ playGrade(ok); playSound(ok); saveSession(); }
       }
-      function next(){if(S.idx+1<S.n){S.idx++;renderProblem();window.scrollTo({top:0,behavior:"smooth"});}else showResult();}
+      // 문항 이동/제출/결과 버튼 구성(문항 상태에 따라)
+      // 팔레트 + 결과보기(한 묶음). 팔레트=가로 스크롤 한 줄, 결과보기=미완료 시 비활성.
+      function unansweredList(){ return S.probs.map((_,i)=>i).filter(i=>!(S.state[i]&&S.state[i].answered)); }
+      function firstUnanswered(from){ for(let k=1;k<=S.n;k++){ const i=(from+k)%S.n; if(!(S.state[i]&&S.state[i].answered)) return i; } return -1; }
+      function renderQNav(){
+        const p=document.getElementById("palette");
+        if(p){
+          p.innerHTML=S.probs.map((_,i)=>{const st=S.state[i];const cls=st&&st.answered?(st.ok?"o":"x"):"u";return `<button type="button" class="labdot ${cls}${i===S.idx?" cur":""}" data-i="${i}" aria-label="${i+1}번 문제로 이동">${i+1}</button>`;}).join("");
+          p.querySelectorAll(".labdot").forEach(b=>b.onclick=()=>goTo(+b.dataset.i));
+          const cur=p.querySelector(".labdot.cur");
+          if(cur){ const pr=p.getBoundingClientRect(), cr=cur.getBoundingClientRect(); p.scrollLeft += (cr.left+cr.width/2)-(pr.left+pr.width/2); } // 가로만(윈도우 스크롤 없음)
+        }
+        const rb=document.getElementById("resultBtn");
+        if(rb){ const un=unansweredList(), allDone=un.length===0;
+          rb.disabled=!allDone;
+          rb.title=allDone?"결과 보기":`안 푼 문제 ${un.length}개: ${un.map(i=>i+1).join(", ")}번`;
+          rb.onclick=showResult; }
+      }
+      function updateProgress(){ const done=S.state.filter(s=>s&&s.answered).length; const f=document.getElementById("pg-fill"); if(f)f.style.width=(done/S.n*100)+"%"; const nm=document.getElementById("pg-num"); if(nm)nm.textContent="푼 문제 "+done+" / "+S.n; }
+      function setActions(){
+        const answered=!!(S.state[S.idx]&&S.state[S.idx].answered);
+        const allDone=unansweredList().length===0;
+        const act=document.getElementById("actions"); if(!act)return;
+        let h="";
+        if(!answered) h+=`<button class="btn" id="submit">제출</button>`;
+        else if(!allDone) h+=`<button class="btn" id="nextBtn">다음 →</button>`;   // 안 푼 다음 문항으로
+        else h+=`<button class="btn" id="resultBtn2">결과 확인</button>`;             // 모두 풀면 결과 확인
+        act.innerHTML=h; act.hidden=!h;
+        const nb=document.getElementById("nextBtn"); if(nb)nb.onclick=()=>{ const ni=firstUnanswered(S.idx); if(ni>=0)goTo(ni); };
+        const sub=document.getElementById("submit"); if(sub)sub.onclick=()=>submit(false);
+        const rb2=document.getElementById("resultBtn2"); if(rb2)rb2.onclick=showResult;
+        renderQNav(); updateProgress();
+      }
+      let hdrSuppress=0;
+      function goTo(i){ if(i<0||i>=S.n)return; S.idx=i; saveSession(); renderProblem();
+        const hdr=document.querySelector(".site-top"); if(hdr)hdr.classList.remove("hide");
+        hdrSuppress=Date.now()+700; window.scrollTo(0,0); }   // 즉시 이동(부드러운 스크롤 제거) + 리스너 억제
+      function next(){ if(S.idx+1<S.n) goTo(S.idx+1); else showResult(); }
 
       function showResult(){
         if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;} if(EXPLODE&&EXPLODE.dispose){EXPLODE.dispose();EXPLODE=null;} disposeExpViews(); if(SCRATCH)SCRATCH.hide();
-        const _fb=document.getElementById("fb"); if(_fb)_fb.hidden=true; const _ac=document.getElementById("actions"); if(_ac)_ac.hidden=true;
+        const _fb=document.getElementById("fb"); if(_fb){_fb.className="fb";_fb.innerHTML="";_fb.hidden=true;} const _ac=document.getElementById("actions"); if(_ac){_ac.innerHTML="";_ac.hidden=true;}
         qcard.style.display="none";document.getElementById("topbar").style.display="none";
         const score=S.answered.filter(Boolean).length;
         const dots=S.answered.map((o,i)=>`<span class="dot ${o?'o':'x'}">${i+1}</span>`).join("");
@@ -701,6 +719,7 @@
             <button class="btn ghost" id="replayBtn" type="button">← 다시풀기</button>
             <button class="btn ghost" id="newBtn" type="button">다른 퀴즈 풀기</button>
             <button class="btn wide" id="saveBtn" type="button">결과 저장하기</button>
+            <button class="btn ghost wide" id="worksheetBtn" type="button">📄 문제지 만들기</button>
           </div>
           <div class="share">
             <span>친구에게 이 퀴즈 공유하기</span>
@@ -709,6 +728,7 @@
         document.getElementById("replayBtn").onclick=()=>{track("replay_click",{type:S.type,seed:S.seed});replaySame();};
         document.getElementById("newBtn").onclick=()=>{track("new_quiz_click",{type:S.type});const u=new URL(location);u.searchParams.set("seed",Math.random().toString(36).slice(2,9));location.href=u.toString();};
         document.getElementById("saveBtn").onclick=saveResult;
+        document.getElementById("worksheetBtn").onclick=exportWorksheet;
         document.getElementById("shareBtn").onclick=shareQuiz;
         window.scrollTo({top:0,behavior:"smooth"});
       }
@@ -716,8 +736,31 @@
       function replaySame(){
         resultEl.className="result"; resultEl.innerHTML="";
         qcard.style.display=""; document.getElementById("topbar").style.display="";
-        S.idx=0; S.answered=[]; document.getElementById("pg-fill").style.width="0%";
-        renderProblem(); window.scrollTo({top:0,behavior:"smooth"});
+        S.idx=0; S.answered=[]; S.state=[];
+        try{ localStorage.removeItem(SKEY); localStorage.removeItem(SKEY+"_sc"); }catch(e){}
+        updateProgress();
+        renderProblem();
+        const hdr=document.querySelector(".site-top"); if(hdr)hdr.classList.remove("hide");
+        hdrSuppress=Date.now()+700; window.scrollTo(0,0);
+      }
+      // 문제지(PDF) = worksheets 소관(자체 알고리즘). quiz는 세션+학생 연습장을 모아 넘겨 '이용'만 한다(마스터 §5.1·§8.1·§4.5).
+      function buildWorksheetPayload(){
+        const problems=S.probs.map((pr,i)=>({
+          n:i+1, type:pr.type, level:pr.lv, edu:PRM.edu||null,
+          ask:pr.ask||TYPES[pr.type].ask,
+          shape: CORE ? CORE.serialize(coreShape(pr.sh)) : null,   // F2 직렬화(worksheets가 core로 재현·정답 산출)
+          correct: !!S.answered[i],
+          scratch: SCRATCH ? SCRATCH.get(i) : null                 // 학생 풀이(PNG dataURL) — 문제 하단 병기용
+        }));
+        return { meta:{ title:TYPES[S.type].title, grade:"초등 6학년", type:S.type,
+          levels:PRM.levels, n:S.n, seed:S.seed, date:new Date().toISOString().slice(0,10), source:"quiz" }, problems };
+      }
+      function exportWorksheet(){
+        track("worksheet_export_click",{type:S.type,n:S.n});
+        const payload=buildWorksheetPayload();
+        const W=window.CubeNest && window.CubeNest.worksheets;
+        if(W && typeof W.fromQuiz==="function"){ W.fromQuiz(payload); }   // ← worksheets 알고리즘 이용(PDF 렌더는 worksheets가)
+        else { alert("문제지(PDF) 만들기는 worksheets와 연동돼요.\n\n· 각 문제 + 아이의 연습장 풀이를 함께 PDF로 출력\n· 학부모가 '무엇을 어떻게 풀었는지' 한눈에\n\nworksheets 모듈 연동은 준비 중입니다.\n(연습장 풀이는 문항별로 저장돼 있어요.)"); }
       }
       // 결과 저장 = 로그인 필요(마스터 6.3 RLS / 6 Supabase OAuth). 로컬엔 이미 저장됨.
       function saveResult(){
@@ -743,6 +786,19 @@
         try{ const r=await fetch("../../assets/js/quiz/gen-config.json",{cache:"no-store"}); if(r.ok){ const j=await r.json(); if(j&&j.levels) GEN_CONFIG=j; } }catch(e){}
         buildSession();
         initScratch();
+        // 이어풀기: 저장된 진행(위치·답·정오)·연습장 복원
+        const saved=loadSession();
+        if(saved && Array.isArray(saved.state)){
+          S.state=saved.state.map(s=>s?{answered:!!s.answered,ok:!!s.ok,raw:s.raw}:null);
+          S.answered=S.state.map(s=>s?!!s.ok:undefined);
+          S.idx=Math.min(Math.max(saved.idx|0,0),S.n-1);
+          try{ const sc=localStorage.getItem(SKEY+"_sc"); if(sc && SCRATCH) SCRATCH.load(JSON.parse(sc)); }catch(e){}
+        }
+        window.addEventListener("beforeunload",saveSession);
+        // 헤더: 아래로 스크롤 시 숨김, 위로 스크롤 시 표시
+        (function(){ const hdr=document.querySelector(".site-top"); if(!hdr)return; let lastY=window.scrollY||0, tick=false;
+          window.addEventListener("scroll",()=>{ if(tick)return; tick=true; requestAnimationFrame(()=>{ const y=window.scrollY||0; if(Date.now()<hdrSuppress){ lastY=y; tick=false; return; } if(y>lastY&&y>64)hdr.classList.add("hide"); else if(y<lastY-2)hdr.classList.remove("hide"); lastY=y; tick=false; }); },{passive:true});
+        })();
         track("quiz_run_start",{type:S.type,n:S.n,seed:S.seed});
         renderProblem();
       })();
