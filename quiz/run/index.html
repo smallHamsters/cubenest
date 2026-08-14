@@ -199,12 +199,24 @@
       #scratch.collapsed #scratchpad{display:none}
       #scratch.collapsed .pen{display:none}
       #scratch.collapsed .scratch-right{display:none}
+      .sc-wrap{position:relative;width:100%;height:clamp(170px,34vh,300px);cursor:crosshair;touch-action:none}
+      #scratch.collapsed .sc-wrap{display:none}
+      #scratchpad-tutor{display:block;width:100%;height:100%;position:absolute;inset:0;touch-action:none;background:transparent;pointer-events:none}
+      .scratch-tutor{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-top:1px solid var(--line);flex-wrap:wrap}
+      .scratch-tutor .lockmsg{font-size:11.5px;font-weight:800;color:var(--muted-2)}
+      .tutor-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+      .tutor-tools .tlabel{font-size:11.5px;font-weight:800;color:var(--del)}
+      .tpen{width:20px;height:20px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px var(--line);background:var(--c);cursor:pointer;padding:0}
+      .tpen.on{box-shadow:0 0 0 2px var(--ink)}
+      .tutor-btn{font-size:12px;font-weight:800;color:var(--accent-ink);background:var(--accent-soft);border:1px solid var(--line)}
+      #scratch.collapsed .scratch-tutor{display:none}
+      #scratch.locked .scratch-left .pen,#scratch.locked #eraser,#scratch.locked #scratchUndo,#scratch.locked #scratchClear{opacity:.35;pointer-events:none}
       .scratch-left .pen{width:20px;height:20px;border-radius:50%;border:2px solid transparent;background:var(--c);cursor:pointer;padding:0}
       .scratch-left .pen.on{border-color:var(--ink);box-shadow:0 0 0 2px #fff inset}
       .scratch-right .tool{font-size:11px;padding:3px 9px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-weight:700;cursor:pointer;display:inline-flex;align-items:center}
       .scratch-right .tool.on{background:var(--accent);color:#fff;border-color:var(--accent)}
       .scratch-right .ticon{padding:3px 7px}
-      #scratchpad{display:block;width:100%;height:clamp(170px,34vh,300px);touch-action:none;cursor:crosshair;background:#fff}
+      #scratchpad{display:block;width:100%;height:100%;position:absolute;inset:0;touch-action:none;background:#fff}
       .pv{display:flex;flex-direction:column;align-items:center;gap:3px}
       .pv svg{display:block;height:auto;max-height:66px}
       .pv span{font-size:11px;font-weight:800;color:var(--muted)}
@@ -277,9 +289,9 @@
         <div class="scratch-bar">
           <div class="scratch-left"><button type="button" class="fold" id="scratchFold" aria-label="연습장 접기/펼치기"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg><span class="foldtxt" id="foldtxt">접기</span></button><span>✏️ 연습장</span>
             <button type="button" class="pen on" data-col="#2d2d3a" style="--c:#2d2d3a" aria-label="검정"></button>
-            <button type="button" class="pen" data-col="#2b6fe0" style="--c:#2b6fe0" aria-label="파랑"></button>
+            <button type="button" class="pen" data-col="#8642d6" style="--c:#8642d6" aria-label="보라"></button>
             <button type="button" class="pen" data-col="#2f9e5f" style="--c:#2f9e5f" aria-label="초록"></button>
-            <button type="button" class="pen" data-col="#e0455e" style="--c:#e0455e" aria-label="빨강"></button>
+            <button type="button" class="pen" data-col="#f5820a" style="--c:#f5820a" aria-label="주황"></button>
           </div>
           <div class="scratch-right">
             <button type="button" class="tool ticon" id="scratchUndo" title="되돌리기" aria-label="되돌리기"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg></button>
@@ -287,7 +299,24 @@
             <button type="button" class="tool" id="scratchClear">전체삭제</button>
           </div>
         </div>
-        <canvas id="scratchpad"></canvas>
+        <div class="sc-wrap" id="scWrap">
+          <canvas id="scratchpad"></canvas>
+          <canvas id="scratchpad-tutor"></canvas>
+        </div>
+        <div class="scratch-tutor" id="scratchTutor" hidden>
+          <span class="lockmsg">🔒 아이 풀이 잠금</span>
+          <div class="tutor-tools" id="tutorTools" hidden>
+            <span class="tlabel">✏️ 첨삭</span>
+            <button type="button" class="tpen on" data-col="#e0455e" style="--c:#e0455e" aria-label="빨강"></button>
+            <button type="button" class="tpen" data-col="#2b6fe0" style="--c:#2b6fe0" aria-label="파랑"></button>
+            <button type="button" class="tool ticon" id="tutorEraser" title="지우개" aria-label="지우개"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16"/><path d="M6.5 16.5l7-7a2 2 0 0 1 2.8 0l1.2 1.2a2 2 0 0 1 0 2.8l-6 6H9z"/></svg></button>
+            <button type="button" class="tool ticon" id="tutorUndo" title="되돌리기" aria-label="되돌리기"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-1"/></svg></button>
+            <button type="button" class="tool" id="tutorClear">지우기</button>
+            <button type="button" class="tool" id="tutorDone">첨삭 종료</button>
+          </div>
+          <button type="button" class="tool tutor-btn" id="tutorLoginBtn">🔓 로그인(모의)</button>
+          <button type="button" class="tool tutor-btn" id="tutorBtn" hidden>✏️ 첨삭 시작</button>
+        </div>
       </div>
 
       <div class="fb" id="fb" hidden></div>

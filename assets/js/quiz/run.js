@@ -397,38 +397,77 @@
       // 연습장 — 정적 HTML(#scratch) 1회 초기화. 문제 표시 때 SCRATCH.show()로 크기 맞춤·초기화.
       let SCRATCH=null;
       function initScratch(){
-        const cv=document.getElementById("scratchpad"); if(!cv)return;
-        const box=document.getElementById("scratch");
-        const dpr=Math.min(window.devicePixelRatio||1,2), ctx=cv.getContext("2d");
-        let penColor="#2d2d3a", eraser=false; const PEN=2.6*dpr, ERA=18*dpr;
-        let undo=[];                 // 되돌리기 스냅샷(최대 5획)
-        const store={}; let curIdx=null;   // 문항별 풀이 보존(PNG dataURL) — PDF 병기용
-        function snapshot(){ try{ undo.push(ctx.getImageData(0,0,cv.width,cv.height)); if(undo.length>5)undo.shift(); }catch(e){} }
-        function saveCur(){ if(curIdx!=null){ try{ store[curIdx]=cv.toDataURL("image/png"); }catch(e){} } }
-        function doUndo(){ if(!undo.length)return; ctx.putImageData(undo.pop(),0,0); saveCur(); }
-        function paint(url){ if(!url)return; const img=new Image(); img.onload=()=>{ try{ ctx.drawImage(img,0,0,cv.width,cv.height); }catch(e){} }; img.src=url; }
-        // 리사이즈: 크기 같으면 무동작(지우지 않음), 다르면 기존 그림 보존해 재설정
-        function fitKeep(){ const r=cv.getBoundingClientRect(); if(r.width<1)return;
+        const box=document.getElementById("scratch"), wrap=document.getElementById("scWrap");
+        const cvC=document.getElementById("scratchpad"), cvT=document.getElementById("scratchpad-tutor");
+        if(!box||!wrap||!cvC||!cvT)return;
+        const dpr=Math.min(window.devicePixelRatio||1,2);
+        const L={ child:{cv:cvC,ctx:cvC.getContext("2d"),undo:[],pen:"#2d2d3a"}, tutor:{cv:cvT,ctx:cvT.getContext("2d"),undo:[],pen:"#e0455e"} };
+        const PEN=2.6*dpr, ERA=18*dpr;
+        let eraser=false, tutorMode=false;
+        const store={}; let curIdx=null; const tutorUsed={};   // store[idx]={child,tutor}
+        const MKEY="cubenest_mock_login";
+        const isLoggedIn=()=>{ try{return localStorage.getItem(MKEY)==="1";}catch(e){return false;} };
+        const childLocked=()=> !!(curIdx!=null && S.state[curIdx] && S.state[curIdx].answered);
+        const active=()=> tutorMode?L.tutor:L.child;
+        const canDraw=()=> tutorMode ? isLoggedIn() : !childLocked();
+        function snapshot(){ const a=active(); try{ a.undo.push(a.ctx.getImageData(0,0,a.cv.width,a.cv.height)); if(a.undo.length>5)a.undo.shift(); }catch(e){} }
+        function saveCur(){ if(curIdx==null)return; try{ const child=cvC.toDataURL("image/png"); const tutor=tutorUsed[curIdx]?cvT.toDataURL("image/png"):((store[curIdx]&&store[curIdx].tutor)||null); store[curIdx]={child,tutor}; }catch(e){} }
+        function childUrl(idx){ const r=store[idx]; return r?(typeof r==="string"?r:r.child):null; }
+        function tutorUrlOf(idx){ const r=store[idx]; return (r&&typeof r==="object")?r.tutor:null; }
+        function paintInto(ctx,cv,url){ if(!url)return; const img=new Image(); img.onload=()=>{try{ctx.drawImage(img,0,0,cv.width,cv.height);}catch(e){}}; img.src=url; }
+        function doUndo(){ const a=active(); if(!canDraw()||!a.undo.length)return; a.ctx.putImageData(a.undo.pop(),0,0); saveCur(); }
+        function sizeBoth(w,h){ [cvC,cvT].forEach(c=>{c.width=w;c.height=h;const x=c.getContext("2d");x.lineCap="round";x.lineJoin="round";}); }
+        // 리사이즈: 크기 같으면 무동작, 다르면 두 레이어 모두 보존해 재설정
+        function fitKeep(){ const r=wrap.getBoundingClientRect(); if(r.width<1)return;
           const w=Math.max(1,Math.round(r.width*dpr)), h=Math.max(1,Math.round(r.height*dpr));
-          if(cv.width===w&&cv.height===h)return;
-          let snap=null; if(cv.width>0&&cv.height>0){ try{ snap=document.createElement("canvas"); snap.width=cv.width; snap.height=cv.height; snap.getContext("2d").drawImage(cv,0,0); }catch(e){} }
-          cv.width=w; cv.height=h; ctx.lineCap="round"; ctx.lineJoin="round"; undo=[];
-          if(snap){ try{ ctx.drawImage(snap,0,0,w,h); }catch(e){} } saveCur();
+          if(cvC.width===w&&cvC.height===h)return;
+          let sc=null,st=null;
+          try{ if(cvC.width>0){sc=document.createElement("canvas");sc.width=cvC.width;sc.height=cvC.height;sc.getContext("2d").drawImage(cvC,0,0);} }catch(e){}
+          try{ if(cvT.width>0){st=document.createElement("canvas");st.width=cvT.width;st.height=cvT.height;st.getContext("2d").drawImage(cvT,0,0);} }catch(e){}
+          sizeBoth(w,h); L.child.undo=[]; L.tutor.undo=[];
+          if(sc){try{L.child.ctx.drawImage(sc,0,0,w,h);}catch(e){}}
+          if(st){try{L.tutor.ctx.drawImage(st,0,0,w,h);}catch(e){}}
+          saveCur();
         }
-        // 문항 진입: 크기 맞추고 그 문항의 저장 풀이를 복원(없으면 빈 캔버스)
-        function fitFor(idx){ const r=cv.getBoundingClientRect(); if(r.width<1)return;
-          cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr)); ctx.lineCap="round"; ctx.lineJoin="round"; undo=[]; paint(store[idx]);
+        // 문항 진입: 크기 맞추고 두 레이어 복원
+        function fitFor(idx){ const r=wrap.getBoundingClientRect(); if(r.width<1)return;
+          sizeBoth(Math.max(1,Math.round(r.width*dpr)),Math.max(1,Math.round(r.height*dpr))); L.child.undo=[]; L.tutor.undo=[];
+          paintInto(L.child.ctx,cvC,childUrl(idx)); paintInto(L.tutor.ctx,cvT,tutorUrlOf(idx));
         }
-        const pos=e=>{const r=cv.getBoundingClientRect();return [(e.clientX-r.left)*cv.width/(r.width||1),(e.clientY-r.top)*cv.height/(r.height||1)];};
+        const pos=e=>{const r=wrap.getBoundingClientRect();const cv=active().cv;return [(e.clientX-r.left)*cv.width/(r.width||1),(e.clientY-r.top)*cv.height/(r.height||1)];};
         let drawing=false,lx=0,ly=0;
-        cv.addEventListener("pointerdown",e=>{drawing=true;snapshot();[lx,ly]=pos(e);ctx.globalCompositeOperation=eraser?"destination-out":"source-over";ctx.lineWidth=eraser?ERA:PEN;ctx.strokeStyle=penColor;cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);});
-        cv.addEventListener("pointermove",e=>{if(!drawing)return;const [x,y]=pos(e);ctx.beginPath();ctx.moveTo(lx,ly);ctx.lineTo(x,y);ctx.stroke();lx=x;ly=y;e.preventDefault();});
-        const end=()=>{ if(drawing){drawing=false;saveCur();} }; cv.addEventListener("pointerup",end);cv.addEventListener("pointercancel",end);cv.addEventListener("pointerleave",end);
+        wrap.addEventListener("pointerdown",e=>{ if(!canDraw())return; drawing=true; snapshot(); const a=active(); [lx,ly]=pos(e); a.ctx.globalCompositeOperation=eraser?"destination-out":"source-over"; a.ctx.lineWidth=eraser?ERA:PEN; a.ctx.strokeStyle=a.pen; wrap.setPointerCapture&&wrap.setPointerCapture(e.pointerId); if(tutorMode)tutorUsed[curIdx]=true; });
+        wrap.addEventListener("pointermove",e=>{ if(!drawing)return; const a=active(); const [x,y]=pos(e); a.ctx.beginPath();a.ctx.moveTo(lx,ly);a.ctx.lineTo(x,y);a.ctx.stroke();lx=x;ly=y;e.preventDefault(); });
+        const end=()=>{ if(drawing){drawing=false;saveCur();} }; wrap.addEventListener("pointerup",end);wrap.addEventListener("pointercancel",end);wrap.addEventListener("pointerleave",end);
+        // 아이 도구
         const er=document.getElementById("eraser");
-        box.querySelectorAll(".pen").forEach(b=>b.onclick=()=>{penColor=b.dataset.col;eraser=false;box.querySelectorAll(".pen").forEach(p=>p.classList.remove("on"));b.classList.add("on");if(er)er.classList.remove("on");});
-        if(er)er.onclick=()=>{eraser=!eraser;er.classList.toggle("on",eraser);if(eraser)box.querySelectorAll(".pen").forEach(p=>p.classList.remove("on"));else{const on=box.querySelector(".pen");if(on)on.classList.add("on");penColor=on?on.dataset.col:penColor;}};
-        const un=document.getElementById("scratchUndo"); if(un)un.onclick=doUndo;
-        const clr=document.getElementById("scratchClear"); if(clr)clr.onclick=()=>{snapshot();ctx.clearRect(0,0,cv.width,cv.height);saveCur();};
+        box.querySelectorAll(".scratch-left .pen").forEach(b=>b.onclick=()=>{ if(childLocked())return; L.child.pen=b.dataset.col; eraser=false; box.querySelectorAll(".scratch-left .pen").forEach(p=>p.classList.remove("on")); b.classList.add("on"); if(er)er.classList.remove("on"); });
+        if(er)er.onclick=()=>{ if(childLocked())return; eraser=!eraser; er.classList.toggle("on",eraser); if(eraser)box.querySelectorAll(".scratch-left .pen").forEach(p=>p.classList.remove("on")); else{const on=box.querySelector(".scratch-left .pen");if(on)on.classList.add("on");L.child.pen=on?on.dataset.col:L.child.pen;} };
+        const un=document.getElementById("scratchUndo"); if(un)un.onclick=()=>{ if(childLocked())return; doUndo(); };
+        const clr=document.getElementById("scratchClear"); if(clr)clr.onclick=()=>{ if(childLocked())return; snapshot(); L.child.ctx.clearRect(0,0,cvC.width,cvC.height); saveCur(); };
+        // 첨삭 도구(tutor 레이어)
+        box.querySelectorAll(".tpen").forEach(b=>b.onclick=()=>{ L.tutor.pen=b.dataset.col; eraser=false; box.querySelectorAll(".tpen").forEach(p=>p.classList.remove("on")); b.classList.add("on"); const te=document.getElementById("tutorEraser"); if(te)te.classList.remove("on"); });
+        const tEra=document.getElementById("tutorEraser"); if(tEra)tEra.onclick=()=>{ eraser=!eraser; tEra.classList.toggle("on",eraser); if(!eraser){const on=box.querySelector(".tpen.on")||box.querySelector(".tpen");if(on){L.tutor.pen=on.dataset.col;}} };
+        const tUndo=document.getElementById("tutorUndo"); if(tUndo)tUndo.onclick=()=>{ if(!tutorMode)return; doUndo(); };
+        const tClr=document.getElementById("tutorClear"); if(tClr)tClr.onclick=()=>{ if(!tutorMode)return; snapshot(); L.tutor.ctx.clearRect(0,0,cvT.width,cvT.height); tutorUsed[curIdx]=true; saveCur(); };
+        // 첨삭 바 상태: 잠금 여부·로그인 여부·첨삭 모드에 따라
+        function renderTutorBar(){
+          const tut=document.getElementById("scratchTutor"); if(!tut)return;
+          const locked=childLocked(); tut.hidden=!locked;
+          const tools=document.getElementById("tutorTools"), loginB=document.getElementById("tutorLoginBtn"), startB=document.getElementById("tutorBtn");
+          if(!locked){ tutorMode=false; if(tools)tools.hidden=true; return; }
+          const authed=isLoggedIn();
+          if(tools)tools.hidden=!tutorMode;
+          if(loginB)loginB.hidden=authed;
+          if(startB)startB.hidden=(!authed||tutorMode);
+        }
+        function enterTutor(){ if(!isLoggedIn())return; eraser=false; tutorMode=true; renderTutorBar(); }
+        function exitTutor(){ eraser=false; tutorMode=false; renderTutorBar(); }
+        const loginB=document.getElementById("tutorLoginBtn");
+        if(loginB)loginB.onclick=()=>{ if(confirm("개발용 모의 로그인을 진행할까요?\n(실제 로그인은 준비 중 — Supabase OAuth·성인·RLS)")){ try{localStorage.setItem(MKEY,"1");}catch(e){} track("mock_login",{ctx:"scratch"}); enterTutor(); } };
+        const startB=document.getElementById("tutorBtn"); if(startB)startB.onclick=()=>enterTutor();
+        const tDone=document.getElementById("tutorDone"); if(tDone)tDone.onclick=exitTutor;
+        // 접기
         const fold=document.getElementById("scratchFold"), foldtxt=document.getElementById("foldtxt");
         const setFoldTxt=()=>{ if(foldtxt) foldtxt.textContent=box.classList.contains("collapsed")?"펼치기":"접기"; };
         if(localStorage.getItem("cubenest_scratch_fold")==="1") box.classList.add("collapsed");
@@ -436,11 +475,12 @@
         if(fold)fold.onclick=()=>{const c=box.classList.toggle("collapsed");localStorage.setItem("cubenest_scratch_fold",c?"1":"0");setFoldTxt();if(!c)requestAnimationFrame(fitKeep);};
         window.addEventListener("resize",()=>{ if(!box.hidden && !box.classList.contains("collapsed")) fitKeep(); });
         SCRATCH={
-          show(idx){ if(curIdx!=null&&curIdx!==idx)saveCur(); box.hidden=false; curIdx=idx; if(!box.classList.contains("collapsed")) requestAnimationFrame(()=>fitFor(idx)); },
+          show(idx){ if(curIdx!=null&&curIdx!==idx)saveCur(); box.hidden=false; curIdx=idx; tutorMode=false; box.classList.toggle("locked",childLocked()); renderTutorBar(); if(!box.classList.contains("collapsed")) requestAnimationFrame(()=>fitFor(idx)); },
           hide(){ saveCur(); box.hidden=true; },
-          get(idx){ return store[idx!=null?idx:curIdx]||null; },   // PDF/worksheets 연동용
-          all(){ saveCur(); return Object.assign({},store); },
-          load(obj){ try{ Object.assign(store,obj||{}); }catch(e){} }
+          relock(){ if(curIdx==null)return; saveCur(); box.classList.toggle("locked",childLocked()); renderTutorBar(); },
+          get(idx){ const r=store[idx!=null?idx:curIdx]; if(!r)return null; return typeof r==="string"?{child:r,tutor:null}:r; },
+          all(){ saveCur(); const o={}; for(const k in store){ const r=store[k]; o[k]=typeof r==="string"?{child:r,tutor:null}:r; } return o; },
+          load(obj){ try{ for(const k in (obj||{})){ const r=obj[k]; store[k]=typeof r==="string"?{child:r,tutor:null}:r; } }catch(e){} }
         };
       }
 
@@ -627,7 +667,7 @@
           sol=`<div class="sol-draw"><div class="sol-pic">${renderThreeViews(sh)}<span>정답</span></div>${vis3d}</div>`;
         }
         S.answered[S.idx]=ok;
-        if(!revisit){ S.state[S.idx].ok=ok; track("quiz_answer",{type:pr.type,level:pr.lv,correct:ok,idx:S.idx}); }
+        if(!revisit){ S.state[S.idx].ok=ok; track("quiz_answer",{type:pr.type,level:pr.lv,correct:ok,idx:S.idx}); if(SCRATCH)SCRATCH.relock(); }
         const ai=document.getElementById("ans"); if(ai)ai.disabled=true;
         const sb=document.getElementById("submit"); if(sb)sb.disabled=true;
         // 답안 즉시 표시 + 애니메이션·사운드 동시
@@ -750,7 +790,7 @@
           ask:pr.ask||TYPES[pr.type].ask,
           shape: CORE ? CORE.serialize(coreShape(pr.sh)) : null,   // F2 직렬화(worksheets가 core로 재현·정답 산출)
           correct: !!S.answered[i],
-          scratch: SCRATCH ? SCRATCH.get(i) : null                 // 학생 풀이(PNG dataURL) — 문제 하단 병기용
+          scratch: SCRATCH ? SCRATCH.get(i) : null                 // {child,tutor} 2레이어(아이 풀이 / 첨삭) PNG dataURL — 문제 하단 병기용
         }));
         return { meta:{ title:TYPES[S.type].title, grade:"초등 6학년", type:S.type,
           levels:PRM.levels, n:S.n, seed:S.seed, date:new Date().toISOString().slice(0,10), source:"quiz" }, problems };
