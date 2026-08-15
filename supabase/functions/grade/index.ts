@@ -3,19 +3,13 @@
 import { preflight, json } from "../_shared/cors.ts";
 import { paramsHash, verify } from "../_shared/gsig.ts";
 import { buildProbs, answerKeyFor, checkAnswer, explainFor } from "../_shared/gen-adapter.ts";
-import { checkRate } from "../_shared/rate.ts";
 
 Deno.serve(async (req: Request) => {
   const pf = preflight(req); if (pf) return pf;
   if (req.method !== "POST") return json(req, { error: "method" }, 405);
 
-  let rl: { ok: boolean; retryAfter?: number; reason?: string };
-  try { rl = await checkRate(req, "grade"); } catch { rl = { ok: true }; }
-  if (!rl.ok) {
-    const r = json(req, { error: "rate", reason: rl.reason }, 429);
-    r.headers.set("Retry-After", String(rl.retryAfter ?? 60));
-    return r;
-  }
+  // rate limit: grade는 gsig(위·변조 방지)로 보호되고 유효 gsig는 rate 걸린 generate에서만 나오므로,
+  // DB 왕복(지연)을 피하려 grade에서는 rate 검사 생략. (남용 징후 시 재활성.)
 
   let body: any;
   try { body = await req.json(); } catch { return json(req, { error: "bad json" }, 400); }

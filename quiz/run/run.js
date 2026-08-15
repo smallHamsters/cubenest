@@ -29,6 +29,41 @@
       function track(name,params){ try{ if(window.gtag) window.gtag('event',name,params||{}); }catch(e){} }
       /* 공용 모듈(§5.1): 계산=CubeNest.core, 뷰어/펼쳐보기=CubeNest.viewer. core 먼저 로드. */
       const CORE=(window.CubeNest&&window.CubeNest.core)||null;
+
+      /* ===== 로딩 버디 — 채점 캐릭터(gradeSVG)와 동일 톤. 로드 시 "Ready~"만. ===== */
+      const Loader=(function(){
+        let el=null,styled=false;
+        function css(){ if(styled)return; styled=true; const st=document.createElement('style'); st.textContent=
+          ".cubi-ov{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:rgba(247,248,251,.92);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .16s}"+
+          ".cubi-ov.on{opacity:1;pointer-events:auto}"+
+          ".cubi-buddy{width:148px;height:auto;animation:cubi-bob 1s ease-in-out infinite;transform-origin:50% 90%}"+
+          "@keyframes cubi-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-11px)}}"+
+          ".cubi-buddy .wave{transform-box:fill-box;transform-origin:50% 100%;animation:cubi-wave .8s ease-in-out infinite}"+
+          "@keyframes cubi-wave{0%,100%{transform:rotate(20deg)}50%{transform:rotate(-16deg)}}"+
+          ".cubi-msg{font-family:var(--font);font-weight:900;font-size:clamp(30px,7vw,46px);line-height:1;color:var(--accent,#3b4bd8);"+
+          "text-shadow:0 2px 0 #fff,0 -2px 0 #fff,2px 0 0 #fff,-2px 0 0 #fff,0 3px 10px rgba(24,34,51,.18);"+
+          "animation:cubi-word .5s cubic-bezier(.34,1.6,.64,1) both}"+
+          "@keyframes cubi-word{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}";
+          document.head.appendChild(st); }
+        const BUDDY="<svg class='cubi-buddy' viewBox='45 110 130 92' xmlns='http://www.w3.org/2000/svg'><g>"+
+          "<path d='M70 130 L110 118 L150 130 L110 142z' fill='#f0d9b4' stroke='#c8965a' stroke-width='2.5' stroke-linejoin='round'/>"+
+          "<rect x='70' y='130' width='80' height='64' rx='11' fill='#e6c9a0' stroke='#c8965a' stroke-width='3'/>"+
+          "<rect x='53' y='132' width='10' height='26' rx='5' fill='#d8a76e' transform='rotate(30 58 145)'/>"+
+          "<rect class='wave' x='157' y='132' width='10' height='26' rx='5' fill='#d8a76e'/>"+
+          "<path d='M85 153 q6 -8 12 0' fill='none' stroke='#5b4327' stroke-width='4' stroke-linecap='round'/>"+
+          "<path d='M123 153 q6 -8 12 0' fill='none' stroke='#5b4327' stroke-width='4' stroke-linecap='round'/>"+
+          "<ellipse cx='83' cy='168' rx='6' ry='4' fill='#e88f96' opacity='.65'/>"+
+          "<ellipse cx='137' cy='168' rx='6' ry='4' fill='#e88f96' opacity='.65'/>"+
+          "<path d='M99 166 q11 14 22 0 z' fill='#8a4a3a'/>"+
+          "</g></svg>";
+        function ensure(){ css(); if(el)return; el=document.createElement('div'); el.className='cubi-ov';
+          el.innerHTML=BUDDY+"<div class='cubi-msg'></div>"; document.body.appendChild(el); }
+        let timer=null;
+        function show(kind){ ensure(); el.querySelector('.cubi-msg').textContent=(kind==='generate'?'Ready~':''); el.classList.add('on'); }
+        function showDelayed(kind,ms){ clearTimeout(timer); timer=setTimeout(function(){ show(kind); }, ms||250); }
+        function hide(){ clearTimeout(timer); if(el)el.classList.remove('on'); }
+        return {show,showDelayed,hide};
+      })();
       const VIEWER=(window.CubeNest&&window.CubeNest.viewer)||null;
       const GEN=(window.CubeNest&&window.CubeNest.gen)||null;
       function coreShape(sh){ return {gx:sh.gx, gy:sh.maxH, gz:sh.gz, edge:sh.edge, cells:sh.cells.map(c=>[c.x,c.y,c.z])}; }
@@ -846,6 +881,7 @@
       (async function init(){
         // gen-config는 서버 소유(정적 json 폐지). 클라는 INLINE_CONFIG 폴백만 유지(서버가 config 무시).
         if(window.CubeNest&&CubeNest.api&&CubeNest.api.__setConfig)CubeNest.api.__setConfig(GEN_CONFIG);
+        Loader.show('generate');
         await buildSession();
         initScratch();
         // 이어풀기: 저장된 진행(위치·답·정오)·연습장 복원
@@ -862,5 +898,6 @@
           window.addEventListener("scroll",()=>{ if(tick)return; tick=true; requestAnimationFrame(()=>{ const y=window.scrollY||0; if(Date.now()<hdrSuppress){ lastY=y; tick=false; return; } if(y>lastY&&y>64)hdr.classList.add("hide"); else if(y<lastY-2)hdr.classList.remove("hide"); lastY=y; tick=false; }); },{passive:true});
         })();
         track("quiz_run_start",{type:S.type,n:S.n,seed:S.seed});
+        Loader.hide();   // 로드 완료 → 즉시 퀴즈 표시
         renderProblem();
       })();
