@@ -1,1 +1,8 @@
 secret-keys.txt
+
+supabase/.env
+supabase/.env.*
+supabase/.branches/
+supabase/.temp/
+
+.vscode

@@ -1,0 +1,5 @@
+[functions.generate]
+verify_jwt = false
+
+[functions.grade]
+verify_jwt = false
