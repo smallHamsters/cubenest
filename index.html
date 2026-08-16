@@ -91,14 +91,9 @@
   .lead{font-size:clamp(15px,2.2vw,17px);color:var(--muted);max-width:56ch;margin:0;line-height:1.72;}
 
   /* ---------- top bar ---------- */
-  /* header.site-top / .site-topin / .site-brand / .site-nav 는 assets/css/nav.css 공용 정의 */
-  .top-cta{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 17px;
-    background:var(--accent);color:#fff;border-radius:12px;font-weight:800;font-size:13.5px;
-    box-shadow:0 3px 10px rgba(63,63,191,.28);transition:transform .12s,box-shadow .2s,background .2s;
-    flex:0 0 auto;margin-left:auto;}
-  .top-cta:hover{background:var(--accent-ink);box-shadow:0 5px 16px rgba(63,63,191,.36);}
-  .top-cta:active{transform:translateY(1px);}
-  .top-cta svg{width:15px;height:15px;}
+  /* header.site-top / .site-topin / .site-brand / .site-nav / .site-actions 는
+     assets/css/nav.css 공용 정의. 헤더 "바로 해보기" CTA는 제거했다 —
+     바로 아래 히어로에 같은 CTA가 있고, 모바일에서 메뉴 폭을 잡아먹었다. */
 
   /* ---------- hero ---------- */
   .hero{position:relative;overflow:hidden;
@@ -295,12 +290,11 @@
       <a href="playground/">플레이그라운드</a>
       <a href="quiz/">퀴즈</a>
       <a href="worksheets/">문제지 생성</a>
-      <a href="account/" id="authNav">로그인</a>
     </nav>
-    <a class="top-cta" id="topCta" href="playground/">
-      바로 해보기
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h13m0 0-5-5m5 5-5 5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </a>
+    <div class="site-actions">
+      <a href="my/" id="myNav"><span class="t">내 자료</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></a>
+      <a href="account/" id="authNav" aria-label="로그인" title="로그인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg></a>
+    </div>
   </div>
 </header>
 
@@ -578,7 +572,7 @@
 const PLAYGROUND_URL  = 'playground/';
 const FEEDBACK_URL    = 'https://forms.gle/hnEmkt5k1PoANYGr6';
 /* 도구 경로를 실제 버튼들에 반영 */
-['topCta','heroCta','finalCta','footPlay'].forEach(id=>{
+['heroCta','finalCta','footPlay'].forEach(id=>{
   const a=document.getElementById(id); if(a) a.setAttribute('href', PLAYGROUND_URL);
 });
 
