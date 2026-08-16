@@ -454,53 +454,64 @@
         const cvC=document.getElementById("scratchpad"), cvT=document.getElementById("scratchpad-tutor");
         if(!box||!wrap||!cvC||!cvT)return;
         const dpr=Math.min(window.devicePixelRatio||1,2);
-        const L={ child:{cv:cvC,ctx:cvC.getContext("2d"),undo:[],pen:"#2d2d3a"}, tutor:{cv:cvT,ctx:cvT.getContext("2d"),undo:[],pen:"#e0455e"} };
+        const L={ child:{cv:cvC,ctx:cvC.getContext("2d"),pen:"#2d2d3a"}, tutor:{cv:cvT,ctx:cvT.getContext("2d"),pen:"#e0455e"} };
         const PEN=2.6*dpr, ERA=18*dpr;
         let eraser=false, tutorMode=false;
-        const store={}; let curIdx=null; const tutorUsed={};   // store[idx]={child,tutor}
+        const store={}; let curIdx=null; const tutorUsed={};   // store[idx]={child:[stroke..],tutor:[stroke..]} — stroke={c,w(폭/캔버스폭),e,p:[[nx,ny]..0..1]}
         const childLocked=()=> !!(curIdx!=null && S.state[curIdx] && S.state[curIdx].answered);
         const active=()=> tutorMode?L.tutor:L.child;
         const canDraw=()=> tutorMode ? isLoggedIn() : !childLocked();
-        function snapshot(){ const a=active(); try{ a.undo.push(a.ctx.getImageData(0,0,a.cv.width,a.cv.height)); if(a.undo.length>5)a.undo.shift(); }catch(e){} }
-        function saveCur(){ if(curIdx==null)return; try{ const child=cvC.toDataURL("image/png"); const tutor=tutorUsed[curIdx]?cvT.toDataURL("image/png"):((store[curIdx]&&store[curIdx].tutor)||null); store[curIdx]={child,tutor}; }catch(e){} }
-        function childUrl(idx){ const r=store[idx]; return r?(typeof r==="string"?r:r.child):null; }
-        function tutorUrlOf(idx){ const r=store[idx]; return (r&&typeof r==="object")?r.tutor:null; }
-        function paintInto(ctx,cv,url){ if(!url)return; const img=new Image(); img.onload=()=>{try{ctx.drawImage(img,0,0,cv.width,cv.height);}catch(e){}}; img.src=url; }
-        function doUndo(){ const a=active(); if(!canDraw()||!a.undo.length)return; a.ctx.putImageData(a.undo.pop(),0,0); saveCur(); }
+        // ── 벡터 저장: PNG 대신 획(stroke) 배열. 해상도무관 재생·용량 1/10~1/50·크로스기기. ──
+        function ensure(idx){ if(idx==null)return {child:[],tutor:[]}; if(!store[idx]||!Array.isArray(store[idx].child)) store[idx]={child:[],tutor:[]}; return store[idx]; }
+        function strokesOf(idx,key){ const r=store[idx]; return (r&&Array.isArray(r[key]))?r[key]:[]; }
         function sizeBoth(w,h){ [cvC,cvT].forEach(c=>{c.width=w;c.height=h;const x=c.getContext("2d");x.lineCap="round";x.lineJoin="round";}); }
-        // 리사이즈: 크기 같으면 무동작, 다르면 두 레이어 모두 보존해 재설정
+        // 한 레이어 획들을 현재 캔버스 크기로 재생(정규화 0..1 → 픽셀)
+        function drawStrokes(ctx,ss,w,h){ ctx.clearRect(0,0,w,h);
+          for(const s of ss){ if(!s.p||!s.p.length)continue;
+            ctx.globalCompositeOperation=s.e?"destination-out":"source-over"; ctx.strokeStyle=s.c||"#2d2d3a"; ctx.lineWidth=Math.max(0.5,(s.w||0.004)*w);
+            ctx.beginPath(); ctx.moveTo(s.p[0][0]*w,s.p[0][1]*h);
+            if(s.p.length===1)ctx.lineTo(s.p[0][0]*w+0.1,s.p[0][1]*h); else for(let i=1;i<s.p.length;i++)ctx.lineTo(s.p[i][0]*w,s.p[i][1]*h);
+            ctx.stroke(); }
+          ctx.globalCompositeOperation="source-over"; }
+        function replayLayer(key){ const a=L[key]; drawStrokes(a.ctx,strokesOf(curIdx,key),a.cv.width,a.cv.height); }
+        function redraw(){ replayLayer("child"); replayLayer("tutor"); }
+        function saveCur(){ /* 획 커밋 시점에 store 갱신됨 — 호환용 훅(무동작) */ }
+        function doUndo(){ if(!canDraw())return; const key=tutorMode?"tutor":"child"; const ss=strokesOf(curIdx,key); if(!ss.length)return; ss.pop(); replayLayer(key); }
+        // 리사이즈: 크기 다르면 재설정 후 획 재생(래스터 복사 불필요)
         function fitKeep(){ const r=wrap.getBoundingClientRect(); if(r.width<1)return;
           const w=Math.max(1,Math.round(r.width*dpr)), h=Math.max(1,Math.round(r.height*dpr));
-          if(cvC.width===w&&cvC.height===h)return;
-          let sc=null,st=null;
-          try{ if(cvC.width>0){sc=document.createElement("canvas");sc.width=cvC.width;sc.height=cvC.height;sc.getContext("2d").drawImage(cvC,0,0);} }catch(e){}
-          try{ if(cvT.width>0){st=document.createElement("canvas");st.width=cvT.width;st.height=cvT.height;st.getContext("2d").drawImage(cvT,0,0);} }catch(e){}
-          sizeBoth(w,h); L.child.undo=[]; L.tutor.undo=[];
-          if(sc){try{L.child.ctx.drawImage(sc,0,0,w,h);}catch(e){}}
-          if(st){try{L.tutor.ctx.drawImage(st,0,0,w,h);}catch(e){}}
-          saveCur();
-        }
-        // 문항 진입: 크기 맞추고 두 레이어 복원
+          if(cvC.width===w&&cvC.height===h)return; sizeBoth(w,h); redraw(); }
+        // 문항 진입: 크기 맞추고 두 레이어 재생
         function fitFor(idx){ const r=wrap.getBoundingClientRect(); if(r.width<1)return;
-          sizeBoth(Math.max(1,Math.round(r.width*dpr)),Math.max(1,Math.round(r.height*dpr))); L.child.undo=[]; L.tutor.undo=[];
-          paintInto(L.child.ctx,cvC,childUrl(idx)); paintInto(L.tutor.ctx,cvT,tutorUrlOf(idx));
-        }
-        const pos=e=>{const r=wrap.getBoundingClientRect();const cv=active().cv;return [(e.clientX-r.left)*cv.width/(r.width||1),(e.clientY-r.top)*cv.height/(r.height||1)];};
-        let drawing=false,lx=0,ly=0;
-        wrap.addEventListener("pointerdown",e=>{ if(!canDraw())return; drawing=true; snapshot(); const a=active(); [lx,ly]=pos(e); a.ctx.globalCompositeOperation=eraser?"destination-out":"source-over"; a.ctx.lineWidth=eraser?ERA:PEN; a.ctx.strokeStyle=a.pen; wrap.setPointerCapture&&wrap.setPointerCapture(e.pointerId); if(tutorMode)tutorUsed[curIdx]=true; });
-        wrap.addEventListener("pointermove",e=>{ if(!drawing)return; const a=active(); const [x,y]=pos(e); a.ctx.beginPath();a.ctx.moveTo(lx,ly);a.ctx.lineTo(x,y);a.ctx.stroke();lx=x;ly=y;e.preventDefault(); });
-        const end=()=>{ if(drawing){drawing=false;saveCur();} }; wrap.addEventListener("pointerup",end);wrap.addEventListener("pointercancel",end);wrap.addEventListener("pointerleave",end);
+          sizeBoth(Math.max(1,Math.round(r.width*dpr)),Math.max(1,Math.round(r.height*dpr))); redraw(); }
+        const pos=e=>{const r=wrap.getBoundingClientRect();return [(e.clientX-r.left)/(r.width||1),(e.clientY-r.top)/(r.height||1)];}; // 정규화 0..1
+        let drawing=false, cur=null;
+        wrap.addEventListener("pointerdown",e=>{ if(!canDraw()||curIdx==null)return; drawing=true; const a=active(),cv=a.cv; const [nx,ny]=pos(e);
+          cur={c:a.pen,w:+((eraser?ERA:PEN)/cv.width).toFixed(4),e:eraser?1:0,p:[[+nx.toFixed(4),+ny.toFixed(4)]]};
+          a.ctx.globalCompositeOperation=eraser?"destination-out":"source-over"; a.ctx.lineWidth=eraser?ERA:PEN; a.ctx.strokeStyle=a.pen;
+          // 탭 한 번(점 하나)도 바로 보이게 — drawStrokes 의 단일점 처리와 같은 모양.
+          a.ctx.beginPath(); a.ctx.moveTo(nx*cv.width,ny*cv.height); a.ctx.lineTo(nx*cv.width+0.1,ny*cv.height); a.ctx.stroke();
+          wrap.setPointerCapture&&wrap.setPointerCapture(e.pointerId); if(tutorMode)tutorUsed[curIdx]=true; });
+        // 이동마다 '직전점→현재점' 1구간만 새 경로로 그린다. 경로를 누적하면 stroke() 가
+        // 매번 획 전체를 다시 래스터화해 점 수에 비례해 느려진다(600점에서 1회 0.9ms).
+        // lineCap/lineJoin 이 round 이고 색이 불투명이라 화면 결과는 누적 경로와 동일하다.
+        wrap.addEventListener("pointermove",e=>{ if(!drawing||!cur)return; const a=active(),cv=a.cv; const [nx,ny]=pos(e);
+          const last=cur.p[cur.p.length-1]; if(last&&Math.abs(last[0]-nx)<0.0015&&Math.abs(last[1]-ny)<0.0015)return; // 과밀 방지
+          a.ctx.beginPath(); a.ctx.moveTo(last[0]*cv.width,last[1]*cv.height); a.ctx.lineTo(nx*cv.width,ny*cv.height); a.ctx.stroke();
+          cur.p.push([+nx.toFixed(4),+ny.toFixed(4)]); e.preventDefault(); });
+        const end=()=>{ if(drawing&&cur){ const rec=ensure(curIdx); rec[tutorMode?"tutor":"child"].push(cur); } cur=null; drawing=false; };
+        wrap.addEventListener("pointerup",end);wrap.addEventListener("pointercancel",end);wrap.addEventListener("pointerleave",end);
         // 아이 도구
         const er=document.getElementById("eraser");
         box.querySelectorAll(".scratch-left .pen").forEach(b=>b.onclick=()=>{ if(childLocked())return; L.child.pen=b.dataset.col; eraser=false; box.querySelectorAll(".scratch-left .pen").forEach(p=>p.classList.remove("on")); b.classList.add("on"); if(er)er.classList.remove("on"); });
         if(er)er.onclick=()=>{ if(childLocked())return; eraser=!eraser; er.classList.toggle("on",eraser); if(eraser)box.querySelectorAll(".scratch-left .pen").forEach(p=>p.classList.remove("on")); else{const on=box.querySelector(".scratch-left .pen");if(on)on.classList.add("on");L.child.pen=on?on.dataset.col:L.child.pen;} };
         const un=document.getElementById("scratchUndo"); if(un)un.onclick=()=>{ if(childLocked())return; doUndo(); };
-        const clr=document.getElementById("scratchClear"); if(clr)clr.onclick=()=>{ if(childLocked())return; snapshot(); L.child.ctx.clearRect(0,0,cvC.width,cvC.height); saveCur(); };
+        const clr=document.getElementById("scratchClear"); if(clr)clr.onclick=()=>{ if(childLocked())return; ensure(curIdx).child=[]; replayLayer("child"); };
         // 첨삭 도구(tutor 레이어)
         box.querySelectorAll(".tpen").forEach(b=>b.onclick=()=>{ L.tutor.pen=b.dataset.col; eraser=false; box.querySelectorAll(".tpen").forEach(p=>p.classList.remove("on")); b.classList.add("on"); const te=document.getElementById("tutorEraser"); if(te)te.classList.remove("on"); });
         const tEra=document.getElementById("tutorEraser"); if(tEra)tEra.onclick=()=>{ eraser=!eraser; tEra.classList.toggle("on",eraser); if(!eraser){const on=box.querySelector(".tpen.on")||box.querySelector(".tpen");if(on){L.tutor.pen=on.dataset.col;}} };
         const tUndo=document.getElementById("tutorUndo"); if(tUndo)tUndo.onclick=()=>{ if(!tutorMode)return; doUndo(); };
-        const tClr=document.getElementById("tutorClear"); if(tClr)tClr.onclick=()=>{ if(!tutorMode)return; snapshot(); L.tutor.ctx.clearRect(0,0,cvT.width,cvT.height); tutorUsed[curIdx]=true; saveCur(); };
+        const tClr=document.getElementById("tutorClear"); if(tClr)tClr.onclick=()=>{ if(!tutorMode)return; ensure(curIdx).tutor=[]; tutorUsed[curIdx]=true; replayLayer("tutor"); };
         // 첨삭 바 상태: 잠금 여부·로그인 여부·첨삭 모드에 따라
         function renderTutorBar(){
           const tut=document.getElementById("scratchTutor"); if(!tut)return;
@@ -527,13 +538,20 @@
         setFoldTxt();
         if(fold)fold.onclick=()=>{const c=box.classList.toggle("collapsed");localStorage.setItem("cubenest_scratch_fold",c?"1":"0");setFoldTxt();if(!c)requestAnimationFrame(fitKeep);};
         window.addEventListener("resize",()=>{ if(!box.hidden && !box.classList.contains("collapsed")) fitKeep(); });
+        // 문제지 임베드용: 벡터 획 → PNG dataURL(오프스크린 렌더). 저장은 벡터, 출력만 이미지.
+        function renderDataURL(idx,key){ const ss=strokesOf(idx,key); if(!ss.length)return null;
+          const w=cvC.width||600, h=cvC.height||400; const oc=document.createElement("canvas"); oc.width=w; oc.height=h;
+          const ctx=oc.getContext("2d"); ctx.lineCap="round"; ctx.lineJoin="round"; drawStrokes(ctx,ss,w,h);
+          try{ return oc.toDataURL("image/png"); }catch(e){ return null; } }
         SCRATCH={
-          show(idx){ if(curIdx!=null&&curIdx!==idx)saveCur(); box.hidden=false; curIdx=idx; tutorMode=false; box.classList.toggle("locked",childLocked()); renderTutorBar(); if(!box.classList.contains("collapsed")) requestAnimationFrame(()=>fitFor(idx)); },
-          hide(){ saveCur(); box.hidden=true; },
-          relock(){ if(curIdx==null)return; saveCur(); box.classList.toggle("locked",childLocked()); renderTutorBar(); },
-          get(idx){ const r=store[idx!=null?idx:curIdx]; if(!r)return null; return typeof r==="string"?{child:r,tutor:null}:r; },
-          all(){ saveCur(); const o={}; for(const k in store){ const r=store[k]; o[k]=typeof r==="string"?{child:r,tutor:null}:r; } return o; },
-          load(obj){ try{ for(const k in (obj||{})){ const r=obj[k]; store[k]=typeof r==="string"?{child:r,tutor:null}:r; } }catch(e){} }
+          show(idx){ box.hidden=false; curIdx=idx; tutorMode=false; box.classList.toggle("locked",childLocked()); renderTutorBar(); if(!box.classList.contains("collapsed")) requestAnimationFrame(()=>fitFor(idx)); },
+          hide(){ box.hidden=true; },
+          relock(){ if(curIdx==null)return; box.classList.toggle("locked",childLocked()); renderTutorBar(); },
+          // 문제지 병기용: 벡터→PNG 변환(호환)
+          get(idx){ const i=idx!=null?idx:curIdx; const c=renderDataURL(i,"child"), t=renderDataURL(i,"tutor"); return (c||t)?{child:c,tutor:t}:null; },
+          // 저장/복원: 벡터 그대로(용량 최소·클라우드 동기화 준비). 레거시(dataURL)는 무시.
+          all(){ const o={}; for(const k in store){ const r=store[k]; if(r&&Array.isArray(r.child)) o[k]={child:r.child,tutor:Array.isArray(r.tutor)?r.tutor:[]}; } return o; },
+          load(obj){ try{ for(const k in (obj||{})){ const r=obj[k]; if(r&&Array.isArray(r.child)) store[k]={child:r.child,tutor:Array.isArray(r.tutor)?r.tutor:[]}; } }catch(e){} }
         };
       }
 
@@ -853,20 +871,39 @@
         hdrSuppress=Date.now()+700; window.scrollTo(0,0);
       }
       // 문제지(PDF) = worksheets 소관(자체 알고리즘). quiz는 세션+학생 연습장을 모아 넘겨 '이용'만 한다(마스터 §5.1·§8.1·§4.5).
-      function buildWorksheetPayload(){
-        const problems=S.probs.map((pr,i)=>({
-          n:i+1, type:pr.type, level:pr.lv, edu:PRM.edu||null,
-          ask:pr.ask||TYPES[pr.type].ask,
-          shape: CORE ? CORE.serialize(coreShape(pr.sh)) : null,   // F2 직렬화(worksheets가 core로 재현·정답 산출)
-          correct: !!S.answered[i],
-          scratch: SCRATCH ? SCRATCH.get(i) : null                 // {child,tutor} 2레이어(아이 풀이 / 첨삭) PNG dataURL — 문제 하단 병기용
-        }));
+      // SCRATCH.get() 은 획→PNG 동기 변환이라 문항당 ~19ms 든다. 문항 몇 개마다 한 번씩
+      // 제어를 넘겨 긴 프리즈 대신 짧은 조각으로 나눈다(태블릿에서 체감 차이가 크다).
+      async function buildWorksheetPayload(){
+        const problems=[];
+        for(let i=0;i<S.probs.length;i++){
+          const pr=S.probs[i];
+          problems.push({
+            n:i+1, type:pr.type, level:pr.lv, edu:PRM.edu||null,
+            ask:pr.ask||TYPES[pr.type].ask,
+            shape: CORE ? CORE.serialize(coreShape(pr.sh)) : null,   // F2 직렬화(worksheets가 core로 재현·정답 산출)
+            correct: !!S.answered[i],
+            scratch: SCRATCH ? SCRATCH.get(i) : null                 // {child,tutor} 2레이어(아이 풀이 / 첨삭) PNG dataURL — 문제 하단 병기용
+          });
+          if(i%3===2) await new Promise(r=>setTimeout(r,0));
+        }
         return { meta:{ title:TYPES[S.type].title, grade:"초등 6학년", type:S.type,
           levels:PRM.levels, n:S.n, seed:S.seed, date:new Date().toISOString().slice(0,10), source:"quiz" }, problems };
       }
-      function exportWorksheet(){
+      // 연습장 획 → PNG 변환이 문항마다 동기로 돌아 10문항이면 200ms(태블릿은 그 3~4배)
+      // 화면이 굳는다. 버튼을 먼저 '만드는 중'으로 바꿔 한 프레임 넘긴 뒤 무거운 일을 시작한다.
+      async function exportWorksheet(){
         track("worksheet_export_click",{type:S.type,n:S.n});
-        const payload=buildWorksheetPayload();
+        const btn=document.getElementById("worksheetBtn"); let label=null;
+        if(btn){ label=btn.textContent; btn.disabled=true; btn.textContent="📄 문제지 만드는 중…"; }
+        // 버튼 상태를 먼저 그린 뒤 무거운 일을 시작한다. rAF 는 탭이 백그라운드면 아예
+        // 멈추므로(누르고 탭을 옮기면 영영 안 끝난다) 타이머와 경주시켜 반드시 진행시킨다.
+        try{ await new Promise(r=>{ let done=false; const go=()=>{ if(!done){ done=true; r(); } };
+               requestAnimationFrame(()=>setTimeout(go,0)); setTimeout(go,60); });
+             await buildAndSend(); }
+        finally{ if(btn){ btn.disabled=false; btn.textContent=label; } }
+      }
+      async function buildAndSend(){
+        const payload=await buildWorksheetPayload();
         // /my "문제지·정답지" 로컬 축적.
         if(window.CubeNest&&CubeNest.mydata) try{ CubeNest.mydata.add({
           kind:"worksheet", title:TYPES[S.type].title+" 문제지 "+S.n+"문항",
