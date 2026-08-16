@@ -34,6 +34,7 @@
     <link rel="stylesheet" href="../../assets/css/tokens.css" />
     <link rel="stylesheet" href="../../assets/css/nav.css" />
     <link rel="stylesheet" href="../../assets/css/consent.css" />
+    <link rel="stylesheet" href="../../assets/css/auth.css" />
     <style>
       *{box-sizing:border-box}
       [hidden]{display:none!important}
@@ -269,6 +270,7 @@
           <a href="../../playground/">플레이그라운드</a>
           <a href="../" aria-current="page">퀴즈</a>
           <a href="../../worksheets/">문제지 생성</a>
+          <a href="../../account/" id="authNav">로그인</a>
         </nav>
       </div>
     </header>
@@ -314,7 +316,7 @@
             <button type="button" class="tool" id="tutorClear">지우기</button>
             <button type="button" class="tool" id="tutorDone">첨삭 종료</button>
           </div>
-          <button type="button" class="tool tutor-btn" id="tutorLoginBtn">🔓 로그인(모의)</button>
+          <button type="button" class="tool tutor-btn" id="tutorLoginBtn">🔓 로그인</button>
           <button type="button" class="tool tutor-btn" id="tutorBtn" hidden>✏️ 첨삭 시작</button>
         </div>
       </div>
@@ -334,6 +336,8 @@
         <button id="consentAccept" type="button">동의</button>
       </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../../assets/js/auth.js?v=0.1.0"></script>
     <script src="../../assets/js/consent.js"></script>
 
 

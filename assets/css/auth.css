@@ -1,0 +1,93 @@
+/* CubeNest — 로그인 모달 · 계정 진입점. assets/js/auth.js 가 주입하는 DOM 전용.
+   색은 tokens.css 변수만 사용한다(카카오 브랜드 색만 예외 — 아래 로컬 변수).
+   리포에 공용 모달 유틸이 없어(playground .sheet / quiz 오버레이는 각자 자체 구현)
+   이 파일은 자체 완결이다. */
+
+/* 제공자 브랜드 색 — 디자인 토큰이 아니라 외부 브랜드 규정 색이라 tokens.css 가 아닌
+   여기에 둔다. 모달(.cn-auth) 밖에서도 버튼을 쓰므로(/account) :root 스코프여야 한다. */
+:root{ --kakao-bg:#FEE500; --kakao-ink:#191600; }
+
+.cn-auth{
+  position:fixed; inset:0; z-index:9998;
+  display:flex; align-items:center; justify-content:center; padding:20px;
+  box-sizing:border-box;
+  font-family:var(--font); color:var(--ink);
+}
+.cn-auth[hidden]{display:none;}
+.cn-auth-scrim{
+  position:absolute; inset:0; background:rgba(24,34,51,.42);
+  opacity:0; transition:opacity .18s ease;
+  -webkit-backdrop-filter:blur(2px); backdrop-filter:blur(2px);
+}
+.cn-auth.on .cn-auth-scrim{opacity:1;}
+
+.cn-auth-card{
+  position:relative; width:min(360px,100%); box-sizing:border-box;
+  background:var(--panel); border-radius:var(--r-lg); box-shadow:var(--shadow-lg);
+  padding:26px 22px 20px; text-align:center;
+  opacity:0; transform:translateY(10px) scale(.98);
+  transition:opacity .18s ease, transform .18s ease;
+  max-height:calc(100vh - 40px); overflow-y:auto;
+}
+.cn-auth.on .cn-auth-card{opacity:1; transform:none;}
+
+.cn-auth-x{
+  position:absolute; top:10px; right:10px; width:34px; height:34px;
+  display:grid; place-items:center; padding:0;
+  border:0; background:transparent; color:var(--muted-2); cursor:pointer;
+  border-radius:10px;
+}
+.cn-auth-x svg{width:18px; height:18px;}
+@media (hover:hover){ .cn-auth-x:hover{background:var(--line-2); color:var(--ink);} }
+
+.cn-auth-t{margin:0 0 8px; font-size:19px; font-weight:800; letter-spacing:-.02em;}
+.cn-auth-d{margin:0 0 18px; font-size:13.5px; line-height:1.6; color:var(--muted);}
+.cn-auth-prov{font-size:12.5px; color:var(--muted-2);}
+.cn-auth-fine{margin:14px 0 0; font-size:11.5px; line-height:1.55; color:var(--muted-2);}
+
+.cn-auth-btn{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; min-height:48px; margin-top:9px; padding:0 16px; box-sizing:border-box;
+  border:0; border-radius:12px; cursor:pointer;
+  font-family:inherit; font-size:14.5px; font-weight:700; letter-spacing:-.01em;
+  box-shadow:var(--shadow-sm); transition:filter .15s, background .15s;
+}
+.cn-auth-btn svg{width:18px; height:18px; flex:0 0 auto;}
+@media (hover:hover){ .cn-auth-btn:hover{filter:brightness(.97);} }
+.cn-auth-btn:active{filter:brightness(.94);}
+
+.cn-auth-btn.kakao{background:var(--kakao-bg); color:var(--kakao-ink);}
+.cn-auth-btn.google{background:var(--panel); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line), var(--shadow-sm);}
+.cn-auth-btn.apple{background:#000; color:#fff;}
+.cn-auth-btn.accent{background:var(--accent); color:#fff;}
+.cn-auth-btn.ghost{background:var(--panel-2); color:var(--muted); box-shadow:inset 0 0 0 1px var(--line);}
+
+/* 헤더 계정 링크 — 로그인 상태일 때만 살짝 강조(nav.css 의 aria-current 스타일과 구분) */
+.site-nav a#authNav.authed{color:var(--accent-ink);}
+
+/* ── /account 페이지 ─────────────────────────────────────── */
+.acct-main{max-width:420px; margin:0 auto; padding:36px 22px 60px;}
+.acct-card{
+  background:var(--panel); border-radius:var(--r-lg); box-shadow:var(--shadow);
+  padding:26px 22px; text-align:center;
+}
+.acct-card h1{margin:0 0 8px; font-size:20px; font-weight:800; letter-spacing:-.02em;}
+.acct-card p{margin:0 0 18px; font-size:13.5px; line-height:1.6; color:var(--muted);}
+.acct-who{
+  display:flex; align-items:center; gap:12px; text-align:left;
+  background:var(--panel-2); border:1px solid var(--line); border-radius:var(--r);
+  padding:14px 16px; margin:0 0 18px;
+}
+.acct-who .av{
+  width:40px; height:40px; flex:0 0 auto; border-radius:50%;
+  background:var(--accent-soft); color:var(--accent-ink);
+  display:grid; place-items:center; font-weight:800; font-size:16px;
+}
+.acct-who .who-t{min-width:0;}
+.acct-who .who-t b{display:block; font-size:14.5px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.acct-who .who-t span{font-size:12px; color:var(--muted-2);}
+.acct-note{
+  margin:16px 0 0; padding:12px 14px; text-align:left;
+  background:var(--accent-soft); border-radius:var(--r);
+  font-size:12.5px; line-height:1.6; color:var(--accent-ink);
+}

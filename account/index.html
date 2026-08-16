@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>큐브네스트 · 계정</title>
+<meta name="description" content="큐브네스트 계정 로그인·로그아웃.">
+<meta name="theme-color" content="#e9eef4">
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/nav.css">
+<link rel="stylesheet" href="../assets/css/consent.css">
+<link rel="stylesheet" href="../assets/css/auth.css">
+<style>
+  body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);}
+</style>
+</head>
+<body>
+
+<header class="site-top" id="topbar">
+  <div class="site-topin">
+    <a class="site-brand" href="../" aria-label="큐브네스트 홈">
+      <img class="glyph" src="../assets/img/brand-glyph.svg" alt="" role="presentation">
+      <span class="t"><b>CubeNest</b><span>쌓기나무 3D 학습</span></span>
+    </a>
+    <nav class="site-nav" aria-label="주요 메뉴">
+      <a href="../">홈</a>
+      <a href="../guide/">가이드</a>
+      <a href="../playground/">플레이그라운드</a>
+      <a href="../quiz/">퀴즈</a>
+      <a href="../worksheets/">문제지 생성</a>
+      <a href="./" id="authNav" aria-current="page">로그인</a>
+    </nav>
+  </div>
+</header>
+
+<main class="acct-main">
+  <div class="acct-card" id="acctCard">
+    <h1>불러오는 중…</h1>
+  </div>
+</main>
+
+<div class="consent" id="consent" hidden>
+  <div class="consent-msg">CubeNest는 서비스 개선을 위해 <b>Google Analytics로 익명 사용 통계</b>(쿠키 포함)를 수집해요. 동의하시면 방문·사용 데이터가 수집되고, 거부하시면 수집하지 않습니다.</div>
+  <div class="consent-btns">
+    <button id="consentDeny" type="button">거부</button>
+    <button id="consentAccept" type="button">동의</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/auth.js?v=0.1.0"></script>
+<script src="../assets/js/consent.js"></script>
+<script>
+/* F1 계측 — 동의 후 로드된 gtag 가 있을 때만(오리진 공유 consent.js 정본) */
+function track(name, params){
+  try{ if(window.gtag) window.gtag('event', name, params||{}); }catch(e){}
+}
+
+(function(){
+  var A = (window.CubeNest && window.CubeNest.auth) || null;
+  var card = document.getElementById('acctCard');
+  if(!A){ card.innerHTML = '<h1>로그인 준비 중</h1><p>인증 모듈을 불러오지 못했어요.</p>'; return; }
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  function render(){
+    if(!A.settled){ card.innerHTML = '<h1>불러오는 중…</h1>'; return; }
+    if(A.isLoggedIn()){
+      var label = A.userLabel();
+      card.innerHTML =
+        '<h1>내 계정</h1>' +
+        '<div class="acct-who">' +
+          '<div class="av">' + esc(label.slice(0,1).toUpperCase()) + '</div>' +
+          '<div class="who-t"><b>' + esc(label) + '</b><span>' + esc(A.providerLabel()) + ' 계정</span></div>' +
+        '</div>' +
+        '<button class="cn-auth-btn ghost" type="button" id="acctOut">로그아웃</button>' +
+        '<div class="acct-note">지금은 <b>플레이그라운드 계산 과정 무제한</b>과 <b>퀴즈 첨삭</b>이 열려 있어요. 퀴즈 결과 클라우드 저장은 준비 중입니다.</div>';
+      document.getElementById('acctOut').onclick = function(){ A.signOut(); };
+    }else{
+      card.innerHTML =
+        '<h1>로그인</h1>' +
+        '<p>비밀번호 없이 카카오·구글 계정으로 시작해요.<br>계정은 <b>보호자·선생님용</b>이고, 학생은 로그인 없이 사용할 수 있어요.</p>' +
+        A.providerButtonsHtml() +
+        '<div class="acct-note">로그인하면 계산 과정을 시간 제한 없이 보고, 퀴즈 첨삭을 쓸 수 있어요.</div>';
+      card.querySelectorAll('[data-provider]').forEach(function(b){
+        b.onclick = function(){
+          var p = b.getAttribute('data-provider');
+          if(p==='kakao') A.signInWithKakao('account');
+          else if(p==='google') A.signInWithGoogle('account');
+          else A.signInWithApple('account');
+        };
+      });
+    }
+  }
+
+  A.onAuthChange(render);
+  A.ready.then(render);
+})();
+
+/* 상단바 그림자(스크롤 시) */
+(function(){
+  var bar=document.getElementById('topbar');
+  var on=function(){ bar.classList.toggle('scrolled', window.scrollY>8); };
+  on(); window.addEventListener('scroll', on, {passive:true});
+})();
+</script>
+
+</body>
+</html>

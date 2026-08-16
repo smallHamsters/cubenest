@@ -142,6 +142,7 @@
     <link rel="stylesheet" href="../assets/css/tokens.css" />
     <link rel="stylesheet" href="../assets/css/nav.css" />
     <link rel="stylesheet" href="../assets/css/consent.css" />
+    <link rel="stylesheet" href="../assets/css/auth.css" />
 
     <style>
       .glyph {
@@ -629,6 +630,7 @@
           <a href="../playground/">플레이그라운드</a>
           <a href="./" aria-current="page">퀴즈</a>
           <a href="../worksheets/">문제지 생성</a>
+          <a href="../account/" id="authNav">로그인</a>
         </nav>
       </div>
     </header>
@@ -703,6 +705,8 @@
         <button id="consentAccept" type="button">동의</button>
       </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../assets/js/auth.js?v=0.1.0"></script>
     <script src="../assets/js/consent.js"></script>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

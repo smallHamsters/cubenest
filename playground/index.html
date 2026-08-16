@@ -53,6 +53,7 @@
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <link rel="stylesheet" href="../assets/css/tokens.css">
 <link rel="stylesheet" href="../assets/css/consent.css">
+<link rel="stylesheet" href="../assets/css/auth.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="../assets/js/cubenest-core.js?v=0.3.0"></script>   <!-- 공용 계산 코어(마스터 §5.1) -->
 <script src="../assets/js/cubenest-viewer.js?v=0.2.3"></script>   <!-- 공용 3D 뷰어·펼쳐보기(마스터 §5.1, core 의존) -->
@@ -550,6 +551,8 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/auth.js?v=0.1.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script>
 "use strict";
@@ -1294,12 +1297,17 @@ function postEdit(mkLayers=true){
 /* ===== F4 정답 숨기기 + calc 30분 타임게이트 (마스터 6.3.1) ===== */
 const LOCK_SVG='<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
 const TIMEGATE_MS=30*60*1000, TIMEGATE_KEY='cubenest_pg_first';
+/* 인증(§6): CubeNest.auth 가 로그인 상태의 단일 진실 소스. 로그인하면 calc 타임게이트가 풀린다. */
+const AUTH=(window.CubeNest&&window.CubeNest.auth)||null;
+function authLoggedIn(){ return !!(AUTH&&AUTH.isLoggedIn()); }
 function markFirstInteract(){ try{ if(!localStorage.getItem(TIMEGATE_KEY)) localStorage.setItem(TIMEGATE_KEY, String(Date.now())); }catch(e){} }
-function timeGateElapsed(){ try{ const t=Number(localStorage.getItem(TIMEGATE_KEY)); return Number.isFinite(t)&&t>0&&(Date.now()-t>=TIMEGATE_MS); }catch(e){ return false; } }
-function checkTimeGate(){ const l=timeGateElapsed(); if(l!==calcLocked){ calcLocked=l; renderStats(); syncCalcLockBtn(); if(l){ try{track('calc_timegate_lock');}catch(e){} } } }
+function timeGateElapsed(){ if(authLoggedIn()) return false; try{ const t=Number(localStorage.getItem(TIMEGATE_KEY)); return Number.isFinite(t)&&t>0&&(Date.now()-t>=TIMEGATE_MS); }catch(e){ return false; } }
+function checkTimeGate(){ if(AUTH&&!AUTH.settled) return;   // 세션 복원 전엔 잠그지 않는다(잠금 깜빡임 방지)
+  const l=timeGateElapsed(); if(l!==calcLocked){ calcLocked=l; renderStats(); syncCalcLockBtn(); if(l){ try{track('calc_timegate_lock');}catch(e){} } } }
 function fmtMMSS(ms){ const s=Math.max(0,Math.ceil(ms/1000)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
 function updateFreeTimer(){
   const el=document.getElementById('freeTimer'); if(!el) return;
+  if(authLoggedIn()){ el.hidden=true; const _p0=document.getElementById('freeTimerPop'); if(_p0) _p0.hidden=true; return; }   // 로그인 → 무료 타이머 자체가 무의미
   let first=0; try{ first=Number(localStorage.getItem(TIMEGATE_KEY))||0; }catch(e){}
   const rem = first ? (TIMEGATE_MS-(Date.now()-first)) : 0;
   if(!first || calcLocked || rem<=0){ el.hidden=true; const _p=document.getElementById('freeTimerPop'); if(_p) _p.hidden=true; return; }
@@ -1307,7 +1315,9 @@ function updateFreeTimer(){
   const t=document.getElementById('freeTimerText'); if(t) t.textContent='무료 체험 '+fmtMMSS(rem)+' 남음';
   el.classList.toggle('warn', rem<=60000);
 }
-function promptLogin(){ toast('로그인은 준비 중이에요. 곧 제공됩니다!'); try{ track('login_prompt'); }catch(e){} }   // 인증(P1.5) 연결 전 자리표시자
+/* 타임게이트 배너·무료 타이머 팝오버의 로그인 진입점 → 공용 모달(auth.js).
+   track('login_prompt')는 auth.js가 담당한다(중복 계측 방지). */
+function promptLogin(){ if(AUTH) AUTH.requireLogin('calc_timegate'); else toast('로그인을 불러오지 못했어요.'); }
 function setAnswerHidden(v){ answerHidden=!!v; syncCalcLockBtn(); renderStats(); try{ track(v?'answer_hide':'answer_reveal'); }catch(e){} }
 function syncCalcLockBtn(){
   const b=document.getElementById('calcLockBtn'); if(!b) return;
@@ -1685,6 +1695,8 @@ document.getElementById('calcLockBtn').addEventListener('click',()=>{ if(!calcLo
 document.getElementById('calcBody').addEventListener('click',(e)=>{ const a=e.target.closest('[data-action]'); if(!a) return; if(a.dataset.action==='reveal') setAnswerHidden(false); else if(a.dataset.action==='login'){ promptLogin(); } });
 (function(){ function onFirst(){ markFirstInteract(); updateFreeTimer(); checkTimeGate(); window.removeEventListener('pointerdown', onFirst, true); } window.addEventListener('pointerdown', onFirst, true); })();
 setInterval(()=>{ updateFreeTimer(); checkTimeGate(); }, 1000);
+/* 로그인/로그아웃 즉시 반영 — 모달에서 로그인하면 새로고침 없이 calc 잠금이 풀린다 */
+if(AUTH) AUTH.onAuthChange(()=>{ checkTimeGate(); updateFreeTimer(); });
 (function(){ const info=document.getElementById('freeTimerInfo'), pop=document.getElementById('freeTimerPop');
   if(info&&pop){ info.addEventListener('click',(e)=>{ e.stopPropagation(); pop.hidden=!pop.hidden; try{ if(!pop.hidden) track('free_info_open'); }catch(_){} });
     document.addEventListener('click',(e)=>{ if(!pop.hidden && !pop.contains(e.target) && !info.contains(e.target)) pop.hidden=true; });

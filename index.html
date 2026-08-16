@@ -29,6 +29,7 @@
 <link rel="stylesheet" href="assets/css/tokens.css">
 <link rel="stylesheet" href="assets/css/nav.css">
 <link rel="stylesheet" href="assets/css/consent.css">
+<link rel="stylesheet" href="assets/css/auth.css">
 <!-- 히어로 3D 뷰어용 (playground 정본과 동일 버전) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
@@ -294,6 +295,7 @@
       <a href="playground/">플레이그라운드</a>
       <a href="quiz/">퀴즈</a>
       <a href="worksheets/">문제지 생성</a>
+      <a href="account/" id="authNav">로그인</a>
     </nav>
     <a class="top-cta" id="topCta" href="playground/">
       바로 해보기
@@ -495,7 +497,7 @@
         <h3>아이와 함께, 준비물 없이</h3>
         <p>태블릿이나 휴대폰만 있으면 돼요. 아이가 직접 쌓고 돌려 보며 스스로 개수를 세어 보고, 답이 맞는지 바로 확인합니다.</p>
         <ul>
-          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>로그인·회원가입 없이 사용</li>
+          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>학생은 로그인·회원가입 없이 사용</li>
           <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>손으로 돌려 보며 공간 감각 연습</li>
           <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>정답·계산을 그 자리에서 확인</li>
         </ul>
@@ -508,7 +510,7 @@
 <section class="final">
   <div class="wrap">
     <h2>지금 바로 쌓아 보세요</h2>
-    <p>설치도, 로그인도 필요 없어요. 브라우저에서 열어 첫 번째 나무를 놓아 보면 됩니다.</p>
+    <p>설치도 필요 없어요. 학생은 로그인 없이 브라우저에서 열어 첫 번째 나무를 놓아 보면 됩니다.</p>
     <a class="btn btn-onaccent" id="finalCta" href="playground/">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
       쌓기나무 도구 열기
@@ -561,6 +563,8 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/auth.js?v=0.1.0"></script>
 <script src="assets/js/consent.js"></script>
 <script>
 /* ============================================================

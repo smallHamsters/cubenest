@@ -29,6 +29,10 @@
       function track(name,params){ try{ if(window.gtag) window.gtag('event',name,params||{}); }catch(e){} }
       /* 공용 모듈(§5.1): 계산=CubeNest.core, 뷰어/펼쳐보기=CubeNest.viewer. core 먼저 로드. */
       const CORE=(window.CubeNest&&window.CubeNest.core)||null;
+      /* 인증(§6): CubeNest.auth 가 로그인 상태의 단일 진실 소스.
+         첨삭 게이트(initScratch)와 결과 저장(saveResult)이 반드시 '같은 하나'를 봐야 한다. */
+      const AUTH=(window.CubeNest&&window.CubeNest.auth)||null;
+      const isLoggedIn=()=> !!(AUTH&&AUTH.isLoggedIn());
 
       /* ===== 로딩 버디 — 채점 캐릭터(gradeSVG)와 동일 톤. 로드 시 "Ready~"만. ===== */
       const Loader=(function(){
@@ -450,8 +454,6 @@
         const PEN=2.6*dpr, ERA=18*dpr;
         let eraser=false, tutorMode=false;
         const store={}; let curIdx=null; const tutorUsed={};   // store[idx]={child,tutor}
-        const MKEY="cubenest_mock_login";
-        const isLoggedIn=()=>{ try{return localStorage.getItem(MKEY)==="1";}catch(e){return false;} };
         const childLocked=()=> !!(curIdx!=null && S.state[curIdx] && S.state[curIdx].answered);
         const active=()=> tutorMode?L.tutor:L.child;
         const canDraw=()=> tutorMode ? isLoggedIn() : !childLocked();
@@ -509,7 +511,9 @@
         function enterTutor(){ if(!isLoggedIn())return; eraser=false; tutorMode=true; renderTutorBar(); }
         function exitTutor(){ eraser=false; tutorMode=false; renderTutorBar(); }
         const loginB=document.getElementById("tutorLoginBtn");
-        if(loginB)loginB.onclick=()=>{ if(confirm("개발용 모의 로그인을 진행할까요?\n(실제 로그인은 준비 중 — Supabase OAuth·성인·RLS)")){ try{localStorage.setItem(MKEY,"1");}catch(e){} track("mock_login",{ctx:"scratch"}); enterTutor(); } };
+        if(loginB)loginB.onclick=()=>{ AUTH ? AUTH.requireLogin("scratch") : alert("로그인 기능을 불러오지 못했어요."); };
+        // 모달에서 로그인/로그아웃하면 첨삭 바를 즉시 갱신(새로고침 불필요)
+        if(AUTH) AUTH.onAuthChange(()=>{ if(!isLoggedIn()&&tutorMode) exitTutor(); else renderTutorBar(); });
         const startB=document.getElementById("tutorBtn"); if(startB)startB.onclick=()=>enterTutor();
         const tDone=document.getElementById("tutorDone"); if(tDone)tDone.onclick=exitTutor;
         // 접기
@@ -860,8 +864,12 @@
       }
       // 결과 저장 = 로그인 필요(마스터 6.3 RLS / 6 Supabase OAuth). 로컬엔 이미 저장됨.
       function saveResult(){
-        track("save_result_click",{loggedIn:false});
-        alert("결과 저장(클라우드)은 로그인이 필요해요.\n\n· 로그인: Supabase OAuth(카카오 우선) · 성인 계정\n· 저장 데이터는 RLS로 본인만 접근\n\n로그인 기능은 준비 중입니다.\n(지금 결과는 이 기기에 자동 저장돼 있어요.)");
+        const authed=isLoggedIn();
+        track("save_result_click",{loggedIn:authed});
+        if(!authed){ AUTH ? AUTH.requireLogin("save_result")
+                          : alert("결과 저장(클라우드)은 로그인이 필요해요.\n(지금 결과는 이 기기에 자동 저장돼 있어요.)"); return; }
+        // 로그인됨 → 클라우드 저장 API는 다음 단계(DB 스키마 + RLS). 지금은 로컬 저장 안내까지.
+        alert("클라우드 저장은 곧 제공돼요.\n\n· 저장 데이터는 RLS로 본인만 접근\n\n지금 결과는 이 기기에 자동 저장돼 있어요.");
       }
       // 공유: 같은 seed URL → 같은 퀴즈 재현. Web Share → 클립보드 폴백.
       function shareQuiz(){
