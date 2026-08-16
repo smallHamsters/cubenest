@@ -114,13 +114,28 @@
     return out;
   }
 
-  // 세션 전체(레벨 시퀀스 포함)
+  // 세션 전체(레벨 시퀀스 포함). v0.2: 3축 gen-config(genConfig)로 cfg 해석.
+  function cfgRef() { return (typeof CubeNest_genConfig !== "undefined" && CubeNest_genConfig)
+    || (global.CubeNest && global.CubeNest.genConfig) || null; }
   function genSession(o) {
     var C = coreRef(o.core);
-    var rngL = rngFrom(o.seed + ':L'), pool = levelPool(o.levels, o.type), probs = [];
+    var CFG = cfgRef();
+    var rngL = rngFrom(o.seed + ':L'), probs = [];
+    // 지원 등급 교집합(요청 levels ∩ 유형 지원). 없으면 유형 최소 지원 등급.
+    var support = CFG ? CFG.support(o.type) : (o.levels || ['중']);
+    var pool = (o.levels || support).filter(function (l) { return support.indexOf(l) >= 0; });
+    if (!pool.length) {                     // 요청이 전부 미지원 → 가장 가까운 지원 등급 1개
+      var ORD = ['하','중','상','최상'];
+      var want = (o.levels && o.levels.length) ? ORD.indexOf(o.levels[o.levels.length-1]) : 1;
+      var best = support[0] || '중', bd = 99;
+      support.forEach(function(l){ var d=Math.abs(ORD.indexOf(l)-want); if(d<bd){bd=d;best=l;} });
+      pool = [best];
+    }
     for (var i = 0; i < o.n; i++) {
       var lv = pool[Math.floor(rngL() * pool.length)];
-      var cfg = o.config.levels[lv];
+      // cfg 해석: 3축 프리셋(있으면) → 없으면 구 config.levels 폴백.
+      var cfg = CFG ? CFG.resolveCfg(o.type, lv, rngFrom(o.seed + ':cfg' + i))
+                    : (o.config && o.config.levels && o.config.levels[lv]);
       probs.push(genProblem({ type: o.type, level: lv, seed: o.seed, index: i, cfg: cfg, edu: o.edu, core: C }));
     }
     return probs;

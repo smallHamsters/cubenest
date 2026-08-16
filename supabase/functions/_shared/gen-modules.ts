@@ -4,9 +4,10 @@
 //   - 원본 IIFE는 파일 상단에서 실행되어 globalThis.CubeNest를 채우고, 하단 export가 이를 노출.
 //   - 브라우저용 원본은 assets/js/의 것을 그대로 사용(이 복사본과 무관).
 
-import { core } from "./cubenest-core.js";   // 값 import (번들 포함 보장)
+import { core } from "./cubenest-core.js";          // 값 import (번들 포함 보장)
+import { genConfig } from "./cubenest-gen-config.js"; // gen보다 먼저(genSession이 참조)
 import { gen } from "./cubenest-gen.js";
-export { core, gen };
+export { core, gen, genConfig };
 
 // gen-config: 공개 json 폐지 → 서버 상수(단일 출처).
 export const GEN_CONFIG = {
