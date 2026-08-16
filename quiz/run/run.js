@@ -307,12 +307,16 @@
         let n=Math.min(30,Math.max(5,+(p.get("n")||10)));
         let seed=p.get("seed")||Math.random().toString(36).slice(2,9);
         let dim=p.get("dim")||"all"; // 3d=3D 임베드 / 2d=2D 겨냥도 / all=기본(3D)
-        return {type,levels,n,seed,dim};
+        let restart=p.get("restart")==="1"; // /my 다시풀기: 저장 세션 제거 후 처음부터
+        let view=p.get("view")||"";         // /my 결과보기: view=result → 결과화면
+        return {type,levels,n,seed,dim,restart,view};
       }
       const PRM=loadParams();
       const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[],state:[]};
       // 세션 지속(새로고침 이어풀기): 진행 위치·문항별 답·정오·연습장 저장
       const SKEY="cubenest_quiz_sess_"+[PRM.seed,PRM.type,PRM.n,(PRM.levels||[]).join(""),PRM.edu||"",PRM.dim||""].join("_");
+      // /my "다시풀기"(restart=1): 저장 세션·연습장 제거 후 처음부터.
+      if(PRM.restart){ try{ localStorage.removeItem(SKEY); localStorage.removeItem(SKEY+"_sc"); }catch(e){} }
       function saveSession(){
         try{
           const state=S.state.map(s=>s?{answered:!!s.answered,ok:!!s.ok,raw:s.raw}:null);
@@ -809,6 +813,11 @@
         const score=S.answered.filter(Boolean).length;
         const dots=S.answered.map((o,i)=>`<span class="dot ${o?'o':'x'}">${i+1}</span>`).join("");
         try{localStorage.setItem("cubenest_quiz_last",JSON.stringify({type:S.type,seed:S.seed,n:S.n,score,ts:Date.now()}));}catch(e){}
+        // /my "퀴즈 기록" 로컬 축적(로컬 우선, 로그인 불필요). mydata가 클라우드 전환 시 자동 동기화.
+        if(window.CubeNest&&CubeNest.mydata) try{ CubeNest.mydata.add({
+          kind:"quiz", title:TYPES[S.type].title, sub:"맞힌 문제 "+score+"/"+S.n,
+          meta:{ type:S.type, seed:S.seed, n:S.n, score:score }
+        }); }catch(e){}
         track("quiz_run_complete",{type:S.type,n:S.n,score,seed:S.seed});
         resultEl.className="result show";
         resultEl.innerHTML=`
@@ -858,6 +867,11 @@
       function exportWorksheet(){
         track("worksheet_export_click",{type:S.type,n:S.n});
         const payload=buildWorksheetPayload();
+        // /my "문제지·정답지" 로컬 축적.
+        if(window.CubeNest&&CubeNest.mydata) try{ CubeNest.mydata.add({
+          kind:"worksheet", title:TYPES[S.type].title+" 문제지 "+S.n+"문항",
+          sub:"정답지 포함", meta:{ type:S.type, seed:S.seed, n:S.n }
+        }); }catch(e){}
         const W=window.CubeNest && window.CubeNest.worksheets;
         if(W && typeof W.fromQuiz==="function"){ W.fromQuiz(payload); }   // ← worksheets 알고리즘 이용(PDF 렌더는 worksheets가)
         else { alert("문제지(PDF) 만들기는 worksheets와 연동돼요.\n\n· 각 문제 + 아이의 연습장 풀이를 함께 PDF로 출력\n· 학부모가 '무엇을 어떻게 풀었는지' 한눈에\n\nworksheets 모듈 연동은 준비 중입니다.\n(연습장 풀이는 문항별로 저장돼 있어요.)"); }
@@ -907,5 +921,7 @@
         })();
         track("quiz_run_start",{type:S.type,n:S.n,seed:S.seed});
         Loader.hide();   // 로드 완료 → 즉시 퀴즈 표시
+        // /my "결과보기"(view=result): 복원된 채점 상태로 결과 화면. 없으면 세션 복원(마지막 위치)으로 폴백.
+        if(PRM.view==="result" && saved && Array.isArray(saved.state) && saved.state.some(x=>x&&x.answered)){ showResult(); return; }
         renderProblem();
       })();

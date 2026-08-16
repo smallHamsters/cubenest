@@ -280,13 +280,19 @@
   }
 
   /* ── 헤더 계정 진입점 ─────────────────────────────────── */
-  /* 각 페이지 nav 에 <a id="authNav"> 가 손으로 들어가 있다. 텍스트만 상태에 맞춰 바꾼다.
+  /* 각 페이지 헤더의 .site-actions 안에 <a id="authNav"> 가 손으로 들어가 있다
+     (SEO — 내부 링크는 원본 HTML에 둔다). 로그인 상태에 맞춰 라벨과 .authed 만 갱신한다.
      playground 는 공용 헤더가 없어(전체화면 앱) 자연히 no-op 이 된다. */
   function mountHeader() {
     var a = document.getElementById('authNav');
     if (!a) return;
-    a.textContent = session ? '내 계정' : '로그인';
-    a.classList.toggle('authed', !!session);
+    var on = !!session;
+    a.classList.toggle('authed', on);
+    a.setAttribute('aria-label', on ? '내 계정' : '로그인');
+    a.setAttribute('title',      on ? '내 계정' : '로그인');
+    /* 아이콘(SVG) 헤더면 접근성 라벨만 갱신하고 마크업은 보존한다.
+       텍스트형 페이지는 종전처럼 라벨 텍스트를 넣는다(하위호환). */
+    if (!a.querySelector('svg')) a.textContent = on ? '내 계정' : '로그인';
   }
 
   /* ── 공개 API ─────────────────────────────────────────── */

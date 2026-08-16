@@ -4,9 +4,20 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>큐브네스트 · 계정</title>
-<meta name="description" content="큐브네스트 계정 로그인·로그아웃.">
+<meta name="description" content="큐브네스트 계정 · 로그인·이용 상태·내 자료.">
 <meta name="theme-color" content="#e9eef4">
 <meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://smallhamsters.github.io/cubenest/account/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CubeNest">
+<meta property="og:title" content="큐브네스트 · 계정">
+<meta property="og:description" content="로그인·이용 상태·내 자료.">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:url" content="https://smallhamsters.github.io/cubenest/account/">
+<meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
 
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <link rel="stylesheet" href="../assets/css/tokens.css">
@@ -14,7 +25,118 @@
 <link rel="stylesheet" href="../assets/css/consent.css">
 <link rel="stylesheet" href="../assets/css/auth.css">
 <style>
-  body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);}
+  body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);
+       -webkit-font-smoothing:antialiased;}
+
+  /* 계정 허브 — auth.css 의 .acct-* 위에 얹는 페이지 전용 컴포넌트(.ah-*) */
+  .ah-status{display:flex;align-items:center;gap:11px;text-align:left;
+             background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);
+             padding:13px 15px;margin:0 0 10px;}
+  .ah-status .dotmark{width:9px;height:9px;flex:0 0 auto;border-radius:50%;
+                      background:var(--add);box-shadow:0 0 0 4px var(--add-soft);}
+  .ah-status .st{min-width:0;flex:1;}
+  .ah-status .st b{display:block;font-size:13.5px;font-weight:700;}
+  .ah-status .st span{display:block;font-size:12px;color:var(--muted-2);margin-top:1px;}
+
+  .ah-links{display:flex;flex-direction:column;gap:9px;margin:14px 0 4px;}
+  .ah-link{display:flex;align-items:center;gap:13px;text-align:left;text-decoration:none;
+           background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+           padding:13px 14px;box-shadow:var(--shadow-sm);color:var(--ink);
+           transition:border-color .15s, transform .12s;}
+  @media (hover:hover){ .ah-link:hover{border-color:#d3dbe6;transform:translateY(-1px);} }
+  .ah-link .badge{width:42px;height:42px;flex:0 0 auto;border-radius:12px;
+                  display:grid;place-items:center;background:var(--accent-soft);}
+  .ah-link .badge svg{width:22px;height:22px;}
+  .ah-link .lt{min-width:0;flex:1;}
+  .ah-link .lt b{display:block;font-size:14px;font-weight:700;letter-spacing:-.01em;}
+  .ah-link .lt span{display:block;font-size:12px;color:var(--muted-2);margin-top:2px;}
+  .ah-link .cnt{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--accent-ink);
+                background:var(--accent-soft);padding:3px 9px;border-radius:999px;}
+  .ah-link .arrow{flex:0 0 auto;color:var(--muted-2);}
+  .ah-link .arrow svg{width:18px;height:18px;display:block;}
+
+  .ah-help{margin:14px 0 0;padding:13px 15px;border-radius:var(--r);text-align:left;
+           background:var(--accent-soft);color:var(--accent-ink);font-size:12.5px;line-height:1.55;}
+  .ah-help a{color:var(--accent-ink);font-weight:800;text-decoration:underline;text-underline-offset:2px;}
+
+  .ah-out{margin-top:16px;}
+
+  /* 계정 관리: 하나의 카드(.ah-panel) 안에 섹션(.ah-sec)을 순서대로, 얇은 구분선으로 */
+  .ah-panel{background:var(--panel);border-radius:var(--r-lg);box-shadow:var(--shadow);
+            text-align:left;padding:6px 20px;margin:0 0 14px;}
+  .ah-sec{padding:18px 0;border-top:1px solid var(--line-2);}
+  .ah-sec:first-child{border-top:0;padding-top:16px;}
+  .ah-sec:last-child{padding-bottom:16px;}
+  .ah-sec > h2{margin:0 0 12px;font-size:14px;font-weight:800;letter-spacing:-.01em;}
+
+  /* 넓은 컨테이너(참고 페이지와 동일 1180) + 데스크톱 2열 */
+  .acct-main{max-width:1180px;padding:clamp(16px,3vw,26px) clamp(16px,4vw,40px) 56px;}
+  /* 계정 콘텐츠(ah-panel·ah-link·ah-help)는 한 열로 세로 배열(중앙 컬럼) */
+  .acct-stack{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:14px;}
+  .acct-stack .ah-panel,.acct-stack .ah-links,.acct-stack .ah-help{margin:0;}
+  .acct-login{max-width:420px;margin:8px auto 0;}
+
+  /* 닉네임 설정 */
+  .ah-nick{margin-top:14px;}
+  .ah-nick .nl{font-size:12px;font-weight:700;color:var(--muted);margin:0 0 6px;}
+  .ah-nick .nrow{display:flex;gap:8px;}
+  .ah-nick input{flex:1;min-width:0;height:44px;padding:0 13px;box-sizing:border-box;
+                 border:1px solid var(--line);border-radius:11px;background:var(--panel-2);
+                 font-family:inherit;font-size:14px;color:var(--ink);}
+  .ah-nick input:focus{outline:none;border-color:var(--accent);background:var(--panel);box-shadow:0 0 0 3px var(--accent-soft);}
+  .ah-nick button{flex:0 0 auto;height:44px;padding:0 16px;border:0;border-radius:11px;
+                  background:var(--accent);color:#fff;font-family:inherit;font-weight:800;font-size:13.5px;cursor:pointer;transition:background .15s;}
+  @media (hover:hover){ .ah-nick button:hover{background:var(--accent-ink);} }
+  .ah-nick .nhint{margin:8px 0 0;font-size:12px;line-height:1.5;color:var(--muted-2);}
+  .ah-nick .nhint.ok{color:var(--add);}
+
+  /* 이용권 */
+  .ah-plan{display:flex;align-items:center;gap:12px;}
+  .ah-plan .pill{flex:0 0 auto;font-size:12px;font-weight:800;color:#fff;
+                 background:var(--accent);padding:6px 12px;border-radius:999px;}
+  .ah-plan .pt{min-width:0;flex:1;}
+  .ah-plan .pt b{display:block;font-size:14px;font-weight:700;}
+  .ah-plan .pt span{display:block;font-size:12px;color:var(--muted-2);margin-top:2px;}
+  .ah-planfoot{margin:12px 0 0;font-size:12px;line-height:1.55;color:var(--muted);}
+
+  /* 쿠폰 입력 */
+  .ah-coupon{display:flex;gap:8px;}
+  .ah-coupon input{flex:1;min-width:0;height:46px;padding:0 14px;box-sizing:border-box;
+                   border:1px solid var(--line);border-radius:12px;background:var(--panel-2);
+                   font-family:inherit;font-size:14px;color:var(--ink);
+                   text-transform:uppercase;letter-spacing:.04em;}
+  .ah-coupon input:focus{outline:none;border-color:var(--accent);background:var(--panel);
+                         box-shadow:0 0 0 3px var(--accent-soft);}
+  .ah-coupon button{flex:0 0 auto;height:46px;padding:0 18px;border:0;border-radius:12px;
+                    background:var(--accent);color:#fff;font-family:inherit;font-weight:800;font-size:14px;
+                    cursor:pointer;transition:background .15s;}
+  @media (hover:hover){ .ah-coupon button:hover{background:var(--accent-ink);} }
+  .ah-coupon button:disabled{background:var(--muted-2);cursor:default;}
+  .ah-msg{margin:10px 0 0;font-size:12.5px;line-height:1.5;min-height:0;}
+  .ah-msg.ok{color:var(--add);} .ah-msg.no{color:var(--del);} .ah-msg.info{color:var(--muted);}
+
+  /* 결제 내역 */
+  .ah-empty{padding:8px 2px 2px;font-size:13px;color:var(--muted);line-height:1.55;}
+  .ah-pay{display:flex;align-items:center;justify-content:space-between;gap:12px;
+          padding:11px 0;border-top:1px solid var(--line-2);font-size:13px;}
+  .ah-pay:first-child{border-top:0;}
+  .ah-pay .pd b{font-weight:700;} .ah-pay .pd span{display:block;font-size:11.5px;color:var(--muted-2);}
+  .ah-pay .pa{font-weight:800;}
+
+  /* 로딩 스켈레톤 */
+  .ah-skel i{display:block;height:56px;border-radius:var(--r);margin-bottom:10px;
+             background:linear-gradient(90deg,var(--panel-2),var(--line-2),var(--panel-2));
+             background-size:200% 100%;animation:shimmer 1.2s infinite;}
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  @media (prefers-reduced-motion:reduce){ .ah-skel i{animation:none;} }
+
+  /* 푸터(문의 = CS, §6.6) */
+  .site-foot{max-width:1180px;margin:6px auto 0;padding:22px clamp(16px,4vw,40px) 30px;
+             border-top:1px solid var(--line);text-align:center;
+             font-size:12px;color:var(--muted-2);line-height:1.7;}
+  .site-foot a{color:var(--muted);text-decoration:none;font-weight:600;}
+  @media (hover:hover){ .site-foot a:hover{color:var(--accent-ink);} }
+  .site-foot .dot{margin:0 7px;opacity:.5;}
 </style>
 </head>
 <body>
@@ -23,7 +145,7 @@
   <div class="site-topin">
     <a class="site-brand" href="../" aria-label="큐브네스트 홈">
       <img class="glyph" src="../assets/img/brand-glyph.svg" alt="" role="presentation">
-      <span class="t"><b>CubeNest</b><span>쌓기나무 3D 학습</span></span>
+      <span class="t"><b data-brand>CubeNest</b><span>쌓기나무 3D 학습</span></span>
     </a>
     <nav class="site-nav" aria-label="주요 메뉴">
       <a href="../">홈</a>
@@ -31,16 +153,24 @@
       <a href="../playground/">플레이그라운드</a>
       <a href="../quiz/">퀴즈</a>
       <a href="../worksheets/">문제지 생성</a>
-      <a href="./" id="authNav" aria-current="page">로그인</a>
     </nav>
+    <div class="site-actions">
+      <a href="../my/" id="myNav"><span class="t">내 자료</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></a>
+      <a href="./" id="authNav" aria-current="page" aria-label="로그인" title="로그인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg></a>
+    </div>
   </div>
 </header>
 
 <main class="acct-main">
-  <div class="acct-card" id="acctCard">
-    <h1>불러오는 중…</h1>
+  <div id="acctRoot">
+    <div class="acct-card"><div class="ah-skel"><i></i><i></i><i></i></div></div>
   </div>
 </main>
+
+<footer class="site-foot">
+  <div>도움이 필요하세요? <a href="#" id="csLink" target="_blank" rel="noopener">문의하기</a></div>
+  <div style="margin-top:6px;">© <span id="year"></span> CubeNest<span class="dot">·</span>쌓기나무 3D 학습</div>
+</footer>
 
 <div class="consent" id="consent" hidden>
   <div class="consent-msg">CubeNest는 서비스 개선을 위해 <b>Google Analytics로 익명 사용 통계</b>(쿠키 포함)를 수집해요. 동의하시면 방문·사용 데이터가 수집되고, 거부하시면 수집하지 않습니다.</div>
@@ -52,49 +182,200 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.1.0"></script>
+<script src="../assets/js/mydata.js?v=0.1.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script>
-/* F1 계측 — 동의 후 로드된 gtag 가 있을 때만(오리진 공유 consent.js 정본) */
-function track(name, params){
-  try{ if(window.gtag) window.gtag('event', name, params||{}); }catch(e){}
-}
+/* F1 계측 — 동의 후 gtag 가 있을 때만(오리진 공유 consent.js 정본) */
+function track(name, params){ try{ if(window.gtag) window.gtag('event', name, params||{}); }catch(e){} }
+
+/* CS 창구 — 마스터 §6.6: 전 페이지 푸터 문의 → 구글폼(초기).
+   ⚠ 실제 구글폼 URL 로 교체해야 함(계정/자료 두 페이지 공통 상수). */
+var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
 
 (function(){
+  var ko = (navigator.language||'').toLowerCase().startsWith('ko');
+  var brand = ko ? '큐브네스트' : 'CubeNest';
+  document.querySelectorAll('[data-brand]').forEach(function(el){ el.textContent = brand; });
+  document.title = brand + ' · 계정';
+
+  var y = document.getElementById('year'); if(y) y.textContent = new Date().getFullYear();
+  var cs = document.getElementById('csLink'); if(cs) cs.href = CS_FORM_URL;
+
   var A = (window.CubeNest && window.CubeNest.auth) || null;
-  var card = document.getElementById('acctCard');
-  if(!A){ card.innerHTML = '<h1>로그인 준비 중</h1><p>인증 모듈을 불러오지 못했어요.</p>'; return; }
+  var M = (window.CubeNest && window.CubeNest.mydata) || null;
+  var root = document.getElementById('acctRoot');
+  if(!A){ root.innerHTML = '<div class="acct-card"><h1>로그인 준비 중</h1><p>인증 모듈을 불러오지 못했어요.</p></div>'; return; }
 
   function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
     return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
 
-  function render(){
-    if(!A.settled){ card.innerHTML = '<h1>불러오는 중…</h1>'; return; }
-    if(A.isLoggedIn()){
-      var label = A.userLabel();
-      card.innerHTML =
-        '<h1>내 계정</h1>' +
-        '<div class="acct-who">' +
-          '<div class="av">' + esc(label.slice(0,1).toUpperCase()) + '</div>' +
-          '<div class="who-t"><b>' + esc(label) + '</b><span>' + esc(A.providerLabel()) + ' 계정</span></div>' +
-        '</div>' +
-        '<button class="cn-auth-btn ghost" type="button" id="acctOut">로그아웃</button>' +
-        '<div class="acct-note">지금은 <b>플레이그라운드 계산 과정 무제한</b>과 <b>퀴즈 첨삭</b>이 열려 있어요. 퀴즈 결과 클라우드 저장은 준비 중입니다.</div>';
-      document.getElementById('acctOut').onclick = function(){ A.signOut(); };
-    }else{
-      card.innerHTML =
-        '<h1>로그인</h1>' +
-        '<p>비밀번호 없이 카카오·구글 계정으로 시작해요.<br>계정은 <b>보호자·선생님용</b>이고, 학생은 로그인 없이 사용할 수 있어요.</p>' +
-        A.providerButtonsHtml() +
-        '<div class="acct-note">로그인하면 계산 과정을 시간 제한 없이 보고, 퀴즈 첨삭을 쓸 수 있어요.</div>';
-      card.querySelectorAll('[data-provider]').forEach(function(b){
-        b.onclick = function(){
-          var p = b.getAttribute('data-provider');
-          if(p==='kakao') A.signInWithKakao('account');
-          else if(p==='google') A.signInWithGoogle('account');
-          else A.signInWithApple('account');
-        };
-      });
+  function icon(kind){
+    var a='<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+    if(kind==='my') return a+'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>';
+    if(kind==='play') return a+'<path d="M12 2l9 5-9 5-9-5z"/><path d="M3 12l9 5 9-5"/><path d="M3 17l9 5 9-5"/></svg>';
+    return a+'<path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>';
+  }
+  var chevron = '<span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>';
+
+  function linkRow(kind, href, title, sub, countHtml){
+    return '<a class="ah-link" href="'+esc(href)+'">'+
+      '<span class="badge">'+icon(kind)+'</span>'+
+      '<span class="lt"><b>'+esc(title)+'</b><span>'+esc(sub)+'</span></span>'+
+      (countHtml||'')+chevron+'</a>';
+  }
+
+  /* 사람 아이콘(아바타용) */
+  function personSvg(){
+    return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="var(--accent-ink)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg>';
+  }
+
+  /* 이용권·결제·쿠폰의 정본은 서버다(§6.5 Postgres 이용권 + Edge Function 결제/검증,
+     §6.7 유료 판정은 서버/RLS — 클라이언트 신뢰 금지). 아래는 표시용 이음새이며,
+     베타 기간엔 전면 무료라 무료 상태를 정직하게 보여준다. */
+  function loadEntitlement(){
+    // TODO: 서버/RLS 조회로 교체. 베타 = 무료 고정.
+    return Promise.resolve({ plan:'beta_free', label:'베타 무료 이용권', note:'베타 기간 · 만료 없음' });
+  }
+  function loadPayments(){
+    // TODO: 서버 조회로 교체. 베타엔 결제 없음.
+    return Promise.resolve([]);
+  }
+  function redeemCoupon(code){
+    // TODO: Edge Function /redeem 서버 검증으로 교체. 베타엔 안내만.
+    return Promise.resolve({ ok:false, reason:'beta', message:'쿠폰은 정식 출시 후 사용할 수 있어요. 코드는 메모해 두세요.' });
+  }
+
+  function planBody(ent){
+    return '<div class="ah-plan">'+
+        '<span class="pill">무료</span>'+
+        '<span class="pt"><b>'+esc(ent.label)+'</b><span>'+esc(ent.note)+'</span></span>'+
+      '</div>'+
+      '<p class="ah-planfoot">정식 출시 후에는 <b>기간 이용권</b>으로 전환돼요. 베타 동안은 모든 기능이 무료입니다.</p>';
+  }
+  function paymentsBody(pays){
+    return (pays && pays.length)
+      ? pays.map(function(p){ return '<div class="ah-pay"><span class="pd"><b>'+esc(p.title)+'</b><span>'+esc(p.date)+'</span></span><span class="pa">'+esc(p.amount)+'</span></div>'; }).join('')
+      : '<div class="ah-empty">아직 결제 내역이 없어요. 베타 기간은 <b>무료</b>입니다.</div>';
+  }
+  function couponBody(){
+    return '<div class="ah-coupon">'+
+        '<input id="cpInput" type="text" inputmode="latin" autocomplete="off" spellcheck="false" maxlength="24" placeholder="쿠폰 코드 입력" aria-label="쿠폰 코드">'+
+        '<button id="cpBtn" type="button">적용</button>'+
+      '</div>'+
+      '<p class="ah-msg info" id="cpMsg"></p>';
+  }
+  function sec(title, body){
+    return '<section class="ah-sec"><h2>'+esc(title)+'</h2>'+body+'</section>';
+  }
+
+  /* ── 로그인 상태: 계정 허브 ─────────────────────────── */
+  function renderHub(){
+    var label = A.userLabel();
+    var curNick = (M && M.getNickname && M.getNickname()) || '';
+    root.innerHTML =
+      '<div class="acct-stack">'+
+        /* 계정 관리: 하나의 카드 안에 순서대로 — 내 계정 → 이용권 → 쿠폰 → 결제 내역 */
+        '<div class="ah-panel">'+
+          sec('내 계정',
+            '<div class="acct-who">'+
+              '<div class="av">'+personSvg()+'</div>'+
+              '<div class="who-t"><b>'+esc(label)+'</b><span>'+esc(A.providerLabel())+' 계정</span></div>'+
+            '</div>'+
+            '<div class="ah-nick">'+
+              '<p class="nl">표시 이름(닉네임)</p>'+
+              '<div class="nrow">'+
+                '<input id="nickInput" type="text" maxlength="20" autocomplete="off" placeholder="'+esc(A.userLabel())+'" value="'+esc(curNick)+'" aria-label="표시 이름">'+
+                '<button id="nickSave" type="button">저장</button>'+
+              '</div>'+
+              '<p class="nhint" id="nickHint">‘내 자료’ 페이지에 <b>○○님의 자료</b>로 표시돼요. 이 기기에만 저장돼요.</p>'+
+            '</div>')+
+          sec('이용권', '<div id="planSlot"><div class="ah-empty">불러오는 중…</div></div>')+
+          sec('결제 내역', '<div id="paySlot"><div class="ah-empty">불러오는 중…</div></div>')+
+          sec('쿠폰 코드', couponBody())+
+          '<div class="ah-sec"><button class="cn-auth-btn ghost" type="button" id="acctOut">로그아웃</button></div>'+
+        '</div>'+
+        /* 내 자료 = 분리된 카드 */
+        '<div class="ah-links">'+
+          linkRow('my','../my/','내 자료','퀴즈 기록·문제지·모양','<span class="cnt" id="myCnt" hidden></span>')+
+        '</div>'+
+        '<div class="ah-help">막히거나 이상한 점이 있으면 <a href="'+esc(CS_FORM_URL)+'" target="_blank" rel="noopener">문의하기</a>로 알려주세요. 보통 하루 안에 답해요.</div>'+
+      '</div>';
+
+    document.getElementById('acctOut').onclick = function(){ A.signOut(); };
+
+    /* 닉네임 저장(로컬) — /my 제목에 반영 */
+    var ni=document.getElementById('nickInput'), ns=document.getElementById('nickSave'), nh=document.getElementById('nickHint');
+    if(ns){
+      ns.onclick=function(){
+        var v=(ni.value||'').trim();
+        Promise.resolve(M ? M.setNickname(v) : v).then(function(){
+          nh.className='nhint ok';
+          /* 닉네임은 localStorage 전용(mydata.setNickname) — 기기가 바뀌면 초기화된다.
+             프로필 동기화가 붙기 전까지 그 사실을 숨기지 않는다. */
+          nh.textContent = (v ? ('저장했어요 · ‘'+v+'님의 자료’로 표시돼요.') : '저장했어요 · 계정 이름으로 표시돼요.')
+            + ' 이 기기에만 저장돼요.';
+          track('nickname_set',{});
+        });
+      };
+      ni.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); ns.click(); } });
     }
+
+    loadEntitlement().then(function(ent){ var s=document.getElementById('planSlot'); if(s) s.innerHTML=planBody(ent); }).catch(function(){});
+    loadPayments().then(function(p){ var s=document.getElementById('paySlot'); if(s) s.innerHTML=paymentsBody(p); }).catch(function(){});
+
+    /* 쿠폰 적용 */
+    var inp=document.getElementById('cpInput'), btn=document.getElementById('cpBtn'), msg=document.getElementById('cpMsg');
+    function setMsg(t,cls){ msg.className='ah-msg '+(cls||'info'); msg.textContent=t; }
+    if(btn){
+      btn.onclick=function(){
+        var code=(inp.value||'').trim().toUpperCase();
+        if(!code){ setMsg('쿠폰 코드를 입력해 주세요.','no'); inp.focus(); return; }
+        if(code.length<4){ setMsg('코드가 너무 짧아요. 다시 확인해 주세요.','no'); return; }
+        btn.disabled=true; setMsg('확인 중…','info'); track('coupon_submit',{});
+        redeemCoupon(code).then(function(r){
+          btn.disabled=false;
+          setMsg(r.message, r.ok?'ok':(r.reason==='beta'?'info':'no'));
+          if(r.ok) inp.value='';
+        }).catch(function(){ btn.disabled=false; setMsg('지금은 확인할 수 없어요. 잠시 후 다시 시도해 주세요.','no'); });
+      };
+      inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); btn.click(); } });
+    }
+
+    /* 내 자료 개수(로컬) */
+    if(M){
+      Promise.all([M.quizFeed(), M.list('worksheet'), M.list('shape')]).then(function(r){
+        var total=r[0].length+r[1].length+r[2].length, el=document.getElementById('myCnt');
+        if(el && total>0){ el.textContent=total+'개'; el.hidden=false; }
+      }).catch(function(){});
+    }
+    track('account_view', { loggedIn:true });
+  }
+
+  /* ── 비로그인: 로그인 카드 ──────────────────────────── */
+  function renderLogin(){
+    root.innerHTML =
+      '<div class="acct-login"><div class="acct-card">'+
+        '<h1>로그인</h1>'+
+        '<p>비밀번호 없이 카카오·구글 계정으로 시작해요.<br>'+
+        '계정은 <b>보호자·선생님용</b>이고, 학생은 로그인 없이 사용할 수 있어요.</p>'+
+        A.providerButtonsHtml()+
+        '<div class="acct-note">로그인하면 계산 과정을 시간 제한 없이 보고, 퀴즈 첨삭을 쓰고, <b>내 자료·이용권·쿠폰</b>을 관리할 수 있어요.</div>'+
+      '</div></div>';
+    root.querySelectorAll('[data-provider]').forEach(function(b){
+      b.onclick = function(){
+        var p = b.getAttribute('data-provider');
+        if(p==='kakao') A.signInWithKakao('account');
+        else if(p==='google') A.signInWithGoogle('account');
+        else A.signInWithApple('account');
+      };
+    });
+    track('account_login_view', { loggedIn:false });
+  }
+
+  function render(){
+    if(!A.settled){ /* 세션 복원 전 — 스켈레톤 유지(잠금 깜빡임 방지) */ return; }
+    if(A.isLoggedIn()) renderHub();
+    else renderLogin();
   }
 
   A.onAuthChange(render);
@@ -103,7 +384,7 @@ function track(name, params){
 
 /* 상단바 그림자(스크롤 시) */
 (function(){
-  var bar=document.getElementById('topbar');
+  var bar=document.getElementById('topbar'); if(!bar) return;
   var on=function(){ bar.classList.toggle('scrolled', window.scrollY>8); };
   on(); window.addEventListener('scroll', on, {passive:true});
 })();

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>큐브네스트 · 내 자료</title>
+<meta name="description" content="큐브네스트에서 저장한 퀴즈 기록·문제지·모양을 한곳에서 봅니다.">
+<meta name="theme-color" content="#e9eef4">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://smallhamsters.github.io/cubenest/my/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CubeNest">
+<meta property="og:title" content="큐브네스트 · 내 자료">
+<meta property="og:description" content="저장한 퀴즈 기록·문제지·모양을 한곳에서.">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:url" content="https://smallhamsters.github.io/cubenest/my/">
+<meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+<link rel="stylesheet" href="../assets/css/tokens.css">
+<link rel="stylesheet" href="../assets/css/nav.css">
+<link rel="stylesheet" href="../assets/css/consent.css">
+<link rel="stylesheet" href="../assets/css/auth.css">
+<style>
+  body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);
+       -webkit-font-smoothing:antialiased;}
+
+  .my-main{max-width:1180px;margin:0 auto;
+           padding:clamp(16px,3vw,26px) clamp(16px,4vw,40px) calc(56px + env(safe-area-inset-bottom));}
+
+  /* ── 히어로: 나무 큐브 둥지 시그니처 ─────────────────── */
+  .my-hero{display:flex;align-items:center;gap:14px;margin:6px 2px 20px;}
+  .my-hero .nest{width:52px;height:52px;flex:0 0 auto;}
+  .my-hero h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.03em;line-height:1.15;}
+  .my-hero .sub{margin:3px 0 0;font-size:13px;color:var(--muted);}
+
+  /* ── 안내 배너(로컬 저장 정직 고지) ─────────────────── */
+  .my-note{display:flex;gap:9px;align-items:flex-start;max-width:760px;
+           margin:0 0 18px;padding:12px 14px;border-radius:var(--r);
+           background:var(--accent-soft);color:var(--accent-ink);
+           font-size:12.5px;line-height:1.55;}
+  .my-note svg{width:16px;height:16px;flex:0 0 auto;margin-top:1px;}
+
+  /* ── 섹션 ─────────────────────────────────────────────── */
+  .my-sec{margin:0 0 26px;}
+  .my-sec-h{display:flex;align-items:center;gap:8px;margin:0 2px 11px;}
+  .my-sec-h h2{margin:0;font-size:15px;font-weight:800;letter-spacing:-.02em;}
+  .my-sec-h .chip{font-size:11px;font-weight:700;color:var(--accent-ink);
+                  background:var(--accent-soft);padding:2px 8px;border-radius:999px;}
+
+  /* 섹션 = 풀폭 카드(.my-item) 안에 행(.my-row) 리스트 */
+  .my-item{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+           box-shadow:var(--shadow-sm);padding:2px 16px;}
+  .my-row{display:flex;align-items:center;gap:13px;padding:13px 0;border-top:1px solid var(--line-2);}
+  .my-row:first-child{border-top:0;}
+  .my-row .rbadge{width:42px;height:42px;flex:0 0 auto;border-radius:12px;
+                  display:grid;place-items:center;background:var(--accent-soft);}
+  .my-row .rbadge svg{width:22px;height:22px;}
+  .my-row .rtxt{min-width:0;flex:1;}
+  .my-row .rtxt b{display:block;font-size:14px;font-weight:700;letter-spacing:-.01em;
+                  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .my-row .rtxt span{display:block;font-size:12px;color:var(--muted-2);margin-top:2px;}
+  .my-row .racts{display:flex;gap:8px;flex:0 0 auto;}
+
+  .go{height:38px;padding:0 14px;border-radius:10px;border:1px solid var(--line);
+      background:var(--panel-2);color:var(--accent-ink);
+      font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;text-decoration:none;
+      display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;
+      transition:background .15s,border-color .15s;}
+  .go--primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .go--ghost{background:var(--panel-2);color:var(--accent-ink);}
+  .go--del{background:var(--panel-2);color:var(--del);border-color:var(--line);}
+  @media (hover:hover){
+    .go--primary:hover{background:var(--accent-ink);border-color:var(--accent-ink);}
+    .go--ghost:hover{background:var(--accent-soft);border-color:var(--accent-soft);}
+    .go--del:hover{background:var(--del-soft);border-color:var(--del-soft);}
+  }
+  /* 모바일: 액션 버튼을 텍스트 아래로 접어 폭 확보.
+     이 페이지엔 전역 border-box 리셋이 없어, basis 100% + padding 이 그대로 넘친다
+     ([삭제] 추가 후 375px에서 가로 스크롤 발생) → 이 블록에서 border-box 를 명시한다. */
+  @media (max-width:560px){
+    .my-row{flex-wrap:wrap;}
+    .my-row .racts{box-sizing:border-box;flex-basis:100%;padding-left:55px;min-width:0;}
+    .my-row .racts .go{flex:1 1 0;min-width:0;padding:0 8px;}
+  }
+
+  /* 빈 상태 = 초대 */
+  .my-empty{border:1.5px dashed var(--line);border-radius:var(--r);
+            padding:22px 18px;text-align:center;background:var(--panel);}
+  .my-empty .nest{width:46px;height:46px;margin:0 auto 10px;opacity:.9;}
+  .my-empty p{margin:0 0 4px;font-size:13.5px;color:var(--ink);font-weight:600;}
+  .my-empty small{display:block;font-size:12px;color:var(--muted-2);margin-bottom:13px;line-height:1.5;}
+  .my-empty a{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 18px;
+              border-radius:11px;background:var(--accent);color:#fff;
+              font-weight:700;font-size:13.5px;text-decoration:none;
+              box-shadow:0 6px 16px rgba(63,63,191,.28);transition:background .15s,transform .12s;}
+  @media (hover:hover){ .my-empty a:hover{background:var(--accent-ink);transform:translateY(-1px);} }
+
+  /* ── 로그인 게이트 ────────────────────────────────────── */
+  .my-gate{max-width:400px;margin:22px auto 0;background:var(--panel);
+           border-radius:var(--r-lg);box-shadow:var(--shadow);padding:30px 24px 24px;text-align:center;}
+  .my-gate .nest{width:60px;height:60px;margin:0 auto 14px;}
+  .my-gate h1{margin:0 0 8px;font-size:20px;font-weight:800;letter-spacing:-.02em;}
+  .my-gate p{margin:0 0 18px;font-size:13.5px;line-height:1.62;color:var(--muted);}
+  .my-gate .fine{margin:14px 0 0;font-size:12px;line-height:1.55;color:var(--muted-2);}
+  .my-gate .device{margin:16px 0 0;padding:11px 13px;border-radius:12px;text-align:left;
+                   background:var(--panel-2);border:1px solid var(--line);
+                   font-size:12px;line-height:1.5;color:var(--muted);}
+  .my-gate .device b{color:var(--ink);}
+
+  /* ── 로딩 스켈레톤 ────────────────────────────────────── */
+  .my-skel{display:flex;flex-direction:column;gap:10px;}
+  .my-skel i{display:block;height:64px;border-radius:var(--r);
+             background:linear-gradient(90deg,var(--panel-2),var(--line-2),var(--panel-2));
+             background-size:200% 100%;animation:shimmer 1.2s infinite;}
+  @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  @media (prefers-reduced-motion:reduce){ .my-skel i{animation:none;} }
+
+  /* ── 푸터(문의 = CS, 마스터 §6.6) ────────────────────── */
+  .site-foot{max-width:1180px;margin:8px auto 0;padding:22px clamp(16px,4vw,40px) 30px;
+             border-top:1px solid var(--line);text-align:center;
+             font-size:12px;color:var(--muted-2);line-height:1.7;}
+  .site-foot a{color:var(--muted);text-decoration:none;font-weight:600;}
+  @media (hover:hover){ .site-foot a:hover{color:var(--accent-ink);} }
+  .site-foot .dot{margin:0 7px;opacity:.5;}
+</style>
+</head>
+<body>
+
+<header class="site-top" id="topbar">
+  <div class="site-topin">
+    <a class="site-brand" href="../" aria-label="큐브네스트 홈">
+      <img class="glyph" src="../assets/img/brand-glyph.svg" alt="" role="presentation">
+      <span class="t"><b data-brand>CubeNest</b><span>쌓기나무 3D 학습</span></span>
+    </a>
+    <nav class="site-nav" aria-label="주요 메뉴">
+      <a href="../">홈</a>
+      <a href="../guide/">가이드</a>
+      <a href="../playground/">플레이그라운드</a>
+      <a href="../quiz/">퀴즈</a>
+      <a href="../worksheets/">문제지 생성</a>
+    </nav>
+    <div class="site-actions">
+      <a href="./" id="myNav" aria-current="page"><span class="t">내 자료</span><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></a>
+      <a href="../account/" id="authNav" aria-label="로그인" title="로그인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg></a>
+    </div>
+  </div>
+</header>
+
+<main class="my-main" id="myRoot">
+  <div class="my-skel" aria-busy="true">
+    <i></i><i></i><i></i>
+  </div>
+</main>
+
+<footer class="site-foot">
+  <div>궁금한 점이나 문제가 있나요? <a href="#" id="csLink" target="_blank" rel="noopener">문의하기</a></div>
+  <div style="margin-top:6px;">© <span id="year"></span> CubeNest<span class="dot">·</span>쌓기나무 3D 학습</div>
+</footer>
+
+<div class="consent" id="consent" hidden>
+  <div class="consent-msg">CubeNest는 서비스 개선을 위해 <b>Google Analytics로 익명 사용 통계</b>(쿠키 포함)를 수집해요. 동의하시면 방문·사용 데이터가 수집되고, 거부하시면 수집하지 않습니다.</div>
+  <div class="consent-btns">
+    <button id="consentDeny" type="button">거부</button>
+    <button id="consentAccept" type="button">동의</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/auth.js?v=0.1.0"></script>
+<script src="../assets/js/mydata.js?v=0.1.0"></script>
+<script src="../assets/js/consent.js"></script>
+<script>
+/* F1 계측 — 동의 후 gtag 가 있을 때만(오리진 공유 consent.js 정본) */
+function track(name, params){ try{ if(window.gtag) window.gtag('event', name, params||{}); }catch(e){} }
+
+/* CS 창구 — 마스터 §6.6: 전 페이지 푸터 문의 → 구글폼(초기).
+   ⚠ 실제 구글폼 URL 로 교체해야 함(계정/자료 두 페이지 공통 상수). */
+var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
+
+(function(){
+  /* 브랜드 언어 전환(브랜드_디자인 §2) */
+  var ko = (navigator.language||'').toLowerCase().startsWith('ko');
+  var brand = ko ? '큐브네스트' : 'CubeNest';
+  document.querySelectorAll('[data-brand]').forEach(function(el){ el.textContent = brand; });
+  document.title = brand + ' · 내 자료';
+
+  var y = document.getElementById('year'); if(y) y.textContent = new Date().getFullYear();
+  var cs = document.getElementById('csLink'); if(cs) cs.href = CS_FORM_URL;
+
+  var A = (window.CubeNest && window.CubeNest.auth) || null;
+  var M = (window.CubeNest && window.CubeNest.mydata) || null;
+  var root = document.getElementById('myRoot');
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+  /* 브랜드 글리프(공용 자산) — 히어로·빈 상태·게이트 공통 */
+  function nestSvg(){
+    return '<img class="nest" src="../assets/img/brand-glyph.svg" alt="" role="presentation">';
+  }
+
+  /* 유형별 라인 아이콘(단색, --accent) */
+  function icon(kind){
+    var a='<svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+    if(kind==='quiz') return a+'<path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>';
+    if(kind==='worksheet') return a+'<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 13h6M9 17h4"/></svg>';
+    return a+'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>';
+  }
+
+  function fmtDate(ts){
+    if(!ts) return '';
+    var d=Date.now()-ts;
+    if(d<60000) return '방금';
+    if(d<3600000) return Math.floor(d/60000)+'분 전';
+    if(d<86400000) return Math.floor(d/3600000)+'시간 전';
+    if(d<7*86400000) return Math.floor(d/86400000)+'일 전';
+    var o=new Date(ts);
+    return o.getFullYear()+'. '+(o.getMonth()+1)+'. '+o.getDate()+'.';
+  }
+
+  /* 한 행(레코드): 배지 + 제목/부제 + 액션(끝에 삭제) */
+  function rowHtml(it, actsHtml){
+    var when = fmtDate(it.ts);
+    var sub  = [it.sub, when].filter(Boolean).join(' · ');
+    return '<div class="my-row">' +
+      '<span class="rbadge">'+icon(it.kind)+'</span>' +
+      '<span class="rtxt"><b>'+esc(it.title)+'</b><span>'+esc(sub)+'</span></span>' +
+      '<span class="racts">'+actsHtml+'</span>' +
+    '</div>';
+  }
+  function delBtn(it){
+    return '<button type="button" class="go go--del" data-del="'+esc(it.id)+'" data-ts="'+(it.ts||0)+'">삭제</button>';
+  }
+  /* 퀴즈 행: [결과보기][다시풀기][삭제]. 결과보기=마지막(채점) 상태, 다시풀기=처음부터.
+     quiz/run 이 view=result·restart=1 을 해석한다(run.js 의 PRM 파싱). */
+  function quizRow(it){
+    var base = it.openUrl || '';
+    var join = base && base.indexOf('?')>=0 ? '&' : '?';
+    var acts = '';
+    if(base){
+      acts += '<a class="go go--primary" href="'+esc(base+join+'view=result')+'">결과보기</a>';
+      acts += '<a class="go go--ghost" href="'+esc(base+join+'restart=1')+'">다시풀기</a>';
+    }
+    acts += delBtn(it);
+    return rowHtml(it, acts);
+  }
+  /* 문제지·모양 행: (열기 있으면) [열기] + [삭제] */
+  function fileRow(it){
+    var acts = (it.openUrl ? '<a class="go" href="'+esc(it.openUrl)+'">열기</a>' : '') + delBtn(it);
+    return rowHtml(it, acts);
+  }
+  function panel(rowsHtml){ return '<div class="my-item">'+rowsHtml+'</div>'; }
+
+  function section(title, count, bodyHtml){
+    var chip = count>0 ? '<span class="chip">'+count+'</span>' : '';
+    return '<section class="my-sec"><div class="my-sec-h"><h2>'+esc(title)+'</h2>'+chip+'</div>'+bodyHtml+'</section>';
+  }
+  function empty(msg, hint, href, cta){
+    return '<div class="my-empty">'+nestSvg()+
+      '<p>'+esc(msg)+'</p><small>'+hint+'</small>'+
+      '<a href="'+esc(href)+'">'+esc(cta)+'</a></div>';
+  }
+
+  /* ── 로그인 상태: 라이브러리 ─────────────────────────── */
+  function paint(host){
+    Promise.all([M.quizFeed(), M.list('worksheet'), M.list('shape')]).then(function(r){
+      var quiz=r[0], ws=r[1], shapes=r[2], html='';
+      html += quiz.length
+        ? section('퀴즈 기록', quiz.length, panel(quiz.map(quizRow).join('')))
+        : section('퀴즈 기록', 0, empty('아직 푼 퀴즈가 없어요','퀴즈를 풀면 결과가 여기 쌓여요.','../quiz/','퀴즈 풀러 가기'));
+      html += ws.length
+        ? section('문제지·정답지', ws.length, panel(ws.map(fileRow).join('')))
+        : section('문제지·정답지', 0, empty('아직 만든 문제지가 없어요','문제지를 만들면 정답지와 함께 보관돼요.','../worksheets/','문제지 만들러 가기'));
+      if(shapes.length) html += section('저장한 모양', shapes.length, panel(shapes.map(fileRow).join('')));
+      host.innerHTML = html;
+    }).catch(function(){
+      host.innerHTML = '<div class="my-empty"><p>자료를 불러오지 못했어요</p><small>잠시 후 새로고침해 주세요.</small><a href="./">다시 시도</a></div>';
+    });
+  }
+
+  function renderLibrary(){
+    /* 제목의 이름은 닉네임(account 에서 설정) 우선, 없으면 계정 표시명 */
+    var nick = (M && M.getNickname && M.getNickname()) || A.userLabel();
+    root.innerHTML =
+      '<div class="my-hero">'+nestSvg()+
+        '<div><h1>'+esc(nick)+'님의 자료</h1>'+
+        '<p class="sub">풀었던 퀴즈와 만든 문제지를 여기 모아둬요.</p></div>'+
+      '</div>' +
+      '<div class="my-note">'+
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>'+
+        '<span>지금은 자료가 <b>이 기기</b>에 저장돼요. 계정 클라우드 보관(어느 기기에서나 열기)은 곧 제공됩니다.</span>'+
+      '</div>' +
+      '<div id="mySections"><div class="my-skel"><i></i><i></i></div></div>';
+
+    var host = document.getElementById('mySections');
+    /* 삭제(위임): 해당 기록을 이 기기에서만 숨김 → 다시 그림 */
+    host.addEventListener('click', function(e){
+      var b = e.target && e.target.closest && e.target.closest('.go--del');
+      if(!b) return;
+      e.preventDefault();
+      var id = b.getAttribute('data-del'), ts = +b.getAttribute('data-ts') || 0;
+      var p = (id === 'legacy_quiz_last') ? M.dismissLatestQuiz(ts) : M.remove(id);
+      Promise.resolve(p).then(function(){ paint(host); });
+    });
+    paint(host);
+    track('my_view', { loggedIn:true });
+  }
+
+  /* ── 비로그인: 로그인 게이트(§6.3 my=로그인 필요) ────── */
+  function renderGate(){
+    var deviceHtml = '';
+    if(M && M.hasDeviceData()){
+      /* 클라우드 동기화 전이라 "다른 기기에서도"는 아직 사실이 아니다(pickBackend=로컬).
+         지금 참인 것만 약속한다 — 동기화가 붙으면 이 문구를 확장한다. */
+      deviceHtml =
+        '<div class="device">이 기기에 저장된 학습 기록이 있어요. '+
+        '<b>로그인하면</b> 여기서 바로 이어서 볼 수 있어요.</div>';
+    }
+    root.innerHTML =
+      '<div class="my-gate">'+nestSvg()+
+        '<h1>내 자료</h1>'+
+        '<p>저장한 퀴즈 기록·문제지·모양을 한곳에서 봐요.<br>'+
+        '계정은 <b>보호자·선생님용</b>이고, 학생은 로그인 없이 사용할 수 있어요.</p>'+
+        (A.providerButtonsHtml ? A.providerButtonsHtml() : '')+
+        deviceHtml +
+        '<p class="fine">비밀번호 없이 카카오·구글 계정으로 시작해요.</p>'+
+      '</div>';
+
+    root.querySelectorAll('[data-provider]').forEach(function(b){
+      b.onclick = function(){
+        var p = b.getAttribute('data-provider');
+        if(p==='kakao') A.signInWithKakao('my');
+        else if(p==='google') A.signInWithGoogle('my');
+        else A.signInWithApple('my');
+      };
+    });
+    track('my_gate_view', { loggedIn:false });
+  }
+
+  function render(){
+    if(!A){ root.innerHTML = '<div class="my-gate"><h1>로그인 준비 중</h1><p>인증 모듈을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p></div>'; return; }
+    if(!A.settled){ /* 세션 복원 전 — 잠금 깜빡임 방지(§6.3.1): 스켈레톤 유지 */ return; }
+    if(A.isLoggedIn()) renderLibrary();
+    else renderGate();
+  }
+
+  A.onAuthChange(render);
+  A.ready.then(render);
+})();
+
+/* 상단바 그림자(스크롤 시) */
+(function(){
+  var bar=document.getElementById('topbar'); if(!bar) return;
+  var on=function(){ bar.classList.toggle('scrolled', window.scrollY>8); };
+  on(); window.addEventListener('scroll', on, {passive:true});
+})();
+</script>
+
+</body>
+</html>
