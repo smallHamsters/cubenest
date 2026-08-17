@@ -343,7 +343,9 @@
       const PRM=loadParams();
       const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[],state:[]};
       // 세션 지속(새로고침 이어풀기): 진행 위치·문항별 답·정오·연습장 저장
-      const SKEY="cubenest_quiz_sess_"+[PRM.seed,PRM.type,PRM.n,(PRM.levels||[]).join(""),PRM.edu||"",PRM.dim||""].join("_");
+      // sub 는 뒤에 덧붙인다 — 같은 seed 로 hidden 서브만 바꿔 들어오면 진행상태가 섞이기 때문.
+      // (앞에 끼워 넣으면 hidden 이 아닌 기존 세션 키가 전부 바뀌어 이어풀기가 끊긴다.)
+      const SKEY="cubenest_quiz_sess_"+[PRM.seed,PRM.type,PRM.n,(PRM.levels||[]).join(""),PRM.edu||"",PRM.dim||""].join("_")+(PRM.sub?"_"+PRM.sub:"");
       // /my "다시풀기"(restart=1): 저장 세션·연습장 제거 후 처음부터.
       if(PRM.restart){ try{ localStorage.removeItem(SKEY); localStorage.removeItem(SKEY+"_sc"); }catch(e){} }
       function saveSession(){
@@ -358,12 +360,25 @@
       function readAnswer(pr){
         const T=TYPES[pr.type], F=pr.form||T.form;
         if(F==="bool"){ return PICK<0?null:PICK; }
-        if(F==="markCells"){ const a=[]; qcard.querySelectorAll(".mcell.on").forEach(c=>a.push(c.dataset.x+","+c.dataset.z)); return a; }
+        // markCells·draw 는 아무것도 안 고른 상태가 빈 배열이라 예전엔 그대로 '제출'돼 즉시 오답이 됐다.
+        // num·hm 처럼 null 을 돌려 제출을 막는다(A-b 는 숨은 칸이 항상 1개 이상이라 빈 답은 언제나 오답).
+        if(F==="markCells"){ const a=[]; qcard.querySelectorAll(".mcell.on").forEach(c=>a.push(c.dataset.x+","+c.dataset.z)); return a.length?a:null; }
         if(F==="num"){ const v=parseInt(document.getElementById("ans").value,10); return isNaN(v)?null:v; }
         if(F==="mc"){ return PICK<0?null:PICK; }
         if(F==="hm"){ const a=[]; let bad=false; qcard.querySelectorAll(".hmcell input").forEach(inp=>{const v=parseInt(inp.value,10); if(isNaN(v))bad=true; a.push({x:+inp.dataset.x,z:+inp.dataset.z,v:isNaN(v)?null:v});}); return bad?null:a; }
-        if(F==="draw"){ const a=[]; qcard.querySelectorAll(".dcell.on").forEach(c=>{a.push(c.closest(".dgrid").dataset.view+","+c.dataset.c+","+c.dataset.r);}); return a; }
+        if(F==="draw"){ const a=[]; qcard.querySelectorAll(".dcell.on").forEach(c=>{a.push(c.closest(".dgrid").dataset.view+","+c.dataset.c+","+c.dataset.r);}); return a.length?a:null; }
         return null;
+      }
+      // 답 없이 제출했을 때. 예전엔 조용히 return 해서 제출 버튼이 먹통처럼 보였다.
+      const NEEDMSG={ bool:"‘있어요 / 없어요’ 중 하나를 골라요.", markCells:"숨은 것 같은 칸을 한 곳 이상 눌러요.",
+                      mc:"보기 중 하나를 골라요.", draw:"칠할 칸을 눌러요.", hm:"색칠된 칸에 수를 모두 써요.", num:"답을 써요." };
+      function needAnswer(form){
+        const box=qcard.querySelector(".answer"); if(!box)return;
+        let el=box.querySelector(".ansnote");
+        if(!el){ el=document.createElement("div"); el.className="ansnote"; box.appendChild(el); }
+        el.textContent=NEEDMSG[form]||NEEDMSG.num;
+        el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");   // 연타해도 매번 다시 흔들리게
+        const inp=document.getElementById("ans"); if(inp)inp.focus();
       }
       // [PoC 2단계] 저장된 raw → API v0.3 answer 객체(서버 채점용). 현재 num·hm(markCount)만.
       function answerObj(pr,raw){
@@ -416,7 +431,7 @@
                 pr.ask="세 방향 모양이 되도록 쌓을 때 <b>최대와 최소의 차이</b>(안 보이는 나무)는 몇 개일까요?"; }
               else{ pr.answer=gp.which==="max"?gp.rc.maxCount:gp.rc.minCount;
                 pr.ask="세 방향(위·앞·옆)에서 본 모양이 되려면 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?"; } }
-            else if(pr.sub==="A-f"){ pr.given="isoTop"; pr.answer=gp.kinds;
+            else if(pr.sub==="A-f"){ pr.given="isoTop"; pr.answer=gp.kinds; pr.unit="가지";   // 개수가 아니라 '가짓수'
               pr.ask="겨냥도와 위에서 본 모양이 이래요. <b>쌓은 모양이 될 수 있는 것은 몇 가지</b>일까요?"; }
             else if(pr.sub==="A-a"){ pr.form="bool"; pr.given="isoTop"; pr.answer=hiddenColsOf(sh).length>0?1:0;
               pr.ask="겨냥도와 위에서 본 모양을 비교해요. <b>안 보이게 숨은 쌓기나무가 있나요?</b>"; }
@@ -446,7 +461,7 @@
           // 44px = 터치 타깃 최소치(마스터 UI 규약). index.html 의 .mcell 크기와 같은 값이어야 한다.
           ans=`<div class="markgrid" style="grid-template-columns:repeat(${sh.gx},44px)">${mc}</div><div class="hint">안 보이게 숨었을 것 같은 칸을 눌러요(여러 칸 가능).</div>`;
         }else if(form==="num"){
-          ans=`<div class="numin"><input id="ans" type="number" inputmode="numeric" autocomplete="off" placeholder="?"/><span class="unit">${T.unit}</span></div>`;
+          ans=`<div class="numin"><input id="ans" type="number" inputmode="numeric" autocomplete="off" placeholder="?"/><span class="unit">${pr.unit||T.unit}</span></div>`;
         }else if(form==="hm"){
           let cells="";
           for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++){
@@ -703,7 +718,8 @@
         const pr=S.probs[S.idx],T=TYPES[pr.type],sh=pr.sh,F=pr.form||T.form;
         if(!revisit){
           const raw=readAnswer(pr);
-          if(raw===null){ const el=document.getElementById("ans"); if(el)el.focus(); return; }
+          if(raw===null){ needAnswer(F); return; }
+          const note=qcard.querySelector(".ansnote"); if(note)note.remove();
           S.state[S.idx]={answered:true,raw:raw,ok:false};
         }
         // 서버 채점(num·hm) — 로컬 계산은 색칠·해설용, 점수는 서버 결과 우선

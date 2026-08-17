@@ -60,6 +60,24 @@
 
   function coreShape(sh) { return { gx: sh.gx, gy: sh.maxH, gz: sh.gz, edge: sh.edge, cells: sh.cells.map(function (c) { return [c.x, c.y, c.z]; }) }; }
 
+  // 높이지도({"x,z":h})를 shape 에 되쓰기 — genShape 와 같은 필드를 다시 계산한다.
+  // (hidden 이 모양을 다듬어 돌려줄 때 쓴다. cells·count·pairs·exposed 가 어긋나면 안 된다.)
+  function reshape(sh, hmapObj) {
+    var hmap = [], x;
+    for (x = 0; x < sh.gx; x++) hmap.push(new Array(sh.gz).fill(0));
+    var cells = [], count = 0;
+    for (var k in hmapObj) {
+      var p = k.split(',').map(Number), h = hmapObj[k];
+      if (!(h > 0)) continue;
+      hmap[p[0]][p[1]] = h; count += h;
+      for (var y = 0; y < h; y++) cells.push({ x: p[0], y: y, z: p[1] });
+    }
+    var set = new Set(cells.map(function (c) { return c.x + ',' + c.y + ',' + c.z; }));
+    var pairs = 0;
+    cells.forEach(function (c) { [[1, 0, 0], [0, 1, 0], [0, 0, 1]].forEach(function (d) { if (set.has((c.x + d[0]) + ',' + (c.y + d[1]) + ',' + (c.z + d[2]))) pairs++; }); });
+    return { gx: sh.gx, gz: sh.gz, maxH: sh.maxH, hmap: hmap, cells: cells, count: count, pairs: pairs, exposed: 6 * count - 2 * pairs, edge: sh.edge };
+  }
+
   // 오목(노치): 노출면 > 2×(위+앞+옆 실루엣 넓이). core 필요.
   function isConcave(sh, core) {
     var C = coreRef(core); if (!C) return false;
@@ -118,7 +136,19 @@
                 : subPool[Math.floor(rngFrom(o.seed + ':sub' + o.index)() * subPool.length)];
       var g3 = 0;
       if (HD) {
-        if (sub === 'A-b') {                                  // 위치: 숨은 나무 있어야
+        if (sub === 'A-a') {                                  // 유무: 있음/없음을 반반으로
+          // 랜덤 모양은 난이도가 오를수록 거의 다 '숨음 있음'이다(중 72%·상 93%·최상 99%).
+          // 그대로 두면 "있어요"만 눌러도 최상 99점이라, seed 로 답을 반반 정하고 그 쪽을 만든다.
+          var wantHidden = rngFrom(o.seed + ':ah' + o.index)() < 0.5;
+          if (wantHidden) {
+            while (g3++ < 80 && !HD.hasHidden(hmapOf(sh))) sh = genShape(rng, o.cfg);
+          } else {
+            // '없음'은 최상에서 1% 뿐이라 재생성으로는 못 만난다(80회로도 45% 실패) → 직접 정리.
+            // 올림만 쓰면 '없음' 모양만 개수가 커져 새 힌트가 된다 → 올림/내림을 반반 섞는다.
+            var fmode = rngFrom(o.seed + ':am' + o.index)() < 0.5 ? 'lower' : 'raise';
+            sh = reshape(sh, HD.flattenHidden(hmapOf(sh), fmode));
+          }
+        } else if (sub === 'A-b') {                           // 위치: 숨은 나무 있어야
           while (g3++ < 60 && !HD.hasHidden(hmapOf(sh))) sh = genShape(rng, o.cfg);
         } else if (sub === 'A-d') {                           // 삼면도: 범위(max>min)
           var rcH = C.reverseCounts(coreShape(sh));

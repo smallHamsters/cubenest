@@ -39,6 +39,36 @@
   }
   function hasHidden(hmap) { return hiddenColumns(hmap).length > 0; }
 
+  // ── flattenHidden: 숨은 열이 하나도 없는 높이지도로 정리 (A-a '없음' 문항용) ──
+  //   숨음 ⟺ h(x+1,z+1) > h(x,z) 이므로, 대각선 사슬 (x+t, z+t) 을 따라 높이가
+  //   뒤로 갈수록 작거나 같으면 아무 열도 안 숨는다. 발자국은 그대로 두고 높이만 고쳐 그 조건을 만든다.
+  //   mode='raise' 자기를 앞대각까지 올림(개수 증가, maxH 는 못 넘음)
+  //   mode='lower' 앞대각을 자기까지 내림(개수 감소, 발자국 유지 위해 1 미만으로는 안 내려감)
+  //   ※ 둘 다 필요하다. 한쪽만 쓰면 '없음' 문항만 개수가 치우쳐 새 힌트가 된다.
+  function flattenHidden(hmap, mode) {
+    var out = {}, k, i, x, z;
+    for (k in hmap) out[k] = hmap[k];
+    var fp = footprint(out);
+    if (mode === 'lower') {
+      // 사슬 앞쪽(x+z 작은 칸)부터: 자기 값이 확정된 뒤 앞대각을 끌어내린다.
+      fp.sort(function (a, b) { return (a[0] + a[1]) - (b[0] + b[1]); });
+      for (i = 0; i < fp.length; i++) {
+        x = fp[i][0]; z = fp[i][1];
+        var kf = (x + 1) + "," + (z + 1);
+        if (out[kf] > out[x + "," + z]) out[kf] = out[x + "," + z];
+      }
+    } else {
+      // 사슬 뒤쪽(x+z 큰 칸)부터: 앞대각이 이미 확정돼 한 번에 끝난다.
+      fp.sort(function (a, b) { return (b[0] + b[1]) - (a[0] + a[1]); });
+      for (i = 0; i < fp.length; i++) {
+        x = fp[i][0]; z = fp[i][1];
+        var D = H(out, x + 1, z + 1);
+        if (D > out[x + "," + z]) out[x + "," + z] = D;
+      }
+    }
+    return out;
+  }
+
   // ── layersToShape: 층별 모양 → 셀 배열 ──
   //   layers = [ Set<"x,z">|Array<[x,z]> , ... ] (index 0 = 1층). 중력 준수(아래층 포함 가정).
   //   반환 cells = [[x,y,z]...] (y=0 바닥).
@@ -80,7 +110,7 @@
   var API = {
     H: H, footprint: footprint,
     visibleTopFootprint: visibleTopFootprint,
-    hiddenColumns: hiddenColumns, hasHidden: hasHidden,
+    hiddenColumns: hiddenColumns, hasHidden: hasHidden, flattenHidden: flattenHidden,
     layersToShape: layersToShape, layersCount: layersCount,
     enumerateByVisible: enumerateByVisible
   };
