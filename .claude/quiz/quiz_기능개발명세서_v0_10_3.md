@@ -1,12 +1,13 @@
 # quiz_기능개발명세서
 
-> **버전:** v0.10.2 · **상태:** 초안 — 본문 = 현행 13유형(8유형 + 안 보이는 나무 6종, minmax·hidden 통합) · **최종 수정일:** 2026-08-17
+> **버전:** v0.10.3 · **상태:** 초안 — 본문 = 현행 13유형(8유형 + 안 보이는 나무 6종, minmax·hidden 통합) · **최종 수정일:** 2026-08-17
 > **기준 마스터:** v1.8.3 (§6.7 정답 은닉 규약 포함)
 > **정본 참조(재정의 금지):** 모양 수학·겉넓이 = 마스터 3·4장 · 인증/게이트/저장 = 6장 · 공용 요소(F1~F5) = 5장 · 문제 분류·생성기·공급/보관 = 『문제 분류 체계』 · 학습 순서 = 『CubeNest 커리큘럼』 · 렌더·투상 펼침·겉넓이 계산 = playground.
 
 ### 변경 이력
 | 버전 | 날짜 | 핵심 |
 |---|---|---|
+| **v0.10.3** | **08-17** | **worksheets 연동 실구현 — 문제지·정답지 인쇄(Claude Code).** 그동안 `fromQuiz` 는 **한 번도 연결된 적이 없었다**(worksheets 스크립트가 quiz 페이지에 없어 항상 alert 폴백). **경계 재정의:** 레이아웃·인쇄=worksheets / **문제 그림·정답 표기=quiz** — quiz 가 화면 렌더러로 그린 SVG 를 payload 에 실어 보내 worksheets 가 19종 분기를 다시 갖지 않게 했다(도형 모듈 추출 불필요). **전달:** `localStorage` 경유 같은 탭 이동(sessionStorage 는 noopener 새 탭이 못 받고, `await` 뒤라 `window.open` 은 항상 차단). **PDF = 브라우저 인쇄**(정적 호스팅·한글 폰트·SVG 벡터). payload 에 `figure`·`answerArea`(폼별 종이 답란: 숫자칸/고르기/격자/빈 삼면도)·`answerText`·`answerFigure` 추가. 인쇄·저장은 로그인 게이트(미리보기는 공개). **`shape:null` 이음새는 불필요로 판명** — 결과 화면이 전 문항 채점 후에만 열려 항상 `explain` 이 있다. |
 | **v0.10.2** | **08-17** | **H군 완성 — H-a 더 쌓은 후 / H-b 빼낸 후 삼면도(Claude Code).** 열 단위 `h±k`(높이지도라 낙하 없음), 답은 `drawSil` 로 `facesDraw` 격자·채점 재사용. **성립 조건 4가지를 한 루프에서**(`opCandidates`): 숨은 열 없음 · 비어있지 않음 · **발자국 연결 유지**(끊김 11% 발생) · **삼면도가 실제로 달라짐**(가장 높지 않은 열을 건드리면 답=원본). 격자 행 수는 **등급 maxH 고정**(조작 후 높이로 그리면 정답 유출) + H-a 는 `h+k≤maxH`. 표시 열은 `iso` 의 `ghost:false` 로 빨강. 답 부담 때문에 **최상 제외(상만)**. 600문항 검증: 4개 제약 위반 0. **🐛 회귀 수정:** `.dcell`·`.opt` 클릭 핸들러가 `T.form`(유형 기본 폼)으로 걸려 있어 **`pr.form` 으로 폼을 덮어쓰는 서브에서 격자만 그려지고 클릭이 안 먹었다** → `form` 으로 교정. **live 19종.** |
 | **v0.10.1** | **08-17** | **H군(조작) H-c·H-d — `type:'manip'` 신설(Claude Code).** **H-c 정육면체 완성** — `m³−현재`, ⚠ `m` 은 격자가 아니라 **실제 점유 범위**(격자를 쓰면 정육면체가 부당하게 커진다). G-c 와 같은 이유로 **숨은 열 없는 모양만** 출제 + 이미 정육면체면 제외(두 조건 한 루프). **H-d 색칠 정육면체** — 꼭짓점8·모서리12(n−2)·면6(n−2)²·속(n−2)³, 합 n³ 을 **직접 시뮬로 확정**(n=3~7). n=2 제외, n=등급(3/4/5). 제시는 별도 도식 없이 **`cubenest-iso` 에 `paint` 옵션**을 더해 n³ 솔리드를 파랗게(겉면만 보이므로 그대로 '색칠한 정육면체'). `renderIso` 에 `ghost:false`(강조만) 옵션도 추가 — **기본 호출 24건 이전과 바이트 동일**로 하위호환 확인. 신규 모듈 **`cubenest-manip.js`**. 랜딩 카테고리 **5 조작** 신설(2종). **live 17종.** 누출·만점채점·결정성 17유형 통과. |
 | **v0.10.0** | **08-17** | **G군(최대·최소) 확장 — G-a/G-b/G-c(Claude Code).** `type:'minmax'` 에 `sub` 축 도입(hidden 과 동일 패턴, `sub` 없으면 난이도별 pool 에서 결정적 선택). **G-b 위+한 방향 최대·최소** 신규 — 공식 `max=Σ sil×n` / `min=Σ(sil+n−1)` 을 **브루트포스 전수 대조로 확정**(앞·옆 186건 불일치 0). 폭 조건(`높이≥2 이면서 칸≥2`인 줄 존재)으로 재생성, 차이형 제외. **G-c 몇 층 이상 세기** 신규 — 파워유형 유형9 공식(`n 이상인 칸 수`), ⚠ **겨냥도만 주므로 숨은 열 없는 모양으로만 출제**(숨은열 제거 + n 선택을 한 루프에서 — 따로 하면 되살아남. 600문항 검증: 풀 수 없는 문항 0·자명 문항 0). 신규 공용 모듈 **`cubenest-minmax.js`**(클라 + `_shared` 서버 복본). 랜딩 3-1~3-3 카드. **live 15종.** 누출 검사·만점 채점 15유형 전부 통과. |
@@ -382,10 +383,28 @@ visibleTop(x,z) ⟺ h(x+1,z+1) <= h(x,z)      // 앞대각이 '더 높을 때만
 - 오리진 공유: GA4·동의. 흔적 `quiz_*`·`quiz_run_*`·`run_*.js` → 커밋 시 각 배포명.
 
 ### 4.6 worksheets 연동 (PDF 문제지)  ⭐ (v0.9.4)
-- **경계:** PDF 문제지·정답지 알고리즘 = **worksheets 소관**(자체). quiz는 **이용(호출)만** — PDF 미생성(§8.1).
-- **위임:** 결과 화면 **📄 문제지 만들기** → `buildWorksheetPayload()`(마스터 §4.5 set 스키마 + 문항별 **연습장 2레이어**) → `window.CubeNest.worksheets.fromQuiz(payload)` **있으면 호출**, 없으면 안내(연동 준비 중).
-- **payload:** `{meta, problems:[{n,type,level,edu,ask,shape(F2),correct,scratch}]}`, **`scratch:{child,tutor}`**(아이 풀이 / 첨삭, 각 투명 PNG 또는 null — 내부 저장은 벡터, `get()`이 PNG로 변환). 정답은 넘기지 않음(정본=core, worksheets가 산출). worksheets는 두 레이어 **구분 표기·필터링** 지원 요망.
-- ⚠ **`shape`가 `null`일 수 있다(v0.9.13):** minmax·hidden은 **안 푼 문항의 모양이 클라에 없다**(§3.12). 푼 문항은 `explain`으로 되만든 모양을 직렬화하고, 안 푼 문항은 `null`. **worksheets 실구현 시 서버에서 모양을 받는 이음새가 필요**하다(예: 정답지 생성용 서버 엔드포인트).
+- **경계(v0.10.3 확정):** **레이아웃·인쇄 = worksheets / 문제 그림·정답 표기 = quiz.** worksheets 가 19종의 제시물 분기를 다시 갖지 않도록(§8.1 표류) **quiz 가 화면 렌더러로 그린 그림(SVG/HTML)을 payload 에 실어 보내고**, worksheets 는 배치·인쇄만 한다. → 도형 렌더러 공용 모듈 추출이 **필요 없어졌다.**
+- **전달:** 결과 화면 **📄 문제지 만들기** → `buildWorksheetPayload()` → **`localStorage['cubenest_ws_payload']`** 에 쓰고 `../../worksheets/?from=quiz` 로 이동.
+  - ⚠ `sessionStorage` 는 쓸 수 없다 — `noopener` 새 탭은 새 브라우징 컨텍스트 그룹이라 물려받지 못한다.
+  - ⚠ **같은 탭 이동**이다. payload 생성에 `await` 가 걸려 클릭의 사용자 제스처가 만료돼 `window.open` 은 사실상 항상 차단된다. 퀴즈는 seed URL + 세션으로 복원되고 문제지의 **'← 퀴즈로'**(`meta.quizUrl`)가 되돌린다.
+  - ⚠ worksheets 는 payload 를 **읽고 지우지 않는다** — 지우면 새로고침·뒤로가기에서 문제지를 잃는다. quiz 가 매번 덮어쓰므로 잔여물도 쌓이지 않는다.
+- **PDF = 브라우저 인쇄(`@media print`) + 'PDF로 저장'.** 빌드 없음·정적 호스팅이라 jsPDF 류는 한글 폰트 임베딩(수 MB)이 걸림돌이고, 제시물이 전부 SVG 라 인쇄 시 **벡터 그대로** 나간다. `print-color-adjust:exact` 필수(빠지면 격자·실루엣 배경이 사라진다).
+- **로그인 게이트:** 미리보기는 보이되 **인쇄·저장은 로그인 필요**(마스터 §6.3 worksheets=필요). 도구의 산출물이 게이트 대상이다.
+- **payload(v0.10.3):** `{meta:{title,grade,type,levels,n,score,seed,quizUrl,date,source}, problems:[…]}`
+  ```
+  problems[i] = { n, type, sub, level, edu, ask,
+                  figure,       // 제시물 그림 HTML(SVG) — quiz 렌더러 산출물
+                  answerArea,   // 종이 답란 HTML(폼별: 숫자칸 / 고르기 / 격자 / 빈 삼면도)
+                  answerText,   // 정답지 한 줄 표기(서버 answerKey 기반)
+                  answerFigure, // 정답이 그림인 유형(drawSil)의 정답 그림
+                  shape,        // F2 직렬화(후속 기능용)
+                  correct, scratch:{child,tutor} }
+  ```
+  - `figure`·`answerArea` 는 화면 위젯 마크업을 **비대화형으로 재사용**한다 — worksheets 는 같은 클래스(`viewer`·`pv`·`threeviews`·`markgrid`·`hmgrid`·`draw`/`dgrid`/`dcell`)만 스타일하면 된다.
+  - ⚠ 화면 렌더러는 문항이 하나라 `id="iso"` 를 쓰지만 문제지엔 여러 문항이 들어가 **id 가 중복**된다 → `figureOf` 가 클래스로 바꿔 넘긴다.
+  - ⚠ `renderSil` 의 SVG 는 viewBox 만 있고 고유 폭이 없어 **flex 안에서 0 으로 찌그러진다** → worksheets 정답지에서 폭을 명시한다.
+- **정답의 단일 출처는 서버 `answerKey`**(§3.12). quiz 는 그것을 표기로 옮길 뿐 재계산하지 않는다.
+- ~~`shape`가 `null`일 수 있다~~ — **결과 화면은 전 문항 채점 후에만 도달**하고 '문제지 만들기'는 결과 화면에만 있으므로, 모든 문항이 `explain` 을 갖는다. **quiz 위임 경로에선 `null` 이 발생하지 않는다.** (worksheets 독립 생성기를 만들 때 다시 검토할 것.)
 - **로그인:** 첨삭·저장·worksheets 공통 **모의 로그인 키 `cubenest_mock_login`** 재사용(실 로그인 = Supabase OAuth·RLS로 교체).
 - **문서:** 연동 요청서 **`worksheets_integration_request_quiz_260814.md`**(2레이어 개정) · worksheets 스펙 `worksheets_기능개발명세서 v0.2.0`(동일 오너).
 

@@ -1068,24 +1068,82 @@
       // 문제지(PDF) = worksheets 소관(자체 알고리즘). quiz는 세션+학생 연습장을 모아 넘겨 '이용'만 한다(마스터 §5.1·§8.1·§4.5).
       // SCRATCH.get() 은 획→PNG 동기 변환이라 문항당 ~19ms 든다. 문항 몇 개마다 한 번씩
       // 제어를 넘겨 긴 프리즈 대신 짧은 조각으로 나눈다(태블릿에서 체감 차이가 크다).
+      // 문제의 '제시물 그림'을 인쇄용 정적 HTML 로. 화면 렌더러를 그대로 재사용한다 —
+      // worksheets 가 19종의 제시물 분기를 다시 갖지 않도록(§8.1 표류 방지) quiz 가 그려서 넘긴다.
+      function figureOf(pr,i){
+        const sh=shapeOf(pr,i)||pr.sh;
+        const html = pr.type==="minmax" ? renderGGiven(pr)
+                   : pr.type==="manip"  ? renderMGiven(pr)
+                   : pr.type==="hidden" ? renderHiddenGiven(pr,sh)
+                   : (sh ? `<div class="viewer">${renderIso(sh,0)}</div>` : "");   // 3D 6종 = 2D 겨냥도로 인쇄
+        // 화면 렌더러는 문항이 하나뿐이라 id="iso" 를 쓰지만, 문제지엔 여러 문항이 한 페이지에
+        // 들어가 id 가 중복된다 → 클래스로 바꿔 넘긴다.
+        return html.replace(/id="iso"/g,'class="isofig"');
+      }
+      // 종이에서 답을 적는 자리. 폼마다 필요한 것이 달라서(숫자칸 / 고르기 / 격자 표시 / 그리기)
+      // 화면 위젯의 마크업을 '비대화형'으로 재사용한다 — worksheets 는 같은 클래스만 스타일하면 된다.
+      function answerAreaOf(pr,i){
+        const T=TYPES[pr.type], F=pr.form||T.form, unit=pr.unit||T.unit||"", sh=shapeOf(pr,i)||pr.sh;
+        if(F==="bool") return `<div class="ansline">답 &nbsp; ☐ 있어요 &nbsp;&nbsp; ☐ 없어요</div>`;
+        if(F==="mc")   return `<div class="ansline">답 <u>&nbsp;</u> 번</div>`;
+        if(F==="markCells"&&sh){
+          let c=""; for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++)
+            c+=`<div class="mcell${sh.hmap[x][z]>0?"":" empty"}" style="grid-column:${x+1};grid-row:${z+1}"></div>`;
+          return `<div class="ansline">답 · 숨은 칸에 ○ 표시하세요</div><div class="markgrid" style="grid-template-columns:repeat(${sh.gx},28px)">${c}</div>`;
+        }
+        if(F==="hm"&&sh){
+          let c=""; for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++)
+            c+=`<div class="hmcell ${sh.hmap[x][z]>0?"fill":"empty"}" style="grid-column:${x+1};grid-row:${z+1}"></div>`;
+          return `<div class="ansline">답 · 색칠된 칸에 수를 쓰세요</div><div class="hmgrid" style="grid-template-columns:repeat(${sh.gx},28px)">${c}</div>`;
+        }
+        if(F==="draw"&&sh){
+          const d=drawDims(sh);
+          const grid=(v,cols,rows,label)=>{ let cc=""; for(let r=0;r<rows;r++)for(let cx=0;cx<cols;cx++)cc+=`<div class="dcell"></div>`;
+            return `<div class="dview"><div class="dgrid" style="grid-template-columns:repeat(${cols},18px)">${cc}</div><span>${label}</span></div>`; };
+          return `<div class="ansline">답 · 칸을 칠해 그리세요</div><div class="draw">`
+            +grid("top",d.top.cols,d.top.rows,"위")+grid("front",d.front.cols,d.front.rows,"앞")+grid("side",d.side.cols,d.side.rows,"옆")+`</div>`;
+        }
+        return `<div class="ansline">답 <u>&nbsp;</u> ${unit}</div>`;
+      }
+      // 정답지용 한 줄 표기. 정답의 단일 출처는 서버 answerKey 다(로컬 재계산 없음).
+      function answerTextOf(pr,i){
+        const st=S.state[i], key=st&&st.key; if(!key) return "—";
+        const T=TYPES[pr.type], unit=pr.unit||T.unit||"";
+        if(key.type==="num")  return key.value+unit+(key.min!=null?`  (최소 ${key.min} · 최대 ${key.max})`:"");
+        if(key.type==="bool") return key.value?"있어요":"없어요";
+        if(key.type==="mc")   return (key.correct+1)+"번";
+        if(key.type==="markCells")  return (key.cells||[]).map(c=>"("+c+")").join(" ")||"없음";
+        if(key.type==="markCount"){ const g=key.grid||{}; return Object.keys(g).map(k=>"("+k+")="+g[k]).join(" "); }
+        if(key.type==="drawSil")    return "아래 그림 참고";
+        return "—";
+      }
+      // 정답이 '그림'인 유형(삼면도 그리기)은 정답 그림도 함께 넘긴다.
+      function answerFigureOf(pr,i){
+        const st=S.state[i], key=st&&st.key; if(!key||key.type!=="drawSil") return null;
+        const sh=shapeOf(pr,i); return sh?renderThreeViews(silsOf(sh)):null;
+      }
       async function buildWorksheetPayload(){
         const problems=[];
         for(let i=0;i<S.probs.length;i++){
           const pr=S.probs[i];
           problems.push({
-            n:i+1, type:pr.type, level:pr.lv, edu:PRM.edu||null,
+            n:i+1, type:pr.type, sub:pr.sub||null, level:pr.lv, edu:PRM.edu||null,
             ask:pr.ask||TYPES[pr.type].ask,
-            // F2 직렬화(worksheets가 core로 재현·정답 산출).
-            // 은닉 유형(minmax·hidden)은 안 푼 문항의 모양이 클라에 없다 — 푼 문항은 explain 으로
-            // 되만든 모양을 쓰고, 안 푼 문항은 null. worksheets 실구현 때 서버에서 받는 이음새 필요.
+            figure: figureOf(pr,i),                                   // 제시물 그림(SVG/HTML) — 인쇄 시 벡터 그대로
+            answerArea: answerAreaOf(pr,i),                           // 종이에서 답을 적는 자리(폼별)
+            answerText: answerTextOf(pr,i), answerFigure: answerFigureOf(pr,i),
+            // F2 직렬화(모양 재현이 필요한 후속 기능용). 결과 화면은 전 문항 채점 후에만
+            // 도달하므로 explain 으로 모양이 복원돼 여기서 null 이 되지 않는다.
             shape: shapeOf(pr,i) && CORE ? CORE.serialize(coreShape(shapeOf(pr,i))) : null,
             correct: !!S.answered[i],
             scratch: SCRATCH ? SCRATCH.get(i) : null                 // {child,tutor} 2레이어(아이 풀이 / 첨삭) PNG dataURL — 문제 하단 병기용
           });
           if(i%3===2) await new Promise(r=>setTimeout(r,0));
         }
+        const score=S.answered.filter(Boolean).length;
         return { meta:{ title:TYPES[S.type].title, grade:"초등 6학년", type:S.type,
-          levels:PRM.levels, n:S.n, seed:S.seed, date:new Date().toISOString().slice(0,10), source:"quiz" }, problems };
+          levels:PRM.levels, n:S.n, score, seed:S.seed, quizUrl:location.href,
+          date:new Date().toISOString().slice(0,10), source:"quiz" }, problems };
       }
       // 연습장 획 → PNG 변환이 문항마다 동기로 돌아 10문항이면 200ms(태블릿은 그 3~4배)
       // 화면이 굳는다. 버튼을 먼저 '만드는 중'으로 바꿔 한 프레임 넘긴 뒤 무거운 일을 시작한다.
@@ -1107,9 +1165,15 @@
           kind:"worksheet", title:TYPES[S.type].title+" 문제지 "+S.n+"문항",
           sub:"정답지 포함", meta:{ type:S.type, seed:S.seed, n:S.n }
         }); }catch(e){}
-        const W=window.CubeNest && window.CubeNest.worksheets;
-        if(W && typeof W.fromQuiz==="function"){ W.fromQuiz(payload); }   // ← worksheets 알고리즘 이용(PDF 렌더는 worksheets가)
-        else { alert("문제지(PDF) 만들기는 worksheets와 연동돼요.\n\n· 각 문제 + 아이의 연습장 풀이를 함께 PDF로 출력\n· 학부모가 '무엇을 어떻게 풀었는지' 한눈에\n\nworksheets 모듈 연동은 준비 중입니다.\n(연습장 풀이는 문항별로 저장돼 있어요.)"); }
+        // worksheets 는 별도 페이지라 함수 호출로 넘길 수 없다(스크립트가 이 페이지에 없다).
+        // ⚠ sessionStorage 는 안 된다 — noopener 로 연 탭은 새 브라우징 컨텍스트 그룹이라
+        //   세션 스토리지를 물려받지 못한다. localStorage 에 한 번 쓰고 worksheets 가 읽자마자 지운다.
+        try{ localStorage.setItem("cubenest_ws_payload", JSON.stringify(payload)); }
+        catch(e){ alert("문제지 데이터가 너무 커서 저장하지 못했어요. 문항 수를 줄여 다시 시도해 주세요."); return; }
+        // 같은 탭으로 이동한다. payload 를 만드는 데 await 가 걸려 클릭의 사용자 제스처가 이미
+        // 만료돼 window.open 은 사실상 항상 차단된다 — 폴백에 기대는 대신 동작을 하나로 고정한다.
+        // 퀴즈는 seed URL + localStorage 세션으로 복원되고, 문제지 화면의 '← 퀴즈로'가 그 URL 로 돌아간다.
+        location.href="../../worksheets/?from=quiz";
       }
       // 결과 저장 = 로그인 필요(마스터 6.3 RLS / 6 Supabase OAuth). 로컬엔 이미 저장됨.
       function saveResult(){
