@@ -1,12 +1,13 @@
 # quiz_기능개발명세서
 
-> **버전:** v0.11.0 · **상태:** 초안 — 본문 = 현행 13유형(8유형 + 안 보이는 나무 6종, minmax·hidden 통합) · **최종 수정일:** 2026-08-17
+> **버전:** v0.11.1 · **상태:** 초안 — 본문 = 현행 13유형(8유형 + 안 보이는 나무 6종, minmax·hidden 통합) · **최종 수정일:** 2026-08-17
 > **기준 마스터:** v1.8.3 (§6.7 정답 은닉 규약 포함)
 > **정본 참조(재정의 금지):** 모양 수학·겉넓이 = 마스터 3·4장 · 인증/게이트/저장 = 6장 · 공용 요소(F1~F5) = 5장 · 문제 분류·생성기·공급/보관 = 『문제 분류 체계』 · 학습 순서 = 『CubeNest 커리큘럼』 · 렌더·투상 펼침·겉넓이 계산 = playground.
 
 ### 변경 이력
 | 버전 | 날짜 | 핵심 |
 |---|---|---|
+| **v0.11.1** | **08-17** | **혼합 문제지 · URL 재현 · `/my` 다시 열기(Claude Code).** ① **`/worksheet` 에 `mix:[{theme,sub?,n}]`** — 여러 유형을 한 장에, 항목마다 `seed#i` 독립 스트림, 총 30 상한. **🐛 `theme` 필수 가드가 mix 처리보다 앞에 있어** 혼합 요청이 전부 400 이었다 → 순서 교정. ② **URL 이 곧 문제지 사양** — `?t=theme[:sub]:n`(반복)`&lv=&seed=` + `history.replaceState`. 같은 URL = 같은 문제지(정답 5건 일치 실측)라 새로고침·공유·'열기'가 한 장치로 끝난다. ⚠ 단일 유형은 `mix` 가 아닌 **평면 요청** — 그래야 quiz 위임분 seed 와 같은 문제가 나온다. ③ **`/my` 열기** — `mydata.list()` 가 `meta.url` 을 `openUrl` 로 승격. **🐛 열 때마다 목록에 사본이 쌓여** id 를 URL 해시로 결정화(`ws_<djb2>`) → 덮어쓰기. ④ **`api-client` 오류 표시** — 서버 `error` 를 버리고 `detail` 만 읽어 400 사유가 클라에서 사라졌다(위 mix 버그 진단이 늦어진 원인) → 둘 다 전달(`e.serverError`). §4.7 신설. |
 | **v0.11.0** | **08-17** | **worksheets 독립 생성기 + 공용 도형 모듈(Claude Code).** ① **`cubenest-figures.js` 신설** — 실루엣·삼면도·위에서 본 수·층별·빈 격자 렌더러를 `run.js` 에서 승격(추출본이 원본과 **36건 바이트 일치** 확인). 진입점 `renderGiven(given)` 이 제시물 종류를 알아서 그린다 → worksheets 가 19종 분기를 갖지 않는다. ② **발문·폼·단위(`ask`·`form`·`unit`)를 서버로 이관** — `buildSession` 이 조립하던 20여 개 문자열을 `presentSpec()` 단일 출처로. quiz 화면과 문제지가 같은 문구를 쓴다. ③ **Edge Function `/worksheet` 신설** — `/generate` + **정답(answerKey)**. 마스터 §6.7 "유료·고가치는 로그인 후 서버 생성" 대로 **`verify_jwt=true`**(토큰 없이 호출 시 401 실측) + 전용 rate 버킷(분당 6). ④ worksheets 에 **유형 19종·난이도·문항수 생성 폼**. ⑤ drawSil 정답 그림은 `answerKey.cells` 로 직접 칠한다 — H-a/H-b 는 클라가 '조작 후 모양'을 모르므로 이 경로가 유일. **🐛 CSS 충돌:** 빈 상태 컨테이너 `.empty` 가 격자 칸의 `.empty` 수식자와 충돌해 `min-height:100vh` 를 물려줬다 → `.nodata` 로 분리. |
 | **v0.10.3** | **08-17** | **worksheets 연동 실구현 — 문제지·정답지 인쇄(Claude Code).** 그동안 `fromQuiz` 는 **한 번도 연결된 적이 없었다**(worksheets 스크립트가 quiz 페이지에 없어 항상 alert 폴백). **경계 재정의:** 레이아웃·인쇄=worksheets / **문제 그림·정답 표기=quiz** — quiz 가 화면 렌더러로 그린 SVG 를 payload 에 실어 보내 worksheets 가 19종 분기를 다시 갖지 않게 했다(도형 모듈 추출 불필요). **전달:** `localStorage` 경유 같은 탭 이동(sessionStorage 는 noopener 새 탭이 못 받고, `await` 뒤라 `window.open` 은 항상 차단). **PDF = 브라우저 인쇄**(정적 호스팅·한글 폰트·SVG 벡터). payload 에 `figure`·`answerArea`(폼별 종이 답란: 숫자칸/고르기/격자/빈 삼면도)·`answerText`·`answerFigure` 추가. 인쇄·저장은 로그인 게이트(미리보기는 공개). **`shape:null` 이음새는 불필요로 판명** — 결과 화면이 전 문항 채점 후에만 열려 항상 `explain` 이 있다. |
 | **v0.10.2** | **08-17** | **H군 완성 — H-a 더 쌓은 후 / H-b 빼낸 후 삼면도(Claude Code).** 열 단위 `h±k`(높이지도라 낙하 없음), 답은 `drawSil` 로 `facesDraw` 격자·채점 재사용. **성립 조건 4가지를 한 루프에서**(`opCandidates`): 숨은 열 없음 · 비어있지 않음 · **발자국 연결 유지**(끊김 11% 발생) · **삼면도가 실제로 달라짐**(가장 높지 않은 열을 건드리면 답=원본). 격자 행 수는 **등급 maxH 고정**(조작 후 높이로 그리면 정답 유출) + H-a 는 `h+k≤maxH`. 표시 열은 `iso` 의 `ghost:false` 로 빨강. 답 부담 때문에 **최상 제외(상만)**. 600문항 검증: 4개 제약 위반 0. **🐛 회귀 수정:** `.dcell`·`.opt` 클릭 핸들러가 `T.form`(유형 기본 폼)으로 걸려 있어 **`pr.form` 으로 폼을 덮어쓰는 서브에서 격자만 그려지고 클릭이 안 먹었다** → `form` 으로 교정. **live 19종.** |
@@ -408,6 +409,23 @@ visibleTop(x,z) ⟺ h(x+1,z+1) <= h(x,z)      // 앞대각이 '더 높을 때만
 - ~~`shape`가 `null`일 수 있다~~ — **결과 화면은 전 문항 채점 후에만 도달**하고 '문제지 만들기'는 결과 화면에만 있으므로, 모든 문항이 `explain` 을 갖는다. **quiz 위임 경로에선 `null` 이 발생하지 않는다.** (worksheets 독립 생성기를 만들 때 다시 검토할 것.)
 - **로그인:** 첨삭·저장·worksheets 공통 **모의 로그인 키 `cubenest_mock_login`** 재사용(실 로그인 = Supabase OAuth·RLS로 교체).
 - **문서:** 연동 요청서 **`worksheets_integration_request_quiz_260814.md`**(2레이어 개정) · worksheets 스펙 `worksheets_기능개발명세서 v0.2.0`(동일 오너).
+
+### 4.7 worksheets 독립 생성기 · 혼합 · URL 재현  ⭐ (v0.11.1)
+quiz 를 거치지 않고 worksheets 에서 바로 문제지를 만드는 경로. **quiz 위임 경로(§4.6)는 그대로 두고 나란히 존재**한다.
+
+- **서버 `/worksheet`** (`supabase/functions/worksheet/`) — `/generate` 와 달리 **`answerKey` 를 함께** 준다(정답지). 그래서 **`verify_jwt=true`**(로그인 필수)이고 rate limit 도 별도(`rate.ts` 의 `worksheet`: 쿠키 6/분·60/시, IP 30/분·300/시). `/generate`·`/grade` 는 무료 익명 플레이라 `false` 유지 — **여기만 다르다.**
+  - 요청: 단일 `{theme, sub?, n, levels, seed?}` 또는 혼합 `{mix:[{theme,sub?,n}], levels, seed?}`. **총 문항 30 상한.**
+  - **혼합의 시드:** 항목마다 `seed + "#" + i` 로 **독립 스트림**을 쓴다. 같은 seed → 항상 같은 문제지.
+  - ⚠ `theme` 은 단일일 때만 필수다. 가드를 mix 처리보다 **앞에** 두면 혼합 요청이 전부 400 으로 막힌다(실제로 한 번 겪음).
+- **URL = 문제지 사양.** `?t=<theme[:sub]:n>`(반복) `&lv=<난이도코드>` `&seed=`. 생성 직후 `history.replaceState` 로 주소창에 박는다.
+  - **같은 URL = 같은 문제지** → 새로고침·공유·`/my` '열기'가 전부 이 한 가지 장치로 해결된다. 별도 저장소가 필요 없다(정답지는 로그인 후 서버가 다시 만들어 준다).
+  - ⚠ 단일 유형이면 `mix` 가 아니라 **평면 요청**으로 보낸다 — 그래야 quiz 위임분이 남긴 seed 로도 똑같이 재현된다(`#0` 접미사가 붙으면 다른 문제가 나온다).
+  - ⚠ 베이스가 둘이다 — 주소창은 `./?`, `/my` 의 '열기'는 `../worksheets/?`.
+- **`/my` 적립:** 독립 생성분만 worksheets 가 적립한다(quiz 위임분은 quiz 가 이미 적립). `meta.url` 을 남기면 `mydata.list()` 가 **`openUrl` 로 승격**해 '열기' 버튼이 생긴다.
+  - ⚠ **id 를 URL 에서 결정적으로 뽑는다**(`ws_<djb2(url)>`). 안 그러면 '열기'·새로고침마다 목록에 사본이 쌓인다.
+- **오류 표시:** `api-client.js` 는 서버의 `error`·`detail` 을 **둘 다** 실어 던진다(`e.serverError`). 예전엔 `detail` 만 읽어 400 사유가 클라에서 사라졌고, 위 mix 가드 버그의 진단이 늦어졌다.
+- **`shape:null` 이음새(§4.6 미결) 해소:** 독립 생성기는 quiz payload 를 안 쓰고 서버 응답에서 바로 그린다. `given`/`sh` 로 모양을 복원해 `cubenest-figures` 에 넘기므로 `shape` 직렬화에 의존하지 않는다.
+- **도형 렌더러 공용화:** 독립 경로에는 quiz 화면 렌더러가 없으므로 `assets/js/cubenest-figures.js` 로 **추출**했다(§2.4). quiz·worksheets 가 같은 함수를 부른다 — §4.6 의 "추출이 필요 없어졌다"는 **위임 경로에 한정된 판단**이었다.
 
 ---
 

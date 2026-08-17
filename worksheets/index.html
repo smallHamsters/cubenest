@@ -51,6 +51,17 @@
         padding:7px 12px;border-radius:999px;font-size:13px;font-weight:700;color:var(--muted);min-height:38px;}
   .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent;color:var(--accent-ink);}
   .makererr{color:var(--del);font-size:13px;font-weight:700;margin-top:8px;}
+  .mixrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;background:var(--panel-2);
+          border:1px dashed var(--line);border-radius:12px;min-height:22px;}
+  .mixempty{font-size:12.5px;color:var(--muted);}
+  .mixempty b{color:var(--accent-ink);}
+  .mixchip{display:inline-flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--line);
+           border-radius:999px;padding:6px 8px 6px 12px;font-size:12.5px;color:var(--muted);}
+  .mixchip b{color:var(--ink);font-weight:700;}
+  .mixdel{border:none;background:var(--line-2);color:var(--muted);cursor:pointer;font-family:inherit;
+          width:20px;height:20px;border-radius:50%;font-size:13px;line-height:1;padding:0;}
+  .mixdel:hover{background:var(--del-soft);color:var(--del);}
+  .mixsum{margin-left:auto;font-size:12px;font-weight:800;color:var(--accent-ink);}
   .btn{border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:15px;padding:12px 18px;border-radius:14px;background:var(--accent);color:#fff;text-decoration:none;display:inline-block;}
   .btn:hover{background:var(--accent-ink);}
   .btn.ghost{background:var(--panel);color:var(--accent-ink);border:1px solid var(--line);}
@@ -221,60 +232,127 @@
     {v:"manip:H-c",  t:"정육면체 완성"},
     {v:"manip:H-d",  t:"색칠한 정육면체"}
   ];
-  var LEVELS=["하","중","상","최상"], TITLE={};
-  TYPES.forEach(function(t){ TITLE[t.v]=t.t; });
-  var mk={ type:"count", levels:["중","상"], n:10 };
+  var LEVELS=["하","중","상","최상"], LVCODE={"하":"1","중":"2","상":"3","최상":"4"}, CODELV={"1":"하","2":"중","3":"상","4":"최상"};
+  var TITLE={}; TYPES.forEach(function(t){ TITLE[t.v]=t.t; });
+  // mix = [{v:"hidden:A-b", n:3}] — 여러 유형을 한 장에. 비어 있으면 select 의 유형 1종.
+  var mk={ pick:"count", mix:[], levels:["중","상"], n:10 };
+  var MAXN=30;
+
+  // ── URL 재현: ?t=<theme[:sub]:n> (반복) & lv=<코드> & seed=... ──
+  //   같은 URL = 같은 문제지. /my '열기'·공유·새로고침이 전부 이걸로 해결된다.
+  //   ⚠ 베이스가 둘이다 — 주소창은 './?'(현재 폴더), /my 의 '열기'는 '../worksheets/?'(/my 기준).
+  //     같은 쿼리를 쓰되 접두사만 다르게 만든다.
+  // URL → 짧고 안정된 키(문제지 신원). 보안용이 아니라 목록 중복 제거용이다.
+  function urlKey(u){
+    var h=5381; u=String(u);
+    for(var i=0;i<u.length;i++) h=((h*33) ^ u.charCodeAt(i)) >>> 0;
+    return h.toString(36);
+  }
+  function mkQuery(list, seed){
+    var p=new URLSearchParams();
+    list.forEach(function(m){ p.append("t", m.v+":"+m.n); });
+    p.set("lv", mk.levels.map(function(l){return LVCODE[l];}).sort().join(""));
+    if(seed) p.set("seed", seed);
+    return p.toString();
+  }
+  function readUrl(){
+    var p=new URLSearchParams(location.search), ts=p.getAll("t");
+    if(!ts.length) return null;
+    var mix=ts.map(function(s){
+      var a=s.split(":");                                  // theme:n  또는  theme:sub:n
+      var n=Math.max(1,parseInt(a[a.length-1],10)||1);
+      return { v:a.length>=3?(a[0]+":"+a[1]):a[0], n:n };
+    }).filter(function(m){ return TITLE[m.v]; });
+    if(!mix.length) return null;
+    var lv=(p.get("lv")||"23").split("").map(function(c){return CODELV[c];}).filter(Boolean);
+    return { mix:mix, levels:lv.length?lv:["중","상"], seed:p.get("seed")||null };
+  }
+
+  function mixRowsHTML(){
+    if(!mk.mix.length) return '<div class="mixempty">담은 유형이 없어요 — 위에서 고르고 <b>+ 담기</b>를 누르면 여러 유형을 한 장에 섞을 수 있어요.</div>';
+    return mk.mix.map(function(m,i){
+      return '<span class="mixchip"><b>'+esc(TITLE[m.v]||m.v)+'</b> '+m.n+'문항'
+        +'<button type="button" class="mixdel" data-i="'+i+'" aria-label="빼기">×</button></span>';
+    }).join("")+'<span class="mixsum">합계 '+mk.mix.reduce(function(a,m){return a+m.n;},0)+'문항</span>';
+  }
 
   function makerHTML(){
     return '<section class="maker">'
-      +'<h2>새 문제지 만들기</h2><div class="sub">유형과 난이도를 고르면 문제와 정답지를 새로 만들어요.</div>'
+      +'<h2>새 문제지 만들기</h2><div class="sub">유형과 난이도를 고르면 문제와 정답지를 새로 만들어요. 여러 유형을 섞을 수도 있어요.</div>'
       +'<div class="frow"><div class="fg"><label for="mkType">유형</label>'
-      +  '<select id="mkType">'+TYPES.map(function(t){return '<option value="'+t.v+'"'+(t.v===mk.type?' selected':'')+'>'+t.t+'</option>';}).join("")+'</select></div>'
+      +  '<select id="mkType">'+TYPES.map(function(t){return '<option value="'+t.v+'"'+(t.v===mk.pick?' selected':'')+'>'+t.t+'</option>';}).join("")+'</select></div>'
+      +  '<div class="fg"><label for="mkN">문항 수</label><input id="mkN" type="number" min="1" max="30" value="'+mk.n+'" style="width:74px"></div>'
+      +  '<button class="btn ghost" id="mkAdd" type="button">+ 담기</button>'
+      +'</div>'
+      +'<div class="mixrow" id="mkMix">'+mixRowsHTML()+'</div>'
+      +'<div class="frow" style="margin-top:12px;margin-bottom:0">'
       +  '<div class="fg"><label>난이도</label><span class="chips" id="mkLv">'
       +    LEVELS.map(function(l){return '<button type="button" class="chip" data-l="'+l+'" aria-pressed="'+(mk.levels.indexOf(l)>=0)+'">'+l+'</button>';}).join("")
-      +  '</span></div>'
-      +  '<div class="fg"><label for="mkN">문항 수</label><input id="mkN" type="number" min="1" max="30" value="'+mk.n+'" style="width:74px"></div>'
+      +  '</span></div><span style="flex:1"></span>'
       +  '<button class="btn" id="mkGo" type="button">만들기</button>'
       +'</div><div class="makererr" id="mkErr" hidden></div></section>';
   }
 
   function bindMaker(){
     var sel=document.getElementById("mkType"); if(!sel) return;
-    sel.onchange=function(){ mk.type=sel.value; };
-    document.getElementById("mkN").onchange=function(e){ mk.n=Math.max(1,Math.min(30,+e.target.value||10)); };
+    var nIn=document.getElementById("mkN");
+    sel.onchange=function(){ mk.pick=sel.value; };
+    nIn.onchange=function(){ mk.n=Math.max(1,Math.min(MAXN,+nIn.value||10)); nIn.value=mk.n; };
+    document.getElementById("mkAdd").onclick=function(){
+      var sum=mk.mix.reduce(function(a,m){return a+m.n;},0);
+      if(sum+mk.n>MAXN){ showErr("한 장에 최대 "+MAXN+"문항까지 담을 수 있어요."); return; }
+      var hit=mk.mix.filter(function(m){return m.v===mk.pick;})[0];
+      if(hit) hit.n+=mk.n; else mk.mix.push({v:mk.pick, n:mk.n});
+      showErr(""); refreshMix();
+    };
+    document.getElementById("mkMix").onclick=function(e){
+      var b=e.target.closest(".mixdel"); if(!b) return;
+      mk.mix.splice(+b.dataset.i,1); refreshMix();
+    };
     document.getElementById("mkLv").onclick=function(e){
       var b=e.target.closest(".chip"); if(!b) return;
       var l=b.dataset.l, on=b.getAttribute("aria-pressed")!=="true";
       b.setAttribute("aria-pressed", on?"true":"false");
       mk.levels = on ? mk.levels.concat([l]) : mk.levels.filter(function(x){return x!==l;});
     };
-    document.getElementById("mkGo").onclick=makeNew;
+    document.getElementById("mkGo").onclick=function(){ makeNew(); };
   }
+  function refreshMix(){ var el=document.getElementById("mkMix"); if(el) el.innerHTML=mixRowsHTML(); }
+  function showErr(m){ var e=document.getElementById("mkErr"); if(e){ e.textContent=m; e.hidden=!m; } }
 
-  async function makeNew(){
-    var err=document.getElementById("mkErr"), btn=document.getElementById("mkGo");
-    var show=function(m){ err.textContent=m; err.hidden=!m; };
-    show("");
-    if(!mk.levels.length){ show("난이도를 하나 이상 골라 주세요."); return; }
-    if(!isLoggedIn()){ show("문제지 만들기는 로그인이 필요해요."); AUTH&&AUTH.requireLogin("worksheet_make"); return; }
+  async function makeNew(seed){
+    var btn=document.getElementById("mkGo");
+    showErr("");
+    if(!mk.levels.length){ showErr("난이도를 하나 이상 골라 주세요."); return; }
+    if(!isLoggedIn()){ showErr("문제지 만들기는 로그인이 필요해요."); AUTH&&AUTH.requireLogin("worksheet_make"); return; }
     var api=window.CubeNest&&window.CubeNest.api;
-    if(!api||!api.worksheet){ show("문제지 생성 모듈을 불러오지 못했어요."); return; }
-    var parts=mk.type.split(":"), label=TITLE[mk.type]||mk.type;
-    btn.disabled=true; var lb=btn.textContent; btn.textContent="만드는 중…";
+    if(!api||!api.worksheet){ showErr("문제지 생성 모듈을 불러오지 못했어요."); return; }
+    var list = mk.mix.length ? mk.mix : [{v:mk.pick, n:mk.n}];
+    var label = list.length===1 ? (TITLE[list[0].v]||list[0].v) : "섞어 풀기";
+    if(btn){ btn.disabled=true; var lb=btn.textContent; btn.textContent="만드는 중…"; }
     try{
-      var r=await api.worksheet({ theme:parts[0], sub:parts[1]||undefined, levels:mk.levels, n:mk.n });
-      render(toPayload(r, label));
+      // 단일 유형은 mix 없이 보낸다 — 서버가 seed 를 그대로 써서 **quiz 와 같은 문제**가 나온다
+      // (mix 는 항목마다 seed#i 로 스트림을 나누므로 quiz 세션과 어긋난다).
+      var one=list.length===1?list[0].v.split(":"):null;
+      var req = one ? { theme:one[0], sub:one[1]||undefined, n:list[0].n, levels:mk.levels, seed:seed||undefined }
+                    : { mix:list.map(function(m){ var a=m.v.split(":"); return {theme:a[0], sub:a[1]||undefined, n:m.n}; }),
+                        levels:mk.levels, seed:seed||undefined };
+      var r=await api.worksheet(req);
+      var qs=mkQuery(list, r.seed);
+      history.replaceState(null,"","./?"+qs);                 // 새로고침·공유 재현용
+      render(toPayload(r, label, "../worksheets/?"+qs));      // /my '열기' 는 /my 기준 상대경로
       window.scrollTo(0,0);
     }catch(e){
-      show(e&&e.rate ? "요청이 조금 많았어요. 잠시 뒤에 다시 시도해 주세요."
+      showErr(e&&e.rate ? "요청이 조금 많았어요. 잠시 뒤에 다시 시도해 주세요."
          : e&&e.network ? "인터넷 연결을 확인해 주세요."
          : e&&e.status===401 ? "로그인이 만료됐어요. 다시 로그인해 주세요."
+         : e&&e.serverError ? "문제지를 만들지 못했어요 — "+e.serverError
          : "문제지를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.");
-    }finally{ btn.disabled=false; btn.textContent=lb; }
+    }finally{ if(btn){ btn.disabled=false; btn.textContent=lb; } }
   }
 
   // 서버 응답 → quiz 위임 payload 와 같은 모양으로(렌더러를 하나만 유지하기 위해)
-  function toPayload(r, label){
+  function toPayload(r, label, url){
     var FIG=window.CubeNest&&window.CubeNest.figures;
     var ISO=window.CubeNest&&window.CubeNest.iso;
     var probs=(r.problems||[]).map(function(p,i){
@@ -288,7 +366,8 @@
                correct:null, scratch:null };
     });
     return { meta:{ title:label, grade:"초등 6학년", type:r.problems&&r.problems[0]&&r.problems[0].type,
-                    n:probs.length, seed:r.seed, date:new Date().toISOString().slice(0,10), source:"worksheets" },
+                    n:probs.length, seed:r.seed, url:url||null,
+                    date:new Date().toISOString().slice(0,10), source:"worksheets" },
              problems:probs };
   }
   function answerArea(p, sh, FIG){
@@ -398,11 +477,34 @@
     };
     syncGate();
     if(AUTH&&AUTH.onAuthChange) AUTH.onAuthChange(syncGate);
-    // ※ /my 적립(mydata.add)은 quiz 가 '문제지 만들기'를 누를 때 이미 한다 — 여기서 또 하면 중복된다.
+
+    // /my 적립 — **독립 생성분만**. quiz 위임분은 quiz 가 '문제지 만들기' 때 이미 적립한다.
+    //   meta.url 을 남겨야 /my 에서 '열기'로 같은 문제지를 다시 연다(같은 seed = 같은 문제).
+    //   id 는 URL 에서 결정적으로 뽑는다 — 같은 URL = 같은 문제지이므로, /my '열기'·새로고침으로
+    //   다시 열려도 mydata.add 가 **덮어쓰기**가 되어 목록에 사본이 쌓이지 않는다.
+    if(m.source==="worksheets" && m.url && window.CubeNest && window.CubeNest.mydata){
+      try{ window.CubeNest.mydata.add({ id:"ws_"+urlKey(m.url), kind:"worksheet",
+        title:(m.title||"쌓기나무")+" 문제지 "+ps.length+"문항", sub:"정답지 포함",
+        meta:{ type:m.type, seed:m.seed, n:ps.length, url:m.url } }); }catch(e){}
+    }
   }
 
-  var pl=loadPayload();
-  if(pl&&pl.problems&&pl.problems.length) render(pl); else renderEmpty();
+  // 진입 순서: ① URL 에 문제지 사양이 있으면 그걸로 재현(/my '열기'·공유·새로고침)
+  //            ② 없으면 quiz 가 넘긴 payload  ③ 둘 다 없으면 생성 폼만
+  var fromUrl=readUrl();
+  if(fromUrl){
+    mk.mix=fromUrl.mix; mk.levels=fromUrl.levels;
+    renderEmpty();                                  // 폼을 먼저 그려 두고(실패해도 조작 가능)
+    (function(){
+      var go=function(){ makeNew(fromUrl.seed); };
+      if(isLoggedIn()) go();
+      else { showErr("이 문제지를 열려면 로그인이 필요해요.");
+             if(AUTH&&AUTH.onAuthChange) AUTH.onAuthChange(function(){ if(isLoggedIn()) go(); }); }
+    })();
+  } else {
+    var pl=loadPayload();
+    if(pl&&pl.problems&&pl.problems.length) render(pl); else renderEmpty();
+  }
 })();
 </script>
 

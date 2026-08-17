@@ -1070,9 +1070,15 @@
       async function buildAndSend(){
         const payload=await buildWorksheetPayload();
         // /my "문제지·정답지" 로컬 축적.
+        //   meta.url = worksheets 재현 주소(/my 기준 상대경로). 같은 seed·유형이라 **같은 문제**가
+        //   다시 나온다. 단 아이의 연습장 필기는 이 세션에만 있으므로 재현본엔 없다.
+        const LVC={"하":"1","중":"2","상":"3","최상":"4"};
+        const wsUrl="../worksheets/?t="+encodeURIComponent(S.type+(PRM.sub?":"+PRM.sub:"")+":"+S.n)
+                   +"&lv="+(PRM.levels||[]).map(l=>LVC[l]).filter(Boolean).sort().join("")
+                   +"&seed="+encodeURIComponent(S.seed);
         if(window.CubeNest&&CubeNest.mydata) try{ CubeNest.mydata.add({
           kind:"worksheet", title:TYPES[S.type].title+" 문제지 "+S.n+"문항",
-          sub:"정답지 포함", meta:{ type:S.type, seed:S.seed, n:S.n }
+          sub:"정답지 포함", meta:{ type:S.type, seed:S.seed, n:S.n, url:wsUrl }
         }); }catch(e){}
         // worksheets 는 별도 페이지라 함수 호출로 넘길 수 없다(스크립트가 이 페이지에 없다).
         // ⚠ sessionStorage 는 안 된다 — noopener 로 연 탭은 새 브라우징 컨텍스트 그룹이라

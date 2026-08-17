@@ -48,9 +48,14 @@
       var e1 = new Error("rate"); e1.rate = true; e1.retryAfter = ra; throw e1;
     }
     if (!res.ok) {
-      var detail = "";
-      try { detail = (await res.json()).detail || ""; } catch (e) {}
-      var e2 = new Error("server " + res.status + (detail ? " " + detail : "")); e2.status = res.status; throw e2;
+      // 서버가 주는 error·detail 을 둘 다 실어 보낸다. detail 만 보면 400 의 사유(error)가 사라져
+      // 클라에서 "알 수 없는 오류"로만 보인다(실제로 mix 도입 때 진단이 늦어졌다).
+      var info = {};
+      try { info = await res.json(); } catch (e) {}
+      var msg = [info.error, info.detail].filter(Boolean).join(" — ");
+      var e2 = new Error("server " + res.status + (msg ? " " + msg : ""));
+      e2.status = res.status; e2.serverError = info.error || null; e2.detail = info.detail || null;
+      throw e2;
     }
     return await res.json();
   }

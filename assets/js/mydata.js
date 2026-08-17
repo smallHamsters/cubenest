@@ -160,7 +160,16 @@
     VERSION: VERSION,
     mode: function () { return pickBackend().mode; },
 
-    list:   function (kind) { return pickBackend().list(kind); },
+    // meta.url 이 있으면 openUrl 로 승격한다(/my 의 '열기' 버튼 조건).
+    //   문제지는 URL 하나가 곧 문제지 사양(유형·난이도·seed)이라 같은 URL = 같은 문제지다.
+    list:   function (kind) {
+      return pickBackend().list(kind).then(function (items) {
+        items.forEach(function (it) {
+          if (!it.openUrl && it.meta && it.meta.url) it.openUrl = it.meta.url;
+        });
+        return items;
+      });
+    },
     add:    function (item) { return pickBackend().add(item); },
     remove: function (id)   { return pickBackend().remove(id); },
     clear:  function (kind) { return pickBackend().clear(kind); },

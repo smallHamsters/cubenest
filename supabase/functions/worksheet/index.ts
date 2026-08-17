@@ -22,7 +22,12 @@ Deno.serve(async (req: Request) => {
   const seed = (body.seed && String(body.seed)) || Math.random().toString(36).slice(2, 9);
   const edu = body.edu ?? null;
   const sub = body.sub ?? null;
-  if (!theme) return json(req, { error: "theme 필요" }, 400);
+  // theme 은 단일 유형일 때만 필수다. mix(혼합 문제지)로 오면 각 항목이 theme 을 갖는다.
+  const hasMix = Array.isArray(body.mix) && body.mix.length > 0;
+  if (!theme && !hasMix) return json(req, { error: "theme 또는 mix 필요" }, 400);
+  if (hasMix && body.mix.some((e: any) => !(e && (e.theme ?? e.type)))) {
+    return json(req, { error: "mix 항목마다 theme 필요" }, 400);
+  }
 
   // 정답까지 나가는 경로라 대량 수집을 막는다(익명 쿠키 + IP).
   let rl: { ok: boolean; retryAfter?: number; reason?: string };
@@ -33,18 +38,31 @@ Deno.serve(async (req: Request) => {
     return r;
   }
 
+  // 혼합 문제지: mix=[{theme,sub?,n}] 를 주면 여러 유형을 한 장에 담는다.
+  //   각 항목은 seed#i 로 **독립 스트림**을 쓴다 — 같은 seed 로 언제나 같은 문제지가 나온다(재현·공유).
+  const mix: any[] | null = hasMix ? body.mix : null;
+  const entries = mix ? mix : [{ theme, sub, n }];
+  const total = entries.reduce((a: number, e: any) => a + Math.max(1, (e.n | 0) || 1), 0);
+  if (total > MAX_N) return json(req, { error: "문항이 너무 많아요", max: MAX_N }, 400);
+
   try {
-    const probs = buildProbs({ type: theme, levels, seed, n, edu, sub });
-    const problems = probs.map((pr: any, i: number) => {
-      const q = questionFor(pr, i, seed, theme);          // 발문·폼·단위·제시물(given/sh)
-      const key = answerKeyFor(theme, pr, i, seed);       // ← /generate 와 다른 점: 정답 포함
-      return {
-        index: i, type: theme, sub: pr.sub ?? null, level: pr.level ?? pr.lv,
-        ask: q.ask, form: q.form, unit: q.unit,
-        given: q.given ?? null, sh: q.sh ?? null,
-        opts: q.opts ?? null,                             // facesMc 보기
-        answerKey: key,
-      };
+    const problems: any[] = [];
+    entries.forEach((en: any, e: number) => {
+      const th = en.theme ?? en.type ?? theme;
+      const esub = en.sub ?? null;
+      const cnt = Math.max(1, (en.n | 0) || 1);
+      const s = mix ? seed + "#" + e : seed;
+      buildProbs({ type: th, levels, seed: s, n: cnt, edu, sub: esub }).forEach((pr: any, i: number) => {
+        const q = questionFor(pr, i, s, th);              // 발문·폼·단위·제시물(given/sh)
+        const key = answerKeyFor(th, pr, i, s);           // ← /generate 와 다른 점: 정답 포함
+        problems.push({
+          index: problems.length, type: th, sub: pr.sub ?? null, level: pr.level ?? pr.lv,
+          ask: q.ask, form: q.form, unit: q.unit,
+          given: q.given ?? null, sh: q.sh ?? null,
+          opts: q.opts ?? null,                           // facesMc 보기
+          answerKey: key,
+        });
+      });
     });
     return json(req, { seed, count: problems.length, problems });
   } catch (e) {
