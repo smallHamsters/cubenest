@@ -8,8 +8,9 @@ import { core } from "./cubenest-core.js";          // 값 import (번들 포함
 import { genConfig } from "./cubenest-gen-config.js"; // gen보다 먼저(genSession이 참조)
 import { hidden } from "./cubenest-hidden.js";        // gen보다 먼저(genProblem hidden 분기가 참조)
 import { iso } from "./cubenest-iso.js";              // 겨냥도 SVG(은닉 유형 제시물을 서버가 그린다)
+import { minmax } from "./cubenest-minmax.js";        // gen보다 먼저(genProblem minmax 분기가 참조)
 import { gen } from "./cubenest-gen.js";
-export { core, gen, genConfig, hidden, iso };
+export { core, gen, genConfig, hidden, iso, minmax };
 
 // gen-config: 공개 json 폐지 → 서버 상수(단일 출처).
 export const GEN_CONFIG = {

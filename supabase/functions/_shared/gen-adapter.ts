@@ -5,7 +5,7 @@
 // 가져온다 — 로드 순서(core→genConfig→hidden→gen)와 번들 포함을 거기서 보장한다.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { core, gen, iso, GEN_CONFIG } from "./gen-modules.ts";
+import { core, gen, iso, minmax as mm, GEN_CONFIG } from "./gen-modules.ts";
 
 // deno-lint-ignore no-explicit-any
 type Sh = any;
@@ -65,7 +65,16 @@ export function answerKeyFor(type: string, pr: Sh, idx: number, seed: string): a
     case "volume":  return { type: "num", value: st.volume };
     case "surface": return { type: "num", value: st.surfaceArea };
     case "minmax": {
-      const rc = core.reverseCounts(cs), which = pr.which || "min";
+      // G군 — G-a 삼면도 / G-b 위+한방향 / G-c 층 조건 개수
+      const gsub = pr.sub || "G-a";
+      if (gsub === "G-c") {
+        // 파워유형 유형9 확정 공식: n층 이상인 칸 수 = 위모양에서 n 이상인 칸 수.
+        return { type: "num", value: mm.countAtLeast(core.heightMap(cs), pr.n), n: pr.n };
+      }
+      const rc = gsub === "G-b"
+        ? mm.minmaxFromTopAndSil(core.heightMap(cs), pr.dir || "front")
+        : core.reverseCounts(cs);
+      const which = pr.which || "min";
       const val = which === "min" ? rc.minCount : which === "max" ? rc.maxCount : (rc.maxCount - rc.minCount);
       return { type: "num", value: val, min: rc.minCount, max: rc.maxCount, which };
     }
@@ -173,8 +182,23 @@ export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
   const q: any = { level: pr.level ?? pr.lv, type };
 
   if (type === "minmax") {
-    q.which = pr.which;                                   // 무엇을 묻는지(최소/최대/차) — 답이 아니다
-    q.given = { gx: sh.gx, gz: sh.gz, kind: "sils", sils: silTrio(sh) };
+    const gsub = pr.sub || "G-a";
+    q.sub = gsub;
+    if (gsub === "G-b") {
+      // 위모양 + '한 방향' 실루엣만. dir 은 무엇을 보여주는지라 답이 아니다.
+      q.which = pr.which; q.dir = pr.dir;
+      q.given = { gx: sh.gx, gz: sh.gz, kind: "topOneSil", top: topSil(sh), dir: pr.dir,
+                  bars: pr.dir === "side" ? sideSil(sh) : frontSil(sh) };
+    } else if (gsub === "G-c") {
+      // 겨냥도 + "n층 이상". n 은 조건(문제의 일부)이지 답이 아니다.
+      // gen 이 숨은 열 없는 모양만 주므로 겨냥도만으로 모든 열의 높이를 읽을 수 있다.
+      q.n = pr.n;
+      q.given = { gx: sh.gx, gz: sh.gz, kind: "isoTop", n: pr.n,
+                  iso: iso.renderIso({ gx: sh.gx, gz: sh.gz, cells: sh.cells }, 0), top: topSil(sh) };
+    } else {
+      q.which = pr.which;                                 // 무엇을 묻는지(최소/최대/차) — 답이 아니다
+      q.given = { gx: sh.gx, gz: sh.gz, kind: "sils", sils: silTrio(sh) };
+    }
     return q;
   }
   if (type === "hidden") {
@@ -203,6 +227,22 @@ export function explainFor(pr: Sh, type: string) {
     ex.sub = pr.sub; ex.hiddenCols = pr.hcols || [];     // 숨은 열(위치) 강조
     if (pr.sub === "A-d" && core.reverseShapes) ex.minMax = core.reverseShapes(cs);
   }
-  if (type === "minmax" && core.reverseShapes) ex.minMax = core.reverseShapes(cs);
+  if (type === "minmax") {
+    const gsub = pr.sub || "G-a";
+    ex.sub = gsub;
+    if (gsub === "G-c") {
+      // 어느 칸이 조건을 만족했는지 = 위모양에서 n 이상인 칸
+      const hm = core.heightMap(cs);
+      ex.n = pr.n;
+      ex.hitCells = Object.keys(hm).filter((k) => hm[k] >= pr.n);
+      ex.heights = hm;
+    } else if (gsub === "G-b") {
+      ex.dir = pr.dir;
+      ex.rc = mm.minmaxFromTopAndSil(core.heightMap(cs), pr.dir || "front");
+      ex.byLine = mm.groupByAxis(core.heightMap(cs), pr.dir || "front");   // 줄별 (실루엣 높이, 칸 수)
+    } else if (core.reverseShapes) {
+      ex.minMax = core.reverseShapes(cs);
+    }
+  }
   return ex;
 }

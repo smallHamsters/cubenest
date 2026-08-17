@@ -225,12 +225,16 @@
         return `<svg viewBox="0 0 ${w+p*2} ${h+p*2}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
       }
       // 위에서 본 수(각 칸 높이) 격자 — 개수 세기 해설용 2D 그림
-      function renderTopNums(sh){
+      //   hit = Set<"x,z">를 주면 그 칸을 초록으로 강조(G-c 'n층 이상' 해설).
+      function renderTopNums(sh,hit){
         const s=26,g=3,W=sh.gx*(s+g)+g,H=sh.gz*(s+g)+g;let r="";
         for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++){
           const h=sh.hmap[x][z],X=g+x*(s+g),Y=g+z*(s+g);
-          r+=`<rect x="${X}" y="${Y}" width="${s}" height="${s}" rx="4" fill="${h>0?'var(--accent-soft)':'var(--line-2)'}"${h>0?' stroke="var(--accent)" stroke-width="1"':''}/>`;
-          if(h>0)r+=`<text x="${X+s/2}" y="${Y+s/2+0.5}" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="var(--accent-ink)">${h}</text>`;
+          const on=!!(hit&&hit.has(x+","+z));
+          const fill=h>0?(on?'var(--add-soft)':'var(--accent-soft)'):'var(--line-2)';
+          const stroke=h>0?(on?'var(--add)':'var(--accent)'):null;
+          r+=`<rect x="${X}" y="${Y}" width="${s}" height="${s}" rx="4" fill="${fill}"${stroke?` stroke="${stroke}" stroke-width="${on?2:1}"`:''}/>`;
+          if(h>0)r+=`<text x="${X+s/2}" y="${Y+s/2+0.5}" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="${on?'#0b6e3e':'var(--accent-ink)'}">${h}</text>`;
         }
         return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
       }
@@ -248,6 +252,22 @@
           panels+=`<div class="pv"><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${cells}</svg><span>${y+1}층</span></div>`;
         }
         return `<div class="threeviews">${panels}</div>`;
+      }
+      // G군 제시 렌더 — G-a=삼면도(sils) / G-b=위모양+한 방향(topOneSil) / G-c=겨냥도+조건(isoTop)
+      function renderGGiven(pr){
+        const g=pr.given, cap=t=>`<div class="rotcap">${t}</div>`;
+        if(g.kind==="topOneSil"){
+          const side=g.dir==="side", color=side?"#d0546f":"#4fae72", label=side?"옆":"앞";
+          return `<div class="viewer"><div class="rothint" style="text-align:center;margin-bottom:4px">위에서 본 모양과 <b>${label}에서 본 모양</b>이에요</div>`
+            +`<div class="threeviews"><div class="pv">${renderSil(g.top,"#3f8fd0")}<span>위</span></div>`
+            +`<div class="pv">${renderSil(g.bars,color)}<span>${label}</span></div></div>`
+            +cap("두 모양만으로는 <b>개수가 하나로 정해지지 않아요</b>")+`</div>`;
+        }
+        if(g.kind==="isoTop"){   // G-c: 겨냥도 + "n층 이상" 조건
+          return `<div class="viewer"><div id="iso">${g.iso||""}</div>`
+            +cap(`<b>${g.n}층 이상</b> 쌓인 칸을 세어요`)+`</div>`;
+        }
+        return `<div class="viewer"><div class="rothint" style="text-align:center;margin-bottom:4px">위·앞·옆에서 본 모양이에요</div>${renderThreeViews(g.sils)}</div>`;
       }
       // 안 보이는 나무 6종 제시 렌더(서브별). 제시물은 서버가 준 pr.given 이 전부다.
       function renderHiddenGiven(pr,sh){
@@ -421,9 +441,13 @@
             pr.opts=gp.opts; pr.dir=dir;        // 정답 인덱스는 안 온다 → 채점 후 answerKey.correct
             pr.ask=(dir==="front"?"앞":dir==="side"?"옆":"위")+"에서 본 모양을 고르세요.";
           }
-          if(PRM.type==="minmax"){
-            pr.which=gp.which;
-            pr.ask=gp.which==="diff"
+          if(PRM.type==="minmax"){          // G군 — G-a 삼면도 / G-b 위+한방향 / G-c 층 조건
+            pr.sub=gp.sub||"G-a"; pr.which=gp.which; pr.dir=gp.dir; pr.n=gp.n;
+            if(pr.sub==="G-c"){ pr.unit="칸";
+              pr.ask="겨냥도를 보고, <b>"+gp.n+"층 이상</b> 쌓인 칸은 모두 몇 칸인지 세요."; }
+            else if(pr.sub==="G-b"){ const d=gp.dir==="side"?"옆":"앞";
+              pr.ask="위에서 본 모양과 <b>"+d+"에서 본 모양</b>이 이래요. 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?"; }
+            else pr.ask=gp.which==="diff"
               ? "세 방향 모양이 같도록 쌓을 때, <b>최대와 최소의 차이</b>는 몇 개일까요?"
               : "세 방향(위·앞·옆)에서 본 모양이 되려면, 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?";
           }
@@ -486,9 +510,10 @@
         const isHidden=pr.type==="hidden";
         const has3D=!!window.THREE && !!VIEWER && PRM.dim!=="2d" && !isViews && !isHidden;
         const gk=(pr.given&&pr.given.kind)||"";
-        const viewLabel=isViews?"세 방향 본 모양":(isHidden?(gk==="numTop"?"위에서 본 수":gk==="sils"?"위·앞·옆":gk==="layers"?"층별 모양":"2D 겨냥도"):(has3D?"3D 문제":"2D 겨냥도"));
+        const GIVENLABEL={numTop:"위에서 본 수",sils:"위·앞·옆",layers:"층별 모양",topOneSil:"위 + 한 방향",isoTop:"2D 겨냥도"};
+        const viewLabel=(isViews||isHidden)?(GIVENLABEL[gk]||"2D 겨냥도"):(has3D?"3D 문제":"2D 겨냥도");
         const viewerHTML=isViews
-          ? `<div class="viewer"><div class="rothint" style="text-align:center;margin-bottom:4px">위·앞·옆에서 본 모양이에요</div>${renderThreeViews(pr.given.sils)}</div>`
+          ? renderGGiven(pr)
           : isHidden
           ? renderHiddenGiven(pr,sh)
           : (has3D
@@ -753,7 +778,20 @@
           if(pr.type==="minmax"||pr.type==="hidden"){
             const mn0=key.min, mx0=key.max;                     // 서버 answerKey 가 준 최소·최대
             const rs=(st.explain&&st.explain.minMax)||(CORE&&sh?CORE.reverseShapes(coreShape(sh)):null);
-            if(pr.type==="minmax"){
+            if(pr.type==="minmax" && pr.sub==="G-c"){           // 층 조건 개수
+              const ex=st.explain||{}, hit=new Set(ex.hitCells||[]);
+              const grid=renderTopNums(sh,hit);
+              sol=`<div class="sol-methods"><div class="sol-pic">${grid}<span>위에서 본 수</span></div>`
+                +`<div class="sol-list"><div>겨냥도의 각 칸에 쌓인 나무 수를 위에서 본 모양에 적어요.</div>`
+                +`<div>그중 <b>${pr.n} 이상</b>인 칸을 세면 <b>${a}칸</b>이에요. <span style="color:#0b6e3e;font-weight:800">초록</span>이 조건을 만족한 칸이에요.</div></div></div>`;
+            }else if(pr.type==="minmax" && pr.sub==="G-b"){     // 위 + 한 방향
+              const ex=st.explain||{}, byLine=ex.byLine||{}, side=pr.dir==="side";
+              const lines=Object.keys(byLine).map(k=>({k:+k,...byLine[k]})).sort((p,q)=>p.k-q.k);
+              const rows=lines.map(l=>`<div>${side?"뒤에서":"왼쪽에서"} ${l.k+1}번째 줄 — 높이 <b>${l.sil}</b>, 칸 <b>${l.n}</b>개 → 최대 ${l.sil}×${l.n}=<b>${l.sil*l.n}</b> · 최소 ${l.sil}+${l.n}−1=<b>${l.sil+l.n-1}</b></div>`).join("");
+              sol=`<div class="sol-list"><div class="mm-txt">${side?"옆":"앞"}에서 본 모양은 <b>각 줄의 가장 높은 칸</b>만 알려줘요. 그래서 줄마다 —<br>`
+                +`<b>최대</b>는 모든 칸을 그 높이까지 채우고, <b>최소</b>는 <b>한 칸만</b> 그 높이로 두고 나머지는 1개만 놓아요.</div>`
+                +rows+`<div style="margin-top:6px">모두 더하면 최소 <b>${mn0}개</b> ~ 최대 <b>${mx0}개</b>.</div></div>`;
+            }else if(pr.type==="minmax"){
               let vis="";
               if(rs){
                 const mn=hmapToShape(rs.min,sh.edge), mx=hmapToShape(rs.max,sh.edge);

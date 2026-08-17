@@ -119,11 +119,47 @@
       var want = o.level === '최상' ? true : (o.level === '상' ? null : false);
       if (want !== null) { var g = 0; while (g++ < 60 && isConcave(sh, C) !== want) sh = genShape(rng, o.cfg); out.sh = sh; }
     }
-    if (o.type === 'minmax' && C) {                          // 최소·최대: 범위 있는(max>min) 모양
-      var rc = C.reverseCounts(coreShape(sh)), g2 = 0;
-      while (g2++ < 40 && rc.maxCount <= rc.minCount) { sh = genShape(rng, o.cfg); rc = C.reverseCounts(coreShape(sh)); }
-      out.sh = sh; out.rc = rc;
-      var r = rngFrom(o.seed + ':q' + o.index)(); out.which = r < 0.34 ? 'min' : (r < 0.67 ? 'max' : 'diff');
+    if (o.type === 'minmax' && C) {                          // G군(최대·최소) G-a/b/c
+      var MM = (global.CubeNest && global.CubeNest.minmax) || null;   // cubenest-minmax.js
+      var HDm = (global.CubeNest && global.CubeNest.hidden) || null;
+      var hmOf = function (s) { return C.heightMap(coreShape(s)); };
+      // 서브 pool — G-a 삼면도(중~최상) / G-b 위+한방향(상~최상) / G-c 층 조건(중~상)
+      var gPool = o.level === '중' ? ['G-a', 'G-c']
+                : o.level === '상' ? ['G-a', 'G-b', 'G-c']
+                : ['G-a', 'G-b'];                            // 최상(G-c 는 상까지)
+      var gsub = (o.sub && /^G-[abc]$/.test(o.sub)) ? o.sub
+               : gPool[Math.floor(rngFrom(o.seed + ':gsub' + o.index)() * gPool.length)];
+      var g2 = 0, r = rngFrom(o.seed + ':q' + o.index)();
+
+      if (gsub === 'G-b' && MM) {
+        // 폭이 생기려면 '높이≥2 이면서 칸≥2'인 줄이 있어야 한다(없으면 답이 하나로 고정).
+        out.dir = rngFrom(o.seed + ':gd' + o.index)() < 0.5 ? 'front' : 'side';
+        while (g2++ < 60 && !MM.hasRange(hmOf(sh), out.dir)) sh = genShape(rng, o.cfg);
+        out.rc = MM.minmaxFromTopAndSil(hmOf(sh), out.dir);
+        out.which = r < 0.5 ? 'min' : 'max';                 // G-b 는 차이형 제외(교과 관례)
+      } else if (gsub === 'G-c' && MM) {
+        // ⚠ 겨냥도만 주는데 숨은 열이 있으면 그 열의 높이를 알 수 없어 문제가 성립하지 않는다.
+        //   → 숨은 열이 없는 모양으로만 출제한다. 두 조건(숨은 열 없음 + 쓸 만한 n 존재)을
+        //     한 루프에서 함께 만족시켜야 한다 — 따로 처리하면 n 을 찾느라 모양을 다시 뽑을 때
+        //     숨은 열이 되살아난다(실측 200문항 중 2건이 '풀 수 없는 문제'로 나갔다).
+        var fm = rngFrom(o.seed + ':gf' + o.index)() < 0.5 ? 'lower' : 'raise';
+        var cand = [], g3 = 0;
+        for (;;) {
+          if (HDm && HDm.hasHidden(hmOf(sh))) sh = reshape(sh, HDm.flattenHidden(hmOf(sh), fm));
+          cand = MM.levelChoices(hmOf(sh), sh.maxH);      // 답이 1 이상이고 전부는 아닌 n
+          if (cand.length || g3++ >= 60) break;
+          sh = genShape(rng, o.cfg);
+        }
+        out.n = cand.length ? cand[Math.floor(rngFrom(o.seed + ':gn' + o.index)() * cand.length)] : 2;
+        out.count = MM.countAtLeast(hmOf(sh), out.n);
+      } else {                                               // G-a — 현행 삼면도 최대·최소
+        gsub = 'G-a';
+        var rc = C.reverseCounts(coreShape(sh));
+        while (g2++ < 40 && rc.maxCount <= rc.minCount) { sh = genShape(rng, o.cfg); rc = C.reverseCounts(coreShape(sh)); }
+        out.rc = rc;
+        out.which = r < 0.34 ? 'min' : (r < 0.67 ? 'max' : 'diff');
+      }
+      out.sh = sh; out.sub = gsub;
     }
     if (o.type === 'hidden' && C) {                          // 안 보이는 나무: A-a~f 6종(설계 v0.2)
       var HD = (global.CubeNest && global.CubeNest.hidden) || null;   // cubenest-hidden.js

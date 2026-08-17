@@ -1,6 +1,6 @@
 # CubeNest — 마스터(개요·공통)
 
-> **버전:** v1.8.3
+> **버전:** v1.8.4
 > **상태:** 확정 (기준 문서)
 > **최종 수정일:** 2026-08-17
 > **문서 성격:** 프로젝트 전체가 공유하는 **불변 원리와 공통 규칙을 단일 출처로** 모은 상위 문서.
@@ -44,6 +44,7 @@
 | v1.8.1 | 2026-08-17 | **저장 스키마·RLS 규약 신설(6.4.1).** DB 착수 전 확정 방어선 — profiles 트리거 자동생성·role 권한 판정 금지, `attempt_id` 멱등키+append-only, 진도·연습장 클라우드 제외(pending intent만 예외), payload 256KB CHECK·payload 인덱스 금지·실컬럼 승격·컬럼 명시 select, RLS 4정책(`to authenticated`·`(select auth.uid())`·`with check`), **`entitlements` select 전용**(§6.5 포인터). **이름 확정:** `CubeNest.mydata`/`my_items`(store/saved_items 폐기). | 저장·보안 |
 | v1.8.2 | 2026-08-17 | **연습장 벡터 전환 완료 반영(6.4.1).** 연습장 필기를 PNG → **좌표 벡터(획 배열 `{c,w,e,p}` 정규화)** 로 전환(문항당 55KB→12KB, 리사이즈 무손실, 되돌리기 무제한, 레거시 PNG는 무시). `quiz_results.scratch jsonb`에 벡터를 그대로 담을 수 있는 상태 — 별도 Storage 불필요. 단 DB 첫 마이그레이션은 scratch 컬럼만 두고 저장 안정 후 연결 권장. | 저장 |
 | v1.8.3 | 2026-08-17 | **정답 은닉 규약 확정(6.7)·공용 모듈 cubenest-iso 등재(5.1).** /generate 응답에서 정답 필드(facesMc correct·minmax rc·A-f kinds) 전면 제거·present 폐지. 채점·색칠·해설 단일 출처를 **/grade 응답(answerKey·explain)** 으로 일원화(로컬 폴백 채점 제거, 실패 시 문항 미소진·재시도). 은닉 유형은 모양 대신 **given**(sils·numTop·layers·isoTop) 수신 — 겨냥도는 서버가 그린 SVG. **[한계] 3D 회전 6종은 은닉 불가**(회전=풀이과정, 수용). | 보안 |
+| v1.8.4 | 2026-08-17 | **공용 모듈 cubenest-minmax 등재(5.1·9).** quiz G군(최대·최소) 확장 G-a/G-b/G-c 구현에 따른 신규 계산 모듈 — G-b(위+한 방향 최소·최대)·G-c(n층 이상 칸 수). 클라 + 서버 복본. quiz 명세서 v0.9.14 → v0.10.0. | 인덱스 |
 
 > 버전 관리 규칙은 8장 참조. 문서마다 독립 버전·독립 변경 이력을 둔다.
 
@@ -374,7 +375,7 @@ cubenest/
 | `playground_기능개발명세서` | 3D 도구 스펙 | v1.5.1 |
 | `worksheets_기능개발명세서` | PDF 문제은행 | v0.2.0 |
 | `landing_기능개발명세서` | 랜딩 | v1.0.0 |
-| `quiz_기능개발명세서` | 인터랙티브 퀴즈 | v0.9.14 |
+| `quiz_기능개발명세서` | 인터랙티브 퀴즈 | v0.10.0 |
 | `guide_기능개발명세서` | 가이드(서비스 설명·사용법) | v0.1.0 (스텁) |
 | `account_기능개발명세서` | 계정 허브(로그인·닉네임·이용권·결제·CS) | v0.9.1 |
 | `my_기능개발명세서` | 내 자료 라이브러리(로컬 우선·`mydata.js` 오너) | v0.9.1 |
@@ -386,6 +387,7 @@ cubenest/
 | `assets/js/cubenest-core.js` | 공용 계산 코어(§4 실행형·§5.1) | v0.3.0 |
 | `assets/js/cubenest-viewer.js` | 공용 3D 뷰어·펼쳐보기(§5.1) | v0.2.3 |
 | `assets/js/cubenest-iso.js` | 공용 겨냥도 SVG 렌더러(§5.1·§6.7) — 서버 복본 `_shared/` 동반 | v0.1.0 |
+| `assets/js/cubenest-minmax.js` | G군(최대·최소) 확장 계산 — G-b 위+한방향·G-c 층 조건. 서버 복본 동반 | v0.1.0 |
 | `assets/js/auth.js` | 공용 인증(Supabase OAuth·`CubeNest.auth`, §5.1·§6.2) | v0.1.0 |
 | `assets/js/consent.js` | GA4 계측·opt-in 동의(§5.1·F1) | v0.1.0 |
 
