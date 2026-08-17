@@ -1,6 +1,6 @@
 # CubeNest — 마스터(개요·공통)
 
-> **버전:** v1.8.2
+> **버전:** v1.8.3
 > **상태:** 확정 (기준 문서)
 > **최종 수정일:** 2026-08-17
 > **문서 성격:** 프로젝트 전체가 공유하는 **불변 원리와 공통 규칙을 단일 출처로** 모은 상위 문서.
@@ -43,6 +43,7 @@
 | v1.8.0 | 2026-08-16 | **gen 계열 정합 + 공용 헤더 규약 신설.** (a) §5.1↔§9 불일치 해소 — `cubenest-gen` v0.2.0을 §9에 (재)등재(v1.6.2 클라 삭제 때 빠졌던 것, 서버엔 생존). (b) §2.1 `_shared/` 하위를 실파일(core·gen·gen-config·gen-modules)로 명시. (c) **§8.1 공용 헤더 예외 신설** — '재-인라인 금지'는 JS 로직에만, 헤더 **마크업은 각 HTML 인라인**(SEO)·스타일만 `nav.css` 공유, `account`의 `.site-actions`가 복사 정본. | 규약·정합 |
 | v1.8.1 | 2026-08-17 | **저장 스키마·RLS 규약 신설(6.4.1).** DB 착수 전 확정 방어선 — profiles 트리거 자동생성·role 권한 판정 금지, `attempt_id` 멱등키+append-only, 진도·연습장 클라우드 제외(pending intent만 예외), payload 256KB CHECK·payload 인덱스 금지·실컬럼 승격·컬럼 명시 select, RLS 4정책(`to authenticated`·`(select auth.uid())`·`with check`), **`entitlements` select 전용**(§6.5 포인터). **이름 확정:** `CubeNest.mydata`/`my_items`(store/saved_items 폐기). | 저장·보안 |
 | v1.8.2 | 2026-08-17 | **연습장 벡터 전환 완료 반영(6.4.1).** 연습장 필기를 PNG → **좌표 벡터(획 배열 `{c,w,e,p}` 정규화)** 로 전환(문항당 55KB→12KB, 리사이즈 무손실, 되돌리기 무제한, 레거시 PNG는 무시). `quiz_results.scratch jsonb`에 벡터를 그대로 담을 수 있는 상태 — 별도 Storage 불필요. 단 DB 첫 마이그레이션은 scratch 컬럼만 두고 저장 안정 후 연결 권장. | 저장 |
+| v1.8.3 | 2026-08-17 | **정답 은닉 규약 확정(6.7)·공용 모듈 cubenest-iso 등재(5.1).** /generate 응답에서 정답 필드(facesMc correct·minmax rc·A-f kinds) 전면 제거·present 폐지. 채점·색칠·해설 단일 출처를 **/grade 응답(answerKey·explain)** 으로 일원화(로컬 폴백 채점 제거, 실패 시 문항 미소진·재시도). 은닉 유형은 모양 대신 **given**(sils·numTop·layers·isoTop) 수신 — 겨냥도는 서버가 그린 SVG. **[한계] 3D 회전 6종은 은닉 불가**(회전=풀이과정, 수용). | 보안 |
 
 > 버전 관리 규칙은 8장 참조. 문서마다 독립 버전·독립 변경 이력을 둔다.
 
@@ -205,6 +206,7 @@ cubenest/
 |---|---|---|
 | `assets/js/cubenest-core.js` | 순수 계산 코어(DOM·Three 무의존): 직렬화(F2)·정방향 계산(4.2)·투상(4.3)·역방향 최대·최소·은면(4.4)·문제 스키마(F5) | §4 |
 | `assets/js/cubenest-viewer.js` | 3D 오빗 관찰 뷰어 + 위·앞·옆 펼쳐보기(삼투상/육투상, 면 방향색·라벨·격자 답안지) | §3.5·§4.3 |
+| `assets/js/cubenest-iso.js` (v0.1.0) | 겨냥도(아이소) SVG 렌더러 — `rot`·`renderIso(sh,k,hiSet)`. **서버 복본 `_shared/cubenest-iso.js`가 은닉 유형 제시물을 그린다**(6.7). ⚠ 셀을 `(x+z)` 오름차순(뒤→앞)으로 그리는 **정렬이 곧 가림**이라 불변 — 바꾸면 '안 보이는 나무' 유형의 전제가 붕괴한다 | §4.3 |
 | `cubenest-gen`(생성기) | 문제 생성기(문항 생성·재현, F5) + 서버 설정 `cubenest-gen-config.js`(격자·밀도·유형별 난이도 프리셋·`resolveCfg`). **서버 전용 — Edge Function `/generate`·`_shared/` (클라 미배포, 6.7)** | §4·F5 |
 | `assets/js/consent.js` | GA4 계측·opt-in 동의 | F1 |
 | `assets/js/auth.js` | 공용 인증(Supabase OAuth·`CubeNest.auth`·`isLoggedIn` 단일 진실) | §6.2 |
@@ -314,10 +316,18 @@ cubenest/
 |---|---|---|
 | `cubenest-core`(계산) | 클라이언트 | 초등 산술 — 보호 가치 낮음, 서버화 실익 없음 |
 | `cubenest-viewer`(렌더) | 클라이언트 | 렌더링 로직 — 비밀 없음 |
+| `cubenest-iso`(겨냥도) | 클라이언트 **+ 서버 복본** | 렌더 자체는 비밀 아님. 단 은닉 유형의 제시물을 **서버가 그려 내려보내야** 해서 서버에도 둔다 |
 | `run`·`consent` | 클라이언트 | UI·흐름 |
 | **`cubenest-gen`(생성기)** | **서버(Edge Function) ✅ 배포** | 전체 문제 공간·난이도·정답 규칙 = 핵심 |
 | **`gen-config`(생성 설정)** | **서버 ✅ 배포**(서버 상수) | 난이도·재현 씨앗 = 핵심 (클라 정적 파일은 폐지 예정) |
 | 정답·해설·워크시트 정답지(유료) | 서버 | 유료 핵심 콘텐츠 |
+
+**정답 은닉 규약 (2026-08-17 확정 · quiz 검수 11):**
+- **`/generate` 응답에 정답을 담지 않는다.** 종전엔 `q.correct`(facesMc 정답 번호)·`q.rc`(min/max)·`q.kinds`(A-f 정답)가 그대로 나갔다 — JSON에서 숫자 하나만 읽으면 답이 되는 상태였다. `present`(모양 중복 전송)도 폐지.
+- **채점·색칠·해설의 단일 출처 = `/grade` 응답의 `answerKey`·`explain`.** 클라는 정답을 재계산하지 않는다(재계산하려면 모양을 들고 있어야 해서 은닉이 원천적으로 불가능해진다). **로컬 폴백 채점 없음** — `/generate` 없이는 세션이 시작조차 안 되므로 지킬 오프라인 세션이 없다. 실패 시 문항 미소진·재시도.
+- **제시물만 전송(`given`):** 3D 회전이 풀이에 불필요한 유형(minmax·hidden)은 모양(`sh`) 대신 `given`을 받는다. `given.kind` = `sils`·`numTop`·`layers`·`isoTop`(겨냥도는 서버가 `cubenest-iso`로 그린 SVG).
+- **[한계·수용] 3D 회전 유형은 은닉 불가.** count·volume·surface·heightmap·facesMc·facesDraw는 **돌려서 가려진 나무를 확인하는 것이 곧 풀이 과정**이라 형상이 클라에 있어야 한다. 이 6종은 직접 정답 필드만 제거한다.
+- **[원리] 그림이 답을 정하는 유형은 그림을 주는 것이 은닉의 최선이다.** '안 보이는 나무' A-a/b/f의 답은 **보이는 그림만의 함수**다(숨은 열의 실제 높이는 어느 답에도 쓰이지 않는다). 따라서 서버 SVG에 가려진 큐브 좌표가 남아도 답이 새지 않으며, 치터도 학생과 똑같이 그림을 분석해야 한다.
 
 - **무료 vs 보호 조율:** quiz 플레이는 무료(6.3)라 전면 서버화 시 무료 경험이 깨진다 → **유료·고가치(워크시트 정답지·대량 문항·특정 세트)는 로그인·이용권 후 서버 생성**, **무료 quiz는 서버가 요청당 1문항 생성(rate limit·익명+IP)**. 필요 시 무료용 경량 생성기 / 유료용 서버 전용 풀 생성기로 이원화.
 - **주의:** 상표 출원·저작권 등록·약관 문구의 최종 확정은 변리사·IP 전문 변호사 확인 필요(본 절은 전략 방향).
@@ -364,7 +374,7 @@ cubenest/
 | `playground_기능개발명세서` | 3D 도구 스펙 | v1.5.1 |
 | `worksheets_기능개발명세서` | PDF 문제은행 | v0.2.0 |
 | `landing_기능개발명세서` | 랜딩 | v1.0.0 |
-| `quiz_기능개발명세서` | 인터랙티브 퀴즈 | v0.9.12 |
+| `quiz_기능개발명세서` | 인터랙티브 퀴즈 | v0.9.13 |
 | `guide_기능개발명세서` | 가이드(서비스 설명·사용법) | v0.1.0 (스텁) |
 | `account_기능개발명세서` | 계정 허브(로그인·닉네임·이용권·결제·CS) | v0.9.1 |
 | `my_기능개발명세서` | 내 자료 라이브러리(로컬 우선·`mydata.js` 오너) | v0.9.1 |
@@ -375,6 +385,7 @@ cubenest/
 | `cubenest_모듈_명세서` | 공용 모듈 API·테스트(§5.1) | v0.3.1 |
 | `assets/js/cubenest-core.js` | 공용 계산 코어(§4 실행형·§5.1) | v0.3.0 |
 | `assets/js/cubenest-viewer.js` | 공용 3D 뷰어·펼쳐보기(§5.1) | v0.2.3 |
+| `assets/js/cubenest-iso.js` | 공용 겨냥도 SVG 렌더러(§5.1·§6.7) — 서버 복본 `_shared/` 동반 | v0.1.0 |
 | `assets/js/auth.js` | 공용 인증(Supabase OAuth·`CubeNest.auth`, §5.1·§6.2) | v0.1.0 |
 | `assets/js/consent.js` | GA4 계측·opt-in 동의(§5.1·F1) | v0.1.0 |
 
