@@ -17,7 +17,7 @@
  *   levelPool(levels, type) → 유형별 허용 난이도(facesDraw=최상 제외)
  *   genProblem({type,level,seed,index,cfg,edu,core}) → { sh, level, which?, rc?, dir?, hmode?, hcells? }
  *   genSession({type,levels,seed,n,config,edu,core}) → [genProblem 결과...]
- *     · which(minmax)=min|max|diff · dir(facesMc)=front|side|top · hmode(hidden)=occ|surround
+ *     · which(minmax)=min|max|diff · dir(facesMc)=front|side|top · sub(hidden)=A-a..A-f · hcols/hasHidden/count/kinds
  */
 (function (global) {
   'use strict';
@@ -78,6 +78,12 @@
     });
   }
 
+  // A-f 출제 밴드(2~6가지) 이탈 정도. 재생성이 끝내 밴드를 못 맞췄을 때
+  // '가장 가까운 후보'를 고르는 기준(정답을 잘라 맞추는 대신 문제를 고른다).
+  //   k=1 = 숨은 나무가 없어 모양이 하나로 확정 → 답은 맞아도 A-f 문제로는 무의미하다.
+  //   그래서 밴드 아래(1)는 큰 벌점을 줘, 밴드 위(7,8,…)를 항상 먼저 고르게 한다.
+  function kindsGap(k) { return k < 2 ? 1000 : (k > 6 ? (k - 6) : 0); }
+
   function levelPool(levels, type) {
     var p = levels.slice();
     if (type === 'facesDraw') { p = p.filter(function (l) { return l !== '최상'; }); if (!p.length) p = ['상']; }
@@ -101,11 +107,40 @@
       out.sh = sh; out.rc = rc;
       var r = rngFrom(o.seed + ':q' + o.index)(); out.which = r < 0.34 ? 'min' : (r < 0.67 ? 'max' : 'diff');
     }
-    if (o.type === 'hidden') {                               // 안 보이는 나무: 가림 ≥1
-      var hmode = o.edu === 'think' ? 'surround' : 'occ';
-      var hc = hiddenCells(sh, hmode), g3 = 0;
-      while (g3++ < 60 && hc.length < 1) { sh = genShape(rng, o.cfg); hc = hiddenCells(sh, hmode); }
-      out.sh = sh; out.hmode = hmode; out.hcells = hc;
+    if (o.type === 'hidden' && C) {                          // 안 보이는 나무: A-a~f 6종(설계 v0.2)
+      var HD = (global.CubeNest && global.CubeNest.hidden) || null;   // cubenest-hidden.js
+      var hmapOf = function (s) { return C.heightMap(coreShape(s)); };
+      // 서브타입 선택 — 난이도별 pool(hidden 지원 중~최상): 중=유무·위치 / 상=+개수 / 최상=+종류수
+      var subPool = o.level === '중' ? ['A-a', 'A-b']
+                  : o.level === '상' ? ['A-a', 'A-b', 'A-c', 'A-d', 'A-e']
+                  : ['A-a', 'A-b', 'A-c', 'A-d', 'A-e', 'A-f'];      // 최상
+      var sub = (o.sub && /^A-[abcdef]$/.test(o.sub)) ? o.sub   // 강제 지정(테스트/선택)
+                : subPool[Math.floor(rngFrom(o.seed + ':sub' + o.index)() * subPool.length)];
+      var g3 = 0;
+      if (HD) {
+        if (sub === 'A-b') {                                  // 위치: 숨은 나무 있어야
+          while (g3++ < 60 && !HD.hasHidden(hmapOf(sh))) sh = genShape(rng, o.cfg);
+        } else if (sub === 'A-d') {                           // 삼면도: 범위(max>min)
+          var rcH = C.reverseCounts(coreShape(sh));
+          while (g3++ < 40 && rcH.maxCount <= rcH.minCount) { sh = genShape(rng, o.cfg); rcH = C.reverseCounts(coreShape(sh)); }
+          out.rc = rcH; var rq = rngFrom(o.seed + ':q' + o.index)(); out.which = rq < 0.34 ? 'min' : (rq < 0.67 ? 'max' : 'diff');
+        } else if (sub === 'A-f') {                           // 종류 수: '정확한' 가짓수가 2..6이 되도록
+          // enumerateByVisible 은 cap 없이 = 정확값. (cap 을 주면 초과 시 Infinity)
+          // 예전엔 cap=6 이 정답으로 반환돼, 실제 9·216가지인 모양도 "6가지"로 출제됐다.
+          var kk = HD.enumerateByVisible(hmapOf(sh));
+          var afSh = sh, afKk = kk;                           // 밴드에 가장 가까운 후보 기억
+          while (g3++ < 80 && (kk < 2 || kk > 6)) {
+            sh = genShape(rng, o.cfg); kk = HD.enumerateByVisible(hmapOf(sh));
+            if (kindsGap(kk) < kindsGap(afKk)) { afSh = sh; afKk = kk; }
+          }
+          if (kk < 2 || kk > 6) { sh = afSh; kk = afKk; }     // 80회 실패 → 최선 후보 채택(정답은 언제나 정확값)
+          out.kinds = kk;
+        }
+        var hm = hmapOf(sh);
+        out.hcols = HD.hiddenColumns(hm);                     // 숨은 열 위치(A-a/b/f)
+        out.hasHidden = HD.hasHidden(hm);                     // A-a 유무
+      }
+      out.sh = sh; out.sub = sub; out.count = sh.cells.length; // A-c/A-e 개수
     }
     if (o.type === 'facesMc') {                              // 위·앞·옆 고르기: 방향
       var rngD = rngFrom(o.seed + ':d' + o.index);
@@ -136,7 +171,7 @@
       // cfg 해석: 3축 프리셋(있으면) → 없으면 구 config.levels 폴백.
       var cfg = CFG ? CFG.resolveCfg(o.type, lv, rngFrom(o.seed + ':cfg' + i))
                     : (o.config && o.config.levels && o.config.levels[lv]);
-      probs.push(genProblem({ type: o.type, level: lv, seed: o.seed, index: i, cfg: cfg, edu: o.edu, core: C }));
+      probs.push(genProblem({ type: o.type, level: lv, seed: o.seed, index: i, cfg: cfg, edu: o.edu, core: C, sub: o.sub }));
     }
     return probs;
   }

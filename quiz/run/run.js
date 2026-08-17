@@ -71,6 +71,10 @@
       const VIEWER=(window.CubeNest&&window.CubeNest.viewer)||null;
       const GEN=(window.CubeNest&&window.CubeNest.gen)||null;
       function coreShape(sh){ return {gx:sh.gx, gy:sh.maxH, gz:sh.gz, edge:sh.edge, cells:sh.cells.map(c=>[c.x,c.y,c.z])}; }
+      // 안 보이는 나무: 숨은 열/셀 (visibleTop 규칙 인라인 — 숨음 ⟺ 앞대각(x+1,z+1) > 높이)
+      function hiddenColsOf(sh){ const at=(x,z)=>((x>=0&&z>=0&&x<sh.gx&&z<sh.gz)?sh.hmap[x][z]:0); const out=[];
+        for(let x=0;x<sh.gx;x++)for(let z=0;z<sh.gz;z++){ const h=sh.hmap[x][z]; if(h>0 && at(x+1,z+1)>h) out.push([x,z]); } return out; }
+      function hiddenCellSet(sh){ const s=new Set(); hiddenColsOf(sh).forEach(([x,z])=>{ const h=sh.hmap[x][z]; for(let y=0;y<h;y++)s.add(x+","+y+","+z); }); return s; }
       // 높이지도({"x,z":h}) → core/viewer 모양
       function hmapToShape(hm,edge){ const cells=[]; let gx=0,gz=0,gy=0; for(const k in hm){const p=k.split(",").map(Number),h=hm[k]; gx=Math.max(gx,p[0]+1); gz=Math.max(gz,p[1]+1); gy=Math.max(gy,h); for(let y=0;y<h;y++)cells.push([p[0],y,p[1]]);} return {gx,gy,gz,edge,cells}; }
       // 해설 내부 3D 뷰어(최소·최대 모양, 안 보이는 나무 강조) — 문항 전환 시 dispose
@@ -234,6 +238,30 @@
         }
         return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
       }
+      // 층별 모양(1층·2층·…) — 안 보이는 나무 A-e 제시용
+      function renderLayers(sh){
+        const hm=sh.hmap,gx=sh.gx,gz=sh.gz,maxH=sh.maxH,s=22,g=2,W=gx*(s+g)+g,H=gz*(s+g)+g;
+        let panels="";
+        for(let y=0;y<maxH;y++){
+          let any=false,cells="";
+          for(let z=0;z<gz;z++)for(let x=0;x<gx;x++){
+            const on=hm[x][z]>y; if(on)any=true; const X=g+x*(s+g),Y=g+z*(s+g);
+            cells+=`<rect x="${X}" y="${Y}" width="${s}" height="${s}" rx="3" fill="${on?'var(--accent-soft)':'var(--line-2)'}"${on?' stroke="var(--accent)" stroke-width="1"':''}/>`;
+          }
+          if(!any&&y>0)continue;
+          panels+=`<div class="pv"><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${cells}</svg><span>${y+1}층</span></div>`;
+        }
+        return `<div class="threeviews">${panels}</div>`;
+      }
+      // 안 보이는 나무 6종 제시 렌더(서브별)
+      function renderHiddenGiven(pr,sh){
+        const cap=t=>`<div class="rotcap">${t}</div>`;
+        if(pr.given==="numTop") return `<div class="viewer">${renderTopNums(sh)}${cap("위에서 본 모양의 각 칸에 쌓인 나무 <b>수</b>예요")}</div>`;
+        if(pr.given==="sils")   return `<div class="viewer"><div class="rothint" style="text-align:center;margin-bottom:4px">위·앞·옆에서 본 모양이에요</div>${renderThreeViews(sh)}</div>`;
+        if(pr.given==="layers") return `<div class="viewer">${renderLayers(sh)}${cap("<b>층별</b>로 나타낸 모양이에요")}</div>`;
+        // isoTop (A-f, A-a/b): 겨냥도 + 위모양
+        return `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="pv" style="margin-top:6px">${renderSil(topSil(sh),"#3f8fd0")}<span>위에서 본 모양</span></div>${cap("겨냥도에서 <b>안 보이는 나무</b>를 생각해요")}</div>`;
+      }
       // 투상 그리드(불리언 2D) → SVG
       function renderProj(g,color){
         const rows=g.length,cols=g[0]?g[0].length:1,s=13,gap=1.5,W=cols*(s+gap)+gap,H=rows*(s+gap)+gap;let r="";
@@ -309,7 +337,8 @@
         let dim=p.get("dim")||"all"; // 3d=3D 임베드 / 2d=2D 겨냥도 / all=기본(3D)
         let restart=p.get("restart")==="1"; // /my 다시풀기: 저장 세션 제거 후 처음부터
         let view=p.get("view")||"";         // /my 결과보기: view=result → 결과화면
-        return {type,levels,n,seed,dim,restart,view};
+        let sub=p.get("sub")||"";           // 안 보이는 나무 서브 강제(A-a~f)
+        return {type,levels,n,seed,dim,restart,view,sub};
       }
       const PRM=loadParams();
       const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[],state:[]};
@@ -327,34 +356,40 @@
       function loadSession(){ try{ const r=localStorage.getItem(SKEY); if(!r)return null; return JSON.parse(r); }catch(e){ return null; } }
       // 답 캡처(제출 시) / 복원(문항 재방문 시)
       function readAnswer(pr){
-        const T=TYPES[pr.type];
-        if(T.form==="num"){ const v=parseInt(document.getElementById("ans").value,10); return isNaN(v)?null:v; }
-        if(T.form==="mc"){ return PICK<0?null:PICK; }
-        if(T.form==="hm"){ const a=[]; let bad=false; qcard.querySelectorAll(".hmcell input").forEach(inp=>{const v=parseInt(inp.value,10); if(isNaN(v))bad=true; a.push({x:+inp.dataset.x,z:+inp.dataset.z,v:isNaN(v)?null:v});}); return bad?null:a; }
-        if(T.form==="draw"){ const a=[]; qcard.querySelectorAll(".dcell.on").forEach(c=>{a.push(c.closest(".dgrid").dataset.view+","+c.dataset.c+","+c.dataset.r);}); return a; }
+        const T=TYPES[pr.type], F=pr.form||T.form;
+        if(F==="bool"){ return PICK<0?null:PICK; }
+        if(F==="markCells"){ const a=[]; qcard.querySelectorAll(".mcell.on").forEach(c=>a.push(c.dataset.x+","+c.dataset.z)); return a; }
+        if(F==="num"){ const v=parseInt(document.getElementById("ans").value,10); return isNaN(v)?null:v; }
+        if(F==="mc"){ return PICK<0?null:PICK; }
+        if(F==="hm"){ const a=[]; let bad=false; qcard.querySelectorAll(".hmcell input").forEach(inp=>{const v=parseInt(inp.value,10); if(isNaN(v))bad=true; a.push({x:+inp.dataset.x,z:+inp.dataset.z,v:isNaN(v)?null:v});}); return bad?null:a; }
+        if(F==="draw"){ const a=[]; qcard.querySelectorAll(".dcell.on").forEach(c=>{a.push(c.closest(".dgrid").dataset.view+","+c.dataset.c+","+c.dataset.r);}); return a; }
         return null;
       }
       // [PoC 2단계] 저장된 raw → API v0.3 answer 객체(서버 채점용). 현재 num·hm(markCount)만.
       function answerObj(pr,raw){
-        const T=TYPES[pr.type];
-        if(T.form==="num"){ return {type:"num", value:raw}; }
-        if(T.form==="hm"){ const grid={}; (raw||[]).forEach(c=>{ if(c.v!=null) grid[c.x+","+c.z]=c.v; }); return {type:"markCount", grid}; }
-        if(T.form==="mc"){ return {type:"mc", pick:raw}; }
-        if(T.form==="draw"){ return {type:"drawSil", cells:(raw||[]).slice()}; }
+        const T=TYPES[pr.type], F=pr.form||T.form;
+        if(F==="bool"){ return {type:"bool", value: raw===1}; }
+        if(F==="markCells"){ return {type:"markCells", cells:(raw||[]).slice()}; }
+        if(F==="num"){ return {type:"num", value:raw}; }
+        if(F==="hm"){ const grid={}; (raw||[]).forEach(c=>{ if(c.v!=null) grid[c.x+","+c.z]=c.v; }); return {type:"markCount", grid}; }
+        if(F==="mc"){ return {type:"mc", pick:raw}; }
+        if(F==="draw"){ return {type:"drawSil", cells:(raw||[]).slice()}; }
         return null;
       }
-      function GRADE_PARAMS(){ return {type:PRM.type, levels:PRM.levels, n:PRM.n, edu:PRM.edu, config:GEN_CONFIG}; }
+      function GRADE_PARAMS(){ return {type:PRM.type, levels:PRM.levels, n:PRM.n, edu:PRM.edu, config:GEN_CONFIG, sub:PRM.sub||undefined}; }
       function applyAnswer(pr,raw){
-        const T=TYPES[pr.type]; if(raw==null)return;
-        if(T.form==="num"){ const el=document.getElementById("ans"); if(el)el.value=raw; }
-        else if(T.form==="mc"){ PICK=raw; qcard.querySelectorAll(".opt").forEach((o,i)=>o.classList.toggle("sel",i===raw)); }
-        else if(T.form==="hm"){ raw.forEach(c=>{const inp=qcard.querySelector('.hmcell input[data-x="'+c.x+'"][data-z="'+c.z+'"]'); if(inp&&c.v!=null)inp.value=c.v;}); }
-        else if(T.form==="draw"){ const set=new Set(raw); qcard.querySelectorAll(".dcell").forEach(cell=>{cell.classList.toggle("on",set.has(cell.closest(".dgrid").dataset.view+","+cell.dataset.c+","+cell.dataset.r));}); }
+        const T=TYPES[pr.type], F=pr.form||T.form; if(raw==null)return;
+        if(F==="bool"){ PICK=raw; qcard.querySelectorAll(".boolopt").forEach(o=>o.classList.toggle("sel",+o.dataset.b===raw)); }
+        else if(F==="markCells"){ const set=new Set(raw); qcard.querySelectorAll(".mcell").forEach(c=>c.classList.toggle("on",set.has(c.dataset.x+","+c.dataset.z))); }
+        else if(F==="num"){ const el=document.getElementById("ans"); if(el)el.value=raw; }
+        else if(F==="mc"){ PICK=raw; qcard.querySelectorAll(".opt").forEach((o,i)=>o.classList.toggle("sel",i===raw)); }
+        else if(F==="hm"){ raw.forEach(c=>{const inp=qcard.querySelector('.hmcell input[data-x="'+c.x+'"][data-z="'+c.z+'"]'); if(inp&&c.v!=null)inp.value=c.v;}); }
+        else if(F==="draw"){ const set=new Set(raw); qcard.querySelectorAll(".dcell").forEach(cell=>{cell.classList.toggle("on",set.has(cell.closest(".dgrid").dataset.view+","+cell.dataset.c+","+cell.dataset.r));}); }
       }
       // [PoC 1단계] 생성만 서버 API 경유(async). 채점·해설은 아직 로컬(다음 단계).
       async function buildSession(){
         S.probs=[];
-        const resp=await CubeNest.api.generate({theme:PRM.type,given:[],ask:null,levels:PRM.levels,seed:PRM.seed,n:PRM.n,config:GEN_CONFIG,edu:PRM.edu});
+        const resp=await CubeNest.api.generate({theme:PRM.type,given:[],ask:null,levels:PRM.levels,seed:PRM.seed,n:PRM.n,config:GEN_CONFIG,edu:PRM.edu,sub:PRM.sub||undefined});
         resp.problems.forEach((p,i)=>{
           const gp=p._gp;                       // 서버 생성 인스턴스(원본 genSession 항목)
           const sh=gp.sh, lv=gp.level;
@@ -370,10 +405,23 @@
             else{ pr.answer=gp.which==="max"?gp.rc.maxCount:gp.rc.minCount; pr.ask="세 방향(위·앞·옆)에서 본 모양이 되려면, 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?"; }
           }
           if(PRM.type==="hidden"){
-            pr.hmode=gp.hmode; pr.hcells=gp.hcells; pr.answer=gp.hcells.length;
-            pr.ask = gp.hmode==="surround"
-              ? "다른 나무에 가려 <b>보이지 않는</b> 쌓기나무는 몇 개일까요?"
-              : "겨냥도에서 뒤에 가려 <b>보이지 않는</b> 쌓기나무는 몇 개일까요?";
+            pr.sub=gp.sub||"A-a";
+            const cnt=(sh.cells?sh.cells.length:0);          // A-c/A-e 개수(로컬 즉시피드백)
+            if(pr.sub==="A-c"){ pr.given="numTop"; pr.answer=cnt;
+              pr.ask="위에서 본 모양의 각 칸에 <b>쌓인 나무 수</b>가 적혀 있어요. 쌓기나무는 모두 몇 개일까요?"; }
+            else if(pr.sub==="A-e"){ pr.given="layers"; pr.answer=cnt;
+              pr.ask="<b>층별로 나타낸 모양</b>이에요. 쌓기나무는 모두 몇 개일까요?"; }
+            else if(pr.sub==="A-d"){ pr.rc=gp.rc; pr.which=gp.which; pr.given="sils";
+              if(gp.which==="diff"){ pr.answer=(gp.rc.hidden!=null?gp.rc.hidden:gp.rc.maxCount-gp.rc.minCount);
+                pr.ask="세 방향 모양이 되도록 쌓을 때 <b>최대와 최소의 차이</b>(안 보이는 나무)는 몇 개일까요?"; }
+              else{ pr.answer=gp.which==="max"?gp.rc.maxCount:gp.rc.minCount;
+                pr.ask="세 방향(위·앞·옆)에서 본 모양이 되려면 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?"; } }
+            else if(pr.sub==="A-f"){ pr.given="isoTop"; pr.answer=gp.kinds;
+              pr.ask="겨냥도와 위에서 본 모양이 이래요. <b>쌓은 모양이 될 수 있는 것은 몇 가지</b>일까요?"; }
+            else if(pr.sub==="A-a"){ pr.form="bool"; pr.given="isoTop"; pr.answer=hiddenColsOf(sh).length>0?1:0;
+              pr.ask="겨냥도와 위에서 본 모양을 비교해요. <b>안 보이게 숨은 쌓기나무가 있나요?</b>"; }
+            else{ pr.form="markCells"; pr.given="isoTop"; pr.answer=hiddenColsOf(sh).map(c=>c[0]+","+c[1]);   // A-b
+              pr.ask="위에서 본 모양에서 <b>안 보이는 나무가 숨은 칸</b>을 모두 눌러요."; }
           }
           S.probs.push(pr);
         });
@@ -388,18 +436,27 @@
         document.getElementById("pg-type").textContent=T.title;
         updateProgress();
         let ans="";
-        if(T.form==="num"){
+        const form=pr.form||T.form;
+        if(form==="bool"){
+          ans=`<div class="opts boolopts"><button type="button" class="opt boolopt" data-b="1">있어요</button><button type="button" class="opt boolopt" data-b="0">없어요</button></div>`;
+        }else if(form==="markCells"){
+          let mc=""; for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++){ const on=sh.hmap[x][z]>0;
+            mc+= on ? `<button type="button" class="mcell" data-x="${x}" data-z="${z}" style="grid-column:${x+1};grid-row:${z+1}"></button>`
+                    : `<div class="mcell empty" style="grid-column:${x+1};grid-row:${z+1}"></div>`; }
+          // 44px = 터치 타깃 최소치(마스터 UI 규약). index.html 의 .mcell 크기와 같은 값이어야 한다.
+          ans=`<div class="markgrid" style="grid-template-columns:repeat(${sh.gx},44px)">${mc}</div><div class="hint">안 보이게 숨었을 것 같은 칸을 눌러요(여러 칸 가능).</div>`;
+        }else if(form==="num"){
           ans=`<div class="numin"><input id="ans" type="number" inputmode="numeric" autocomplete="off" placeholder="?"/><span class="unit">${T.unit}</span></div>`;
-        }else if(T.form==="hm"){
+        }else if(form==="hm"){
           let cells="";
           for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++){
             const h=sh.hmap[x][z];
             cells+=`<div class="hmcell ${h>0?'fill':'empty'}" style="grid-column:${x+1};grid-row:${z+1}">${h>0?`<input data-x="${x}" data-z="${z}" type="number" inputmode="numeric" min="1" max="${sh.maxH}"/>`:''}</div>`;
           }
           ans=`<div class="hmgrid" style="grid-template-columns:repeat(${sh.gx},42px)">${cells}</div><div class="hint">색칠된 칸(위에서 보이는 칸)에만 수를 써요.</div>`;
-        }else if(T.form==="mc"){
+        }else if(form==="mc"){
           ans=`<div class="opts">${pr.opts.map((v,i)=>`<button class="opt" data-i="${i}">${renderSil(v)}</button>`).join("")}</div>`;
-        }else if(T.form==="draw"){
+        }else if(form==="draw"){
           ans=renderDrawInput(sh);
         }
         const askText=pr.ask||T.ask;
@@ -407,11 +464,11 @@
         const isViews=pr.type==="minmax";
         const isHidden=pr.type==="hidden";
         const has3D=!!window.THREE && !!VIEWER && PRM.dim!=="2d" && !isViews && !isHidden;
-        const viewLabel=isViews?"세 방향 본 모양":(isHidden?"2D 겨냥도":(has3D?"3D 문제":"2D 겨냥도"));
+        const viewLabel=isViews?"세 방향 본 모양":(isHidden?(pr.given==="numTop"?"위에서 본 수":pr.given==="sils"?"위·앞·옆":pr.given==="layers"?"층별 모양":"2D 겨냥도"):(has3D?"3D 문제":"2D 겨냥도"));
         const viewerHTML=isViews
           ? `<div class="viewer"><div class="rothint" style="text-align:center;margin-bottom:4px">위·앞·옆에서 본 모양이에요</div>${renderThreeViews(sh)}</div>`
           : isHidden
-          ? `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotcap">겨냥도(위·앞·옆에서 본 그림)에서 <b>안 보이는 나무</b>를 세어보세요</div></div>`
+          ? renderHiddenGiven(pr,sh)
           : (has3D
           ? `<div class="viewer"><div id="v3d" class="v3d"></div><div class="rotrow2"><div class="rothint">손가락·마우스로 <b>돌려서</b> 위·앞·옆을 확인해요</div><button id="reset3d" class="rotbtn2" type="button">정면</button></div></div>`
           : `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotrow"><button id="rl" class="rotbtn wide" type="button" aria-label="왼쪽으로 90도 돌리기">${ARC_CCW}<span>90°</span></button><div id="compass" class="compass" aria-hidden="true">${renderCompass(0)}</div><button id="rr" class="rotbtn wide" type="button" aria-label="오른쪽으로 90도 돌리기">${ARC_CW}<span>90°</span></button></div><div class="rotcap" id="rotcap">버튼으로 쌓기나무를 <b>돌려서</b> 뒤·옆면을 확인해요</div></div>`);
@@ -436,6 +493,8 @@
         const fb0=document.getElementById("fb"); fb0.className="fb"; fb0.innerHTML=""; fb0.hidden=false;
         if(T.form==="mc"){qcard.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.i;qcard.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
         if(T.form==="draw"){qcard.querySelectorAll(".dcell").forEach(b=>b.onclick=()=>{if(!b.disabled)b.classList.toggle("on");});}
+        if((pr.form||T.form)==="bool"){qcard.querySelectorAll(".boolopt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.b;qcard.querySelectorAll(".boolopt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
+        if((pr.form||T.form)==="markCells"){qcard.querySelectorAll(".mcell:not(.empty)").forEach(b=>b.onclick=()=>{if(b.style.pointerEvents!=="none")b.classList.toggle("on");});}
         document.getElementById("feedbackBtn").onclick=openFeedback;
         const st=S.state[S.idx];
         if(st && st.answered){          // 이미 푼 문항: 답 복원 + 채점 상태 재구성(잠금)
@@ -641,7 +700,7 @@
         setTimeout(()=>{ fx.remove(); }, 1400);
       }
       async function submit(revisit){
-        const pr=S.probs[S.idx],T=TYPES[pr.type],sh=pr.sh;
+        const pr=S.probs[S.idx],T=TYPES[pr.type],sh=pr.sh,F=pr.form||T.form;
         if(!revisit){
           const raw=readAnswer(pr);
           if(raw===null){ const el=document.getElementById("ans"); if(el)el.focus(); return; }
@@ -657,7 +716,7 @@
           }catch(e){ srvOk=null; }   // 실패 시 로컬 폴백
         }
         let ok=false,sol="";
-        if(T.form==="num"){
+        if(F==="num"){
           const v=parseInt(document.getElementById("ans").value,10);
           if(isNaN(v)){document.getElementById("ans").focus();return;}
           let a;
@@ -683,13 +742,20 @@
                 vis = `<div class="mm-txt">${txt}</div><div class="mm-top"><div class="mmv-h">위에서 본 모양 · 숫자=항상 그 높이<br><span style="color:#c68a2e">색칠=최소·최대 달라지는 칸</span></div>${topGrid}</div>${grid3d}`;
               }
               sol = vis;
-            }else{
-              const hiSet=new Set(pr.hcells.map(c=>c.x+","+c.y+","+c.z));
-              const why = pr.hmode==="surround" ? "앞·위·옆이 모두 다른 나무로 막힌" : "겨냥도에서 뒤쪽에 가려진";
-              const vis = (VIEWER&&window.THREE)
-                ? `<div class="expv expv-hi" id="expHidden"></div>`
-                : `<div class="sol-pic">${renderIso(sh,0,hiSet)}</div>`;
-              sol = `<div class="sol-hidden">${vis}<div class="sol-list">${why} 쌓기나무는 <b>${pr.answer}개</b>예요. <span style="color:#c33a4f;font-weight:800">빨강</span>이 안 보이는 나무예요.</div></div>`;
+            }else{   // 안 보이는 나무 num 서브: A-c/A-e(개수)·A-d(최대최소)·A-f(종류수)
+              if(pr.sub==="A-d"){
+                let vis="정답: <b>"+a+"개</b>";
+                if(CORE){ const rs=CORE.reverseShapes(coreShape(sh)); const mn=hmapToShape(rs.min,sh.edge),mx=hmapToShape(rs.max,sh.edge); pr._mn=mn; pr._mx=mx;
+                  vis=`<div class="mm-txt">세 방향에서 본 모양이 같아도 안쪽 높이가 달라질 수 있어요. 최소 <b>${rc.minCount}</b> ~ 최대 <b>${rc.maxCount}</b>개.</div><div class="mm-views"><div class="mmv"><div class="mmv-h">최소 ${rc.minCount}개</div>${renderIso(mn,0)}</div><div class="mmv"><div class="mmv-h">최대 ${rc.maxCount}개</div>${renderIso(mx,0)}</div></div>`; }
+                sol=vis;
+              }else if(pr.sub==="A-f"){
+                const hiSet=hiddenCellSet(sh);
+                sol=`<div class="sol-hidden"><div class="sol-pic">${renderIso(sh,0,hiSet)}</div><div class="sol-list">숨은 칸의 높이가 달라질 수 있어, 쌓은 모양은 <b>${a}가지</b>예요. <span style="color:#c33a4f;font-weight:800">빨강</span>이 안 보이는 칸이에요.</div></div>`;
+              }else{   // A-c / A-e
+                const nums=[]; for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++){if(sh.hmap[x][z]>0)nums.push(sh.hmap[x][z]);}
+                const maxY=Math.max(...sh.cells.map(c=>c.y))+1, layer=Array(maxY).fill(0); sh.cells.forEach(c=>layer[c.y]++);
+                sol=`<div class="sol-methods"><div class="sol-pic">${renderTopNums(sh)}<span>위에서 본 수</span></div><div class="sol-list"><div>① <b>위에서 본 수의 합</b> : ${nums.join(" + ")} = <b>${a}개</b></div><div>② <b>층별 세기</b> : ${layer.map((c,i)=>`${i+1}층 ${c}`).join(" + ")} = <b>${a}개</b></div></div></div>`;
+              }
             }
           }else{
             const st = CORE ? CORE.stats(coreShape(sh)) : null;   // §4 정본 계산(공용 모듈)
@@ -718,13 +784,13 @@
             }
           }
           ok = (srvOk!=null ? srvOk : (v===a));
-        }else if(T.form==="hm"){
+        }else if(F==="hm"){
           ok=true;let bad=false;
           qcard.querySelectorAll(".hmcell input").forEach(inp=>{const x=+inp.dataset.x,z=+inp.dataset.z,cor=sh.hmap[x][z];const v=parseInt(inp.value,10);if(isNaN(v)||v!==cor){if(isNaN(v))bad=true;ok=false;inp.style.borderColor="var(--del)";}else{inp.style.borderColor="var(--add)";}inp.value=cor;inp.disabled=true;});
           if(bad)ok=false;
           if(srvOk!=null)ok=srvOk;   // 색칠은 로컬, 점수는 서버
           sol="각 칸의 수 = 그 자리에 쌓인 나무의 <b>높이(층수)</b>예요. 초록색이 정답입니다.";
-        }else if(T.form==="mc"){
+        }else if(F==="mc"){
           if(PICK<0)return;
           ok=(srvOk!=null?srvOk:(PICK===pr.correct));
           qcard.querySelectorAll(".opt").forEach((o,i)=>{o.classList.add("done");if(i===pr.correct)o.classList.add("correct");else if(i===PICK)o.classList.add("wrong");o.style.pointerEvents="none";});
@@ -732,7 +798,7 @@
               :pr.dir==="side"?"<b>옆</b>에서 보면 깊이 각 줄에서 <b>가장 높은 층</b>까지 보여요."
               :"<b>위</b>에서 보면 나무가 <b>있는 칸</b>이 모두 칠해져요(높이는 안 보여요).")
               +" 초록 테두리가 정답이에요.";
-        }else if(T.form==="draw"){
+        }else if(F==="draw"){
           ok=true;
           ["top","front","side"].forEach(view=>{
             const g=qcard.querySelector(`.dgrid[data-view="${view}"]`);
@@ -747,6 +813,21 @@
           if(srvOk!=null)ok=srvOk;   // 색칠은 로컬, 점수는 서버
           const vis3d = (VIEWER&&window.THREE) ? `<div class="expv expv-hi" id="expDraw"></div>` : `<div class="sol-pic">${renderIso(sh,0)}</div>`;
           sol=`<div class="sol-draw"><div class="sol-pic">${renderThreeViews(sh)}<span>정답</span></div>${vis3d}</div>`;
+        }else if(F==="bool"){                          // A-a 유무
+          if(PICK<0)return;
+          const truth=hiddenColsOf(sh).length>0?1:0;
+          ok=(srvOk!=null?srvOk:(PICK===truth));
+          qcard.querySelectorAll(".boolopt").forEach(o=>{o.classList.add("done");const b=+o.dataset.b;if(b===truth)o.classList.add("correct");else if(b===PICK)o.classList.add("wrong");o.style.pointerEvents="none";});
+          const hiSet=hiddenCellSet(sh);
+          sol=`<div class="sol-hidden"><div class="sol-pic">${renderIso(sh,0,hiSet)}</div><div class="sol-list">안 보이는 나무가 <b>${truth?"있어요":"없어요"}</b>. ${truth?'<span style="color:#c33a4f;font-weight:800">빨강</span>이 숨은 칸이에요.':"모든 칸의 윗면이 보여요."}</div></div>`;
+        }else if(F==="markCells"){                     // A-b 위치
+          const marked=new Set(); qcard.querySelectorAll(".mcell.on").forEach(c=>marked.add(c.dataset.x+","+c.dataset.z));
+          const cols=hiddenColsOf(sh), truth=new Set(cols.map(c=>c[0]+","+c[1]));
+          let eq=marked.size===truth.size; if(eq)for(const k of truth)if(!marked.has(k)){eq=false;break;}
+          ok=(srvOk!=null?srvOk:eq);
+          qcard.querySelectorAll(".mcell").forEach(c=>{const k=c.dataset.x+","+c.dataset.z;c.style.pointerEvents="none";if(truth.has(k))c.classList.add("correct");else if(marked.has(k))c.classList.add("wrong");});
+          const hiSet=hiddenCellSet(sh);
+          sol=`<div class="sol-hidden"><div class="sol-pic">${renderIso(sh,0,hiSet)}</div><div class="sol-list"><span style="color:#c33a4f;font-weight:800">빨강</span>이 안 보이는 나무가 숨은 칸이에요 (${cols.length}칸).</div></div>`;
         }
         S.answered[S.idx]=ok;
         if(!revisit){ S.state[S.idx].ok=ok; track("quiz_answer",{type:pr.type,level:pr.lv,correct:ok,idx:S.idx}); if(SCRATCH)SCRATCH.relock(); }
@@ -762,8 +843,7 @@
             if(hMin) EXPVIEWS.push(VIEWER.createViewer(hMin,{THREE:window.THREE,shape:pr._mn,showLabels:false}));
             if(hMax) EXPVIEWS.push(VIEWER.createViewer(hMax,{THREE:window.THREE,shape:pr._mx,showLabels:false}));
           }else if(pr.type==="hidden"){
-            const hH=document.getElementById("expHidden");
-            if(hH) EXPVIEWS.push(VIEWER.createViewer(hH,{THREE:window.THREE,shape:coreShape(sh),highlightCells:pr.hcells.map(c=>[c.x,c.y,c.z]),highlightColor:"#e0455e",showLabels:true}));
+            // 안 보이는 나무 해설은 정적 iso(renderIso+hiddenCellSet)로 표시 → 3D explode 불필요
           }else if(pr.type==="facesDraw"){
             const hD=document.getElementById("expDraw");
             if(hD) EXPVIEWS.push(VIEWER.createViewer(hD,{THREE:window.THREE,shape:coreShape(sh),showLabels:true}));

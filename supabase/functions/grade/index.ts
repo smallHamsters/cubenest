@@ -32,7 +32,7 @@ Deno.serve(async (req: Request) => {
 
   let pr: any;
   try {
-    const probs = buildProbs({ type: theme, levels, seed, n, edu });
+    const probs = buildProbs({ type: theme, levels, seed, n, edu, sub: params.sub ?? null });
     pr = probs[idx];
   } catch (e) {
     return json(req, { error: "재생성 실패", detail: String((e as Error).message) }, 500);

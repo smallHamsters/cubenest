@@ -123,6 +123,30 @@
       .hmcell.fill{background:var(--accent-soft)}
       .hmcell input{width:100%;height:100%;border:1.5px solid var(--accent);border-radius:8px;background:var(--panel);font-family:inherit;font-size:18px;font-weight:800;text-align:center;color:var(--accent-ink)}
       .hmcell input:focus{outline:none;box-shadow:0 0 0 2px var(--accent-soft)}
+
+      /* 안 보이는 나무 A-b: 위에서 본 모양 격자를 눌러 '숨은 칸' 고르기(markCells).
+         칸 크기 44px 는 run.js renderProblem 의 grid-template-columns 와 짝을 맞춘 값이다(둘 다 고치기).
+         행=z(위쪽이 z=0), 열=x — 바로 위 제시 그림(renderSil(topSil)) 과 같은 방향. */
+      .markgrid{display:inline-grid;gap:4px;background:var(--panel);padding:8px;border:1px solid var(--line);border-radius:12px}
+      /* 누를 수 있는 칸(나무 있음)은 테두리 링으로 또렷하게, 빈 칸은 배경까지 물러나게 —
+         그래야 발자국 모양이 위 그림과 같은 실루엣으로 읽힌다. */
+      .mcell{width:44px;height:44px;border:none;border-radius:8px;padding:0;display:grid;place-items:center;
+             background:var(--accent-soft);box-shadow:inset 0 0 0 2px #a9a7e8;cursor:pointer;
+             font-family:inherit;font-size:19px;font-weight:800;line-height:1;color:transparent;
+             touch-action:manipulation;transition:background .1s,box-shadow .1s}
+      .mcell.empty{background:transparent;box-shadow:inset 0 0 0 1px var(--line-2);cursor:default}
+      .mcell.on{background:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent-ink);color:#fff}
+      .mcell.on::after{content:"●"}
+      /* 채점 후: 정답칸=초록(놓친 칸은 테두리만, 맞게 고른 칸은 꽉 참) · 잘못 고른 칸=빨강 */
+      .mcell.correct{background:var(--add-soft);box-shadow:inset 0 0 0 2.5px var(--add);color:#0b6e3e}
+      .mcell.on.correct{background:#4fae72;box-shadow:none;color:#fff}
+      .mcell.correct::after{content:"✓"}
+      .mcell.wrong{background:#e0455e;box-shadow:none;color:#fff}
+      .mcell.wrong::after{content:"✕"}
+
+      /* 안 보이는 나무 A-a: 있음/없음 2지선다. .opts/.opt 를 그대로 쓰되 그림이 아닌 '글자' 보기라 높이를 낮춘다. */
+      .boolopts .opt{min-height:64px;font-size:17px;font-weight:800;color:var(--ink)}
+
       .hint{font-size:12.5px;color:var(--muted);margin-top:8px}
 
       .opts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}

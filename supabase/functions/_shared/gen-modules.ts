@@ -6,8 +6,9 @@
 
 import { core } from "./cubenest-core.js";          // 값 import (번들 포함 보장)
 import { genConfig } from "./cubenest-gen-config.js"; // gen보다 먼저(genSession이 참조)
+import { hidden } from "./cubenest-hidden.js";        // gen보다 먼저(genProblem hidden 분기가 참조)
 import { gen } from "./cubenest-gen.js";
-export { core, gen, genConfig };
+export { core, gen, genConfig, hidden };
 
 // gen-config: 공개 json 폐지 → 서버 상수(단일 출처).
 export const GEN_CONFIG = {

@@ -29,7 +29,7 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const probs = buildProbs({ type: theme, levels, seed, n, edu });
+    const probs = buildProbs({ type: theme, levels, seed, n, edu, sub: body.sub ?? null });
     const ph = paramsHash({ theme, levels, n, edu });
     const problems = await Promise.all(probs.map(async (pr: any, i: number) => {
       const id = seed + "#" + i;

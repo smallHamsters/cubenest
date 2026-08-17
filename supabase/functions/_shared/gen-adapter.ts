@@ -1,20 +1,11 @@
 // CubeNest Edge Functions — gen/core 어댑터 (서버 전용 생성기)
 // ─────────────────────────────────────────────────────────────────────────
-// 이 파일은 "이식 자리"다. 실제 배포 시:
-//   1) cubenest-core.js  → core.ts (또는 .js ESM): export const core = {...}
-//   2) cubenest-gen.js   → gen.ts  (또는 .js ESM): export const gen  = {...}
-//      - window.CubeNest 의존 제거, import { core } from "./core.ts"
-//      - makeSilOpts·silSig·perturbSil·frontSil·sideSil·topSil·drawCorrect 도 서버로 이전
-//   3) gen-config        → config.ts: export const GEN_CONFIG = {...}(정적 json 폐지)
-// 아래 import 두 줄을 실제 모듈로 교체하면, 이 파일의 로직은 그대로 동작한다.
-//   PoC의 mock 서버(cubenest-mock-server_260814_0003.js)의 answerKeyFor/check/헬퍼가 정본.
+// 역할: gen 출력 → API 페이로드 (answerKey · checkAnswer · question · present · explain).
+// core·gen·gen-config 의 서버 이식은 완료됐다. 값은 반드시 gen-modules.ts 한 곳에서만
+// 가져온다 — 로드 순서(core→genConfig→hidden→gen)와 번들 포함을 거기서 보장한다.
 // ─────────────────────────────────────────────────────────────────────────
 
-// TODO(이식): 실제 모듈로 교체
-// import { core } from "./core.ts";
-// import { gen } from "./gen.ts";
-// import { GEN_CONFIG } from "./config.ts";
-import { core, gen, GEN_CONFIG } from "./gen-modules.ts"; // ← 이식 산출물(아래 gen-modules.ts 참고)
+import { core, gen, GEN_CONFIG } from "./gen-modules.ts";
 
 // deno-lint-ignore no-explicit-any
 type Sh = any;
@@ -26,11 +17,11 @@ export function coreShape(sh: Sh) {
 
 // 세션을 seed+params로 결정적으로 재생성 (generate·grade 공통)
 export function buildProbs(p: {
-  type: string; levels: string[]; seed: string; n: number; edu?: string | null;
+  type: string; levels: string[]; seed: string; n: number; edu?: string | null; sub?: string | null;
 }): Sh[] {
   return gen.genSession({
     type: p.type, levels: p.levels, seed: p.seed, n: p.n,
-    config: GEN_CONFIG, edu: p.edu ?? null, core,
+    config: GEN_CONFIG, edu: p.edu ?? null, core, sub: p.sub ?? null,
   });
 }
 
@@ -79,13 +70,25 @@ export function answerKeyFor(type: string, pr: Sh, idx: number, seed: string): a
       return { type: "num", value: val, min: rc.minCount, max: rc.maxCount, which };
     }
     case "hidden": {
-      const hc = gen.hiddenCells ? gen.hiddenCells(sh, pr.hmode || "occ") : (pr.hcells || []);
-      return { type: "num", value: (hc && hc.length) || 0 };
+      // 안 보이는 나무 A-a~f (gen v0.3이 sub·hasHidden·hcols·count·rc·which·kinds 첨부)
+      const sub = pr.sub || "A-a";
+      if (sub === "A-a") return { type: "bool", value: !!pr.hasHidden };
+      if (sub === "A-b") return { type: "markCells", cells: (pr.hcols || []).map((c: any) => c[0] + "," + c[1]) };
+      if (sub === "A-c" || sub === "A-e") return { type: "num", value: pr.count };
+      if (sub === "A-d") {
+        const rc = pr.rc || core.reverseCounts(cs), which = pr.which || "min";
+        const val = which === "min" ? rc.minCount : which === "max" ? rc.maxCount : (rc.maxCount - rc.minCount);
+        return { type: "num", value: val, min: rc.minCount, max: rc.maxCount, which };
+      }
+      if (sub === "A-f") return { type: "num", value: pr.kinds };
+      return { type: "bool", value: !!pr.hasHidden };
     }
     case "heightmap": {
+      // core.heightMap 은 2차원 배열이 아니라 {"x,z": h} 객체다(cubenest-core.js §4.3).
+      // hm[z][x] 로 읽던 시절엔 grid 가 항상 {} 라 만점 답안도 오답 처리됐다.
       const hm = core.heightMap(cs), grid: Record<string, number> = {};
       for (let z = 0; z < sh.gz; z++) for (let x = 0; x < sh.gx; x++) {
-        const h = (hm[z] && hm[z][x]) || 0; if (h > 0) grid[x + "," + z] = h;
+        const h = hm[x + "," + z] || 0; if (h > 0) grid[x + "," + z] = h;
       }
       return { type: "markCount", grid };
     }
@@ -106,6 +109,14 @@ export function checkAnswer(_type: string, answer: any, key: any): boolean {
     case "bool": return !!answer.value === !!key.value;
     case "mc":   return Number(answer.pick) === Number(key.correct);
     case "markCount": return mapEq(answer.grid, key.grid);
+    case "markCells": {
+      const A: Record<string, 1> = {}, B: Record<string, 1> = {};
+      (answer.cells || []).forEach((x: string) => A[x] = 1);
+      (key.cells || []).forEach((x: string) => B[x] = 1);
+      for (const k in A) if (!B[k]) return false;
+      for (const k in B) if (!A[k]) return false;
+      return true;
+    }
     case "drawSil": {
       const A: Record<string, 1> = {}, B: Record<string, 1> = {};
       (answer.cells || []).forEach((x: string) => A[x] = 1);
@@ -143,7 +154,11 @@ export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
   } else if (type === "minmax") {
     q.which = pr.which; q.rc = pr.rc;
   } else if (type === "hidden") {
-    q.hmode = pr.hmode; q.hcells = pr.hcells;
+    q.sub = pr.sub;                       // A-a~f: 클라가 위젯·제시 선택
+    if (pr.sub === "A-d") { q.which = pr.which; q.rc = pr.rc; }  // 삼면도 최대/최소
+    if (pr.sub === "A-f") { q.kinds = pr.kinds; }                // 종류 수(로컬 즉시피드백용)
+    // 주의: hcols·hasHidden·kinds(정답)는 전달하지 않음.
+    // A-a/b/f 정답 은닉은 서버 renderIso(4단계)로 완성(현재 sh 전달=솔리드 파생가능, 8유형과 동일 수준).
   }
   return q;
 }
@@ -151,7 +166,10 @@ export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
 export function explainFor(pr: Sh, type: string) {
   const sh = pr.sh, cs = coreShape(sh);
   const ex: any = { cells: cs.cells, edge: sh.edge };
-  if (type === "hidden" && gen.hiddenCells) ex.hiddenCells = gen.hiddenCells(sh, pr.hmode || "occ");
+  if (type === "hidden") {
+    ex.sub = pr.sub; ex.hiddenCols = pr.hcols || [];     // 숨은 열(위치) 강조
+    if (pr.sub === "A-d" && core.reverseShapes) ex.minMax = core.reverseShapes(cs);
+  }
   if (type === "minmax" && core.reverseShapes) ex.minMax = core.reverseShapes(cs);
   return ex;
 }
