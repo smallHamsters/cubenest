@@ -89,8 +89,45 @@
     return n === cells.length;
   }
 
+  // 삼면도 지문 — 발자국 + 앞높이(x별 최대) + 옆높이(z별 최대).
+  //   '조작 후 삼면도 그리기'는 조작으로 삼면도가 **실제로 바뀌어야** 문제가 성립한다.
+  //   가장 높지 않은 열을 건드리면 실루엣이 그대로라 답이 원본과 같아진다.
+  function viewSig(hmap) {
+    var front = {}, side = {}, foot = [], k, p, v, x, z;
+    for (k in hmap) {
+      v = hmap[k]; if (!(v > 0)) continue;
+      p = k.split(','); x = +p[0]; z = +p[1];
+      if (!(x in front) || v > front[x]) front[x] = v;
+      if (!(z in side) || v > side[z]) side[z] = v;
+      foot.push(k);
+    }
+    foot.sort();
+    return foot.join(' ') + '|' + JSON.stringify(front) + '|' + JSON.stringify(side);
+  }
+
+  // 조작 후보 열거 — 조작이 가능하고, 결과가 연결돼 있고, 삼면도가 달라지는 (열, 변화량) 전부.
+  //   add=true 면 +1..(maxH−h), false 면 −1..−h.
+  function opCandidates(hmap, maxH, add) {
+    var keys = [], k, out = [];
+    for (k in hmap) if (hmap[k] > 0) keys.push(k);
+    keys.sort();
+    var sig0 = viewSig(hmap);
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i], h0 = hmap[key], lim = add ? (maxH - h0) : h0;
+      for (var d = 1; d <= lim; d++) {
+        var next = applyDelta(hmap, key, add ? d : -d), any = false, q;
+        for (q in next) if (next[q] > 0) { any = true; break; }
+        if (!any) continue;                       // 모양이 통째로 사라지면 안 됨
+        if (!footConnected(next)) continue;       // 발자국이 두 덩이로 끊기면 안 됨(마스터 §4)
+        if (viewSig(next) === sig0) continue;     // 삼면도가 그대로면 문제가 안 됨
+        out.push([key, add ? d : -d]);
+      }
+    }
+    return out;
+  }
+
   var API = {
-    VERSION: VERSION,
+    VERSION: VERSION, viewSig: viewSig, opCandidates: opCandidates,
     extents: extents,
     completeCube: completeCube,
     paintedCubeCount: paintedCubeCount, paintedCubeAll: paintedCubeAll, solidCubeHmap: solidCubeHmap,

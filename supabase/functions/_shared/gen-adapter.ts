@@ -82,6 +82,8 @@ export function answerKeyFor(type: string, pr: Sh, idx: number, seed: string): a
       // H군 — H-c 정육면체 완성 / H-d 색칠 정육면체
       const msub = pr.sub || "H-c";
       if (msub === "H-d") return { type: "num", value: mp.paintedCubeCount(pr.n, pr.k), n: pr.n, k: pr.k };
+      // H-a/H-b — 조작 후 모양의 삼면도. facesDraw 와 같은 drawSil 집합 일치로 채점.
+      if ((msub === "H-a" || msub === "H-b") && pr.resSh) return { type: "drawSil", cells: drawCorrectCells(pr.resSh) };
       const cc = mp.completeCube(core.heightMap(cs));        // 재계산(서버가 정답의 단일 출처)
       return { type: "num", value: cc.need, m: cc.m, total: cc.total, count: cc.count };
     }
@@ -217,6 +219,17 @@ export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
       q.given = { gx: sh.gx, gz: sh.gz, kind: "paintedCube", n: pr.n,
                   iso: iso.renderIso({ gx: sh.gx, gz: sh.gz, cells: sh.cells }, 0,
                                      null, { paint: { L: "#7fb3e8", R: "#5b93cc", T: "#a9d1f5" } }) };
+    } else if ((msub === "H-a" || msub === "H-b") && pr.resSh) {
+      // 표시된 열을 빨강으로(ghost:false = 나머지는 흐리게 하지 않는다). 표시 열·변화량은 조건이지 답이 아니다.
+      const p = String(pr.target).split(",").map(Number);
+      const h0 = sh.hmap[p[0]][p[1]];
+      const hi = new Set<string>();
+      for (let y = 0; y < h0; y++) hi.add(p[0] + "," + y + "," + p[1]);
+      q.target = pr.target; q.delta = pr.delta;
+      // maxH 는 답안 격자의 행 수다. **조작 후 실제 높이가 아니라 등급 maxH** 를 보낸다 —
+      // 결과 높이로 격자를 그리면 격자 크기가 정답을 흘린다.
+      q.given = { gx: sh.gx, gz: sh.gz, maxH: sh.maxH, kind: "isoMark", delta: pr.delta,
+                  iso: iso.renderIso({ gx: sh.gx, gz: sh.gz, cells: sh.cells }, 0, hi, { ghost: false }) };
     } else {
       // 겨냥도만. gen 이 숨은 열 없는 모양만 주므로 개수를 셀 수 있다. m·need 는 답이라 미전송.
       q.given = { gx: sh.gx, gz: sh.gz, kind: "isoTop",
@@ -255,6 +268,12 @@ export function explainFor(pr: Sh, type: string) {
     ex.sub = msub;
     if (msub === "H-d") {
       ex.n = pr.n; ex.k = pr.k; ex.all = mp.paintedCubeAll(pr.n);   // [0면,1면,2면,3면]
+    } else if ((msub === "H-a" || msub === "H-b") && pr.resSh) {
+      // 해설의 주인공은 '바뀐 뒤' 모양이다 → cells 를 결과로 바꾸고 원본은 따로 담는다.
+      const rs = coreShape(pr.resSh);
+      ex.beforeCells = ex.cells; ex.cells = rs.cells;
+      ex.gx = pr.resSh.gx; ex.gz = pr.resSh.gz; ex.maxH = pr.resSh.maxH;
+      ex.target = pr.target; ex.delta = pr.delta;
     } else {
       const cc = mp.completeCube(core.heightMap(cs));
       ex.m = cc.m; ex.total = cc.total; ex.count = cc.count; ex.need = cc.need;

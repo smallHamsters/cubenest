@@ -89,7 +89,10 @@
         else if(g.kind==="sils"){ foot(g.sils.top); }
         let maxH=0; const cells=[];
         for(let x=0;x<gx;x++)for(let z=0;z<gz;z++){const h=hmap[x][z]; if(h>maxH)maxH=h; for(let y=0;y<h;y++)cells.push({x,y,z});}
-        return {gx,gz,maxH:Math.max(1,maxH),hmap,cells,edge:1,_partial:g.kind==="isoTop"||g.kind==="sils"};
+        // g.maxH 는 서버가 준 '등급 maxH' — 답안 격자(위·앞·옆 그리기)의 행 수다.
+        // 조작 후 실제 높이가 아니라 이 값을 써야 격자 크기가 정답을 흘리지 않는다.
+        return {gx,gz,maxH:g.maxH||Math.max(1,maxH),hmap,cells,edge:1,
+                _partial:g.kind==="isoTop"||g.kind==="sils"||g.kind==="isoMark"};
       }
       // 문항 i 의 '완전한' 모양. 은닉 유형은 채점 전엔 클라에 없으므로 null 일 수 있다.
       function shapeOf(pr,i){
@@ -273,6 +276,11 @@
       // H군 제시 렌더 — H-c=겨냥도 / H-d=겉면 색칠한 정육면체(서버가 파란색으로 그려 보낸다)
       function renderMGiven(pr){
         const g=pr.given, cap=t=>`<div class="rotcap">${t}</div>`;
+        if(g.kind==="isoMark"){
+          const d=g.delta, txt=d>0?`<b style="color:#c33a4f">빨강으로 표시한 줄</b>에 <b>${d}개를 더 쌓아요</b>`
+                                  :`<b style="color:#c33a4f">빨강으로 표시한 줄</b>에서 <b>${-d}개를 빼내요</b>`;
+          return `<div class="viewer"><div id="iso">${g.iso||""}</div>${cap(txt)}</div>`;
+        }
         if(g.kind==="paintedCube")
           return `<div class="viewer"><div id="iso">${g.iso||""}</div>`
             +cap(`한 변이 <b>${g.n}개</b>인 정육면체예요. <b>겉면을 모두 색칠</b>한 뒤 낱개로 떼어냅니다`)+`</div>`;
@@ -466,6 +474,10 @@
             if(pr.sub==="H-d"){
               const kw=["색칠되지 않은","한 면만 색칠된","두 면이 색칠된","세 면이 색칠된"][gp.k];
               pr.ask="겉면을 모두 색칠한 뒤 낱개로 떼어내면, <b>"+kw+"</b> 쌓기나무는 몇 개일까요?";
+            }else if(pr.sub==="H-a"||pr.sub==="H-b"){
+              pr.form="draw"; pr.delta=gp.delta;
+              pr.ask=(gp.delta>0?"표시한 줄에 <b>"+gp.delta+"개를 더 쌓은</b> 뒤":"표시한 줄에서 <b>"+(-gp.delta)+"개를 빼낸</b> 뒤")
+                +"의 <b>위·앞·옆에서 본 모양</b>을 각 칸을 칠해 그리세요.";
             }else{
               pr.ask="이 모양에 쌓기나무를 더 놓아 <b>가장 작은 정육면체</b>를 만들려고 해요. 몇 개가 더 필요할까요?";
             }
@@ -560,8 +572,10 @@
         }
         if(SCRATCH) SCRATCH.show(S.idx);
         const fb0=document.getElementById("fb"); fb0.className="fb"; fb0.innerHTML=""; fb0.hidden=false;
-        if(T.form==="mc"){qcard.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.i;qcard.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
-        if(T.form==="draw"){qcard.querySelectorAll(".dcell").forEach(b=>b.onclick=()=>{if(!b.disabled)b.classList.toggle("on");});}
+        // ⚠ 반드시 form(=pr.form||T.form)으로 판단할 것. T.form 만 보면 유형 기본 폼과 다른
+        //   서브(H-a/H-b 는 manip 이지만 draw)에서 격자만 그려지고 클릭이 안 먹는다.
+        if(form==="mc"){qcard.querySelectorAll(".opt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.i;qcard.querySelectorAll(".opt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
+        if(form==="draw"){qcard.querySelectorAll(".dcell").forEach(b=>b.onclick=()=>{if(!b.disabled)b.classList.toggle("on");});}
         if((pr.form||T.form)==="bool"){qcard.querySelectorAll(".boolopt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.b;qcard.querySelectorAll(".boolopt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
         if((pr.form||T.form)==="markCells"){qcard.querySelectorAll(".mcell:not(.empty)").forEach(b=>b.onclick=()=>{if(b.style.pointerEvents!=="none")b.classList.toggle("on");});}
         document.getElementById("feedbackBtn").onclick=openFeedback;
@@ -906,8 +920,18 @@
               else if(!should&&has)cell.classList.add("wrongcell");
             });
           });
-          const vis3d = (VIEWER&&window.THREE) ? `<div class="expv expv-hi" id="expDraw"></div>` : `<div class="sol-pic">${renderIso(sh,0)}</div>`;
-          sol=`<div class="sol-draw"><div class="sol-pic">${renderThreeViews(silsOf(sh))}<span>정답</span></div>${vis3d}</div>`;
+          if(pr.type==="manip"){                           // H-a/H-b — 조작 전 → 후를 나란히
+            const ex=st.explain||{}, before=ex.beforeCells?shFromCells({...ex,cells:ex.beforeCells}):null;
+            const d=pr.delta, verb=d>0?`${d}개 더 쌓으면`:`${-d}개 빼내면`;
+            sol=`<div class="sol-draw"><div class="mm-txt">표시한 줄에 <b>${verb}</b> 이런 모양이 돼요. 그 모양을 위·앞·옆에서 본 것이 정답이에요.</div>`
+              +`<div class="mm-views">`
+              +(before?`<div class="mmv"><div class="mmv-h">조작 전</div>${renderIso(before,0)}</div>`:``)
+              +`<div class="mmv"><div class="mmv-h">조작 후</div>${renderIso(sh,0)}</div></div>`
+              +`<div class="sol-pic">${renderThreeViews(silsOf(sh))}<span>정답(조작 후 위·앞·옆)</span></div></div>`;
+          }else{
+            const vis3d = (VIEWER&&window.THREE) ? `<div class="expv expv-hi" id="expDraw"></div>` : `<div class="sol-pic">${renderIso(sh,0)}</div>`;
+            sol=`<div class="sol-draw"><div class="sol-pic">${renderThreeViews(silsOf(sh))}<span>정답</span></div>${vis3d}</div>`;
+          }
         }else if(F==="bool"){                          // A-a 유무
           const truth=key.value?1:0;
           qcard.querySelectorAll(".boolopt").forEach(o=>{o.classList.add("done");const b=+o.dataset.b;if(b===truth)o.classList.add("correct");else if(b===PICK)o.classList.add("wrong");o.style.pointerEvents="none";});

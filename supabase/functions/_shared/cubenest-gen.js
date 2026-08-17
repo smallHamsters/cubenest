@@ -212,7 +212,8 @@
       var MP = (global.CubeNest && global.CubeNest.manip) || null;
       var HDp = (global.CubeNest && global.CubeNest.hidden) || null;
       var hmOfM = function (s) { return C.heightMap(coreShape(s)); };
-      var mPool = ['H-c', 'H-d'];
+      // H-a/H-b 는 답이 '삼면도 그리기'라 격자 부담이 크다 → facesDraw 와 같은 이유로 최상 제외(상만).
+      var mPool = o.level === '상' ? ['H-c', 'H-d', 'H-a', 'H-b'] : ['H-c', 'H-d'];
       var msub = (o.sub && /^H-[abcd]$/.test(o.sub)) ? o.sub
                : mPool[Math.floor(rngFrom(o.seed + ':msub' + o.index)() * mPool.length)];
       if (MP) {
@@ -222,6 +223,27 @@
           var kk2 = Math.floor(rngFrom(o.seed + ':hk' + o.index)() * 4);   // 0~3면
           sh = reshape({ gx: nn, gz: nn, maxH: nn, edge: o.cfg.edge }, MP.solidCubeHmap(nn));
           out.n = nn; out.k = kk2; out.count = MP.paintedCubeCount(nn, kk2);
+        } else if (msub === 'H-a' || msub === 'H-b') {
+          // 겨냥도 + 표시된 열에 ±k → 바뀐 모양의 삼면도를 그린다.
+          // 성립 조건 3가지를 한 루프에서: ① 숨은 열 없음(높이를 읽을 수 있어야) ②
+          // 결과가 연결·비어있지 않음 ③ 삼면도가 실제로 달라짐(안 그러면 답=원본).
+          var add = msub === 'H-a';
+          var fm3 = rngFrom(o.seed + ':hf' + o.index)() < 0.5 ? 'lower' : 'raise';
+          var g6 = 0, cands = [];
+          for (;;) {
+            if (HDp && HDp.hasHidden(hmOfM(sh))) sh = reshape(sh, HDp.flattenHidden(hmOfM(sh), fm3));
+            cands = MP.opCandidates(hmOfM(sh), sh.maxH, add);
+            if (cands.length || g6++ >= 60) break;
+            sh = genShape(rng, o.cfg);
+          }
+          if (cands.length) {
+            var pick = cands[Math.floor(rngFrom(o.seed + ':hop' + o.index)() * cands.length)];
+            out.target = pick[0]; out.delta = pick[1];
+            out.resSh = reshape(sh, MP.applyDelta(hmOfM(sh), pick[0], pick[1]));
+          } else {
+            msub = 'H-c';                                  // 끝내 못 만들면 같은 등급의 H-c 로 대체
+            out.m = MP.completeCube(hmOfM(sh)).m; out.need = MP.completeCube(hmOfM(sh)).need;
+          }
         } else {
           msub = 'H-c';
           // ⚠ 겨냥도를 보고 현재 개수를 세야 하므로 숨은 열이 있으면 문제가 성립하지 않는다.
