@@ -1,12 +1,13 @@
 # quiz_기능개발명세서
 
-> **버전:** v0.9.13 · **상태:** 초안 — 본문=현행 8유형 · §6=**서버 이전(P0.5) 완료** · **최종 수정일:** 2026-08-17
-> **기준 마스터:** v1.5.2
+> **버전:** v0.9.14 · **상태:** 초안 — 본문 = 현행 13유형(8유형 + 안 보이는 나무 6종, minmax·hidden 통합) · **최종 수정일:** 2026-08-17
+> **기준 마스터:** v1.8.3 (§6.7 정답 은닉 규약 포함)
 > **정본 참조(재정의 금지):** 모양 수학·겉넓이 = 마스터 3·4장 · 인증/게이트/저장 = 6장 · 공용 요소(F1~F5) = 5장 · 문제 분류·생성기·공급/보관 = 『문제 분류 체계』 · 학습 순서 = 『CubeNest 커리큘럼』 · 렌더·투상 펼침·겉넓이 계산 = playground.
 
 ### 변경 이력
 | 버전 | 날짜 | 핵심 |
 |---|---|---|
+| **v0.9.14** | **08-17** | **본문 정합화 + §3.5 누락분 보충(Claude Code).** §3에 **`facesMc`(위·앞·옆 모양 고르기) 절이 통째로 빠져 있던 것**을 채움(3.4 → 3.6으로 건너뛰고 있었다). v0.9.10~v0.9.13에서 **변경 이력만 갱신되고 본문은 v0.9.9 상태로 남아 있던 절들**을 코드 기준으로 정정. 주요 정정: §3.7 안 보이는 나무(폐기된 '2정의' → **A-a~f 6종**) · §2.4 공용 모듈(클라 gen 제거, **iso·auth·mydata·api-client 추가**, 로드 순서) · §2.2 gen-config(클라 json → **서버 상수**) · §3.11 상태 모델(`{answered,ok,raw}` → **`+key,explain`**)·세션키(**+sub**) · §3.9 연습장(PNG → **벡터**) · §4.5 경로(`assets/js/quiz/run.js` → **`quiz/run/run.js`**) · **§3.12 채점 아키텍처 신설**(서버 단일출처·재시도) · §1.1 랜딩(드롭다운 → **카테고리 아코디언**) · build_tier 표·결정 로그·§6.7 잔여 갱신. **기능 변경 없음 — 문서만 현행화.** |
 | v0.1.0~v0.5.0 | ~08-04 | 스텁 → 트랙·태그·build_tier → 드롭다운 필터 → run 프로토타입 → gen_config 외부화·정본 3D 뷰어 임베드. |
 | v0.6.0 | 08-07 | 차원 = 문제 보기 형태(3D 문제/2D 겨냥도), worksheets 연동 규칙, 실행이 `dim`으로 뷰어 선택. |
 | v0.7.0 | 08-07 | 뷰어 격자·위앞옆 라벨(회전 연동)·회전 잘림 해결·2D 버튼 명확화, 문항별 의견 버튼(구글폼 미리채우기), 채점 캐릭터 애니메이션. |
@@ -53,40 +54,47 @@
 
 ```
 [설정] quiz/index.html
-   · 교육과정·난이도·차원(보기 형태)·문제유형·문제수 → 유형 카드
-   │  시작하기 → ./run/?type&lv&n&edu&dim
+   · 교육과정·난이도·차원(보기 형태)·문제 수 필터 + 카테고리 아코디언(8) → 유형 카드(19)
+   │  시작하기 → ./run/?type&sub&lv&n&dim
    ▼
-[실행] quiz/run/index.html (얇은 HTML) + assets/js/quiz/run.js (로직)
-   · seed로 N문항 → 제시(뷰어/세 방향/겨냥도) → 연습장 → 답·채점(캐릭터+효과음)·해설(§3) → 결과·공유
+[실행] quiz/run/index.html (얇은 HTML) + quiz/run/run.js (로직)
+   · POST /generate → N문항(정답 미포함) → 제시(뷰어/삼면도/겨냥도/수·층) → 연습장
+   · 제출 → POST /grade → 정오·answerKey(색칠)·explain(해설) → 결과·공유
    · 진도·결과 localStorage(무로그인) / 결과 저장(클라우드)만 로그인 게이트(RLS)
 ```
 
-**정본 경계:** 값·판정·겉넓이·최소/최대·오목=`cubenest-core` · **문제 생성기(genShape·genSession)=`cubenest-gen`** · gen-config=분류 체계 · 3D 렌더·투상·큐브 강조=`cubenest-viewer`/playground · 인증·저장=6장 · **PDF 문제지=worksheets(quiz는 `fromQuiz`로 이용).**
+**정본 경계:** 값·판정·겉넓이·최소/최대·오목=`cubenest-core` · **문제 생성기·정답 = 서버(Edge Function `_shared/cubenest-gen`·`gen-config`, 클라 미배포)** · 겨냥도 SVG=`cubenest-iso`(클라+서버 복본) · 3D 렌더·투상·큐브 강조=`cubenest-viewer`/playground · 인증·저장=6장 · **PDF 문제지=worksheets(quiz는 `fromQuiz`로 이용).**
 
-**구현 현황 (build_tier):**
-| build_tier | 유형 | 입력 / 채점 | 상태 |
+**구현 현황 (live 13종):**
+| build_tier | 유형(`type`/`sub`) | 입력 / 채점 | 상태 |
 |---|---|---|---|
-| 기본채점 | 개수·부피·겉넓이 | 숫자 / 정확 일치(4.2) | ✅ |
-| 기본채점 | 위·앞·옆 모양 고르기 | 객관식 / 정답 선택(4.3b) | ✅ |
-| 기본채점 | 위에서 본 수 쓰기 | 격자 칸별 숫자 / 칸별(4.3a) | ✅ |
-| 사고력 | **최소·최대**(최소/최대/차이) | 숫자 / `reverseCounts`(4.4) | ✅ |
-| 사고력 | **안 보이는 나무**(겨냥도 가림/이웃 가림) | 숫자 / 가림 판정 | ✅ |
-| 입력UI | **위·앞·옆 그리기**(기본) | 격자 칠하기 / 칸별 실루엣 | ✅ |
-| 입력UI | 위·앞·옆 그리기(가감 후) | 격자 칠하기 | ⏳ 후속 |
-| 사고력엔진 | 추론·구성·변환·세기(나머지) | 역방향 등 | ⏳ 후속 |
-| 공통 | **연습장**(전 유형) | 자유 필기 canvas | ✅ |
+| 기본채점 | 개수·부피·겉넓이 (`count`·`volume`·`surface`) | 숫자 / 정확 일치(4.2) | ✅ |
+| 기본채점 | 위·앞·옆 모양 고르기 (`facesMc`) | 객관식 / 실루엣 일치(4.3b) | ✅ |
+| 기본채점 | 위에서 본 수 쓰기 (`heightmap`) | 격자 칸별 숫자 / 칸별(4.3a) | ✅ |
+| 입력UI | 위·앞·옆 그리기 (`facesDraw`) | 격자 칠하기 / 칸별 실루엣 | ✅ (최상 제외) |
+| 사고력 | 최소·최대 (`minmax`) | 숫자 / `reverseCounts`(4.4) | ✅ |
+| 사고력 | **안 보이는 나무 6종** (`hidden`/`A-a`~`A-f`) | bool·markCells·num / §3.7 | ✅ |
+| 입력UI | 위·앞·옆 그리기(가감 후) → **H-a/H-b로 재분류** | 격자 칠하기 | ⏳ P1 |
+| 사고력엔진 | **G**(최대·최소 확장)·**H**(조작) | 신규 계산 | ⏳ P1 착수 예정 |
+| 사고력엔진 | J(폴리큐브) | 회전 동일성 | ⏳ P2 |
+| 공통 | **연습장**(전 유형·2레이어) | 자유 필기 canvas(벡터) | ✅ |
+
+> 랜딩 카드 19종 중 **live 13 / 곧 공개 6**(그림자 추론·무엇을 바꿨나·모양 만들기·조각 맞추기·같은 모양 찾기·가짓수 세기).
 
 ---
 
 ## 1. 두 화면
 
 ### 1.1 설정 — `quiz/index.html`  [프로토타입]
-- **필터(드롭다운 + 스테퍼):** 교육과정 · 난이도(다중, 기본 전체) · **차원(전체/3D 문제/2D 겨냥도)** · 문제유형(그룹 다중) · 문제 수(5~30, 5단위, 기본 10).
-- **차원 = 보기 형태(§2.3).** 카드 태그가 필터 선택 미러링. 2D 지원 유형엔 **`문제지 생성 →`** 버튼(worksheets 예약 안내), 3D 조작 전용엔 **`화면 전용`**.
-- 시작하기 → `./run/?type&lv&n&edu&dim`.
+- **1행 필터:** 교육과정(전체/교과/사고력) · 난이도(다중 칩, 기본 중·상·최상) · **차원(전체/3D만/2D만)** · 문제 수(10/20/30).
+- **2행 문제유형 = 카테고리 아코디언(v0.8.0~):** 8개 카테고리(`1 개수·부피·겉넓이 / 2 위·앞·옆 / 3 최소·최대 / 4 안 보이는 나무 / 5 추론 / 6 구성 / 7 변환·합동 / 8 세기`)를 펼쳐 세부 유형을 고른다. 아래 카드 그리드가 같은 목록을 카드로 미러링(카드 번호 = `카테고리-순번`).
+- **`dim` = 지원하는 렌더 모드**(보기 형태 아님). run이 실제로 3D 뷰어를 띄울 수 있는 유형만 `3d`/`both` — `minmax`·`hidden` 6종은 항상 2D로만 그려지므로 `2d`. "3D만" 필터 = 실제로 회전 가능한 6종.
+- 시작하기 → `./run/?type&sub&lv&n&dim` (`sub`은 hidden 6종 등 서브타입 지정).
+- 필터 상태는 URL 쿼리로 동기화(`edu`·`dim`·`n`·`lv`) → 공유 가능.
 
-### 1.2 실행 — `quiz/run/index.html` + `assets/js/quiz/run.js`  [프로토타입]
-- **구조:** 얇은 HTML(마크업·스타일·스크립트 참조 ~234줄) + **로직 분리 `run.js`**(생성기·채점·해설·뷰어 마운트·연습장·GA4 등). HTML은 화면, run.js는 로직 → 편집·검증 토큰 절감.
+### 1.2 실행 — `quiz/run/index.html` + `quiz/run/run.js`  [프로토타입]
+- **구조:** 얇은 HTML(마크업·스타일·스크립트 참조) + **로직 분리 `run.js`**(세션 구성·렌더·채점 표시·해설·뷰어 마운트·연습장·GA4 등). HTML은 화면, run.js는 로직 → 편집·검증 토큰 절감.
+- **경로 주의:** run.js는 **`quiz/run/run.js`**(모듈과 함께 두지 않고 페이지 옆). `api-client.js`도 같은 폴더.
 - **라우팅:** 별도 페이지, 상대경로(`../../assets`, 복귀 `../`).
 - **제시 형태(유형별):** 3D 임베드/2D 겨냥도(`dim`) · **세 방향 본 모양**(최소·최대) · **고정 겨냥도**(안 보이는 나무).
 - **상단 헤더(v0.9.5):** 사이트 헤더 `.site-top`는 **아래로 스크롤 시 위로 슬라이드 숨김 / 위로 스크롤 시 표시**(sticky + transform, 문항 이동 중엔 토글 억제). 퀴즈 topbar = 나가기 · **유형 + 진행바 + "푼 문제 N/총"** · 음소거.
@@ -103,9 +111,10 @@
 ### 2.1 문제 유형
 유형·태그·난이도·`build_tier`·정답 산출 = **『문제 분류 체계』 정본(14종)**. 학습 순서 = **커리큘럼**.
 
-### 2.2 생성기 · `gen_config` · 시드
-- **생성기 = `(config, seed)` 순수 함수**(높이 지도, 연결·중력).
-- **`gen_config` 외부화**(`assets/js/quiz/gen-config.json`, 분류 §7.3, **v0.2.0**): run이 fetch → 실패 시 인라인 폴백. worksheets 동일 문항 재현의 다리. 레벨별 `gx·gz·maxH·fMin/fMax·nMin/nMax·edge`. **최상 = 5/5/5·edge2**(fMin9·fMax14·nMin18·nMax30).
+### 2.2 생성기 · `gen-config` · 시드   ※ **전부 서버 전용**(클라 미배포, 마스터 6.7)
+- **생성기 = `(config, seed)` 순수 함수**(높이 지도, 연결·중력). 위치 = `supabase/functions/_shared/cubenest-gen.js`.
+- **`gen-config` = 서버 상수**(`_shared/cubenest-gen-config.js`, **3축 v0.2.0**). ~~`assets/js/quiz/gen-config.json`~~ **폐지·삭제됨**(클라 fetch 없음). run의 `INLINE_CONFIG`는 잔존 폴백일 뿐 서버가 무시한다.
+- **난이도 3축(remap v0.7 §2):** ① 난이도 라벨(하/중/상/최상) ⊥ ② 격자 스케일(S 3³·M 4⁴·L 5⁵) ⊥ ③ 유형 고유축. 유형별 `PRESETS[type][label]`에서 `[격자, 밀도, edge?]` 조합을 rng로 골라 `resolveCfg`가 `gx·gz·maxH·fMin/fMax·nMin/nMax·edge`를 만든다. **지원 등급도 여기서 결정**(예: `minmax`·`hidden`은 중~최상, `facesDraw`는 하~상).
 - **겉넓이 오목 난이도 밴딩(마스터 v1.5.2 4.2):** `core` 오목 판정 `isConcave`(`노출면 > 2×(위+앞+옆 실루엣)`)으로 **하·중=오목없음 / 상=혼재 / 최상=오목있음**. 시드 스트림을 유지한 채 목표에 맞을 때까지 재샘플(≤60, 결정적). (검증: 밴딩 실패 0.)
 - **시드:** 문자열 seed→`xmur3`→`mulberry32`. 스트림 분리(문제 `seed:i`/난이도 `seed:L`/오답 `seed:d{i}`), `history.replaceState`로 URL 유지 → 재현·공유.
 
@@ -116,12 +125,23 @@
 - 문항 전환·결과 시 뷰어 `dispose`.
 
 ### 2.4 공용 모듈 (마스터 §5.1·§8.1)  ⭐
-- **`cubenest-core`(계산, §4 정본, v0.3.0):** `stats`(개수·부피·pairs·위앞옆·노출면·겉넓이) · `silhouettes` · **`reverseCounts`(최소·최대·은면)** · **`reverseShapes`(최소·최대 높이지도)** · `serialize`(F2). quiz의 §4 값·최소/최대 모양은 전부 여기서 나온다.
-- **`cubenest-gen`(생성기, v0.1.0) ⭐ 신규:** `rngFrom`(시드 PRNG) · `genShape(rng,cfg)` · `isConcave` · `hiddenCells` · `levelPool` · **`genProblem`/`genSession`**(모양 + 하위질문 결정 which/dir/hmode). **quiz·worksheets가 같은 seed→같은 문제**를 얻는 단일 출처(§8.1 표류 방지). buildSession은 `genSession`을 호출하고 프레젠테이션(문구·보기)만 담당. core 의존.
-- **`cubenest-viewer`(뷰어/펼쳐보기, v0.2.3):** `createViewer(...)` + 펼쳐보기 + **`setHighlight`/`highlightCells`** + `dirLabelPositions`.
-- **로딩:** `window.CubeNest.{core,gen,viewer}`. **core → gen → viewer → run.js.** 캐시 무효화 `?v=`(**core 0.3.0 · gen 0.1.0 · viewer 0.2.3**).
-- **모양 어댑터:** `coreShape(sh)` = `{gx, gy:maxH, gz, edge, cells:[[x,y,z]]}`(quiz·gen 공용 형태).
-- **오너십:** 모듈은 playground 소관 — 변경은 단일 지점(playground)에서, quiz는 참조. (라벨 문제도 quiz 우회 후 모듈 v0.2.1로 근본 해결.)
+**클라이언트**
+- **`cubenest-core`(계산, §4 정본, v0.3.0):** `stats` · `silhouettes` · `heightMap` · `viewHeights` · **`reverseCounts`·`reverseShapes`** · `serialize`(F2). quiz는 **해설 문구용 수치**와 F2 직렬화에만 쓴다(정답 판정은 서버).
+- **`cubenest-iso`(겨냥도 SVG, v0.1.0) ⭐ 신규:** `rot` · `renderIso(sh,k,hiSet)`. run에 인라인돼 있던 것을 승격 — **서버 복본이 은닉 유형 제시물을 그린다**(§3.12). ⚠ 셀을 `(x+z)` 오름차순(뒤→앞)으로 칠하는 **정렬이 곧 가림**이므로 불변.
+- **`cubenest-viewer`(뷰어/펼쳐보기, v0.2.3):** `createViewer(...)` + 펼쳐보기 + `setHighlight` + `dirLabelPositions`.
+- **`auth`(v0.1.0)·`mydata`(v0.1.0)·`consent`:** 인증 단일 진실 · 로컬 우선 데이터 계층 · GA4 동의.
+- **`api-client.js`(quiz 로컬):** `CubeNest.api.generate/grade` — 실 fetch·`X-Anon-Id`·429 처리.
+
+**서버 전용**(`supabase/functions/_shared/`, 클라 미배포 — 마스터 6.7)
+- **`cubenest-gen`(생성기):** `rngFrom` · `genShape` · **`reshape`** · `isConcave` · `levelPool` · `genProblem`/`genSession`.
+- **`cubenest-gen-config`:** 3축 프리셋 · `support` · `resolveCfg`.
+- **`cubenest-hidden`:** `visibleTopFootprint` · `hiddenColumns` · `hasHidden` · **`flattenHidden`** · `enumerateByVisible` · `layersToShape`.
+- **`cubenest-iso`(복본)** · `gen-adapter`(`buildProbs`·`answerKeyFor`·`checkAnswer`·`questionFor`·`explainFor`).
+- ⚠ **신규 `_shared` 모듈은 원본 IIFE + 맨끝 `export const x = globalThis.CubeNest.x`** 를 붙이고 `gen-modules.ts`에 값 import(로드 순서 `core→genConfig→hidden→iso→gen`). 누락 시 **503 BOOT_ERROR**.
+
+- **로딩 순서(실제):** `THREE → core → iso → api-client → viewer → (본문) → supabase-js → auth → mydata → consent → run.js`. 캐시 무효화 `?v=`(**core 0.3.0 · iso 0.1.0 · viewer 0.2.3**).
+- **모양 어댑터:** `coreShape(sh)` = `{gx, gy:maxH, gz, edge, cells:[[x,y,z]]}`.
+- **오너십:** core·viewer는 playground 소관. **`cubenest-iso`는 quiz가 추출했으나 공용** — 변경은 단일 지점에서(클라·서버 복본 **동시** 갱신).
 
 ---
 
@@ -159,20 +179,50 @@
 - **입력:** 위 격자 칸별 숫자(색칠 칸만). **채점:** 칸별 일치. 채점 후 **각 칸에 정답 높이 채움**(정답 초록·오답 빨강 테두리).
 - **해설:** 각 칸의 수 = 그 자리 나무의 **높이(층수)**(4.3a).
 
+### 3.5 위·앞·옆 모양 고르기  (`facesMc`, 4.3b)   ※ v0.9.14에서 누락분 보충
+- **제시:** 솔리드(3D 뷰어 / 2D 겨냥도, `dim` 존중). 묻는 방향 `dir`은 문항마다 `front`·`side`·`top` 중 결정적으로 선택.
+- **보기(4지선다):** 정답 실루엣 + `perturbSil`로 만든 오답 3개(막대 높이 ±1 / 뒤집기 / 자리 바꾸기, 중복 제거 후 셔플). **보기 배열(`opts`)은 서버가 생성해 내려보낸다** — 클라가 같은 rng를 돌릴 필요가 없다.
+- **채점:** ⚠ **정답 인덱스는 전송되지 않는다**(v0.9.13). 서버가 `answerKeyFor`에서 **같은 rng 시드(`seed:o{idx}`)로 보기를 재생성**해 같은 인덱스를 얻어 채점하고, 클라는 `/grade` 응답의 `answerKey.correct`로 초록/빨강을 칠한다.
+- **해설:** 방향별 한 줄 설명(앞=가로 줄의 가장 높은 층 / 옆=깊이 줄의 가장 높은 층 / 위=있는 칸 모두, 높이 안 보임) + "초록 테두리가 정답".
+
 ### 3.6 최소·최대  ⭐ (마스터 4.4)
-- **제시:** 위·앞·옆 **세 방향 본 모양**(2D 방향색 패널). 솔리드는 숨김(정답 노출 방지).
-- **출제:** 문항마다 **최소 / 최대 / 차이(=최대−최소)** 무작위. `core.reverseCounts`로 정답. **max>min 되도록 재샘플**(범위 있는 문제).
-- **입력:** 숫자(개). **채점:** 정확 일치.
-- **해설(문제 맞춤):**
-  - **위에서 본 모양 그리드:** 불변 칸(min==max)은 **고정 높이 숫자**, 변동 칸(min≠max)은 **색칠 + `최소~최대` 범위**(어느 자리에서 갈리는지 간략 표시). `core.reverseShapes`로 산출.
-  - **3D 최소·최대 모양** 나란히(`reverseShapes` → 높이지도 → `createViewer` 2개). `viewer` 부재 시 2D 겨냥도 폴백.
+- **제시:** 위·앞·옆 **세 방향 본 모양**(2D 방향색 패널). **모양(`sh`)은 아예 전송되지 않는다** — `given.kind="sils"`로 실루엣 3종만 받는다(§3.12).
+- **출제:** 문항마다 **최소 / 최대 / 차이(=최대−최소)** 무작위(`which`는 질문이라 전송, **정답 `rc`는 미전송**). 서버가 `core.reverseCounts`로 채점. **max>min 되도록 재샘플**(범위 있는 문제).
+- **입력:** 숫자(개). **채점:** 서버 `answerKey.value`(보조로 `min`·`max` 동반).
+- **해설(문제 맞춤 · `/grade`의 `explain`으로 구성):**
+  - **위에서 본 모양 그리드:** 불변 칸(min==max)은 **고정 높이 숫자**, 변동 칸(min≠max)은 **색칠 + `최소~최대` 범위**. `explain.minMax`(서버 `reverseShapes`) 사용.
+  - **3D 최소·최대 모양** 나란히(높이지도 → `createViewer` 2개). `viewer` 부재 시 2D 겨냥도 폴백.
   - 텍스트: 최대=작은 값까지 채움 / 최소=변동 칸을 낮춤 / 차이=최대−최소.
 
-### 3.7 안 보이는 나무  ⭐ (2정의)
-- **정의(교육과정별):** **교과=겨냥도 뒤쪽 가림**(큐브 `(x,y,z)` 뒤 `(x+1,y+1,z+1)`이 있으면 가림) / **사고력=이웃 가림**(앞·위·옆 이웃 모두 채워짐). `PRM.edu==="think"`면 이웃 가림, 그 외 겨냥도 가림.
-- **제시:** **고정 2D 겨냥도**(회전 없음 — 정의가 겨냥도 시점 기준). **가림 ≥1개 되도록 재샘플.**
-- **입력:** 숫자(개). **채점:** 가려진 나무 수.
-- **해설:** **3D 뷰어 + `setHighlight`로 가려진 나무 빨강**(회전 가능). `viewer` 부재 시 **반투명 2D 겨냥도에 빨강**(renderIso ghost) 폴백.
+### 3.7 안 보이는 나무 A-a~f  ⭐ (6종 · v0.9.10~13)
+
+> ~~구 '2정의'(교과=겨냥도 가림 / 사고력=이웃 가림, `edu` 분기)는 **폐기**~~ — 판정이 틀렸다. 아래 `visibleTop` 규칙으로 대체.
+
+**[불변] 판정 규칙** (교과서 70쪽 1·2번 + 엣지 케이스 검증)
+```
+heightMap h(x,z) = 각 (x,z) 열의 높이
+visibleTop(x,z) ⟺ h(x+1,z+1) <= h(x,z)      // 앞대각이 '더 높을 때만' 가려짐
+숨은 열 hiddenColumns = { (x,z) : h(x+1,z+1) > h(x,z) }
+```
+- ⚠ **`<`가 아니라 `<=`** — 평지 2×2(동일 높이 대각)를 숨음으로 오판하던 버그를 잡은 규칙.
+- 클라 `renderIso`가 뒤→앞으로 칠하므로 숨은 열은 **자동으로 가려진다**(§2.4 정렬 불변).
+
+**6종 규격**
+| sub | 이름 | 제시(`given.kind`) | 질문 | form | 서버 answerKey |
+|---|---|---|---|---|---|
+| **A-a** | 숨은 나무 판단 | `isoTop` | 숨은 나무 있나? | `bool` | `hasHidden` |
+| **A-b** | 숨은 나무 칸 찾기 | `isoTop` | 숨은 칸 모두 | `markCells` | `hiddenColumns` |
+| **A-c** | 개수(위+수) | `numTop` | 총 개수 | `num` | `count` |
+| **A-d** | 개수(삼면도 최대최소) | `sils` | 최대/최소/차 | `num` | `reverseCounts` |
+| **A-e** | 개수(층별) | `layers` | 총 개수 | `num` | `count` |
+| **A-f** | 여러 가지 종류 | `isoTop` | 몇 **가지**? | `num` | `enumerateByVisible` |
+
+- **난이도별 서브 pool:** 중 = A-a·b / 상 = +A-c·d·e / 최상 = +A-f. (랜딩에서 `sub`을 직접 지정하면 그 서브로 강제.)
+- **생성 제약(regen):** A-b = 숨은 나무 ≥1 / A-d = `max>min` / A-f = 가짓수 2~6.
+- **A-f 가짓수:** 숨은 열의 높이 `t ∈ [1, D−1]`(D=앞대각 높이) → `Π(D−1)`. **정확값**을 답으로 쓴다(cap 을 정답으로 반환하던 버그 제거, remap v0.7 §6.1). 밴드(2~6)를 못 맞추면 **정답을 자르지 않고** 밴드에 가장 가까운 문제를 고른다. **[성질] "5가지"는 구조상 불가**(5는 소수 → 자유도 5 = maxH≥6 필요, 현재 최대 maxH=5).
+- **A-a 균형:** 랜덤 모양은 난이도가 오를수록 거의 다 '숨음 있음'(최상 99%)이라 **seed로 답을 반반 정하고 그쪽 모양을 만든다.** '없음'은 `flattenHidden`으로 직접 생성(대각 사슬을 단조 비증가로 → 발자국·연결·중력 불변), `raise`/`lower`를 반반 섞어 개수 편향까지 상쇄. 결과 "있어요" **49%**(전 난이도).
+- **입력 위젯:** `bool`(있어요/없어요 2지선다) · `markCells`(위 격자 44px 탭, 행=z·열=x — 제시 그림과 같은 방향) · `num`(A-f는 단위 **"가지"**).
+- **해설:** `/grade`의 `explain.cells`로 모양을 되만들어 **숨은 칸을 빨강 강조한 겨냥도**(A-a/b/f) · 최소·최대 모양(A-d) · 위에서 본 수 + 층별 세기(A-c/e).
 
 ### 3.8 채점 후 3D 해설 뷰어 (공통 인프라)
 - 최소·최대(최소·최대 모양)·안 보이는 나무(강조)·**위·앞·옆 그리기(정답 모양)** 의 해설 뷰어는 `EXPVIEWS`로 관리, 문항 전환·결과 시 `disposeExpViews()`로 정리(WebGL 누수 방지).
@@ -182,7 +232,8 @@
 - **자유 필기 canvas(아이):** 색연필 **검정·보라·초록·주황**, **지우개**(SVG), **되돌리기 5획**, **전체삭제**, **접기**(localStorage 저장).
 - **툴바 표시 규칙:** 펼침 = 라벨 숨김·도구만 / **접힘 = 도구 숨김·접기 버튼+"연습장" 라벨만**.
 - **좌표 정합:** 표시 시 `requestAnimationFrame`으로 `getBoundingClientRect` 사이징 + 그릴 때마다 현재 rect로 매핑 → **첫 문제 y오프셋 없음**. 고해상도(`×dpr`) 대응.
-- **2레이어 + 첨삭(v0.9.6):** 캔버스 2겹 — **아이(`child`, 흰 배경) / 첨삭(`tutor`, 투명 오버레이)**. `store[idx]={child,tutor}` 각 PNG.
+- **2레이어 + 첨삭(v0.9.6):** 캔버스 2겹 — **아이(`child`, 흰 배경) / 첨삭(`tutor`, 투명 오버레이)**.
+- **벡터 저장(v0.9.11):** `store[idx] = {child:[stroke], tutor:[stroke]}`, `stroke = {c(색), w(폭/캔버스폭), e(지우개), p:[[nx,ny]…] 정규화 0..1}`. ~~PNG dataURL~~ 폐기 — 용량 8~35배↓·해상도 무관·리사이즈 무손실·되돌리기 무제한. `SCRATCH.get()`은 **벡터→PNG 변환**을 제공(문제지 임베드 호환).
   - **아이 잠금:** 문제 **제출(채점) 시 아이 레이어 read-only**(그리기·도구 비활성, `relock`) → 원본 보존.
   - **첨삭(선생님·학부모):** 제출 후 첨삭 바 노출 → **모의 로그인**(`cubenest_mock_login`, ✅ worksheets와 공용) → **첨삭 모드**(빨강·파랑, 굵기 동일). 아이 풀이 위에 다른 색으로. `첨삭 종료`로 해제.
   - **레이어별 저장·되돌리기 분리** — 나중에 필터링·구분 출력 가능. 실제 로그인 붙으면 `isLoggedIn()`만 Supabase 세션 체크로 교체.
@@ -193,17 +244,49 @@
 - **입력:** 위(gx×gz 발자국)·앞(gx×**maxH**)·옆(gz×maxH) **격자 칸 칠하기**. 격자 높이 = **레벨 maxH**(실제 최고 높이를 힌트하지 않음). 옆 = z 반전(옆에서 본 좌우).
 - **채점:** `topSil/frontSil/sideSil` 정답과 **칸별 대조** — 맞게 칠함=초록·놓침=초록 테두리·잘못 칠함=빨강. 세 격자 모두 일치 = 정답. (검증: 정답 격자 = core 실루엣 면적 일치.)
 - **해설:** **정답 세 방향 그림 + 3D 뷰어(세로 1열)**. 설명 텍스트 없음(그림·색 표시로 충분).
-- (미구현) **가감 후 그리기**(수를 더하거나 빼서 변형 후) — 후속.
+- (미구현) **가감 후 그리기**(수를 더하거나 빼서 변형 후) — **H-a(더 쌓은 후)·H-b(빼낸 후)로 재분류**되어 P1에서 `type:'manip'`으로 구현 예정. 이 절의 격자·채점 로직(`drawSil`)을 그대로 재사용한다.
+- ⚠ **격자 높이는 반드시 레벨 `maxH` 고정** — 실제 최고 높이로 그리면 격자 크기가 정답을 흘린다. H-a/b에서도 **조작 후** 모양의 maxH가 아니라 cfg maxH를 써야 한다.
 
 ### 3.11 세션 지속 · 문항 이동  ⭐ (v0.9.4)
-- **상태 모델:** `S.state[i] = {answered, ok, raw}` (raw = 학생 제출 답: num=값 / mc=선택 / hm=칸값 / draw=칠한 칸). `readAnswer`(캡처) ↔ `applyAnswer`(복원).
-- **이동:** `goTo(i)` — 이전/다음 자유 이동. 답한 문항 재방문 = `applyAnswer` + `submit(revisit)`로 답·채점·해설 재구성(효과음·추적·저장은 새 제출만).
-- **지속:** `saveSession`/`loadSession`(키 = seed·type·n·levels·edu·dim). 저장 = 위치·`state`·연습장(`_sc`, 용량 초과 시 연습장만 생략). 로드 = init에서 복원 후 해당 위치 렌더. `beforeunload`에도 저장.
+- **상태 모델:** `S.state[i] = {answered, ok, raw, key, explain}`
+  - `raw` = 학생 제출 답(num=값 / bool=0·1 / mc=선택 / markCells=`["x,z"]` / hm=칸값 / draw=칠한 칸). `readAnswer`(캡처) ↔ `applyAnswer`(복원).
+  - **`key`·`explain` = `/grade` 응답 보관**(v0.9.13). 색칠·해설의 출처가 서버 응답이라, 없으면 새로고침 후 이미 푼 문항의 채점 화면을 복원할 수 없다. 이미 제출해 본 정보라 저장해도 새로 새는 것은 없다(문항당 ~0.2KB).
+- **이동:** `goTo(i)` — 이전/다음 자유 이동. 답한 문항 재방문 = `applyAnswer` + `submit(revisit)`로 답·채점·해설 재구성(**보관된 `key`·`explain` 사용, 재요청 없음**. 효과음·추적·저장은 새 제출만).
+- **지속:** `saveSession`/`loadSession`. **키 = `seed·type·n·levels·edu·dim` + (`sub` 있으면 뒤에 덧붙임)** — `sub`을 뒤에 붙이는 이유는 앞에 끼우면 hidden이 아닌 기존 세션 키가 전부 바뀌어 진행 중이던 이어풀기가 끊기기 때문. 저장 = 위치·`state`·연습장(`_sc`, 용량 초과 시 연습장만 생략). `beforeunload`에도 저장.
 - **다시풀기:** 세션·저장 초기화 후 처음부터(같은 seed=같은 문제).
 - **팔레트·이동(v0.9.5):** `.qnav`(카드 상단) = 번호 팔레트 + 결과보기. 팔레트 칩 = 정오/미풀이 색(빈칸=미풀이) · 클릭 `goTo` · **가로 스크롤만**(윈도우 스크롤 유발 금지 → 흔들림 없음) · 현재 칩 중앙 정렬. `goTo`는 **즉시 스크롤 + 헤더 토글 억제**.
 - **결과보기 활성 로직(v0.9.5):** **`allDone`(모든 문항 answered) 기준** 활성 — 순서 무관, 마지막 한 문항을 푸는 순간 활성. 비활성 시 **안 푼 번호를 툴팁으로 안내**(`안 푼 문제 N개: 1,3,5번`).
 - **'다음' 로직(v0.9.5):** 답한 문항에서 `allDone` 아니면 **[다음 →] = `firstUnanswered`(안 푼 다음 문항, 끝이면 앞쪽으로 순환)**. → 건너뛴 문항으로 반드시 도달. 모두 풀면 **[결과 확인]**(상단 결과보기와 중복, 편의).
 - **진행바:** `.bar` 길이·"푼 문제 N/총" = **실제 푼 문항 수**에 비례(`updateProgress`), 문항 번호 아님.
+
+### 3.12 채점 아키텍처 · 정답 은닉  ⭐ (v0.9.13 신설 · 마스터 §6.7)
+
+> **왜:** 클라가 `sh`로 정답을 재계산해 색칠했는데, 그러려면 모양(=정답의 원천)을 들고 있어야 해서 은닉이 원천적으로 불가능했다. 게다가 `_gp`에 정답이 그대로 실려 나갔다.
+
+- **`/generate` 응답에 정답 없음.** 제거된 필드: `q.correct`(facesMc 정답 번호) · `q.rc`(minmax·A-d의 min/max) · `q.kinds`(A-f 정답). `present`(모양 중복 전송, 클라 소비 0)도 폐지.
+  - facesMc 보기(`opts`)는 계속 보낸다 — 정답 인덱스는 서버가 **같은 rng 시드로 재생성**하므로 보낼 필요가 없다.
+- **제시물만 전송(`given`):** 3D 회전이 풀이에 불필요한 유형(minmax·hidden)은 `sh` 대신 `given`.
+  ```
+  _gp = { level, type, sub?, which?, given }        // sh 없음
+  given.kind
+    sils   (minmax·A-d) : { gx,gz, sils:{top,front,side} }
+    numTop (A-c)        : { gx,gz, heights:{"x,z":h} }
+    layers (A-e)        : { gx,gz, layers:[["x,z"…] …] }   // 1층부터
+    isoTop (A-a/b/f)    : { gx,gz, iso:"<svg>", top:<topSil> }  // 서버가 그린 겨냥도
+  ```
+  클라는 `givenShape(given)`으로 렌더용 부분 모양을 만든다 — `isoTop`·`sils`는 **발자국까지만** 알 수 있고 숨은 열의 높이는 오지 않는다(`_partial` 표시, 계산에 쓰면 안 됨).
+- **채점·색칠·해설의 단일 출처 = `/grade` 응답.**
+  | form | 색칠 근거 |
+  |---|---|
+  | `num`·`bool` | `answerKey.value` (minmax·A-d는 `min`·`max` 동반) |
+  | `mc` | `answerKey.correct` |
+  | `hm` | `answerKey.grid` |
+  | `draw`·`markCells` | `answerKey.cells` |
+  해설 그림은 `explain`(`cells`·`gx`·`gz`·`maxH`·`edge`·`hiddenCols`·`minMax`)으로 모양을 되만들어 **기존 해설 렌더러를 그대로 재사용**한다(제출 후이므로 모양을 밝혀도 된다).
+- **로컬 폴백 채점 제거.** `/generate` 없이는 세션이 시작조차 안 되므로 지킬 오프라인 세션이 없다.
+- **실패 시 재시도:** 종전엔 네트워크 호출 **전에** `answered`를 세팅해 실패해도 문항이 소진됐다. 이제 **성공했을 때만** 소진하고, 답·입력 상태를 유지한 채 안내를 띄운다(오프라인 / 레이트리밋 / 서버오류 3갈래, `.ansnote` 재사용).
+- **[한계·수용] 3D 회전 6종은 은닉하지 않는다.** `count`·`volume`·`surface`·`heightmap`·`facesMc`·`facesDraw`는 **돌려서 가려진 나무를 확인하는 것이 곧 풀이 과정**이라 형상이 클라에 있어야 한다. 이 6종은 직접 정답 필드만 제거.
+- **[원리] 답이 '보이는 그림'만의 함수인 유형은 그림을 주는 것이 은닉의 최선.** A-a/b/f의 답은 숨은 열의 **실제 높이와 무관**하다(`enumerateByVisible`도 앞대각 높이 D만 쓴다). 따라서 서버 SVG에 가려진 큐브 좌표가 남아도 답이 새지 않으며, 치터도 학생과 똑같이 그림을 분석해야 한다.
 
 ---
 
@@ -247,14 +330,18 @@
 - 결과 화면 **공유하기** → **Web Share API**(점수+seed 링크), 미지원 시 **클립보드 복사**. 링크는 seed 포함 → 친구가 같은 문제 재현.
 
 ### 4.5 배포 · 경로 · 자산
-- 산출: `quiz/index.html`·`quiz/run/index.html` + **`assets/js/quiz/run.js`**. **상대경로만.**
-- 자산: `assets/css/*` · `assets/js/quiz/gen-config.json`(v0.2.0) · **공용 모듈 `assets/js/cubenest-{core,gen,viewer}.js`**(0.3.0·0.1.0·0.2.3). OG 절대 URL.
+- 산출: `quiz/index.html` · `quiz/run/index.html` + **`quiz/run/run.js`** + `quiz/run/api-client.js`. **상대경로만**(2층이라 `../../assets/…`).
+- 공용 자산: `assets/css/*` · **`assets/js/cubenest-{core,iso,viewer}.js`**(0.3.0 · 0.1.0 · 0.2.3) · `auth.js`·`mydata.js`·`consent.js`. OG 절대 URL.
+- **서버:** `supabase/functions/{generate,grade}/index.ts` + `_shared/*`. **`_shared` 를 건드리면 `generate`·`grade` 둘 다 재배포**(함수 단위 배포라 한쪽만 올리면 어긋난다). 재배포 후 `config.toml`의 `verify_jwt=false` 유지 확인.
+- ~~`assets/js/quiz/gen-config.json`~~ · ~~`assets/js/cubenest-gen.js`~~ **삭제됨**(서버 전용).
+- 로컬 확인: **`127.0.0.1:5500` 고정**(Edge Function CORS 허용 오리진 — 다른 포트면 `/generate`·`/grade`가 막힌다).
 - 오리진 공유: GA4·동의. 흔적 `quiz_*`·`quiz_run_*`·`run_*.js` → 커밋 시 각 배포명.
 
 ### 4.6 worksheets 연동 (PDF 문제지)  ⭐ (v0.9.4)
 - **경계:** PDF 문제지·정답지 알고리즘 = **worksheets 소관**(자체). quiz는 **이용(호출)만** — PDF 미생성(§8.1).
 - **위임:** 결과 화면 **📄 문제지 만들기** → `buildWorksheetPayload()`(마스터 §4.5 set 스키마 + 문항별 **연습장 2레이어**) → `window.CubeNest.worksheets.fromQuiz(payload)` **있으면 호출**, 없으면 안내(연동 준비 중).
-- **payload:** `{meta, problems:[{n,type,level,edu,ask,shape(F2),correct,scratch}]}`, **`scratch:{child,tutor}`**(아이 풀이 / 첨삭, 각 투명 PNG 또는 null). 정답은 넘기지 않음(정본=core, worksheets가 산출). worksheets는 두 레이어 **구분 표기·필터링** 지원 요망.
+- **payload:** `{meta, problems:[{n,type,level,edu,ask,shape(F2),correct,scratch}]}`, **`scratch:{child,tutor}`**(아이 풀이 / 첨삭, 각 투명 PNG 또는 null — 내부 저장은 벡터, `get()`이 PNG로 변환). 정답은 넘기지 않음(정본=core, worksheets가 산출). worksheets는 두 레이어 **구분 표기·필터링** 지원 요망.
+- ⚠ **`shape`가 `null`일 수 있다(v0.9.13):** minmax·hidden은 **안 푼 문항의 모양이 클라에 없다**(§3.12). 푼 문항은 `explain`으로 되만든 모양을 직렬화하고, 안 푼 문항은 `null`. **worksheets 실구현 시 서버에서 모양을 받는 이음새가 필요**하다(예: 정답지 생성용 서버 엔드포인트).
 - **로그인:** 첨삭·저장·worksheets 공통 **모의 로그인 키 `cubenest_mock_login`** 재사용(실 로그인 = Supabase OAuth·RLS로 교체).
 - **문서:** 연동 요청서 **`worksheets_integration_request_quiz_260814.md`**(2레이어 개정) · worksheets 스펙 `worksheets_기능개발명세서 v0.2.0`(동일 오너).
 
@@ -264,20 +351,23 @@
 
 ### 5.1 수용 기준
 - **계산:** 5큐브 → 개수 5·부피 5·겉넓이 22 등 골든. **겉넓이 오목 포함** `2×(위+앞+옆)=6N−2쌍`. **최소·최대** `min≤실제≤max`.
-- **생성기:** `gen.genShape`가 **원본과 완전 동일**(600/600, 셀 비어있지 않음 — Set→배열은 `Array.from`). 같은 seed → quiz·worksheets 동일 문제.
-- **재현성·이어풀기:** 같은 seed → 같은 세트. 새로고침 시 위치·답·연습장 복원. URL 공유·다시풀기로 동일 문제.
+- **생성기:** 같은 seed → 같은 문제(`/generate`와 `/grade`의 재생성이 일치해야 채점이 성립). `sub` 강제 지정이 100% 반영.
+- **재현성·이어풀기:** 같은 seed → 같은 세트. 새로고침 시 위치·답·**채점 화면(색칠·해설)**·연습장 복원. URL 공유·다시풀기로 동일 문제.
 - **뷰어/계산:** 공용 모듈 로드 시 정상, `viewer` 부재 시 2D 폴백. **연습장 첫 문제 오프셋·리사이즈 지움 없음.**
 - **무결성:** 무로그인·상대경로 · quiz는 PDF 미생성(worksheets 위임).
+- **정답 비누출(v0.9.13 신설·회귀 금지):** `/generate` 응답 어디에도 정답이 없어야 한다. 회귀 검사 = 전 유형에 대해 `_gp`에 금지 필드(`correct`·`rc`·`kinds`·`hasHidden`·`hcols`)가 없고, `answerKey` 값이 페이로드에 문자열로 등장하지 않으며, minmax·hidden은 `sh` 미포함.
+- **만점 답안 채점(회귀):** 전 유형에 대해 서버 `answerKey`를 그대로 제출하면 `correct:true`. (유형 추가 시 반드시 이 검사를 통과시킬 것.)
+- **채점 실패:** 네트워크 차단 상태로 제출 → 문항이 소진되지 않고 답이 유지되며, 복구 후 재제출이 성공.
 
 ### 5.2 버전 계획
-`v0.9.4`(생성기 모듈·세션 지속·문항 이동·worksheets 위임) → `v0.10.0`(가감 후 그리기·혼합 세션·오답만 다시) → `v1.0.0`(기본채점+사고력 일부 출시).
+`v0.9.13`(안 보이는 나무 6종·정답 은닉·서버 단일 채점) → **`v0.10.0`(P1 잔여 = G 최대·최소 확장 / H 조작)** → `v0.11.0`(혼합 세션·오답만 다시 풀기) → `v1.0.0`(기본채점+사고력 출시).
 
 ### 5.3 결정 로그
-build_tier · 실행 별도 `run/` · **로직 분리(`run.js`)** · **공용 모듈(core 0.3.0·gen 0.1.0·viewer 0.2.3, §5.1·§8.1)** · **생성기 = `cubenest-gen`(quiz·worksheets 공유·표류 방지)** · 시드 재현·공유·**이어풀기·문항 이동(팔레트)** · **실행 UX: 번호 팔레트(가로 스크롤·정오색·클릭 이동)+결과보기 한 묶음·결과보기 allDone 기준(안 푼 번호 안내)·'다음'=안 푼 다음 문항 순환·진행바=푼 수 비례·헤더 스크롤 슬라이드·중복 정보 정리·[hidden] 잔상 차단** · 답안·애니메이션 동시·효과음·음소거 · 결과 버튼+공유+**문제지(worksheets 위임)** · **겉넓이 = core.stats, ①위·앞·옆 / ②'다른 해설' 병기 + 오목 밴딩(최상 5/5/5)** · **최소·최대(min/max/차이+위 그림+3D)** · **안 보이는 나무(2정의+3D 빨강)** · **위·앞·옆 그리기(격자·칸별·maxH·최상 제외·해설 3D)** · **연습장(전 유형·정적·아이 4색(검정·보라·초록·주황)·지우개·undo5·접기·리사이즈 보존·문항별 저장·2레이어[아이 잠금/첨삭 빨강·파랑]·모의 로그인 게이트)** · facesMc 무작위·옆 반전 수정 · 저장 로그인 게이트(RLS) · GA4 · 외부 문항 미복제 · **quiz+worksheets 동일 오너·엄격 경계.**
+build_tier · 실행 별도 `run/` · **로직 분리(`run.js`)** · **공용 모듈(core 0.3.0·iso 0.1.0·viewer 0.2.3, §5.1·§8.1)** · **생성기·정답 = 서버 전용(Edge Function, 클라 미배포)** · 시드 재현·공유·**이어풀기·문항 이동(팔레트)** · **실행 UX: 번호 팔레트(가로 스크롤·정오색·클릭 이동)+결과보기 한 묶음·결과보기 allDone 기준(안 푼 번호 안내)·'다음'=안 푼 다음 문항 순환·진행바=푼 수 비례·헤더 스크롤 슬라이드·중복 정보 정리·[hidden] 잔상 차단** · 답안·애니메이션 동시·효과음·음소거 · 결과 버튼+공유+**문제지(worksheets 위임)** · **겉넓이 = core.stats, ①위·앞·옆 / ②'다른 해설' 병기 + 오목 밴딩(최상 5/5/5)** · **최소·최대(min/max/차이+위 그림+3D)** · **안 보이는 나무 6종 A-a~f(visibleTop `<=` 규칙·A-f 정확 가짓수·A-a 균형)** · **정답 은닉(§3.12: /generate 무정답·given 전송·/grade 단일출처·재시도)** · **위·앞·옆 그리기(격자·칸별·maxH·최상 제외·해설 3D)** · **연습장(전 유형·정적·아이 4색(검정·보라·초록·주황)·지우개·undo5·접기·리사이즈 보존·문항별 저장·2레이어[아이 잠금/첨삭 빨강·파랑]·모의 로그인 게이트)** · facesMc 무작위·옆 반전 수정 · 저장 로그인 게이트(RLS) · GA4 · 외부 문항 미복제 · **quiz+worksheets 동일 오너·엄격 경계.**
 
 ### 5.4 미결
 - **worksheets 구현**(`fromQuiz` PDF·문제 그림 렌더 공유·정답지·PDF 엔진) — 스켈레톤 `worksheets_기능개발명세서 v0.2.0`.
-- **위·앞·옆 그리기 '가감 후 그리기'** · 연습장 **유형별 on/off**(`NO_SCRATCH`).
+- **'가감 후 그리기' → H-a/H-b로 재분류**(P1 · G·H 인수인계서 §3.3) · 연습장 **유형별 on/off**(`NO_SCRATCH`).
 - **결과 저장(로그인·Supabase)** · 여러 유형 **혼합 세션** · **오답만 다시 풀기**.
 - 최상 heightmap 부담 · 겨냥도 높이 가독성 · 효과음 에셋 · 태그 정밀화.
 
@@ -312,13 +402,13 @@ build_tier · 실행 별도 `run/` · **로직 분리(`run.js`)** · **공용 �
 - **gsig(HMAC-SHA256)**: 채점 위·변조 방지(secret=`GSIG_SECRET`).
 - **rate limit**: Postgres 원자적 카운터(`check_rate` RPC)·anon 쿠키(개인 공정)+IP(하한). generate 쿠키 20/분·300/시, grade 60/분·1000/시, IP 120/분·2000/시. 429+Retry-After.
 - **클라 연동**: `api-client.js`(실 fetch·`X-Anon-Id` 랜덤 UUID·`USE_MOCK` 폴백) + `run.js`(비동기 generate/grade·GEN 의존 제거·gen-config fetch 제거). 로드=core→api-client→viewer→consent→run.
-- **서버가 `_gp`(렌더용 질문 데이터: sh·which·rc·hmode·hcells·facesMc opts)를 함께 반환** → 현행 8유형 렌더 호환. (은닉 isoImage 도입 시 축소 예정.)
+- ~~서버가 `_gp`(렌더용 질문 데이터: sh·which·rc·hmode·hcells·facesMc opts)를 함께 반환~~ → **v0.9.13에서 대체됨.** `rc`·`hmode`·`hcells`는 정답이거나 폐기된 필드라 더 이상 나가지 않는다. 현행 `_gp` 계약은 **§3.12** 참조.
 - **검증**: 8유형 생성·렌더·**서버 채점**·해설 실동작 확인. 결정성(seed) 유지.
 - **정적 파일 삭제 완료**: `assets/js/cubenest-gen.js`·`assets/js/quiz/gen-config.json` 제거(클라 Network 미로드 확인). **생성기가 클라에서 완전히 사라짐.**
 - **로딩 UX(큐브 버디)**: 문제 로딩(generate) 시 채점 캐릭터(Good!/Oops!)와 **동일 톤**의 나무 큐브 버디 + 영어 **'Ready~'**(`.fxword`와 같은 폰트·900·흰 외곽선, 색=액센트). 로드 완료 즉시 퀴즈 표시. **제출(grade) 시엔 미표시**(사용자 선택).
 - **grade 지연 완화**: grade는 `gsig`로 보호되고 유효 gsig는 rate 걸린 generate에서만 나오므로, grade의 rate DB 왕복 **제거**(pending 단축). generate rate는 유지.
 - **랜딩 버그 수정**: `quiz/index.html`의 `shadow` 글리프 누락(`G[t.glyph] is not a function`) → `shadow` 추가 + `G[t.glyph]?...:''` 방어.
-- **잔여**: 은닉 present `isoImage`(서버 renderIso) · P1 리매핑·신규 17유형(서버) · 안 보이는 나무 `hiddenCells` 정의 수정(보류) · worksheets 실구현.
+- **잔여(v0.9.13 기준 갱신)**: ~~은닉 present `isoImage`(서버 renderIso)~~ **완료**(§3.12 `given.isoTop.iso`) · ~~안 보이는 나무 `hiddenCells` 정의 수정~~ **완료**(§3.7 6종) · **P1 잔여 = G(최대·최소 확장)·H(조작)** · P2 = J(폴리큐브) · worksheets 실구현(§4.6 `shape:null` 이음새 포함).
 - **관련 문서**: `quiz_edge_function_plan_260815_v0_2.md`(결정·아키텍처) · `quiz_edge_deploy_guide_260815.md`(배포) · `supabase_rate_schema_260815.sql` · `edge/`(함수 스켈레톤).
 
 ### 6.6 다음 (단계)
@@ -326,6 +416,7 @@ P0 마스터 §7.3 분류 + §5·§6 인증·모듈 개정 → P0.5 실 Edge Fun
 
 ---
 
-> **버전 정합(오늘 확인):** quiz `?v=` = **core 0.3.0 · gen 0.1.0 · viewer 0.2.3** / gen-config **v0.2.0** / 명세서 **v0.9.9** / **클라에서 gen·gen-config 제거(서버 전용)** / worksheets 스펙 **v0.2.0**. ※ 마스터 **§9 인덱스**에 **`cubenest-gen`·worksheets 스펙** 신규 등재 + 모듈 명세서(`cubenest_모듈_명세서`)에 gen API 추가 = 마스터 오너 갱신 필요(요청 예정).
+> **버전 정합(v0.9.14 기준):** quiz `?v=` = **core 0.3.0 · iso 0.1.0 · viewer 0.2.3** / 명세서 **v0.9.14** / 마스터 **v1.8.3**(§6.7 정답 은닉 규약) / 분류 정본 **cubenest_remap v0.7** / 유형지도 **v0.3** / worksheets 스펙 v0.2.0.
+> **클라에 없는 것:** ·(서버 전용) — 이 문서에서 클라 모듈로 기술하던 옛 서술은 v0.9.14에서 정정했다.
 
 > 해소: ~~겉넓이 오목 난이도 밴딩~~(v0.9.1 반영) · ~~count−pairs 병기 정책~~(마스터 v1.5.2 정합) · ~~뷰어·펼쳐보기 공용 모듈 추출~~(v0.9.0 반영).
