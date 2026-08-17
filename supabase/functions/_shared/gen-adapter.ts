@@ -5,7 +5,7 @@
 // 가져온다 — 로드 순서(core→genConfig→hidden→gen)와 번들 포함을 거기서 보장한다.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { core, gen, iso, minmax as mm, GEN_CONFIG } from "./gen-modules.ts";
+import { core, gen, iso, minmax as mm, manip as mp, GEN_CONFIG } from "./gen-modules.ts";
 
 // deno-lint-ignore no-explicit-any
 type Sh = any;
@@ -77,6 +77,13 @@ export function answerKeyFor(type: string, pr: Sh, idx: number, seed: string): a
       const which = pr.which || "min";
       const val = which === "min" ? rc.minCount : which === "max" ? rc.maxCount : (rc.maxCount - rc.minCount);
       return { type: "num", value: val, min: rc.minCount, max: rc.maxCount, which };
+    }
+    case "manip": {
+      // H군 — H-c 정육면체 완성 / H-d 색칠 정육면체
+      const msub = pr.sub || "H-c";
+      if (msub === "H-d") return { type: "num", value: mp.paintedCubeCount(pr.n, pr.k), n: pr.n, k: pr.k };
+      const cc = mp.completeCube(core.heightMap(cs));        // 재계산(서버가 정답의 단일 출처)
+      return { type: "num", value: cc.need, m: cc.m, total: cc.total, count: cc.count };
     }
     case "hidden": {
       // 안 보이는 나무 A-a~f (gen v0.3이 sub·hasHidden·hcols·count·rc·which·kinds 첨부)
@@ -201,6 +208,22 @@ export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
     }
     return q;
   }
+  if (type === "manip") {
+    const msub = pr.sub || "H-c";
+    q.sub = msub;
+    if (msub === "H-d") {
+      // n·k 는 문제의 조건이지 답이 아니다(답 = 그 조건에서의 개수).
+      q.n = pr.n; q.k = pr.k;
+      q.given = { gx: sh.gx, gz: sh.gz, kind: "paintedCube", n: pr.n,
+                  iso: iso.renderIso({ gx: sh.gx, gz: sh.gz, cells: sh.cells }, 0,
+                                     null, { paint: { L: "#7fb3e8", R: "#5b93cc", T: "#a9d1f5" } }) };
+    } else {
+      // 겨냥도만. gen 이 숨은 열 없는 모양만 주므로 개수를 셀 수 있다. m·need 는 답이라 미전송.
+      q.given = { gx: sh.gx, gz: sh.gz, kind: "isoTop",
+                  iso: iso.renderIso({ gx: sh.gx, gz: sh.gz, cells: sh.cells }, 0), top: topSil(sh) };
+    }
+    return q;
+  }
   if (type === "hidden") {
     q.sub = pr.sub;
     if (pr.sub === "A-d") q.which = pr.which;
@@ -226,6 +249,16 @@ export function explainFor(pr: Sh, type: string) {
   if (type === "hidden") {
     ex.sub = pr.sub; ex.hiddenCols = pr.hcols || [];     // 숨은 열(위치) 강조
     if (pr.sub === "A-d" && core.reverseShapes) ex.minMax = core.reverseShapes(cs);
+  }
+  if (type === "manip") {
+    const msub = pr.sub || "H-c";
+    ex.sub = msub;
+    if (msub === "H-d") {
+      ex.n = pr.n; ex.k = pr.k; ex.all = mp.paintedCubeAll(pr.n);   // [0면,1면,2면,3면]
+    } else {
+      const cc = mp.completeCube(core.heightMap(cs));
+      ex.m = cc.m; ex.total = cc.total; ex.count = cc.count; ex.need = cc.need;
+    }
   }
   if (type === "minmax") {
     const gsub = pr.sub || "G-a";

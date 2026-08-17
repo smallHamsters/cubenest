@@ -241,6 +241,7 @@ const CATS=[
   { id:'views',    name:'위·앞·옆' },
   { id:'minmax',   name:'최소·최대' },
   { id:'hidden',   name:'안 보이는 나무' },
+  { id:'manip',    name:'조작' },
   // '추론'은 옛 reason 카테고리의 잔여분. minmax·hidden 이 각자 카테고리로 독립하면서
   // 비었다고 지웠더니 shadow·deltaFind 가 갈 곳을 잃었다(카드 번호가 0-1 로 깨짐).
   { id:'reason',   name:'추론' },
@@ -266,6 +267,8 @@ const TYPES=[
   { id:'hidden-Ad', type:'hidden', sub:'A-d', cat:'hidden', name:'개수 세기 (삼면도 최대최소)', chip:'개수(삼면도)',   edu:['curr','think'], desc:'삼면도로 가능한 최대·최소 개수를 구해요.',       dim:'2d', levels:['중','상','최상'], status:'live', glyph:'hidden' },
   { id:'hidden-Ae', type:'hidden', sub:'A-e', cat:'hidden', name:'개수 세기 (층별)',           chip:'개수(층별)',     edu:['curr','think'], desc:'층별로 나타낸 모양을 보고 전체 개수를 세요.',     dim:'2d', levels:['중','상','최상'], status:'live', glyph:'hidden' },
   { id:'hidden-Af', type:'hidden', sub:'A-f', cat:'hidden', name:'여러 가지 종류',            chip:'여러 가지',      edu:['curr','think'], desc:'조건에 맞는 모양이 몇 가지인지 세요.',           dim:'2d', levels:['중','상','최상'], status:'live', glyph:'hidden' },
+  { id:'manip-Hc', type:'manip', sub:'H-c', cat:'manip', name:'정육면체 완성',   chip:'정육면체 완성', edu:['curr','think'], desc:'가장 작은 정육면체를 만들려면 몇 개가 더 필요한지 구해요.', dim:'2d', levels:['중','상','최상'], status:'live', glyph:'build' },
+  { id:'manip-Hd', type:'manip', sub:'H-d', cat:'manip', name:'색칠한 정육면체', chip:'색칠 정육면체', edu:['curr','think'], desc:'겉면을 칠한 정육면체를 떼어냈을 때 색칠된 면 수로 세요.',   dim:'2d', levels:['중','상','최상'], status:'live', glyph:'faces' },
   { id:'shadow',   cat:'reason',  name:'그림자 추론',      chip:'그림자',      edu:['think'],        desc:'방향별 그림자로 가능한 모양을 좁혀요.',    dim:'both', levels:['상','최상'],   status:'soon', glyph:'shadow' },
   { id:'deltaFind',cat:'reason',  name:'무엇을 바꿨나',    chip:'무엇을 바꿨나',edu:['think'],        desc:'원본에서 무엇을 빼거나 더했는지 맞혀요.',  dim:'both', levels:['상','최상'],   status:'soon', glyph:'delta' },
   { id:'build',    cat:'compose', name:'모양 만들기',      chip:'모양 만들기', edu:['curr','think'], desc:'조건에 맞게 직접 쌓아 만들어요.',          dim:'3d',   levels:['중','상','최상'],status:'soon', glyph:'build' },

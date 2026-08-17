@@ -9,6 +9,7 @@
         facesMc:{title:"위·앞·옆 모양 고르기",ask:"이 모양을 앞에서 본 모양을 고르세요.",form:"mc"},
         minmax:{title:"최소·최대",ask:"세 방향에서 본 모양이 되는 쌓기나무 개수는?",form:"num",unit:"개"},
         hidden:{title:"안 보이는 나무",ask:"안 보이게 숨길 수 있는 쌓기나무는 몇 개일까요?",form:"num",unit:"개"},
+        manip:{title:"조작",ask:"조건에 맞는 쌓기나무 수를 구하세요.",form:"num",unit:"개"},
         facesDraw:{title:"위·앞·옆 그리기",ask:"위·앞·옆에서 본 모양을 각 칸을 칠해 그리세요.",form:"draw"},
       };
       /* gen_config (분류 체계 §7.3) — 정본은 assets/js/quiz/gen-config.json.
@@ -269,6 +270,15 @@
         }
         return `<div class="viewer"><div class="rothint" style="text-align:center;margin-bottom:4px">위·앞·옆에서 본 모양이에요</div>${renderThreeViews(g.sils)}</div>`;
       }
+      // H군 제시 렌더 — H-c=겨냥도 / H-d=겉면 색칠한 정육면체(서버가 파란색으로 그려 보낸다)
+      function renderMGiven(pr){
+        const g=pr.given, cap=t=>`<div class="rotcap">${t}</div>`;
+        if(g.kind==="paintedCube")
+          return `<div class="viewer"><div id="iso">${g.iso||""}</div>`
+            +cap(`한 변이 <b>${g.n}개</b>인 정육면체예요. <b>겉면을 모두 색칠</b>한 뒤 낱개로 떼어냅니다`)+`</div>`;
+        return `<div class="viewer"><div id="iso">${g.iso||""}</div>`
+          +cap("이 모양으로 <b>가장 작은 정육면체</b>를 만들려면?")+`</div>`;
+      }
       // 안 보이는 나무 6종 제시 렌더(서브별). 제시물은 서버가 준 pr.given 이 전부다.
       function renderHiddenGiven(pr,sh){
         const g=pr.given, cap=t=>`<div class="rotcap">${t}</div>`;
@@ -451,6 +461,15 @@
               ? "세 방향 모양이 같도록 쌓을 때, <b>최대와 최소의 차이</b>는 몇 개일까요?"
               : "세 방향(위·앞·옆)에서 본 모양이 되려면, 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?";
           }
+          if(PRM.type==="manip"){          // H군 — H-c 정육면체 완성 / H-d 색칠 정육면체
+            pr.sub=gp.sub||"H-c"; pr.n=gp.n; pr.k=gp.k;
+            if(pr.sub==="H-d"){
+              const kw=["색칠되지 않은","한 면만 색칠된","두 면이 색칠된","세 면이 색칠된"][gp.k];
+              pr.ask="겉면을 모두 색칠한 뒤 낱개로 떼어내면, <b>"+kw+"</b> 쌓기나무는 몇 개일까요?";
+            }else{
+              pr.ask="이 모양에 쌓기나무를 더 놓아 <b>가장 작은 정육면체</b>를 만들려고 해요. 몇 개가 더 필요할까요?";
+            }
+          }
           if(PRM.type==="hidden"){
             pr.sub=gp.sub||"A-a";
             if(pr.sub==="A-c"){
@@ -508,12 +527,15 @@
         const edgeTxt=T.edge?`<br>쌓기나무 한 모서리 = ${sh.edge}cm`:"";
         const isViews=pr.type==="minmax";
         const isHidden=pr.type==="hidden";
-        const has3D=!!window.THREE && !!VIEWER && PRM.dim!=="2d" && !isViews && !isHidden;
+        const isManip=pr.type==="manip";
+        const has3D=!!window.THREE && !!VIEWER && PRM.dim!=="2d" && !isViews && !isHidden && !isManip;
         const gk=(pr.given&&pr.given.kind)||"";
-        const GIVENLABEL={numTop:"위에서 본 수",sils:"위·앞·옆",layers:"층별 모양",topOneSil:"위 + 한 방향",isoTop:"2D 겨냥도"};
-        const viewLabel=(isViews||isHidden)?(GIVENLABEL[gk]||"2D 겨냥도"):(has3D?"3D 문제":"2D 겨냥도");
+        const GIVENLABEL={numTop:"위에서 본 수",sils:"위·앞·옆",layers:"층별 모양",topOneSil:"위 + 한 방향",isoTop:"2D 겨냥도",paintedCube:"색칠한 정육면체"};
+        const viewLabel=(isViews||isHidden||isManip)?(GIVENLABEL[gk]||"2D 겨냥도"):(has3D?"3D 문제":"2D 겨냥도");
         const viewerHTML=isViews
           ? renderGGiven(pr)
+          : isManip
+          ? renderMGiven(pr)
           : isHidden
           ? renderHiddenGiven(pr,sh)
           : (has3D
@@ -526,7 +548,7 @@
           ${viewerHTML}
           <div class="answer">${ans}</div>`;
         if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;} if(EXPLODE&&EXPLODE.dispose){EXPLODE.dispose();EXPLODE=null;} disposeExpViews();
-        if(!isViews && !isHidden){
+        if(!isViews && !isHidden && !isManip){
         if(has3D){
           CURVIEW=VIEWER.createViewer(document.getElementById("v3d"),{THREE:window.THREE,shape:coreShape(sh),showLabels:true});
           const rb=document.getElementById("reset3d"); if(rb)rb.onclick=()=>{CURVIEW&&CURVIEW.reset();track("quiz_view_reset",{});};
@@ -775,7 +797,20 @@
         let sol="";
         if(F==="num"){
           const a=key.value;
-          if(pr.type==="minmax"||pr.type==="hidden"){
+          if(pr.type==="manip"){                             // H군 해설
+            const ex=st.explain||{};
+            if(pr.sub==="H-d"){
+              const all=ex.all||[], lab=["색칠 안 됨(속)","한 면(면)","두 면(모서리)","세 면(꼭짓점)"];
+              const rows=all.map((v,i)=>`<div${i===pr.k?' style="font-weight:800;color:var(--accent-ink)"':''}>${lab[i]} : <b>${v}개</b>${i===pr.k?' ← 물어본 것':''}</div>`).join("");
+              sol=`<div class="sol-list"><div class="mm-txt">한 변 <b>${ex.n}</b>인 정육면체는 자리에 따라 색칠된 면 수가 정해져요 — `
+                +`<b>꼭짓점 8개</b>는 세 면, <b>모서리</b>는 두 면, <b>면 가운데</b>는 한 면, <b>속</b>은 색이 안 묻어요.</div>`
+                +rows+`<div style="margin-top:6px">모두 더하면 ${all.reduce((a,b)=>a+b,0)}개 = ${ex.n}×${ex.n}×${ex.n} 이에요.</div></div>`;
+            }else{
+              sol=`<div class="sol-methods"><div class="sol-pic">${renderIso(sh,0)}<span>지금 모양</span></div>`
+                +`<div class="sol-list"><div>가로·세로·높이 중 가장 큰 값이 <b>${ex.m}</b>이라 가장 작은 정육면체는 <b>${ex.m}×${ex.m}×${ex.m} = ${ex.total}개</b>예요.</div>`
+                +`<div>지금 놓인 나무가 <b>${ex.count}개</b>이므로 ${ex.total} − ${ex.count} = <b>${a}개</b>가 더 필요해요.</div></div></div>`;
+            }
+          }else if(pr.type==="minmax"||pr.type==="hidden"){
             const mn0=key.min, mx0=key.max;                     // 서버 answerKey 가 준 최소·최대
             const rs=(st.explain&&st.explain.minMax)||(CORE&&sh?CORE.reverseShapes(coreShape(sh)):null);
             if(pr.type==="minmax" && pr.sub==="G-c"){           // 층 조건 개수

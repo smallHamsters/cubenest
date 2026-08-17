@@ -208,6 +208,37 @@
       }
       out.sh = sh; out.sub = sub; out.count = sh.cells.length; // A-c/A-e 개수
     }
+    if (o.type === 'manip' && C) {                           // H군(조작) H-c 정육면체 완성 / H-d 색칠
+      var MP = (global.CubeNest && global.CubeNest.manip) || null;
+      var HDp = (global.CubeNest && global.CubeNest.hidden) || null;
+      var hmOfM = function (s) { return C.heightMap(coreShape(s)); };
+      var mPool = ['H-c', 'H-d'];
+      var msub = (o.sub && /^H-[abcd]$/.test(o.sub)) ? o.sub
+               : mPool[Math.floor(rngFrom(o.seed + ':msub' + o.index)() * mPool.length)];
+      if (MP) {
+        if (msub === 'H-d') {
+          // 한 변 n = 등급(중 3·상 4·최상 5). n=2 는 전부 3면이라 출제하지 않는다.
+          var nn = o.level === '중' ? 3 : (o.level === '상' ? 4 : 5);
+          var kk2 = Math.floor(rngFrom(o.seed + ':hk' + o.index)() * 4);   // 0~3면
+          sh = reshape({ gx: nn, gz: nn, maxH: nn, edge: o.cfg.edge }, MP.solidCubeHmap(nn));
+          out.n = nn; out.k = kk2; out.count = MP.paintedCubeCount(nn, kk2);
+        } else {
+          msub = 'H-c';
+          // ⚠ 겨냥도를 보고 현재 개수를 세야 하므로 숨은 열이 있으면 문제가 성립하지 않는다.
+          //   (G-c 와 같은 이유) + 이미 정육면체면 '더 필요한 수'가 0이라 출제 불가.
+          var fm2 = rngFrom(o.seed + ':hf' + o.index)() < 0.5 ? 'lower' : 'raise';
+          var g5 = 0, cc;
+          for (;;) {
+            if (HDp && HDp.hasHidden(hmOfM(sh))) sh = reshape(sh, HDp.flattenHidden(hmOfM(sh), fm2));
+            cc = MP.completeCube(hmOfM(sh));
+            if (cc.need >= 1 || g5++ >= 60) break;
+            sh = genShape(rng, o.cfg);
+          }
+          out.m = cc.m; out.need = cc.need;
+        }
+      }
+      out.sh = sh; out.sub = msub;
+    }
     if (o.type === 'facesMc') {                              // 위·앞·옆 고르기: 방향
       var rngD = rngFrom(o.seed + ':d' + o.index);
       out.dir = ['front', 'side', 'top'][Math.floor(rngD() * 3)];

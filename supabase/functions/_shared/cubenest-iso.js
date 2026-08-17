@@ -33,10 +33,13 @@
     return { x: x, y: y, z: z };
   }
 
-  function renderIso(sh, k, hiSet) {
-    k = k || 0;
+  //   opts.ghost=false → hiSet 을 '강조'로만 쓰고 나머지를 흐리게 하지 않는다(문제의 표시 열용).
+  //   opts.paint      → 큐브 색을 통째로 바꾼다(H-d 색칠한 정육면체용).
+  function renderIso(sh, k, hiSet, opts) {
+    k = k || 0; opts = opts || {};
     var a = 20, b = 10, c = 24;
-    var ghost = !!hiSet;
+    var ghost = !!hiSet && opts.ghost !== false;
+    var paint = opts.paint || null;
     var cells = sh.cells.map(function (p) { return rot(p, k, sh.gx, sh.gz); });
     cells.sort(function (p, q) { return (p.x + p.z) - (q.x + q.z) || p.y - q.y; });  // 뒤→앞(가림 성립)
     var minX = 1e9, maxX = -1e9, minY = 1e9, maxY = -1e9;
@@ -65,10 +68,11 @@
       var top = P(x, y + 1, z) + ' ' + P(x + 1, y + 1, z) + ' ' + P(x + 1, y + 1, z + 1) + ' ' + P(x, y + 1, z + 1);
       var left = P(x, y, z + 1) + ' ' + P(x + 1, y, z + 1) + ' ' + P(x + 1, y + 1, z + 1) + ' ' + P(x, y + 1, z + 1);
       var right = P(x + 1, y, z) + ' ' + P(x + 1, y, z + 1) + ' ' + P(x + 1, y + 1, z + 1) + ' ' + P(x + 1, y + 1, z);
-      var hi = ghost && hiSet.has(x + ',' + y + ',' + z);
+      var hi = !!hiSet && hiSet.has(x + ',' + y + ',' + z);
       var op = (ghost && !hi) ? ' fill-opacity=".28"' : '';
       var st = hi ? ' stroke="#7c1f2c"' : '';
-      var cL = hi ? '#d84a5e' : '#d8a76e', cR = hi ? '#b83346' : '#c8965a', cT = hi ? '#ef7f8e' : '#e6c9a0';
+      var base = paint || { L: '#d8a76e', R: '#c8965a', T: '#e6c9a0' };
+      var cL = hi ? '#d84a5e' : base.L, cR = hi ? '#b83346' : base.R, cT = hi ? '#ef7f8e' : base.T;
       poly += '<polygon points="' + left + '" fill="' + cL + '"' + op + st + '/>'
             + '<polygon points="' + right + '" fill="' + cR + '"' + op + st + '/>'
             + '<polygon points="' + top + '" fill="' + cT + '"' + op + st + '/>';
