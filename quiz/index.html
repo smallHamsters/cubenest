@@ -17,6 +17,9 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <!-- 프로덕션: <link rel="stylesheet" href="../assets/css/tokens.css"> -->
+<!-- 공용 헤더 — 스타일은 nav.css 단일 출처, 마크업은 아래 인라인(마스터 §8.1). -->
+<link rel="stylesheet" href="../assets/css/nav.css" />
+<link rel="stylesheet" href="../assets/css/auth.css" />
 <style>
   /* ===== tokens.css (공유 단일 소스 사본) ===== */
   :root{
@@ -39,13 +42,7 @@
   body{font-family:var(--font);color:var(--ink);background:radial-gradient(120% 90% at 100% -10%, #e7ecf6 0%, rgba(231,236,246,0) 55%), linear-gradient(180deg,var(--panel-2),var(--bg));min-height:100dvh;line-height:1.5;-webkit-font-smoothing:antialiased}
   a{color:inherit} button{font-family:inherit}
 
-  .topbar{display:flex;align-items:center;gap:12px;padding:14px clamp(16px,4vw,40px);border-bottom:1px solid var(--line);background:rgba(255,255,255,.72);backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:-.01em}
-  .brand .logo{width:26px;height:26px;display:block;filter:drop-shadow(0 2px 4px var(--w-shadow))}
-  .brand .sub{font-weight:600;color:var(--muted);font-size:13px;padding-left:8px;margin-left:2px;border-left:1px solid var(--line)}
-  .topbar .spacer{flex:1}
-  .topbar .home{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;padding:7px 12px;border-radius:999px}
-  .topbar .home:hover{background:var(--accent-soft);color:var(--accent-ink)}
+  /* 헤더는 공용 nav.css 가 전담한다 — 이 페이지 전용 .topbar 는 폐기(v0.11.2). */
 
   .hero{padding:clamp(20px,3.6vw,34px) clamp(16px,4vw,40px) 4px;max-width:1180px;margin:0 auto}
   .hero-inner{border-left:3px solid var(--accent);padding-left:18px}
@@ -94,8 +91,9 @@
   .card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#dbe3ef}
   .card.soon{opacity:.92}
   .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-  .glyph{width:46px;height:46px;flex:none;border-radius:var(--r);background:var(--panel-2);display:grid;place-items:center}
-  .glyph svg{width:30px;height:30px}
+  /* 카드 글리프 — 공용 헤더의 .site-brand .glyph 와 이름이 겹치므로 카드 안으로 한정한다. */
+  .card-top .glyph{width:46px;height:46px;flex:none;border-radius:var(--r);background:var(--panel-2);display:grid;place-items:center}
+  .card-top .glyph svg{width:30px;height:30px}
   .badge{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
   .card h3{margin:0;font-size:15.5px;letter-spacing:-.01em}
   .card .desc{margin:0;color:var(--muted);font-size:13px;min-height:2.6em}
@@ -149,17 +147,25 @@
 </style>
 </head>
 <body>
-  <header class="topbar">
-    <span class="brand">
-      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true">
-        <path d="M16 3 28 9 16 15 4 9z" fill="var(--w-top)"/>
-        <path d="M16 15 28 9v14L16 29z" fill="var(--w-right)"/>
-        <path d="M16 15 4 9v14l12 6z" fill="var(--w-left)"/>
-      </svg>
-      <span data-brand>CubeNest</span><span class="sub">퀴즈</span>
-    </span>
-    <span class="spacer"></span>
-    <a class="home" href="../">← 홈으로</a>
+  <!-- 공용 헤더 — 정본은 account/index.html. 경로와 aria-current 만 바꿔 옮긴다(마스터 §8.1). -->
+  <header class="site-top" id="topbar">
+    <div class="site-topin">
+      <a class="site-brand" href="../" aria-label="큐브네스트 홈">
+        <img class="glyph" src="../assets/img/brand-glyph.svg" alt="" role="presentation">
+        <span class="t"><b data-brand>CubeNest</b><span>쌓기나무 3D 학습</span></span>
+      </a>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a href="../">홈</a>
+        <a href="../guide/">가이드</a>
+        <a href="../playground/">플레이그라운드</a>
+        <a href="./" aria-current="page">퀴즈</a>
+        <a href="../worksheets/">문제지 생성</a>
+        <a href="../my/" id="myNav">내 자료</a>
+      </nav>
+      <div class="site-actions">
+        <a href="../account/" id="authNav" aria-label="로그인" title="로그인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg></a>
+      </div>
+    </div>
   </header>
 
   <section class="hero">
@@ -227,6 +233,10 @@
   <p class="footnote">프로토타입 v0.8.0 · 배포 시 <code>quiz/index.html</code>, 상대경로 · 무로그인 · 필터는 주소(URL)로 공유돼요.<br>교육과정(교과/사고력)은 트랙이 아니라 <b>태그</b> — 한 유형이 둘 다 가질 수 있어요. 사고력·경시 유형은 전부 <b>자체 생성 문항</b>입니다.</p>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+<!-- 공용 인증 — 헤더 계정 아이콘의 로그인 상태 표시만 담당한다.
+     퀴즈 랜딩·플레이는 무로그인이 원칙이라(마스터 §6.3) 여기서 게이트를 걸지 않는다. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../assets/js/auth.js?v=0.1.0"></script>
 <script>
 if((navigator.language||'').toLowerCase().startsWith('ko')) document.querySelector('[data-brand]').textContent='큐브네스트';
 
