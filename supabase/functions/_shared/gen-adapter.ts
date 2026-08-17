@@ -5,7 +5,7 @@
 // 가져온다 — 로드 순서(core→genConfig→hidden→gen)와 번들 포함을 거기서 보장한다.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { core, gen, GEN_CONFIG } from "./gen-modules.ts";
+import { core, gen, iso, GEN_CONFIG } from "./gen-modules.ts";
 
 // deno-lint-ignore no-explicit-any
 type Sh = any;
@@ -135,37 +135,70 @@ function mapEq(a: any, b: any): boolean {
   return true;
 }
 
-// present (현행: shape). 신규 은닉유형은 isoImage(서버 renderIso)로 확장 예정.
-export function presentFor(pr: Sh) {
-  const cs = coreShape(pr.sh);
-  return { parts: [{ kind: "shape", cells: cs.cells, gx: pr.sh.gx, gz: pr.sh.gz, maxH: pr.sh.maxH, edge: pr.sh.edge }] };
+// ── 제시물(given) 빌더 — 은닉 유형은 모양 대신 '주어진 것'만 내려보낸다 ──
+function silTrio(sh: Sh) { return { top: topSil(sh), front: frontSil(sh), side: sideSil(sh) }; }
+function heightGrid(sh: Sh) {                     // A-c: 위에서 본 수 = 높이 전체(제시물 자체)
+  const g: Record<string, number> = {};
+  for (let x = 0; x < sh.gx; x++) for (let z = 0; z < sh.gz; z++) if (sh.hmap[x][z] > 0) g[x + "," + z] = sh.hmap[x][z];
+  return g;
+}
+function layerGrids(sh: Sh) {                     // A-e: 층별 모양(1층부터). 빈 층은 생략
+  const out: string[][] = [];
+  for (let y = 0; y < sh.maxH; y++) {
+    const cells: string[] = [];
+    for (let x = 0; x < sh.gx; x++) for (let z = 0; z < sh.gz; z++) if (sh.hmap[x][z] > y) cells.push(x + "," + z);
+    if (!cells.length && y > 0) continue;
+    out.push(cells);
+  }
+  return out;
+}
+function hiddenGiven(pr: Sh, sh: Sh) {
+  const base = { gx: sh.gx, gz: sh.gz };
+  if (pr.sub === "A-c") return { ...base, kind: "numTop", heights: heightGrid(sh) };
+  if (pr.sub === "A-e") return { ...base, kind: "layers", layers: layerGrids(sh) };
+  if (pr.sub === "A-d") return { ...base, kind: "sils", sils: silTrio(sh) };
+  // A-a · A-b · A-f — 겨냥도가 제시물이고 '거기 안 보이는 것'이 문제다.
+  // 모양을 보내면 전제가 깨지므로 서버가 SVG 로 그려 보낸다(숨은 열의 높이는 전송되지 않는다).
+  // top(위에서 본 모양)은 주어진 정보이고 A-b 답안 격자의 발자국으로도 쓰인다.
+  return { ...base, kind: "isoTop", iso: iso.renderIso({ gx: sh.gx, gz: sh.gz, cells: sh.cells }, 0), top: topSil(sh) };
 }
 
-// 렌더용 질문 데이터(_gp): 현행 클라 run이 문제를 그리는 데 필요한 필드.
-// sh(hmap 포함)는 JSON 왕복되어 그대로 사용. facesMc 보기(opts)는 서버가 생성(같은 rng 스트림).
-// ※ 현행 8유형은 솔리드가 보이므로 답 파생 가능(수용). 은닉유형(isoImage) 도입 시 이 페이로드를 축소한다.
+// 렌더용 질문 데이터(_gp). **정답은 절대 넣지 않는다.**
+//   예전엔 q.correct(facesMc 정답 번호)·q.rc(min/max)·q.kinds(A-f 정답)를 그대로 보내
+//   JSON 에서 숫자 하나만 읽으면 답이 나왔다. 지금은 전부 /grade 응답으로만 간다.
+// 3D 회전을 쓰는 6종은 형상(sh)을 유지한다 — 돌려서 가려진 나무를 확인하는 것이 풀이 과정이라
+// 은닉이 설계상 불가능하다(수용). minmax·hidden 은 3D 뷰어를 안 쓰므로 형상을 뺀다.
 export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
-  const q: any = { sh: pr.sh, level: pr.level ?? pr.lv, type };
+  const sh = pr.sh;
+  const q: any = { level: pr.level ?? pr.lv, type };
+
+  if (type === "minmax") {
+    q.which = pr.which;                                   // 무엇을 묻는지(최소/최대/차) — 답이 아니다
+    q.given = { gx: sh.gx, gz: sh.gz, kind: "sils", sils: silTrio(sh) };
+    return q;
+  }
+  if (type === "hidden") {
+    q.sub = pr.sub;
+    if (pr.sub === "A-d") q.which = pr.which;
+    q.given = hiddenGiven(pr, sh);
+    return q;
+  }
+
+  q.sh = sh;
   if (type === "facesMc") {
     const dir = pr.dir;
-    const correctSil = dir === "front" ? frontSil(pr.sh) : dir === "side" ? sideSil(pr.sh) : topSil(pr.sh);
-    const built = makeSilOpts(correctSil, gen.rngFrom(seed + ":o" + idx));
-    q.dir = dir; q.opts = built.opts; q.correct = built.correct;
-  } else if (type === "minmax") {
-    q.which = pr.which; q.rc = pr.rc;
-  } else if (type === "hidden") {
-    q.sub = pr.sub;                       // A-a~f: 클라가 위젯·제시 선택
-    if (pr.sub === "A-d") { q.which = pr.which; q.rc = pr.rc; }  // 삼면도 최대/최소
-    if (pr.sub === "A-f") { q.kinds = pr.kinds; }                // 종류 수(로컬 즉시피드백용)
-    // 주의: hcols·hasHidden·kinds(정답)는 전달하지 않음.
-    // A-a/b/f 정답 은닉은 서버 renderIso(4단계)로 완성(현재 sh 전달=솔리드 파생가능, 8유형과 동일 수준).
+    const correctSil = dir === "front" ? frontSil(sh) : dir === "side" ? sideSil(sh) : topSil(sh);
+    // 보기 순서만 보낸다. 정답 인덱스는 answerKeyFor 가 같은 rng 시드로 재생성하므로 보낼 필요가 없다.
+    q.dir = dir; q.opts = makeSilOpts(correctSil, gen.rngFrom(seed + ":o" + idx)).opts;
   }
   return q;
 }
 
+// 해설용 페이로드 — 제출 후이므로 모양을 밝혀도 된다.
+// 클라는 이걸로 모양을 되만들어 기존 해설 렌더러를 그대로 쓴다(격자 크기가 있어야 바닥판이 원본과 같다).
 export function explainFor(pr: Sh, type: string) {
   const sh = pr.sh, cs = coreShape(sh);
-  const ex: any = { cells: cs.cells, edge: sh.edge };
+  const ex: any = { cells: cs.cells, edge: sh.edge, gx: sh.gx, gz: sh.gz, maxH: sh.maxH };
   if (type === "hidden") {
     ex.sub = pr.sub; ex.hiddenCols = pr.hcols || [];     // 숨은 열(위치) 강조
     if (pr.sub === "A-d" && core.reverseShapes) ex.minMax = core.reverseShapes(cs);

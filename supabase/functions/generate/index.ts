@@ -2,7 +2,7 @@
 // 문제 세트 생성(정답 미포함). 무료=익명(rate limit) / 유료=JWT.
 import { preflight, json } from "../_shared/cors.ts";
 import { paramsHash, sign } from "../_shared/gsig.ts";
-import { buildProbs, presentFor, questionFor } from "../_shared/gen-adapter.ts";
+import { buildProbs, questionFor } from "../_shared/gen-adapter.ts";
 import { checkRate } from "../_shared/rate.ts";
 
 Deno.serve(async (req: Request) => {
@@ -37,7 +37,7 @@ Deno.serve(async (req: Request) => {
         id, index: i,
         theme, given: body.given ?? null, ask: body.ask ?? null,
         type: pr.type, level: pr.level ?? pr.lv,
-        present: presentFor(pr),         // 현행: shape. 은닉유형은 isoImage(추후)
+        // present(모양 통째 중복)는 폐지 — 클라 소비처가 없는데 모양만 한 번 더 노출시켰다.
         grade: "server", answerKey: null,
         gsig: await sign(id, ph),
         _gp: questionFor(pr, i, seed, theme),   // 렌더용 질문 데이터(현행 run 호환)

@@ -75,6 +75,35 @@
       function hiddenColsOf(sh){ const at=(x,z)=>((x>=0&&z>=0&&x<sh.gx&&z<sh.gz)?sh.hmap[x][z]:0); const out=[];
         for(let x=0;x<sh.gx;x++)for(let z=0;z<sh.gz;z++){ const h=sh.hmap[x][z]; if(h>0 && at(x+1,z+1)>h) out.push([x,z]); } return out; }
       function hiddenCellSet(sh){ const s=new Set(); hiddenColsOf(sh).forEach(([x,z])=>{ const h=sh.hmap[x][z]; for(let y=0;y<h;y++)s.add(x+","+y+","+z); }); return s; }
+      // 서버가 준 제시물(given) → 렌더러들이 먹는 sh 모양 객체.
+      //   ⚠ isoTop(A-a/b/f)·sils 에서는 '발자국'까지만 안다 — 숨은 열의 높이는 의도적으로
+      //     전송되지 않으므로 높이를 1로 채운 부분 정보다(_partial). 개수·겉넓이 계산에 쓰면 안 된다.
+      function givenShape(g){
+        const gx=g.gx,gz=g.gz,hmap=[];
+        for(let x=0;x<gx;x++)hmap.push(new Array(gz).fill(0));
+        const foot=t=>{ for(let z=0;z<t.rows;z++)for(let x=0;x<t.cols;x++) if(t.g[z][x]) hmap[x][z]=1; };
+        if(g.kind==="numTop"){ for(const k in g.heights){const p=k.split(",").map(Number);hmap[p[0]][p[1]]=g.heights[k];} }
+        else if(g.kind==="layers"){ (g.layers||[]).forEach(cs=>cs.forEach(k=>{const p=k.split(",").map(Number);hmap[p[0]][p[1]]++;})); }
+        else if(g.kind==="isoTop"){ foot(g.top); }
+        else if(g.kind==="sils"){ foot(g.sils.top); }
+        let maxH=0; const cells=[];
+        for(let x=0;x<gx;x++)for(let z=0;z<gz;z++){const h=hmap[x][z]; if(h>maxH)maxH=h; for(let y=0;y<h;y++)cells.push({x,y,z});}
+        return {gx,gz,maxH:Math.max(1,maxH),hmap,cells,edge:1,_partial:g.kind==="isoTop"||g.kind==="sils"};
+      }
+      // 문항 i 의 '완전한' 모양. 은닉 유형은 채점 전엔 클라에 없으므로 null 일 수 있다.
+      function shapeOf(pr,i){
+        const st=S.state[i]; const full=st&&st.explain&&shFromCells(st.explain);
+        return full || (pr.sh && !pr.sh._partial ? pr.sh : null);
+      }
+      // /grade 의 explain → 해설 렌더러가 먹는 '완전한' 모양. 제출 후이므로 밝혀도 된다.
+      function shFromCells(ex){
+        if(!ex||!ex.cells) return null;
+        const cells=ex.cells.map(c=>({x:c[0],y:c[1],z:c[2]}));
+        const gx=ex.gx||Math.max(1,...cells.map(c=>c.x+1)), gz=ex.gz||Math.max(1,...cells.map(c=>c.z+1));
+        const hmap=[]; for(let x=0;x<gx;x++)hmap.push(new Array(gz).fill(0));
+        cells.forEach(c=>{ if(c.y+1>hmap[c.x][c.z]) hmap[c.x][c.z]=c.y+1; });
+        return {gx,gz,maxH:ex.maxH||Math.max(1,...cells.map(c=>c.y+1)),hmap,cells,edge:ex.edge==null?1:ex.edge};
+      }
       // 높이지도({"x,z":h}) → core/viewer 모양
       function hmapToShape(hm,edge){ const cells=[]; let gx=0,gz=0,gy=0; for(const k in hm){const p=k.split(",").map(Number),h=hm[k]; gx=Math.max(gx,p[0]+1); gz=Math.max(gz,p[1]+1); gy=Math.max(gy,h); for(let y=0;y<h;y++)cells.push([p[0],y,p[1]]);} return {gx,gy,gz,edge,cells}; }
       // 해설 내부 3D 뷰어(최소·최대 모양, 안 보이는 나무 강조) — 문항 전환 시 dispose
@@ -139,45 +168,9 @@
       /* ===== 모양 생성 ===== */
       /* ===== 문제 생성기 = 공용 모듈 GEN.genShape / GEN.genSession ===== */
 
-      /* ===== 아이소 뷰어 ===== */
-      function rot(p,k,gx,gz){const{x,y,z}=p;if(k===1)return{x:gz-1-z,y,z:x};if(k===2)return{x:gx-1-x,y,z:gz-1-z};if(k===3)return{x:z,y,z:gx-1-x};return{x,y,z};}
-      function renderIso(sh,k,hiSet){
-        const a=20,b=10,c=24;
-        const ghost=!!hiSet;
-        const cells=sh.cells.map(p=>rot(p,k,sh.gx,sh.gz));
-        cells.sort((p,q)=>(p.x+p.z)-(q.x+q.z)||p.y-q.y);
-        let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
-        const PT=(x,y,z)=>{const X=a*(x-z),Y=b*(x+z)-c*y;if(X<minX)minX=X;if(X>maxX)maxX=X;if(Y<minY)minY=Y;if(Y>maxY)maxY=Y;return [X,Y];};
-        const P=(x,y,z)=>{const t=PT(x,y,z);return t[0]+","+t[1];};
-        // 바닥 격자(회전된 발자국) — 기준 평면
-        const g2gx=(k%2===1)?sh.gz:sh.gx, g2gz=(k%2===1)?sh.gx:sh.gz;
-        let grid="";
-        for(let i=0;i<=g2gx;i++){const A=PT(i,0,0),B=PT(i,0,g2gz);grid+=`<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" stroke="#c3ccda" stroke-width="1"/>`;}
-        for(let j=0;j<=g2gz;j++){const A=PT(0,0,j),B=PT(g2gx,0,j);grid+=`<line x1="${A[0]}" y1="${A[1]}" x2="${B[0]}" y2="${B[1]}" stroke="#c3ccda" stroke-width="1"/>`;}
-        const q0=PT(0,0,0),q1=PT(g2gx,0,0),q2=PT(g2gx,0,g2gz),q3=PT(0,0,g2gz);
-        grid+=`<polygon points="${q0.join(',')} ${q1.join(',')} ${q2.join(',')} ${q3.join(',')}" fill="none" stroke="#8a95a6" stroke-width="1.8" stroke-linejoin="round"/>`;
-        // 큐브
-        let poly="";
-        for(const{x,y,z}of cells){
-          const top=`${P(x,y+1,z)} ${P(x+1,y+1,z)} ${P(x+1,y+1,z+1)} ${P(x,y+1,z+1)}`;
-          const left=`${P(x,y,z+1)} ${P(x+1,y,z+1)} ${P(x+1,y+1,z+1)} ${P(x,y+1,z+1)}`;
-          const right=`${P(x+1,y,z)} ${P(x+1,y,z+1)} ${P(x+1,y+1,z+1)} ${P(x+1,y+1,z)}`;
-          const hi=ghost && hiSet.has(x+","+y+","+z);
-          const op=(ghost&&!hi)?0.28:1;
-          const cL=hi?"#d84a5e":"#d8a76e",cR=hi?"#b83346":"#c8965a",cT=hi?"#ef7f8e":"#e6c9a0",st=hi?"#7c1f2c":"#9c6b30";
-          poly+=`<polygon points="${left}" fill="${cL}" fill-opacity="${op}" stroke="${st}" stroke-width="1" stroke-linejoin="round"/><polygon points="${right}" fill="${cR}" fill-opacity="${op}" stroke="${st}" stroke-width="1" stroke-linejoin="round"/><polygon points="${top}" fill="${cT}" fill-opacity="${op}" stroke="${st}" stroke-width="1" stroke-linejoin="round"/>`;
-        }
-        // 위·앞·옆 라벨 — 회전과 함께 이동(원본 축 방향을 회전·투영)
-        const ccx=(sh.gx-1)/2, ccz=(sh.gz-1)/2;
-        const proj=(X,Y,Z)=>[a*(X-Z),b*(X+Z)-c*Y];
-        const axisDir=(dx,dz)=>{const C=rot({x:ccx,y:0,z:ccz},k,sh.gx,sh.gz),A=rot({x:ccx+dx,y:0,z:ccz+dz},k,sh.gx,sh.gz);const pc=proj(C.x,C.y,C.z),pa=proj(A.x,A.y,A.z);let vx=pa[0]-pc[0],vy=pa[1]-pc[1];const m=Math.hypot(vx,vy)||1;return [vx/m,vy/m];};
-        const cX=(minX+maxX)/2,cY=(minY+maxY)/2,R=Math.max(maxX-minX,maxY-minY)/2+12;
-        const sD=axisDir(1,0),fD=axisDir(0,1);
-        const lab=(x,y,t,col)=>`<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" fill="${col}" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">${t}</text>`;
-        let labels=lab(cX,minY-12,"위","#3f8fd0")+lab(cX+fD[0]*R,cY+fD[1]*R,"앞","#4fae72")+lab(cX+sD[0]*R,cY+sD[1]*R,"옆","#d0546f");
-        const pad=30,w=(maxX-minX)+pad*2,h=(maxY-minY)+pad*2;
-        return `<svg viewBox="${minX-pad} ${minY-pad} ${w} ${h}" xmlns="http://www.w3.org/2000/svg">${grid}${poly}${labels}</svg>`;
-      }
+      /* ===== 아이소 뷰어 = 공용 모듈 cubenest-iso (서버도 같은 모듈로 겨냥도를 그린다) ===== */
+      const ISO=(window.CubeNest&&window.CubeNest.iso)||null;
+      function renderIso(sh,k,hiSet){ return ISO?ISO.renderIso(sh,k||0,hiSet):""; }
       // 실루엣(막대/격자)을 88×88 균일 박스에 중앙 배치 → 어떤 형태든 레이아웃 일정
       function renderSil(sil,color){
         const cols=sil.t==="bars"?sil.a.length:sil.cols, rows=sil.rows;
@@ -210,10 +203,13 @@
       function sideSil(sh){const a=[];for(let z=0;z<sh.gz;z++){let m=0;for(let x=0;x<sh.gx;x++)m=Math.max(m,sh.hmap[x][z]);a.push(m);}a.reverse();return {t:"bars",a,rows:Math.max(...a,1)};}
       function topSil(sh){const g=[];for(let z=0;z<sh.gz;z++){const row=[];for(let x=0;x<sh.gx;x++)row.push(sh.hmap[x][z]>0);g.push(row);}return {t:"grid",g,cols:sh.gx,rows:sh.gz};}
       // 최소·최대/안 보이는 나무의 제시물: 위·앞·옆 세 방향 본 모양(2D)
-      function renderThreeViews(sh){
+      // 삼면도 — 실루엣 3종을 직접 받는다. 은닉 유형은 서버가 이 형태로만 제시물을 주므로
+      // (모양 없이) 그릴 수 있어야 한다. 모양이 있는 곳에서는 silsOf(sh)로 만들어 넘긴다.
+      function silsOf(sh){ return {top:topSil(sh),front:frontSil(sh),side:sideSil(sh)}; }
+      function renderThreeViews(sils){
         const B="#3f8fd0",G="#4fae72",R="#d0546f";
         const pv=(sil,color,label)=>`<div class="pv">${renderSil(sil,color)}<span>${label}</span></div>`;
-        return `<div class="threeviews">${pv(topSil(sh),B,"위")}${pv(frontSil(sh),G,"앞")}${pv(sideSil(sh),R,"옆")}</div>`;
+        return `<div class="threeviews">${pv(sils.top,B,"위")}${pv(sils.front,G,"앞")}${pv(sils.side,R,"옆")}</div>`;
       }
       // 최소·최대 해설: 위에서 본 모양 격자에 '불변 높이'(min==max)는 숫자, '변동 칸'(min≠max)은 색칠+범위
       function renderMinMaxTop(mn,mx,gx,gz){
@@ -253,14 +249,15 @@
         }
         return `<div class="threeviews">${panels}</div>`;
       }
-      // 안 보이는 나무 6종 제시 렌더(서브별)
+      // 안 보이는 나무 6종 제시 렌더(서브별). 제시물은 서버가 준 pr.given 이 전부다.
       function renderHiddenGiven(pr,sh){
-        const cap=t=>`<div class="rotcap">${t}</div>`;
-        if(pr.given==="numTop") return `<div class="viewer">${renderTopNums(sh)}${cap("위에서 본 모양의 각 칸에 쌓인 나무 <b>수</b>예요")}</div>`;
-        if(pr.given==="sils")   return `<div class="viewer"><div class="rothint" style="text-align:center;margin-bottom:4px">위·앞·옆에서 본 모양이에요</div>${renderThreeViews(sh)}</div>`;
-        if(pr.given==="layers") return `<div class="viewer">${renderLayers(sh)}${cap("<b>층별</b>로 나타낸 모양이에요")}</div>`;
-        // isoTop (A-f, A-a/b): 겨냥도 + 위모양
-        return `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="pv" style="margin-top:6px">${renderSil(topSil(sh),"#3f8fd0")}<span>위에서 본 모양</span></div>${cap("겨냥도에서 <b>안 보이는 나무</b>를 생각해요")}</div>`;
+        const g=pr.given, cap=t=>`<div class="rotcap">${t}</div>`;
+        if(g.kind==="numTop") return `<div class="viewer">${renderTopNums(sh)}${cap("위에서 본 모양의 각 칸에 쌓인 나무 <b>수</b>예요")}</div>`;
+        if(g.kind==="sils")   return `<div class="viewer"><div class="rothint" style="text-align:center;margin-bottom:4px">위·앞·옆에서 본 모양이에요</div>${renderThreeViews(g.sils)}</div>`;
+        if(g.kind==="layers") return `<div class="viewer">${renderLayers(sh)}${cap("<b>층별</b>로 나타낸 모양이에요")}</div>`;
+        // isoTop (A-a/b/f): 겨냥도는 서버가 그려 보낸 SVG 를 그대로 쓴다.
+        // 여기서 클라가 모양으로 다시 그리면 숨은 열의 높이가 클라에 있어야 해 은닉이 깨진다.
+        return `<div class="viewer"><div id="iso">${g.iso||""}</div><div class="pv" style="margin-top:6px">${renderSil(g.top,"#3f8fd0")}<span>위에서 본 모양</span></div>${cap("겨냥도에서 <b>안 보이는 나무</b>를 생각해요")}</div>`;
       }
       // 투상 그리드(불리언 2D) → SVG
       function renderProj(g,color){
@@ -350,7 +347,10 @@
       if(PRM.restart){ try{ localStorage.removeItem(SKEY); localStorage.removeItem(SKEY+"_sc"); }catch(e){} }
       function saveSession(){
         try{
-          const state=S.state.map(s=>s?{answered:!!s.answered,ok:!!s.ok,raw:s.raw}:null);
+          // key·explain 도 함께 저장한다 — 이제 색칠·해설의 출처가 서버 응답이라,
+          // 새로고침으로 이어풀기 할 때 이게 없으면 이미 푼 문항의 채점 화면을 복원할 수 없다.
+          // (이미 제출해서 본 정보라 저장해도 새로 새는 것은 없다.)
+          const state=S.state.map(s=>s?{answered:!!s.answered,ok:!!s.ok,raw:s.raw,key:s.key||null,explain:s.explain||null}:null);
           localStorage.setItem(SKEY,JSON.stringify({idx:S.idx,state,ts:Date.now()}));
           try{ if(SCRATCH) localStorage.setItem(SKEY+"_sc",JSON.stringify(SCRATCH.all())); }catch(e){/* 용량 초과 시 연습장만 생략 */}
         }catch(e){}
@@ -371,12 +371,16 @@
       }
       // 답 없이 제출했을 때. 예전엔 조용히 return 해서 제출 버튼이 먹통처럼 보였다.
       const NEEDMSG={ bool:"‘있어요 / 없어요’ 중 하나를 골라요.", markCells:"숨은 것 같은 칸을 한 곳 이상 눌러요.",
-                      mc:"보기 중 하나를 골라요.", draw:"칠할 칸을 눌러요.", hm:"색칠된 칸에 수를 모두 써요.", num:"답을 써요." };
+                      mc:"보기 중 하나를 골라요.", draw:"칠할 칸을 눌러요.", hm:"색칠된 칸에 수를 모두 써요.", num:"답을 써요.",
+                      // 채점 실패 — 답은 그대로 두고 다시 제출하면 된다(문항은 소진되지 않았다).
+                      network:"인터넷이 끊겨서 채점하지 못했어요. 연결을 확인하고 <b>다시 제출</b>해 주세요.",
+                      rate:"잠시 뒤에 다시 제출해 주세요. (요청이 조금 많았어요)",
+                      server:"채점 중 문제가 생겼어요. <b>다시 제출</b>해 주세요." };
       function needAnswer(form){
         const box=qcard.querySelector(".answer"); if(!box)return;
         let el=box.querySelector(".ansnote");
         if(!el){ el=document.createElement("div"); el.className="ansnote"; box.appendChild(el); }
-        el.textContent=NEEDMSG[form]||NEEDMSG.num;
+        el.innerHTML=NEEDMSG[form]||NEEDMSG.num;
         el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");   // 연타해도 매번 다시 흔들리게
         const inp=document.getElementById("ans"); if(inp)inp.focus();
       }
@@ -406,36 +410,38 @@
         S.probs=[];
         const resp=await CubeNest.api.generate({theme:PRM.type,given:[],ask:null,levels:PRM.levels,seed:PRM.seed,n:PRM.n,config:GEN_CONFIG,edu:PRM.edu,sub:PRM.sub||undefined});
         resp.problems.forEach((p,i)=>{
-          const gp=p._gp;                       // 서버 생성 인스턴스(원본 genSession 항목)
-          const sh=gp.sh, lv=gp.level;
-          const pr={type:PRM.type,lv,sh,id:p.id,gsig:p.gsig};   // id·gsig = 다음 단계 서버 채점용
+          const gp=p._gp;                       // 서버 생성 인스턴스(정답 필드는 들어 있지 않다)
+          const lv=gp.level;
+          // minmax·hidden 은 모양(sh)을 받지 않는다 — 제시물(given)만 온다.
+          // 답은 전부 /grade 가 준다. 여기서 로컬 정답을 만들면 은닉이 도로 깨진다.
+          const sh=gp.sh||(gp.given?givenShape(gp.given):null);
+          const pr={type:PRM.type,lv,sh,given:gp.given||null,id:p.id,gsig:p.gsig};
           if(PRM.type==="facesMc"){
             const dir=gp.dir;
-            pr.opts=gp.opts; pr.correct=gp.correct; pr.dir=dir;   // 서버 생성 보기 사용(GEN 불필요)
+            pr.opts=gp.opts; pr.dir=dir;        // 정답 인덱스는 안 온다 → 채점 후 answerKey.correct
             pr.ask=(dir==="front"?"앞":dir==="side"?"옆":"위")+"에서 본 모양을 고르세요.";
           }
           if(PRM.type==="minmax"){
-            pr.rc=gp.rc; pr.which=gp.which;
-            if(gp.which==="diff"){ pr.answer=gp.rc.hidden; pr.ask="세 방향 모양이 같도록 쌓을 때, <b>최대와 최소의 차이</b>는 몇 개일까요?"; }
-            else{ pr.answer=gp.which==="max"?gp.rc.maxCount:gp.rc.minCount; pr.ask="세 방향(위·앞·옆)에서 본 모양이 되려면, 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?"; }
+            pr.which=gp.which;
+            pr.ask=gp.which==="diff"
+              ? "세 방향 모양이 같도록 쌓을 때, <b>최대와 최소의 차이</b>는 몇 개일까요?"
+              : "세 방향(위·앞·옆)에서 본 모양이 되려면, 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?";
           }
           if(PRM.type==="hidden"){
             pr.sub=gp.sub||"A-a";
-            const cnt=(sh.cells?sh.cells.length:0);          // A-c/A-e 개수(로컬 즉시피드백)
-            if(pr.sub==="A-c"){ pr.given="numTop"; pr.answer=cnt;
+            if(pr.sub==="A-c"){
               pr.ask="위에서 본 모양의 각 칸에 <b>쌓인 나무 수</b>가 적혀 있어요. 쌓기나무는 모두 몇 개일까요?"; }
-            else if(pr.sub==="A-e"){ pr.given="layers"; pr.answer=cnt;
+            else if(pr.sub==="A-e"){
               pr.ask="<b>층별로 나타낸 모양</b>이에요. 쌓기나무는 모두 몇 개일까요?"; }
-            else if(pr.sub==="A-d"){ pr.rc=gp.rc; pr.which=gp.which; pr.given="sils";
-              if(gp.which==="diff"){ pr.answer=(gp.rc.hidden!=null?gp.rc.hidden:gp.rc.maxCount-gp.rc.minCount);
-                pr.ask="세 방향 모양이 되도록 쌓을 때 <b>최대와 최소의 차이</b>(안 보이는 나무)는 몇 개일까요?"; }
-              else{ pr.answer=gp.which==="max"?gp.rc.maxCount:gp.rc.minCount;
-                pr.ask="세 방향(위·앞·옆)에서 본 모양이 되려면 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?"; } }
-            else if(pr.sub==="A-f"){ pr.given="isoTop"; pr.answer=gp.kinds; pr.unit="가지";   // 개수가 아니라 '가짓수'
+            else if(pr.sub==="A-d"){ pr.which=gp.which;
+              pr.ask=gp.which==="diff"
+                ? "세 방향 모양이 되도록 쌓을 때 <b>최대와 최소의 차이</b>(안 보이는 나무)는 몇 개일까요?"
+                : "세 방향(위·앞·옆)에서 본 모양이 되려면 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?"; }
+            else if(pr.sub==="A-f"){ pr.unit="가지";   // 개수가 아니라 '가짓수'
               pr.ask="겨냥도와 위에서 본 모양이 이래요. <b>쌓은 모양이 될 수 있는 것은 몇 가지</b>일까요?"; }
-            else if(pr.sub==="A-a"){ pr.form="bool"; pr.given="isoTop"; pr.answer=hiddenColsOf(sh).length>0?1:0;
+            else if(pr.sub==="A-a"){ pr.form="bool";
               pr.ask="겨냥도와 위에서 본 모양을 비교해요. <b>안 보이게 숨은 쌓기나무가 있나요?</b>"; }
-            else{ pr.form="markCells"; pr.given="isoTop"; pr.answer=hiddenColsOf(sh).map(c=>c[0]+","+c[1]);   // A-b
+            else{ pr.form="markCells";   // A-b
               pr.ask="위에서 본 모양에서 <b>안 보이는 나무가 숨은 칸</b>을 모두 눌러요."; }
           }
           S.probs.push(pr);
@@ -479,9 +485,10 @@
         const isViews=pr.type==="minmax";
         const isHidden=pr.type==="hidden";
         const has3D=!!window.THREE && !!VIEWER && PRM.dim!=="2d" && !isViews && !isHidden;
-        const viewLabel=isViews?"세 방향 본 모양":(isHidden?(pr.given==="numTop"?"위에서 본 수":pr.given==="sils"?"위·앞·옆":pr.given==="layers"?"층별 모양":"2D 겨냥도"):(has3D?"3D 문제":"2D 겨냥도"));
+        const gk=(pr.given&&pr.given.kind)||"";
+        const viewLabel=isViews?"세 방향 본 모양":(isHidden?(gk==="numTop"?"위에서 본 수":gk==="sils"?"위·앞·옆":gk==="layers"?"층별 모양":"2D 겨냥도"):(has3D?"3D 문제":"2D 겨냥도"));
         const viewerHTML=isViews
-          ? `<div class="viewer"><div class="rothint" style="text-align:center;margin-bottom:4px">위·앞·옆에서 본 모양이에요</div>${renderThreeViews(sh)}</div>`
+          ? `<div class="viewer"><div class="rothint" style="text-align:center;margin-bottom:4px">위·앞·옆에서 본 모양이에요</div>${renderThreeViews(pr.given.sils)}</div>`
           : isHidden
           ? renderHiddenGiven(pr,sh)
           : (has3D
@@ -714,55 +721,62 @@
         qcard.appendChild(fx);
         setTimeout(()=>{ fx.remove(); }, 1400);
       }
+      // 채점·색칠·해설의 단일 출처는 /grade 응답이다.
+      //   answerKey → 색칠 · explain → 해설 그림.
+      //   예전엔 클라가 pr.sh 로 정답을 다시 계산해 색칠했는데, 그러려면 모양(=정답의 원천)을
+      //   클라가 갖고 있어야 해서 은닉이 원천적으로 불가능했다. 서버는 이미 두 필드를 다 보내고
+      //   있었고 클라가 res.correct 한 줄만 쓰고 버리던 것을, 이제 제대로 쓴다.
       async function submit(revisit){
-        const pr=S.probs[S.idx],T=TYPES[pr.type],sh=pr.sh,F=pr.form||T.form;
+        const pr=S.probs[S.idx],T=TYPES[pr.type],F=pr.form||T.form;
         if(!revisit){
           const raw=readAnswer(pr);
           if(raw===null){ needAnswer(F); return; }
           const note=qcard.querySelector(".ansnote"); if(note)note.remove();
-          S.state[S.idx]={answered:true,raw:raw,ok:false};
-        }
-        // 서버 채점(num·hm) — 로컬 계산은 색칠·해설용, 점수는 서버 결과 우선
-        let srvOk=null;
-        if(!revisit && window.CubeNest && CubeNest.api && answerObj(pr,S.state[S.idx].raw)){
           const sb0=document.getElementById("submit"); if(sb0)sb0.disabled=true;
+          let res;
           try{
-            const res=await CubeNest.api.grade({id:pr.id, gsig:pr.gsig, answer:answerObj(pr,S.state[S.idx].raw), params:GRADE_PARAMS()});
-            srvOk=!!res.correct;
-          }catch(e){ srvOk=null; }   // 실패 시 로컬 폴백
+            res=await CubeNest.api.grade({id:pr.id, gsig:pr.gsig, answer:answerObj(pr,raw), params:GRADE_PARAMS()});
+          }catch(e){
+            // 실패해도 문항을 소진하지 않는다 — 답을 그대로 두고 다시 제출할 수 있다.
+            if(sb0)sb0.disabled=false;
+            needAnswer(e&&e.rate?"rate":(e&&e.network?"network":"server"));
+            return;
+          }
+          S.state[S.idx]={answered:true,raw:raw,ok:!!res.correct,key:res.answerKey||null,explain:res.explain||null};
         }
-        let ok=false,sol="";
+        const st=S.state[S.idx]||{}, key=st.key||{}, ok=!!st.ok;
+        // 해설용 모양 — 제출 후엔 밝혀도 되므로 explain 으로 되만든다(은닉 유형은 이때 처음 받는다).
+        const sh=(st.explain&&shFromCells(st.explain))||pr.sh;
+        let sol="";
         if(F==="num"){
-          const v=parseInt(document.getElementById("ans").value,10);
-          if(isNaN(v)){document.getElementById("ans").focus();return;}
-          let a;
+          const a=key.value;
           if(pr.type==="minmax"||pr.type==="hidden"){
-            a=pr.answer; const rc=pr.rc;
+            const mn0=key.min, mx0=key.max;                     // 서버 answerKey 가 준 최소·최대
+            const rs=(st.explain&&st.explain.minMax)||(CORE&&sh?CORE.reverseShapes(coreShape(sh)):null);
             if(pr.type==="minmax"){
               let vis="";
-              if(CORE){
-                const rs=CORE.reverseShapes(coreShape(sh));
+              if(rs){
                 const mn=hmapToShape(rs.min,sh.edge), mx=hmapToShape(rs.max,sh.edge);
                 pr._mn=mn; pr._mx=mx;
                 let vary=0; for(const k in rs.min) if(rs.min[k]!==rs.max[k]) vary++;
                 const topGrid=renderMinMaxTop(rs.min,rs.max,sh.gx,sh.gz);
                 const mark=`<b style="color:#c68a2e">색칠한 ${vary}칸</b>`;
                 const txt = pr.which==="max"
-                  ? `각 칸을 <b>앞·옆에서 본 높이 중 작은 값</b>까지 채우면 가장 많아요. 모두 더하면 최대 <b>${rc.maxCount}개</b>. ${mark}이 최대에서 더 쌓이는 자리예요.`
+                  ? `각 칸을 <b>앞·옆에서 본 높이 중 작은 값</b>까지 채우면 가장 많아요. 모두 더하면 최대 <b>${mx0}개</b>. ${mark}이 최대에서 더 쌓이는 자리예요.`
                   : pr.which==="min"
-                  ? `${mark}을 <b>낮은 쪽 수</b>까지 낮추면 가장 적어요. 모두 더하면 최소 <b>${rc.minCount}개</b>. (나머지 칸은 항상 그 수예요)`
-                  : `최대 <b>${rc.maxCount}</b> − 최소 <b>${rc.minCount}</b> = <b>${rc.hidden}개</b>.`;
+                  ? `${mark}을 <b>낮은 쪽 수</b>까지 낮추면 가장 적어요. 모두 더하면 최소 <b>${mn0}개</b>. (나머지 칸은 항상 그 수예요)`
+                  : `최대 <b>${mx0}</b> − 최소 <b>${mn0}</b> = <b>${mx0-mn0}개</b>.`;
                 const grid3d = (VIEWER&&window.THREE)
-                  ? `<div class="mm-views"><div class="mmv"><div class="mmv-h">최소 ${rc.minCount}개</div><div class="expv" id="expMin"></div></div><div class="mmv"><div class="mmv-h">최대 ${rc.maxCount}개</div><div class="expv" id="expMax"></div></div></div>`
-                  : `<div class="mm-views"><div class="mmv"><div class="mmv-h">최소 ${rc.minCount}개</div>${renderIso(mn,0)}</div><div class="mmv"><div class="mmv-h">최대 ${rc.maxCount}개</div>${renderIso(mx,0)}</div></div>`;
+                  ? `<div class="mm-views"><div class="mmv"><div class="mmv-h">최소 ${mn0}개</div><div class="expv" id="expMin"></div></div><div class="mmv"><div class="mmv-h">최대 ${mx0}개</div><div class="expv" id="expMax"></div></div></div>`
+                  : `<div class="mm-views"><div class="mmv"><div class="mmv-h">최소 ${mn0}개</div>${renderIso(mn,0)}</div><div class="mmv"><div class="mmv-h">최대 ${mx0}개</div>${renderIso(mx,0)}</div></div>`;
                 vis = `<div class="mm-txt">${txt}</div><div class="mm-top"><div class="mmv-h">위에서 본 모양 · 숫자=항상 그 높이<br><span style="color:#c68a2e">색칠=최소·최대 달라지는 칸</span></div>${topGrid}</div>${grid3d}`;
               }
               sol = vis;
             }else{   // 안 보이는 나무 num 서브: A-c/A-e(개수)·A-d(최대최소)·A-f(종류수)
               if(pr.sub==="A-d"){
                 let vis="정답: <b>"+a+"개</b>";
-                if(CORE){ const rs=CORE.reverseShapes(coreShape(sh)); const mn=hmapToShape(rs.min,sh.edge),mx=hmapToShape(rs.max,sh.edge); pr._mn=mn; pr._mx=mx;
-                  vis=`<div class="mm-txt">세 방향에서 본 모양이 같아도 안쪽 높이가 달라질 수 있어요. 최소 <b>${rc.minCount}</b> ~ 최대 <b>${rc.maxCount}</b>개.</div><div class="mm-views"><div class="mmv"><div class="mmv-h">최소 ${rc.minCount}개</div>${renderIso(mn,0)}</div><div class="mmv"><div class="mmv-h">최대 ${rc.maxCount}개</div>${renderIso(mx,0)}</div></div>`; }
+                if(rs){ const mn=hmapToShape(rs.min,sh.edge),mx=hmapToShape(rs.max,sh.edge); pr._mn=mn; pr._mx=mx;
+                  vis=`<div class="mm-txt">세 방향에서 본 모양이 같아도 안쪽 높이가 달라질 수 있어요. 최소 <b>${mn0}</b> ~ 최대 <b>${mx0}</b>개.</div><div class="mm-views"><div class="mmv"><div class="mmv-h">최소 ${mn0}개</div>${renderIso(mn,0)}</div><div class="mmv"><div class="mmv-h">최대 ${mx0}개</div>${renderIso(mx,0)}</div></div>`; }
                 sol=vis;
               }else if(pr.sub==="A-f"){
                 const hiSet=hiddenCellSet(sh);
@@ -774,20 +788,16 @@
               }
             }
           }else{
-            const st = CORE ? CORE.stats(coreShape(sh)) : null;   // §4 정본 계산(공용 모듈)
-            a = st ? st.count : sh.count;
+            const stt = CORE ? CORE.stats(coreShape(sh)) : null;   // §4 정본 계산(공용 모듈) — 해설 문구용
             if(pr.type==="volume"){
-              a = st ? st.volume : sh.count*sh.edge**3;
-              sol=`부피 = 쌓기나무 수 × 한 개의 부피 = ${st?st.count:sh.count} × (${sh.edge}cm × ${sh.edge}cm × ${sh.edge}cm) = <b>${a}cm³</b>`;
+              sol=`부피 = 쌓기나무 수 × 한 개의 부피 = ${stt?stt.count:sh.cells.length} × (${sh.edge}cm × ${sh.edge}cm × ${sh.edge}cm) = <b>${a}cm³</b>`;
             }else if(pr.type==="surface"){
-              if(st){
-                const up=st.up,front=st.front,side=st.side,pairs=st.touchingPairs,face=`${sh.edge}cm × ${sh.edge}cm`;
-                a=st.surfaceArea;
+              if(stt){
+                const up=stt.up,front=stt.front,side=stt.side,pairs=stt.touchingPairs,face=`${sh.edge}cm × ${sh.edge}cm`;
                 sol=`<div class="sol-surf"><div>① <b>위·앞·옆으로</b> : 2×(위 ${up} + 앞 ${front} + 옆 ${side}) × (${face}) = <b>${a}cm²</b></div>`
-                  +`<div>② <b>다른 해설</b> : 겉넓이 = (전체 면 수 − 맞닿은 면 수) × 한 면의 넓이 = (6×${st.count} − 2×${pairs}) × (${face}) = <b>${a}cm²</b></div></div>`
+                  +`<div>② <b>다른 해설</b> : 겉넓이 = (전체 면 수 − 맞닿은 면 수) × 한 면의 넓이 = (6×${stt.count} − 2×${pairs}) × (${face}) = <b>${a}cm²</b></div></div>`
                   +projPanel(sh);
               }else{
-                a=sh.exposed*sh.edge**2;
                 sol=`겉넓이 = <b>${a}cm²</b>`+projPanel(sh);
               }
             }else{
@@ -799,54 +809,46 @@
                 +`<div>② <b>위에서 본 수의 합</b> : ${nums.join(" + ")} = <b>${a}개</b></div></div></div>`;
             }
           }
-          ok = (srvOk!=null ? srvOk : (v===a));
         }else if(F==="hm"){
-          ok=true;let bad=false;
-          qcard.querySelectorAll(".hmcell input").forEach(inp=>{const x=+inp.dataset.x,z=+inp.dataset.z,cor=sh.hmap[x][z];const v=parseInt(inp.value,10);if(isNaN(v)||v!==cor){if(isNaN(v))bad=true;ok=false;inp.style.borderColor="var(--del)";}else{inp.style.borderColor="var(--add)";}inp.value=cor;inp.disabled=true;});
-          if(bad)ok=false;
-          if(srvOk!=null)ok=srvOk;   // 색칠은 로컬, 점수는 서버
+          const grid=key.grid||{};
+          qcard.querySelectorAll(".hmcell input").forEach(inp=>{const cor=grid[inp.dataset.x+","+inp.dataset.z];const v=parseInt(inp.value,10);
+            inp.style.borderColor=(!isNaN(v)&&v===cor)?"var(--add)":"var(--del)"; if(cor!=null)inp.value=cor; inp.disabled=true;});
           sol="각 칸의 수 = 그 자리에 쌓인 나무의 <b>높이(층수)</b>예요. 초록색이 정답입니다.";
         }else if(F==="mc"){
-          if(PICK<0)return;
-          ok=(srvOk!=null?srvOk:(PICK===pr.correct));
-          qcard.querySelectorAll(".opt").forEach((o,i)=>{o.classList.add("done");if(i===pr.correct)o.classList.add("correct");else if(i===PICK)o.classList.add("wrong");o.style.pointerEvents="none";});
+          const cor=key.correct;
+          qcard.querySelectorAll(".opt").forEach((o,i)=>{o.classList.add("done");if(i===cor)o.classList.add("correct");else if(i===PICK)o.classList.add("wrong");o.style.pointerEvents="none";});
           sol=(pr.dir==="front"?"<b>앞</b>에서 보면 가로 각 줄에서 <b>가장 높은 층</b>까지 보여요."
               :pr.dir==="side"?"<b>옆</b>에서 보면 깊이 각 줄에서 <b>가장 높은 층</b>까지 보여요."
               :"<b>위</b>에서 보면 나무가 <b>있는 칸</b>이 모두 칠해져요(높이는 안 보여요).")
               +" 초록 테두리가 정답이에요.";
         }else if(F==="draw"){
-          ok=true;
+          const truth=new Set(key.cells||[]);
           ["top","front","side"].forEach(view=>{
-            const g=qcard.querySelector(`.dgrid[data-view="${view}"]`);
+            const g=qcard.querySelector(`.dgrid[data-view="${view}"]`); if(!g)return;
             g.querySelectorAll(".dcell").forEach(cell=>{
-              const c=+cell.dataset.c,r=+cell.dataset.r,should=drawCorrect(sh,view,c,r),has=cell.classList.contains("on");
+              const should=truth.has(view+","+cell.dataset.c+","+cell.dataset.r),has=cell.classList.contains("on");
               cell.disabled=true;
               if(should&&has)cell.classList.add("okcell");
-              else if(should&&!has){cell.classList.add("misscell");ok=false;}
-              else if(!should&&has){cell.classList.add("wrongcell");ok=false;}
+              else if(should&&!has)cell.classList.add("misscell");
+              else if(!should&&has)cell.classList.add("wrongcell");
             });
           });
-          if(srvOk!=null)ok=srvOk;   // 색칠은 로컬, 점수는 서버
           const vis3d = (VIEWER&&window.THREE) ? `<div class="expv expv-hi" id="expDraw"></div>` : `<div class="sol-pic">${renderIso(sh,0)}</div>`;
-          sol=`<div class="sol-draw"><div class="sol-pic">${renderThreeViews(sh)}<span>정답</span></div>${vis3d}</div>`;
+          sol=`<div class="sol-draw"><div class="sol-pic">${renderThreeViews(silsOf(sh))}<span>정답</span></div>${vis3d}</div>`;
         }else if(F==="bool"){                          // A-a 유무
-          if(PICK<0)return;
-          const truth=hiddenColsOf(sh).length>0?1:0;
-          ok=(srvOk!=null?srvOk:(PICK===truth));
+          const truth=key.value?1:0;
           qcard.querySelectorAll(".boolopt").forEach(o=>{o.classList.add("done");const b=+o.dataset.b;if(b===truth)o.classList.add("correct");else if(b===PICK)o.classList.add("wrong");o.style.pointerEvents="none";});
           const hiSet=hiddenCellSet(sh);
           sol=`<div class="sol-hidden"><div class="sol-pic">${renderIso(sh,0,hiSet)}</div><div class="sol-list">안 보이는 나무가 <b>${truth?"있어요":"없어요"}</b>. ${truth?'<span style="color:#c33a4f;font-weight:800">빨강</span>이 숨은 칸이에요.':"모든 칸의 윗면이 보여요."}</div></div>`;
         }else if(F==="markCells"){                     // A-b 위치
           const marked=new Set(); qcard.querySelectorAll(".mcell.on").forEach(c=>marked.add(c.dataset.x+","+c.dataset.z));
-          const cols=hiddenColsOf(sh), truth=new Set(cols.map(c=>c[0]+","+c[1]));
-          let eq=marked.size===truth.size; if(eq)for(const k of truth)if(!marked.has(k)){eq=false;break;}
-          ok=(srvOk!=null?srvOk:eq);
+          const truth=new Set(key.cells||[]);
           qcard.querySelectorAll(".mcell").forEach(c=>{const k=c.dataset.x+","+c.dataset.z;c.style.pointerEvents="none";if(truth.has(k))c.classList.add("correct");else if(marked.has(k))c.classList.add("wrong");});
           const hiSet=hiddenCellSet(sh);
-          sol=`<div class="sol-hidden"><div class="sol-pic">${renderIso(sh,0,hiSet)}</div><div class="sol-list"><span style="color:#c33a4f;font-weight:800">빨강</span>이 안 보이는 나무가 숨은 칸이에요 (${cols.length}칸).</div></div>`;
+          sol=`<div class="sol-hidden"><div class="sol-pic">${renderIso(sh,0,hiSet)}</div><div class="sol-list"><span style="color:#c33a4f;font-weight:800">빨강</span>이 안 보이는 나무가 숨은 칸이에요 (${truth.size}칸).</div></div>`;
         }
-        S.answered[S.idx]=ok;
-        if(!revisit){ S.state[S.idx].ok=ok; track("quiz_answer",{type:pr.type,level:pr.lv,correct:ok,idx:S.idx}); if(SCRATCH)SCRATCH.relock(); }
+        S.answered[S.idx]=ok;   // ok 는 서버 판정(S.state[idx].ok) — 로컬 재계산 없음
+        if(!revisit){ track("quiz_answer",{type:pr.type,level:pr.lv,correct:ok,idx:S.idx}); if(SCRATCH)SCRATCH.relock(); }
         const ai=document.getElementById("ans"); if(ai)ai.disabled=true;
         const sb=document.getElementById("submit"); if(sb)sb.disabled=true;
         // 답안 즉시 표시 + 애니메이션·사운드 동시
@@ -976,7 +978,10 @@
           problems.push({
             n:i+1, type:pr.type, level:pr.lv, edu:PRM.edu||null,
             ask:pr.ask||TYPES[pr.type].ask,
-            shape: CORE ? CORE.serialize(coreShape(pr.sh)) : null,   // F2 직렬화(worksheets가 core로 재현·정답 산출)
+            // F2 직렬화(worksheets가 core로 재현·정답 산출).
+            // 은닉 유형(minmax·hidden)은 안 푼 문항의 모양이 클라에 없다 — 푼 문항은 explain 으로
+            // 되만든 모양을 쓰고, 안 푼 문항은 null. worksheets 실구현 때 서버에서 받는 이음새 필요.
+            shape: shapeOf(pr,i) && CORE ? CORE.serialize(coreShape(shapeOf(pr,i))) : null,
             correct: !!S.answered[i],
             scratch: SCRATCH ? SCRATCH.get(i) : null                 // {child,tutor} 2레이어(아이 풀이 / 첨삭) PNG dataURL — 문제 하단 병기용
           });
@@ -1042,7 +1047,7 @@
         // 이어풀기: 저장된 진행(위치·답·정오)·연습장 복원
         const saved=loadSession();
         if(saved && Array.isArray(saved.state)){
-          S.state=saved.state.map(s=>s?{answered:!!s.answered,ok:!!s.ok,raw:s.raw}:null);
+          S.state=saved.state.map(s=>s?{answered:!!s.answered,ok:!!s.ok,raw:s.raw,key:s.key||null,explain:s.explain||null}:null);
           S.answered=S.state.map(s=>s?!!s.ok:undefined);
           S.idx=Math.min(Math.max(saved.idx|0,0),S.n-1);
           try{ const sc=localStorage.getItem(SKEY+"_sc"); if(sc && SCRATCH) SCRATCH.load(JSON.parse(sc)); }catch(e){}

@@ -28,6 +28,7 @@
 ## 공용 모듈 (assets/js/ — import, 재-인라인 금지)
 전역 `window.CubeNest`. viewer는 core에 의존 → **core 먼저 로드.** 변경은 단일 지점 + 전 모듈 재테스트.
 - `cubenest-core.js` — 계산 코어(§4 실행형). `cubenest-viewer.js` — 3D 뷰어·펼쳐보기.
+- `cubenest-iso.js` — 겨냥도 SVG 렌더러. **서버 복본(`_shared/`)이 은닉 유형 제시물을 그린다** — 그리는 순서(뒤→앞)가 곧 가림이라 정렬을 바꾸면 숨은 나무가 드러난다.
 - `auth.js` — **공용 인증(`CubeNest.auth`·`isLoggedIn` 단일 진실)**. `mydata.js` — **공용 데이터 계층(로컬 우선, `/my` 오너·account 소비)**. `consent.js` — GA4·동의.
 - **생성기 `gen`·설정 `gen-config`는 서버 전용**(Edge Function, 클라 미배포 — 아래 보안).
 
@@ -41,7 +42,11 @@
 ## 보안 · 지적재산 (정적 웹은 클라 코드 은닉 불가 → 서버화 + 법적 보호)
 - **핵심 자산은 서버(Edge Function):** `gen`·`gen-config`(전체 문제 공간·정답 규칙)는 클라에서 삭제됨. 클라는 `api-client.js`로 `/generate`·`/grade` 호출. **`/grade`는 gsig(HMAC)로 위·변조 방지**, rate limit(익명 쿠키+IP). 무료 익명 플레이라 `verify_jwt=false`.
 - **anon key만 클라이언트**(공개 OK). **`service_role` key는 절대 클라·리포 금지**(서버 전용).
-- 클라 유지(보호 가치 낮음): core·viewer·auth·consent.
+- 클라 유지(보호 가치 낮음): core·viewer·auth·consent·iso(겨냥도 렌더).
+- **정답 은닉:** `/generate` 응답에 **정답을 담지 않는다**(예전엔 facesMc 정답 번호·minmax rc·A-f kinds가 그대로 나갔다). 채점·색칠·해설의 단일 출처는 **`/grade` 응답의 `answerKey`·`explain`**. 로컬 폴백 채점 없음 → 실패 시 재시도(어차피 `/generate` 없이는 시작도 못 한다).
+  - **minmax·hidden**은 모양(`sh`) 대신 **제시물만** 보낸다. 겨냥도가 제시물인 A-a/b/f는 서버가 `cubenest-iso`로 SVG를 그려 내려보낸다.
+  - **[한계] 3D 회전 6종(count·volume·surface·heightmap·facesMc·facesDraw)은 은닉 불가** — 돌려서 가려진 나무를 확인하는 것이 풀이 과정이라 형상이 클라에 있어야 한다. 의도된 수용.
+  - A-a/b/f의 답은 **보이는 그림만의 함수**다(숨은 열의 실제 높이는 어느 답에도 안 쓰임). 그래서 그림을 주는 것으로 은닉이 성립한다 — 치터도 학생과 똑같이 그림을 분석해야 한다.
 - 법적: 저작권 표시·독점 라이선스·이용약관·저작권 등록·**CubeNest 상표 출원**(변리사 확인).
 
 ## 기술 · 규약
