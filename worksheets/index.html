@@ -32,10 +32,25 @@
   .page{max-width:920px;margin:0 auto;padding:20px clamp(14px,3vw,28px) 64px;}
 
   /* ── 안내(빈 상태) ── */
-  .empty{display:grid;place-items:center;min-height:calc(100vh - 64px);text-align:center;padding:24px;box-sizing:border-box;}
-  .empty .wrap{max-width:40ch;}
-  .empty h1{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 10px;}
-  .empty p{color:var(--muted);line-height:1.7;margin:0 0 20px;}
+  .nodata{display:grid;place-items:center;min-height:calc(100vh - 64px);text-align:center;padding:24px;box-sizing:border-box;}
+  .nodata .wrap{max-width:40ch;}
+  .nodata h1{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 10px;}
+  .nodata p{color:var(--muted);line-height:1.7;margin:0 0 20px;}
+
+  /* ── 새 문제지 만들기(생성 폼) ── */
+  .maker{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;margin-bottom:18px;box-shadow:var(--shadow-sm);}
+  .maker h2{font-size:16px;font-weight:800;margin:0 0 3px;}
+  .maker .sub{color:var(--muted);font-size:12.5px;margin-bottom:14px;}
+  .frow{display:flex;gap:12px 20px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+  .fg{display:flex;align-items:center;gap:8px;}
+  .fg > label{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;}
+  .fg select,.fg input{font-family:inherit;font-size:13.5px;padding:8px 10px;border:1px solid var(--line);
+                       border-radius:10px;background:var(--panel);color:var(--ink);min-height:38px;}
+  .chips{display:inline-flex;gap:6px;flex-wrap:wrap;}
+  .chip{border:1px solid var(--line);background:var(--panel);cursor:pointer;font-family:inherit;
+        padding:7px 12px;border-radius:999px;font-size:13px;font-weight:700;color:var(--muted);min-height:38px;}
+  .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent;color:var(--accent-ink);}
+  .makererr{color:var(--del);font-size:13px;font-weight:700;margin-top:8px;}
   .btn{border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:15px;padding:12px 18px;border-radius:14px;background:var(--accent);color:#fff;text-decoration:none;display:inline-block;}
   .btn:hover{background:var(--accent-ink);}
   .btn.ghost{background:var(--panel);color:var(--accent-ink);border:1px solid var(--line);}
@@ -88,6 +103,7 @@
   .dview span{font-size:11px;font-weight:800;color:var(--muted-2);}
   .dgrid{display:grid;gap:1.5px;background:var(--line);padding:1.5px;border-radius:5px;}
   .dcell{width:18px;height:18px;background:#fff;border-radius:2px;}
+  .dcell.on{background:var(--accent);}   /* 정답지에서 칠해진 칸 */
 
   /* 제시물 그림 — quiz 렌더러 산출물을 그대로 받으므로 같은 클래스명을 쓴다 */
   .viewer{background:var(--panel-2);border:1px solid var(--line);border-radius:12px;padding:10px;
@@ -160,6 +176,9 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.1.0"></script>
 <script src="../assets/js/mydata.js?v=0.1.0"></script>
+<script src="../assets/js/cubenest-iso.js?v=0.1.0"></script>
+<script src="../assets/js/cubenest-figures.js?v=0.1.0"></script>
+<script src="../quiz/run/api-client.js?v=1"></script>
 <script>
 (function(){
   "use strict";
@@ -180,13 +199,137 @@
     try{ return JSON.parse(raw); }catch(e){ return null; }
   }
 
+  // ── 새 문제지 만들기(독립 생성) — 유형·난이도·문항수를 골라 서버에서 새로 뽑는다 ──
+  var TYPES=[
+    {v:"count",      t:"개수 세기"},
+    {v:"volume",     t:"부피 구하기"},
+    {v:"surface",    t:"겉넓이 구하기"},
+    {v:"facesMc",    t:"위·앞·옆 모양 고르기"},
+    {v:"heightmap",  t:"위에서 본 수 쓰기"},
+    {v:"facesDraw",  t:"위·앞·옆 그리기"},
+    {v:"minmax:G-a", t:"삼면도 최대·최소"},
+    {v:"minmax:G-b", t:"위+한 방향 최대·최소"},
+    {v:"minmax:G-c", t:"몇 층 이상 세기"},
+    {v:"hidden:A-a", t:"숨은 나무 판단"},
+    {v:"hidden:A-b", t:"숨은 나무 칸 찾기"},
+    {v:"hidden:A-c", t:"개수 세기 (위+수)"},
+    {v:"hidden:A-d", t:"개수 세기 (삼면도)"},
+    {v:"hidden:A-e", t:"개수 세기 (층별)"},
+    {v:"hidden:A-f", t:"여러 가지 종류"},
+    {v:"manip:H-a",  t:"더 쌓은 후 그리기"},
+    {v:"manip:H-b",  t:"빼낸 후 그리기"},
+    {v:"manip:H-c",  t:"정육면체 완성"},
+    {v:"manip:H-d",  t:"색칠한 정육면체"}
+  ];
+  var LEVELS=["하","중","상","최상"], TITLE={};
+  TYPES.forEach(function(t){ TITLE[t.v]=t.t; });
+  var mk={ type:"count", levels:["중","상"], n:10 };
+
+  function makerHTML(){
+    return '<section class="maker">'
+      +'<h2>새 문제지 만들기</h2><div class="sub">유형과 난이도를 고르면 문제와 정답지를 새로 만들어요.</div>'
+      +'<div class="frow"><div class="fg"><label for="mkType">유형</label>'
+      +  '<select id="mkType">'+TYPES.map(function(t){return '<option value="'+t.v+'"'+(t.v===mk.type?' selected':'')+'>'+t.t+'</option>';}).join("")+'</select></div>'
+      +  '<div class="fg"><label>난이도</label><span class="chips" id="mkLv">'
+      +    LEVELS.map(function(l){return '<button type="button" class="chip" data-l="'+l+'" aria-pressed="'+(mk.levels.indexOf(l)>=0)+'">'+l+'</button>';}).join("")
+      +  '</span></div>'
+      +  '<div class="fg"><label for="mkN">문항 수</label><input id="mkN" type="number" min="1" max="30" value="'+mk.n+'" style="width:74px"></div>'
+      +  '<button class="btn" id="mkGo" type="button">만들기</button>'
+      +'</div><div class="makererr" id="mkErr" hidden></div></section>';
+  }
+
+  function bindMaker(){
+    var sel=document.getElementById("mkType"); if(!sel) return;
+    sel.onchange=function(){ mk.type=sel.value; };
+    document.getElementById("mkN").onchange=function(e){ mk.n=Math.max(1,Math.min(30,+e.target.value||10)); };
+    document.getElementById("mkLv").onclick=function(e){
+      var b=e.target.closest(".chip"); if(!b) return;
+      var l=b.dataset.l, on=b.getAttribute("aria-pressed")!=="true";
+      b.setAttribute("aria-pressed", on?"true":"false");
+      mk.levels = on ? mk.levels.concat([l]) : mk.levels.filter(function(x){return x!==l;});
+    };
+    document.getElementById("mkGo").onclick=makeNew;
+  }
+
+  async function makeNew(){
+    var err=document.getElementById("mkErr"), btn=document.getElementById("mkGo");
+    var show=function(m){ err.textContent=m; err.hidden=!m; };
+    show("");
+    if(!mk.levels.length){ show("난이도를 하나 이상 골라 주세요."); return; }
+    if(!isLoggedIn()){ show("문제지 만들기는 로그인이 필요해요."); AUTH&&AUTH.requireLogin("worksheet_make"); return; }
+    var api=window.CubeNest&&window.CubeNest.api;
+    if(!api||!api.worksheet){ show("문제지 생성 모듈을 불러오지 못했어요."); return; }
+    var parts=mk.type.split(":"), label=TITLE[mk.type]||mk.type;
+    btn.disabled=true; var lb=btn.textContent; btn.textContent="만드는 중…";
+    try{
+      var r=await api.worksheet({ theme:parts[0], sub:parts[1]||undefined, levels:mk.levels, n:mk.n });
+      render(toPayload(r, label));
+      window.scrollTo(0,0);
+    }catch(e){
+      show(e&&e.rate ? "요청이 조금 많았어요. 잠시 뒤에 다시 시도해 주세요."
+         : e&&e.network ? "인터넷 연결을 확인해 주세요."
+         : e&&e.status===401 ? "로그인이 만료됐어요. 다시 로그인해 주세요."
+         : "문제지를 만들지 못했어요. 잠시 뒤 다시 시도해 주세요.");
+    }finally{ btn.disabled=false; btn.textContent=lb; }
+  }
+
+  // 서버 응답 → quiz 위임 payload 와 같은 모양으로(렌더러를 하나만 유지하기 위해)
+  function toPayload(r, label){
+    var FIG=window.CubeNest&&window.CubeNest.figures;
+    var ISO=window.CubeNest&&window.CubeNest.iso;
+    var probs=(r.problems||[]).map(function(p,i){
+      var sh=p.given?FIG.shapeFromGiven(p.given):null;
+      var figure = p.given ? FIG.renderGiven(p.given)
+                 : (p.sh&&ISO ? '<div class="viewer"><div class="isofig">'+ISO.renderIso({gx:p.sh.gx,gz:p.sh.gz,cells:p.sh.cells},0)+'</div></div>' : "");
+      var gsh = sh || (p.sh||null);
+      return { n:i+1, type:p.type, sub:p.sub, level:p.level, ask:p.ask,
+               figure:figure, answerArea:answerArea(p, gsh, FIG),
+               answerText:answerText(p), answerFigure:answerFigure(p, gsh, FIG),
+               correct:null, scratch:null };
+    });
+    return { meta:{ title:label, grade:"초등 6학년", type:r.problems&&r.problems[0]&&r.problems[0].type,
+                    n:probs.length, seed:r.seed, date:new Date().toISOString().slice(0,10), source:"worksheets" },
+             problems:probs };
+  }
+  function answerArea(p, sh, FIG){
+    if(p.form==="bool") return '<div class="ansline">답 &nbsp; ☐ 있어요 &nbsp;&nbsp; ☐ 없어요</div>';
+    if(p.form==="mc")   return '<div class="ansline">답 <u>&nbsp;</u> 번</div>';
+    if(p.form==="draw"&&sh) return '<div class="ansline">답 · 칸을 칠해 그리세요</div>'+FIG.renderDrawGrids(sh);
+    if((p.form==="markCells"||p.form==="hm")&&sh){
+      var c="",x,z,cls=p.form==="hm"?"hmcell":"mcell";
+      for(z=0;z<sh.gz;z++)for(x=0;x<sh.gx;x++)
+        c+='<div class="'+cls+(sh.hmap[x][z]>0?(p.form==="hm"?" fill":""):" empty")+'" style="grid-column:'+(x+1)+';grid-row:'+(z+1)+'"></div>';
+      var hint=p.form==="hm"?"색칠된 칸에 수를 쓰세요":"숨은 칸에 ○ 표시하세요";
+      return '<div class="ansline">답 · '+hint+'</div><div class="'+(p.form==="hm"?"hmgrid":"markgrid")+'" style="grid-template-columns:repeat('+sh.gx+',28px)">'+c+'</div>';
+    }
+    return '<div class="ansline">답 <u>&nbsp;</u> '+esc(p.unit||"")+'</div>';
+  }
+  function answerText(p){
+    var k=p.answerKey; if(!k) return "—";
+    if(k.type==="num")  return k.value+(p.unit||"")+(k.min!=null?"  (최소 "+k.min+" · 최대 "+k.max+")":"");
+    if(k.type==="bool") return k.value?"있어요":"없어요";
+    if(k.type==="mc")   return (k.correct+1)+"번";
+    if(k.type==="markCells") return (k.cells||[]).map(function(c){return "("+c+")";}).join(" ")||"없음";
+    if(k.type==="markCount"){ var g=k.grid||{}; return Object.keys(g).map(function(kk){return "("+kk+")="+g[kk];}).join(" "); }
+    if(k.type==="drawSil") return "아래 그림 참고";
+    return "—";
+  }
+  // drawSil 정답 그림: answerKey.cells 가 "view,c,r" 형식이라 모양 없이도 칠할 수 있다.
+  // (H-a/H-b 는 클라가 '조작 후 모양'을 모르므로 이 경로가 유일하다.)
+  function answerFigure(p, sh, FIG){
+    if(!p.answerKey||p.answerKey.type!=="drawSil"||!sh) return null;
+    return FIG.renderDrawGrids(sh, 18, new Set(p.answerKey.cells||[]));
+  }
+
   function renderEmpty(){
     main.innerHTML=
-      '<div class="empty"><div class="wrap">'
-      +'<h1>문제지를 만들 자료가 없어요</h1>'
-      +'<p>퀴즈를 끝까지 푼 뒤 결과 화면의 <b>📄 문제지 만들기</b>를 누르면, 푼 문제와 아이의 연습장 풀이·정답지가 담긴 문제지가 여기서 만들어져요.</p>'
-      +'<a class="btn" href="../quiz/">퀴즈 풀러 가기</a>'
-      +'</div></div>';
+      '<div class="page">'+makerHTML()
+      +'<div class="nodata" style="min-height:auto;padding:40px 20px"><div class="wrap">'
+      +'<h1>또는 퀴즈에서 가져오기</h1>'
+      +'<p>퀴즈를 끝까지 푼 뒤 결과 화면의 <b>📄 문제지 만들기</b>를 누르면, 푼 문제와 아이의 연습장 풀이·정답지가 함께 담겨요.</p>'
+      +'<a class="btn ghost" href="../quiz/">퀴즈 풀러 가기</a>'
+      +'</div></div></div>';
+    bindMaker();
   }
 
   function problemHTML(p){
@@ -205,9 +348,11 @@
   }
 
   function answerRow(p){
+    // correct 가 null 이면 '푼 적 없는' 새 문제지다 — 정오 표기를 하지 않는다.
+    var ox = p.correct==null ? ''
+      : '<span class="ox '+(p.correct?"o":"x")+'">'+(p.correct?"맞힘":"틀림")+'</span>';
     return '<div class="arow"><span class="n">'+p.n+'번</span>'
-      +'<span class="v">'+esc(p.answerText||"—")+'</span>'
-      +'<span class="ox '+(p.correct?"o":"x")+'">'+(p.correct?"맞힘":"틀림")+'</span>'
+      +'<span class="v">'+esc(p.answerText||"—")+'</span>'+ox
       +(p.answerFigure?'<div class="fig">'+p.answerFigure+'</div>':'')
       +'</div>';
   }
@@ -220,9 +365,10 @@
 
     main.innerHTML=
       '<div class="page">'
+      +'<div class="noprint">'+makerHTML()+'</div>'
       +'<div class="bar noprint">'
       +  '<span class="ttl">📄 문제지 미리보기</span>'
-      +  '<span class="meta">'+ps.length+'문항 · 맞힌 문제 '+(m.score!=null?m.score:"-")+'/'+ps.length+'</span>'
+      +  '<span class="meta">'+ps.length+'문항'+(m.score!=null?' · 맞힌 문제 '+m.score+'/'+ps.length:'')+'</span>'
       +  '<span class="sp"></span>'
       +  '<span id="gate" class="gatemsg"></span>'
       +  '<button class="btn ghost" id="backBtn" type="button">← 퀴즈로</button>'
@@ -235,9 +381,10 @@
       +'</section>'
       +'</div>';
 
-    document.getElementById("backBtn").onclick=function(){
-      if(m.quizUrl) location.href=m.quizUrl; else location.href="../quiz/";
-    };
+    bindMaker();
+    var back=document.getElementById("backBtn");
+    if(m.source==="quiz"&&m.quizUrl){ back.onclick=function(){ location.href=m.quizUrl; }; }
+    else { back.textContent="퀴즈로"; back.onclick=function(){ location.href="../quiz/"; }; }
     var btn=document.getElementById("printBtn"), gate=document.getElementById("gate");
     function syncGate(){
       var ok=isLoggedIn();

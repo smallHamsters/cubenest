@@ -181,6 +181,65 @@ function hiddenGiven(pr: Sh, sh: Sh) {
   return { ...base, kind: "isoTop", iso: iso.renderIso({ gx: sh.gx, gz: sh.gz, cells: sh.cells }, 0), top: topSil(sh) };
 }
 
+// ── 발문·답 형식 (문제의 일부라 서버가 단일 출처) ──
+//   quiz 화면과 worksheets 문제지가 같은 문구를 써야 한다. 클라 두 곳에서 각자 조립하면
+//   반드시 표류한다(마스터 §8.1) → 여기서 한 번만 만든다. 정답은 물론 들어가지 않는다.
+const TYPE_SPEC: Record<string, { ask: string; form: string; unit: string }> = {
+  count:     { ask: "쌓기나무는 모두 몇 개일까요?", form: "num", unit: "개" },
+  volume:    { ask: "이 모양의 부피는 얼마일까요?", form: "num", unit: "cm³" },
+  surface:   { ask: "겉넓이는 얼마일까요? (바닥 포함)", form: "num", unit: "cm²" },
+  heightmap: { ask: "위에서 본 모양의 각 칸에 쌓인 나무 수를 쓰세요.", form: "hm", unit: "" },
+  facesMc:   { ask: "이 모양을 앞에서 본 모양을 고르세요.", form: "mc", unit: "" },
+  facesDraw: { ask: "위·앞·옆에서 본 모양을 각 칸을 칠해 그리세요.", form: "draw", unit: "" },
+  minmax:    { ask: "세 방향에서 본 모양이 되는 쌓기나무 개수는?", form: "num", unit: "개" },
+  hidden:    { ask: "안 보이는 쌓기나무를 생각해 보세요.", form: "num", unit: "개" },
+  manip:     { ask: "조건에 맞는 쌓기나무 수를 구하세요.", form: "num", unit: "개" },
+};
+const MINMAX_ASK = (s: string, w: string, dir: string, n: number) =>
+  s === "G-c" ? `겨냥도를 보고, <b>${n}층 이상</b> 쌓인 칸은 모두 몇 칸인지 세요.`
+: s === "G-b" ? `위에서 본 모양과 <b>${dir === "side" ? "옆" : "앞"}에서 본 모양</b>이 이래요. 쌓기나무는 <b>${w === "max" ? "최대" : "최소"}</b> 몇 개일까요?`
+: w === "diff" ? "세 방향 모양이 같도록 쌓을 때, <b>최대와 최소의 차이</b>는 몇 개일까요?"
+: `세 방향(위·앞·옆)에서 본 모양이 되려면, 쌓기나무는 <b>${w === "max" ? "최대" : "최소"}</b> 몇 개일까요?`;
+const HIDDEN_ASK: Record<string, string> = {
+  "A-a": "겨냥도와 위에서 본 모양을 비교해요. <b>안 보이게 숨은 쌓기나무가 있나요?</b>",
+  "A-b": "위에서 본 모양에서 <b>안 보이는 나무가 숨은 칸</b>을 모두 눌러요.",
+  "A-c": "위에서 본 모양의 각 칸에 <b>쌓인 나무 수</b>가 적혀 있어요. 쌓기나무는 모두 몇 개일까요?",
+  "A-e": "<b>층별로 나타낸 모양</b>이에요. 쌓기나무는 모두 몇 개일까요?",
+  "A-f": "겨냥도와 위에서 본 모양이 이래요. <b>쌓은 모양이 될 수 있는 것은 몇 가지</b>일까요?",
+};
+const PAINT_K = ["색칠되지 않은", "한 면만 색칠된", "두 면이 색칠된", "세 면이 색칠된"];
+
+function presentSpec(pr: Sh, type: string) {
+  const base = TYPE_SPEC[type] || TYPE_SPEC.count;
+  let ask = base.ask, form = base.form, unit = base.unit;
+  if (type === "facesMc") {
+    ask = (pr.dir === "front" ? "앞" : pr.dir === "side" ? "옆" : "위") + "에서 본 모양을 고르세요.";
+  } else if (type === "minmax") {
+    const s = pr.sub || "G-a";
+    ask = MINMAX_ASK(s, pr.which, pr.dir, pr.n);
+    if (s === "G-c") unit = "칸";
+  } else if (type === "hidden") {
+    const s = pr.sub || "A-a";
+    if (s === "A-a") { form = "bool"; unit = ""; }
+    else if (s === "A-b") { form = "markCells"; unit = ""; }
+    else if (s === "A-f") unit = "가지";
+    ask = s === "A-d"
+      ? (pr.which === "diff"
+          ? "세 방향 모양이 되도록 쌓을 때 <b>최대와 최소의 차이</b>(안 보이는 나무)는 몇 개일까요?"
+          : `세 방향(위·앞·옆)에서 본 모양이 되려면 쌓기나무는 <b>${pr.which === "max" ? "최대" : "최소"}</b> 몇 개일까요?`)
+      : (HIDDEN_ASK[s] || base.ask);
+  } else if (type === "manip") {
+    const s = pr.sub || "H-c";
+    if (s === "H-d") ask = `겉면을 모두 색칠한 뒤 낱개로 떼어내면, <b>${PAINT_K[pr.k]}</b> 쌓기나무는 몇 개일까요?`;
+    else if (s === "H-a" || s === "H-b") {
+      form = "draw"; unit = "";
+      ask = (pr.delta > 0 ? `표시한 줄에 <b>${pr.delta}개를 더 쌓은</b> 뒤` : `표시한 줄에서 <b>${-pr.delta}개를 빼낸</b> 뒤`)
+          + "의 <b>위·앞·옆에서 본 모양</b>을 각 칸을 칠해 그리세요.";
+    } else ask = "이 모양에 쌓기나무를 더 놓아 <b>가장 작은 정육면체</b>를 만들려고 해요. 몇 개가 더 필요할까요?";
+  }
+  return { ask, form, unit };
+}
+
 // 렌더용 질문 데이터(_gp). **정답은 절대 넣지 않는다.**
 //   예전엔 q.correct(facesMc 정답 번호)·q.rc(min/max)·q.kinds(A-f 정답)를 그대로 보내
 //   JSON 에서 숫자 하나만 읽으면 답이 나왔다. 지금은 전부 /grade 응답으로만 간다.
@@ -188,7 +247,8 @@ function hiddenGiven(pr: Sh, sh: Sh) {
 // 은닉이 설계상 불가능하다(수용). minmax·hidden 은 3D 뷰어를 안 쓰므로 형상을 뺀다.
 export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
   const sh = pr.sh;
-  const q: any = { level: pr.level ?? pr.lv, type };
+  const spec = presentSpec(pr, type);
+  const q: any = { level: pr.level ?? pr.lv, type, ask: spec.ask, form: spec.form, unit: spec.unit };
 
   if (type === "minmax") {
     const gsub = pr.sub || "G-a";

@@ -27,13 +27,15 @@
     } catch (e) { return "anon-nostore"; }
   }
 
-  async function call(path, body) {
+  async function call(path, body, extraHeaders) {
     if (USE_MOCK && NS._mockApi && NS._mockApi[path]) return NS._mockApi[path](body);
     var res;
+    var headers = { "Content-Type": "application/json", "X-Anon-Id": anonId() };
+    if (extraHeaders) for (var h in extraHeaders) headers[h] = extraHeaders[h];
     try {
       res = await fetch(BASE + "/" + path, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "X-Anon-Id": anonId() },
+        headers: headers,
         body: JSON.stringify(body),
       });
     } catch (netErr) {
@@ -56,6 +58,13 @@
   NS.api = {
     generate: function (req) { return call("generate", req); },
     grade: function (req) { return call("grade", req); },
+    // 문제지: 정답까지 오는 경로라 로그인 필수 — Supabase 게이트웨이가 JWT 를 검증한다.
+    // 액세스 토큰은 CubeNest.auth 가 단일 진실(§6.2). 없으면 서버가 401 을 준다.
+    worksheet: async function (req) {
+      var tok = null;
+      try { tok = NS.auth && NS.auth.getAccessToken ? await NS.auth.getAccessToken() : null; } catch (e) {}
+      return call("worksheet", req, tok ? { Authorization: "Bearer " + tok } : null);
+    },
     _base: BASE, _useMock: USE_MOCK,
   };
 })();

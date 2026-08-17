@@ -4,8 +4,10 @@
 // 스키마=supabase_rate_schema_260815.sql
 
 export const LIMITS = {
-  generate: { cookie: { perMin: 20, perHour: 300 }, ip: { perMin: 120, perHour: 2000 } },
-  grade:    { cookie: { perMin: 60, perHour: 1000 }, ip: { perMin: 120, perHour: 2000 } },
+  generate:  { cookie: { perMin: 20, perHour: 300 }, ip: { perMin: 120, perHour: 2000 } },
+  grade:     { cookie: { perMin: 60, perHour: 1000 }, ip: { perMin: 120, perHour: 2000 } },
+  // 문제지: 정답까지 나가는 경로라 더 조인다. 로그인 사용자가 한 장씩 만드는 용도라 넉넉하다.
+  worksheet: { cookie: { perMin: 6, perHour: 60 }, ip: { perMin: 30, perHour: 300 } },
 };
 
 // 실패 시 정책: true=fail-open(허용, 서비스 우선) / false=fail-closed(차단)
@@ -20,7 +22,7 @@ export function identify(req: Request): { anon: string | null; ip: string } {
 
 export type RateResult = { ok: boolean; retryAfter?: number; reason?: string };
 
-export async function checkRate(req: Request, kind: "generate" | "grade"): Promise<RateResult> {
+export async function checkRate(req: Request, kind: keyof typeof LIMITS): Promise<RateResult> {
   const { anon, ip } = identify(req);
   const L = LIMITS[kind];
   const now = Date.now();

@@ -3,3 +3,7 @@ verify_jwt = false
 
 [functions.grade]
 verify_jwt = false
+
+[functions.worksheet]
+# 정답이 포함되는 경로 — 로그인 필수(게이트웨이가 JWT 검증). generate·grade 는 무료 익명이라 false 유지.
+verify_jwt = true

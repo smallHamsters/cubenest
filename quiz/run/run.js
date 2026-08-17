@@ -175,26 +175,16 @@
       /* ===== 아이소 뷰어 = 공용 모듈 cubenest-iso (서버도 같은 모듈로 겨냥도를 그린다) ===== */
       const ISO=(window.CubeNest&&window.CubeNest.iso)||null;
       function renderIso(sh,k,hiSet){ return ISO?ISO.renderIso(sh,k||0,hiSet):""; }
-      // 실루엣(막대/격자)을 88×88 균일 박스에 중앙 배치 → 어떤 형태든 레이아웃 일정
-      function renderSil(sil,color){
-        const cols=sil.t==="bars"?sil.a.length:sil.cols, rows=sil.rows;
-        const box=88,pad=8,avail=box-pad*2,s=Math.min(avail/cols,avail/rows,20);
-        const gw=cols*s,gh=rows*s,ox=(box-gw)/2,oy=(box-gh)/2,gap=1;
-        const cell=(cx,cy,on)=>`<rect x="${(cx+gap/2).toFixed(1)}" y="${(cy+gap/2).toFixed(1)}" width="${(s-gap).toFixed(1)}" height="${(s-gap).toFixed(1)}" rx="2.5" fill="${on?(color||'var(--accent)'):'var(--line-2)'}"/>`;
-        let r="";
-        if(sil.t==="bars"){ for(let x=0;x<cols;x++)for(let y=0;y<rows;y++) r+=cell(ox+x*s, oy+(rows-1-y)*s, y<sil.a[x]); }
-        else { for(let z=0;z<sil.rows;z++)for(let x=0;x<sil.cols;x++) r+=cell(ox+x*s, oy+z*s, sil.g[z][x]); }
-        return `<svg viewBox="0 0 ${box} ${box}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
-      }
-      // 방향별 실루엣: 앞=x별 max_z, 옆=z별 max_x(막대) / 위=발자국(격자)
-      function frontSil(sh){const a=[];for(let x=0;x<sh.gx;x++){let m=0;for(let z=0;z<sh.gz;z++)m=Math.max(m,sh.hmap[x][z]);a.push(m);}return {t:"bars",a,rows:Math.max(...a,1)};}
-      // 위·앞·옆 그리기: 빈 격자 입력 + 정답 셀 판정(display row r=0=위쪽)
-      function drawDims(sh){ const H=sh.maxH; return {H, top:{cols:sh.gx,rows:sh.gz}, front:{cols:sh.gx,rows:H}, side:{cols:sh.gz,rows:H}}; }
-      function drawCorrect(sh,view,c,r){ const H=sh.maxH;
-        if(view==="top") return topSil(sh).g[r][c];               // r=z, c=x
-        if(view==="front") return (H-1-r) < frontSil(sh).a[c];    // c=x, 아래부터 채움
-        return (H-1-r) < sideSil(sh).a[c];                        // side: c=옆에서 본 열(z 반전 반영)
-      }
+      /* ===== 도형 렌더러 = 공용 모듈 cubenest-figures (worksheets 와 같은 그림을 쓴다) ===== */
+      const FIG=(window.CubeNest&&window.CubeNest.figures)||null;
+      const renderSil=(sil,color)=>FIG?FIG.renderSil(sil,color):"";
+      const frontSil=sh=>FIG.frontSil(sh);
+      const sideSil=sh=>FIG.sideSil(sh);
+      const topSil=sh=>FIG.topSil(sh);
+      const silsOf=sh=>FIG.silsOf(sh);
+      const renderThreeViews=sils=>FIG?FIG.renderThreeViews(sils):"";
+      const drawDims=sh=>FIG.drawDims(sh);
+      // 화면용 '칠하는' 격자(대화형). 종이 답란의 빈 격자는 FIG.renderDrawGrids 가 만든다.
       function renderDrawInput(sh){
         const d=drawDims(sh);
         const grid=(view,cols,rows)=>{
@@ -203,17 +193,6 @@
           return `<div class="dview"><div class="dgrid" data-view="${view}" style="grid-template-columns:repeat(${cols},24px)">${cells}</div><span>${label}</span></div>`;
         };
         return `<div class="draw">${grid("top",d.top.cols,d.top.rows)}${grid("front",d.front.cols,d.front.rows)}${grid("side",d.side.cols,d.side.rows)}</div><div class="hint">각 칸을 눌러 칠하세요. 위=발자국, 앞·옆=높이만큼 아래에서 위로.</div>`;
-      }
-      function sideSil(sh){const a=[];for(let z=0;z<sh.gz;z++){let m=0;for(let x=0;x<sh.gx;x++)m=Math.max(m,sh.hmap[x][z]);a.push(m);}a.reverse();return {t:"bars",a,rows:Math.max(...a,1)};}
-      function topSil(sh){const g=[];for(let z=0;z<sh.gz;z++){const row=[];for(let x=0;x<sh.gx;x++)row.push(sh.hmap[x][z]>0);g.push(row);}return {t:"grid",g,cols:sh.gx,rows:sh.gz};}
-      // 최소·최대/안 보이는 나무의 제시물: 위·앞·옆 세 방향 본 모양(2D)
-      // 삼면도 — 실루엣 3종을 직접 받는다. 은닉 유형은 서버가 이 형태로만 제시물을 주므로
-      // (모양 없이) 그릴 수 있어야 한다. 모양이 있는 곳에서는 silsOf(sh)로 만들어 넘긴다.
-      function silsOf(sh){ return {top:topSil(sh),front:frontSil(sh),side:sideSil(sh)}; }
-      function renderThreeViews(sils){
-        const B="#3f8fd0",G="#4fae72",R="#d0546f";
-        const pv=(sil,color,label)=>`<div class="pv">${renderSil(sil,color)}<span>${label}</span></div>`;
-        return `<div class="threeviews">${pv(sils.top,B,"위")}${pv(sils.front,G,"앞")}${pv(sils.side,R,"옆")}</div>`;
       }
       // 최소·최대 해설: 위에서 본 모양 격자에 '불변 높이'(min==max)는 숫자, '변동 칸'(min≠max)은 색칠+범위
       function renderMinMaxTop(mn,mx,gx,gz){
@@ -228,35 +207,8 @@
         }
         return `<svg viewBox="0 0 ${w+p*2} ${h+p*2}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
       }
-      // 위에서 본 수(각 칸 높이) 격자 — 개수 세기 해설용 2D 그림
-      //   hit = Set<"x,z">를 주면 그 칸을 초록으로 강조(G-c 'n층 이상' 해설).
-      function renderTopNums(sh,hit){
-        const s=26,g=3,W=sh.gx*(s+g)+g,H=sh.gz*(s+g)+g;let r="";
-        for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++){
-          const h=sh.hmap[x][z],X=g+x*(s+g),Y=g+z*(s+g);
-          const on=!!(hit&&hit.has(x+","+z));
-          const fill=h>0?(on?'var(--add-soft)':'var(--accent-soft)'):'var(--line-2)';
-          const stroke=h>0?(on?'var(--add)':'var(--accent)'):null;
-          r+=`<rect x="${X}" y="${Y}" width="${s}" height="${s}" rx="4" fill="${fill}"${stroke?` stroke="${stroke}" stroke-width="${on?2:1}"`:''}/>`;
-          if(h>0)r+=`<text x="${X+s/2}" y="${Y+s/2+0.5}" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="${on?'#0b6e3e':'var(--accent-ink)'}">${h}</text>`;
-        }
-        return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
-      }
-      // 층별 모양(1층·2층·…) — 안 보이는 나무 A-e 제시용
-      function renderLayers(sh){
-        const hm=sh.hmap,gx=sh.gx,gz=sh.gz,maxH=sh.maxH,s=22,g=2,W=gx*(s+g)+g,H=gz*(s+g)+g;
-        let panels="";
-        for(let y=0;y<maxH;y++){
-          let any=false,cells="";
-          for(let z=0;z<gz;z++)for(let x=0;x<gx;x++){
-            const on=hm[x][z]>y; if(on)any=true; const X=g+x*(s+g),Y=g+z*(s+g);
-            cells+=`<rect x="${X}" y="${Y}" width="${s}" height="${s}" rx="3" fill="${on?'var(--accent-soft)':'var(--line-2)'}"${on?' stroke="var(--accent)" stroke-width="1"':''}/>`;
-          }
-          if(!any&&y>0)continue;
-          panels+=`<div class="pv"><svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${cells}</svg><span>${y+1}층</span></div>`;
-        }
-        return `<div class="threeviews">${panels}</div>`;
-      }
+      const renderTopNums=(sh,hit)=>FIG?FIG.renderTopNums(sh,hit):"";
+      const renderLayers=sh=>FIG?FIG.renderLayers(sh):"";
       // G군 제시 렌더 — G-a=삼면도(sils) / G-b=위모양+한 방향(topOneSil) / G-c=겨냥도+조건(isoTop)
       function renderGGiven(pr){
         const g=pr.given, cap=t=>`<div class="rotcap">${t}</div>`;
@@ -453,52 +405,15 @@
           // minmax·hidden 은 모양(sh)을 받지 않는다 — 제시물(given)만 온다.
           // 답은 전부 /grade 가 준다. 여기서 로컬 정답을 만들면 은닉이 도로 깨진다.
           const sh=gp.sh||(gp.given?givenShape(gp.given):null);
-          const pr={type:PRM.type,lv,sh,given:gp.given||null,id:p.id,gsig:p.gsig};
-          if(PRM.type==="facesMc"){
-            const dir=gp.dir;
-            pr.opts=gp.opts; pr.dir=dir;        // 정답 인덱스는 안 온다 → 채점 후 answerKey.correct
-            pr.ask=(dir==="front"?"앞":dir==="side"?"옆":"위")+"에서 본 모양을 고르세요.";
-          }
-          if(PRM.type==="minmax"){          // G군 — G-a 삼면도 / G-b 위+한방향 / G-c 층 조건
-            pr.sub=gp.sub||"G-a"; pr.which=gp.which; pr.dir=gp.dir; pr.n=gp.n;
-            if(pr.sub==="G-c"){ pr.unit="칸";
-              pr.ask="겨냥도를 보고, <b>"+gp.n+"층 이상</b> 쌓인 칸은 모두 몇 칸인지 세요."; }
-            else if(pr.sub==="G-b"){ const d=gp.dir==="side"?"옆":"앞";
-              pr.ask="위에서 본 모양과 <b>"+d+"에서 본 모양</b>이 이래요. 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?"; }
-            else pr.ask=gp.which==="diff"
-              ? "세 방향 모양이 같도록 쌓을 때, <b>최대와 최소의 차이</b>는 몇 개일까요?"
-              : "세 방향(위·앞·옆)에서 본 모양이 되려면, 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?";
-          }
-          if(PRM.type==="manip"){          // H군 — H-c 정육면체 완성 / H-d 색칠 정육면체
-            pr.sub=gp.sub||"H-c"; pr.n=gp.n; pr.k=gp.k;
-            if(pr.sub==="H-d"){
-              const kw=["색칠되지 않은","한 면만 색칠된","두 면이 색칠된","세 면이 색칠된"][gp.k];
-              pr.ask="겉면을 모두 색칠한 뒤 낱개로 떼어내면, <b>"+kw+"</b> 쌓기나무는 몇 개일까요?";
-            }else if(pr.sub==="H-a"||pr.sub==="H-b"){
-              pr.form="draw"; pr.delta=gp.delta;
-              pr.ask=(gp.delta>0?"표시한 줄에 <b>"+gp.delta+"개를 더 쌓은</b> 뒤":"표시한 줄에서 <b>"+(-gp.delta)+"개를 빼낸</b> 뒤")
-                +"의 <b>위·앞·옆에서 본 모양</b>을 각 칸을 칠해 그리세요.";
-            }else{
-              pr.ask="이 모양에 쌓기나무를 더 놓아 <b>가장 작은 정육면체</b>를 만들려고 해요. 몇 개가 더 필요할까요?";
-            }
-          }
-          if(PRM.type==="hidden"){
-            pr.sub=gp.sub||"A-a";
-            if(pr.sub==="A-c"){
-              pr.ask="위에서 본 모양의 각 칸에 <b>쌓인 나무 수</b>가 적혀 있어요. 쌓기나무는 모두 몇 개일까요?"; }
-            else if(pr.sub==="A-e"){
-              pr.ask="<b>층별로 나타낸 모양</b>이에요. 쌓기나무는 모두 몇 개일까요?"; }
-            else if(pr.sub==="A-d"){ pr.which=gp.which;
-              pr.ask=gp.which==="diff"
-                ? "세 방향 모양이 되도록 쌓을 때 <b>최대와 최소의 차이</b>(안 보이는 나무)는 몇 개일까요?"
-                : "세 방향(위·앞·옆)에서 본 모양이 되려면 쌓기나무는 <b>"+(gp.which==="max"?"최대":"최소")+"</b> 몇 개일까요?"; }
-            else if(pr.sub==="A-f"){ pr.unit="가지";   // 개수가 아니라 '가짓수'
-              pr.ask="겨냥도와 위에서 본 모양이 이래요. <b>쌓은 모양이 될 수 있는 것은 몇 가지</b>일까요?"; }
-            else if(pr.sub==="A-a"){ pr.form="bool";
-              pr.ask="겨냥도와 위에서 본 모양을 비교해요. <b>안 보이게 숨은 쌓기나무가 있나요?</b>"; }
-            else{ pr.form="markCells";   // A-b
-              pr.ask="위에서 본 모양에서 <b>안 보이는 나무가 숨은 칸</b>을 모두 눌러요."; }
-          }
+          // 발문·답 형식·단위는 **서버가 준 것을 그대로 쓴다**(gp.ask/form/unit).
+          // 예전엔 여기서 유형·서브별로 조립했는데, worksheets 문제지가 같은 문구를 써야 해서
+          // 두 곳이 각자 만들면 반드시 표류한다(§8.1) → 서버 단일 출처로 옮겼다.
+          const pr={type:PRM.type,lv,sh,given:gp.given||null,id:p.id,gsig:p.gsig,
+                    ask:gp.ask, form:gp.form, unit:gp.unit, sub:gp.sub||null};
+          if(PRM.type==="facesMc"){ pr.opts=gp.opts; pr.dir=gp.dir; }   // 정답 인덱스는 안 온다
+          if(PRM.type==="minmax"){ pr.which=gp.which; pr.dir=gp.dir; pr.n=gp.n; }
+          if(PRM.type==="manip"){ pr.n=gp.n; pr.k=gp.k; pr.delta=gp.delta; }
+          if(PRM.type==="hidden"){ pr.which=gp.which; }
           S.probs.push(pr);
         });
       }
@@ -1096,13 +1011,7 @@
             c+=`<div class="hmcell ${sh.hmap[x][z]>0?"fill":"empty"}" style="grid-column:${x+1};grid-row:${z+1}"></div>`;
           return `<div class="ansline">답 · 색칠된 칸에 수를 쓰세요</div><div class="hmgrid" style="grid-template-columns:repeat(${sh.gx},28px)">${c}</div>`;
         }
-        if(F==="draw"&&sh){
-          const d=drawDims(sh);
-          const grid=(v,cols,rows,label)=>{ let cc=""; for(let r=0;r<rows;r++)for(let cx=0;cx<cols;cx++)cc+=`<div class="dcell"></div>`;
-            return `<div class="dview"><div class="dgrid" style="grid-template-columns:repeat(${cols},18px)">${cc}</div><span>${label}</span></div>`; };
-          return `<div class="ansline">답 · 칸을 칠해 그리세요</div><div class="draw">`
-            +grid("top",d.top.cols,d.top.rows,"위")+grid("front",d.front.cols,d.front.rows,"앞")+grid("side",d.side.cols,d.side.rows,"옆")+`</div>`;
-        }
+        if(F==="draw"&&sh) return `<div class="ansline">답 · 칸을 칠해 그리세요</div>`+FIG.renderDrawGrids(sh);
         return `<div class="ansline">답 <u>&nbsp;</u> ${unit}</div>`;
       }
       // 정답지용 한 줄 표기. 정답의 단일 출처는 서버 answerKey 다(로컬 재계산 없음).
