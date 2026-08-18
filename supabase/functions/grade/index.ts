@@ -22,9 +22,10 @@ Deno.serve(async (req: Request) => {
   const levels = Array.isArray(params.levels) ? params.levels : ["중"];
   const n = Math.min(30, Math.max(1, params.n | 0 || 10));
   const edu = params.edu ?? null;
+  const stage = params.stage ?? null;               // /generate 와 같은 값이어야 재생성이 일치한다
 
   // 위·변조 검증: id + paramsHash 서명 일치?
-  const ph = paramsHash({ theme, levels, n, edu });
+  const ph = paramsHash({ theme, levels, n, edu, stage });
   if (!(await verify(id, ph, gsig))) return json(req, { error: "gsig 불일치" }, 403);
 
   const [seed, idxStr] = String(id).split("#");
@@ -32,7 +33,7 @@ Deno.serve(async (req: Request) => {
 
   let pr: any;
   try {
-    const probs = buildProbs({ type: theme, levels, seed, n, edu, sub: params.sub ?? null });
+    const probs = buildProbs({ type: theme, levels, seed, n, edu, sub: params.sub ?? null, stage });
     pr = probs[idx];
   } catch (e) {
     return json(req, { error: "재생성 실패", detail: String((e as Error).message) }, 500);

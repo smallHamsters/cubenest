@@ -19,8 +19,12 @@ function b64url(buf: ArrayBuffer): string {
 }
 
 // 결정적 params 지문(seed 재현에 필요한 필드만, 순서 고정)
+//   ⚠ stage 는 '있을 때만' 덧붙인다. 무조건 붙이면 필드가 하나 늘어 기존 gsig 가 전부 어긋나
+//     배포 순간 진행 중이던 세션이 403 을 맞는다. 안 보내는 클라는 지문이 예전과 똑같다.
+//   stage 를 지문에 넣는 이유: 스테이지가 다르면 재생성 모양이 달라 정답이 어긋난다.
+//     sub 처럼 지문 밖에 두면 조용히 오채점되지만, 안에 두면 403 으로 즉시 드러난다.
 export function paramsHash(p: {
-  type?: string; theme?: string; levels?: string[]; n?: number; edu?: string | null;
+  type?: string; theme?: string; levels?: string[]; n?: number; edu?: string | null; stage?: string | null;
 }): string {
   const norm = [
     p.theme ?? p.type ?? "",
@@ -28,7 +32,7 @@ export function paramsHash(p: {
     String(p.n ?? ""),
     p.edu ?? "",
   ].join("|");
-  return norm;
+  return p.stage ? norm + "|" + p.stage : norm;
 }
 
 export async function sign(id: string, ph: string): Promise<string> {

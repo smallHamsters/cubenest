@@ -325,14 +325,18 @@
         let restart=p.get("restart")==="1"; // /my 다시풀기: 저장 세션 제거 후 처음부터
         let view=p.get("view")||"";         // /my 결과보기: view=result → 결과화면
         let sub=p.get("sub")||"";           // 안 보이는 나무 서브 강제(A-a~f)
-        return {type,levels,n,seed,dim,restart,view,sub};
+        // 연령 스테이지(S2~S5). 없으면 서버 기본 S4(초6) — 스테이지를 모르는 링크는 지금까지와 같다.
+        //   ⚠ /generate 와 /grade 에 같은 값이 가야 한다(gsig 지문 포함). GRADE_PARAMS 참조.
+        let stage=(p.get("stage")||"").toUpperCase(); if(!/^S[2-5]$/.test(stage)) stage="";
+        return {type,levels,n,seed,dim,restart,view,sub,stage};
       }
       const PRM=loadParams();
       const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[],state:[]};
       // 세션 지속(새로고침 이어풀기): 진행 위치·문항별 답·정오·연습장 저장
       // sub 는 뒤에 덧붙인다 — 같은 seed 로 hidden 서브만 바꿔 들어오면 진행상태가 섞이기 때문.
       // (앞에 끼워 넣으면 hidden 이 아닌 기존 세션 키가 전부 바뀌어 이어풀기가 끊긴다.)
-      const SKEY="cubenest_quiz_sess_"+[PRM.seed,PRM.type,PRM.n,(PRM.levels||[]).join(""),PRM.edu||"",PRM.dim||""].join("_")+(PRM.sub?"_"+PRM.sub:"");
+      // stage 도 sub 와 같은 이유로 뒤에 덧붙인다 — 스테이지가 다르면 같은 seed 라도 다른 문제다.
+      const SKEY="cubenest_quiz_sess_"+[PRM.seed,PRM.type,PRM.n,(PRM.levels||[]).join(""),PRM.edu||"",PRM.dim||""].join("_")+(PRM.sub?"_"+PRM.sub:"")+(PRM.stage?"_"+PRM.stage:"");
       // /my "다시풀기"(restart=1): 저장 세션·연습장 제거 후 처음부터.
       if(PRM.restart){ try{ localStorage.removeItem(SKEY); localStorage.removeItem(SKEY+"_sc"); }catch(e){} }
       function saveSession(){
@@ -385,7 +389,7 @@
         if(F==="draw"){ return {type:"drawSil", cells:(raw||[]).slice()}; }
         return null;
       }
-      function GRADE_PARAMS(){ return {type:PRM.type, levels:PRM.levels, n:PRM.n, edu:PRM.edu, config:GEN_CONFIG, sub:PRM.sub||undefined}; }
+      function GRADE_PARAMS(){ return {type:PRM.type, levels:PRM.levels, n:PRM.n, edu:PRM.edu, config:GEN_CONFIG, sub:PRM.sub||undefined, stage:PRM.stage||undefined}; }
       function applyAnswer(pr,raw){
         const T=TYPES[pr.type], F=pr.form||T.form; if(raw==null)return;
         if(F==="bool"){ PICK=raw; qcard.querySelectorAll(".boolopt").forEach(o=>o.classList.toggle("sel",+o.dataset.b===raw)); }
@@ -398,7 +402,7 @@
       // [PoC 1단계] 생성만 서버 API 경유(async). 채점·해설은 아직 로컬(다음 단계).
       async function buildSession(){
         S.probs=[];
-        const resp=await CubeNest.api.generate({theme:PRM.type,given:[],ask:null,levels:PRM.levels,seed:PRM.seed,n:PRM.n,config:GEN_CONFIG,edu:PRM.edu,sub:PRM.sub||undefined});
+        const resp=await CubeNest.api.generate({theme:PRM.type,given:[],ask:null,levels:PRM.levels,seed:PRM.seed,n:PRM.n,config:GEN_CONFIG,edu:PRM.edu,sub:PRM.sub||undefined,stage:PRM.stage||undefined});
         resp.problems.forEach((p,i)=>{
           const gp=p._gp;                       // 서버 생성 인스턴스(정답 필드는 들어 있지 않다)
           const lv=gp.level;
@@ -409,7 +413,8 @@
           // 예전엔 여기서 유형·서브별로 조립했는데, worksheets 문제지가 같은 문구를 써야 해서
           // 두 곳이 각자 만들면 반드시 표류한다(§8.1) → 서버 단일 출처로 옮겼다.
           const pr={type:PRM.type,lv,sh,given:gp.given||null,id:p.id,gsig:p.gsig,
-                    ask:gp.ask, form:gp.form, unit:gp.unit, sub:gp.sub||null};
+                    ask:gp.ask, form:gp.form, unit:gp.unit, sub:gp.sub||null,
+                    stage:gp.stage||null, dim:gp.dim||null};   // 스테이지·보기형태는 서버가 정한다
           if(PRM.type==="facesMc"){ pr.opts=gp.opts; pr.dir=gp.dir; }   // 정답 인덱스는 안 온다
           if(PRM.type==="minmax"){ pr.which=gp.which; pr.dir=gp.dir; pr.n=gp.n; }
           if(PRM.type==="manip"){ pr.n=gp.n; pr.k=gp.k; pr.delta=gp.delta; }
@@ -455,7 +460,11 @@
         const isViews=pr.type==="minmax";
         const isHidden=pr.type==="hidden";
         const isManip=pr.type==="manip";
-        const has3D=!!window.THREE && !!VIEWER && PRM.dim!=="2d" && !isViews && !isHidden && !isManip;
+        // 저학년(S2·S3)은 정적 겨냥도를 아직 안 배웠다 — 겨냥도는 초5 교과다.
+        //   서버가 문항마다 dim 을 내려보내므로(gen-adapter) 클라가 따로 판단하지 않는다.
+        //   dim==="3d" 면 URL 의 ?dim=2d 보다 서버 판단이 우선한다.
+        const force3D=(pr.dim||"any")==="3d";
+        const has3D=!!window.THREE && !!VIEWER && (force3D || PRM.dim!=="2d") && !isViews && !isHidden && !isManip;
         const gk=(pr.given&&pr.given.kind)||"";
         const GIVENLABEL={numTop:"위에서 본 수",sils:"위·앞·옆",layers:"층별 모양",topOneSil:"위 + 한 방향",isoTop:"2D 겨냥도",paintedCube:"색칠한 정육면체"};
         const viewLabel=(isViews||isHidden||isManip)?(GIVENLABEL[gk]||"2D 겨냥도"):(has3D?"3D 문제":"2D 겨냥도");

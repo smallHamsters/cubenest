@@ -17,6 +17,7 @@ Deno.serve(async (req: Request) => {
   const n = Math.min(30, Math.max(1, body.n | 0 || 10));
   const seed = (body.seed && String(body.seed)) || Math.random().toString(36).slice(2, 9);
   const edu = body.edu ?? null;
+  const stage = body.stage ?? null;                 // 연령 스테이지(S2~S5). 없으면 서버 기본 S4(초6)
   if (!theme) return json(req, { error: "theme 필요" }, 400);
 
   // TODO: 매트릭스 검증(theme,given,ask,subtype 존재 조합인지)
@@ -29,8 +30,8 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const probs = buildProbs({ type: theme, levels, seed, n, edu, sub: body.sub ?? null });
-    const ph = paramsHash({ theme, levels, n, edu });
+    const probs = buildProbs({ type: theme, levels, seed, n, edu, sub: body.sub ?? null, stage });
+    const ph = paramsHash({ theme, levels, n, edu, stage });
     const problems = await Promise.all(probs.map(async (pr: any, i: number) => {
       const id = seed + "#" + i;
       return {

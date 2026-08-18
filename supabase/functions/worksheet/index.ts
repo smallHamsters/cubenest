@@ -21,6 +21,7 @@ Deno.serve(async (req: Request) => {
   const n = Math.min(MAX_N, Math.max(1, body.n | 0 || 10));
   const seed = (body.seed && String(body.seed)) || Math.random().toString(36).slice(2, 9);
   const edu = body.edu ?? null;
+  const stage = body.stage ?? null;                 // 연령 스테이지(quiz 위임분과 같은 값이어야 같은 문제)
   const sub = body.sub ?? null;
   // theme 은 단일 유형일 때만 필수다. mix(혼합 문제지)로 오면 각 항목이 theme 을 갖는다.
   const hasMix = Array.isArray(body.mix) && body.mix.length > 0;
@@ -52,7 +53,7 @@ Deno.serve(async (req: Request) => {
       const esub = en.sub ?? null;
       const cnt = Math.max(1, (en.n | 0) || 1);
       const s = mix ? seed + "#" + e : seed;
-      buildProbs({ type: th, levels, seed: s, n: cnt, edu, sub: esub }).forEach((pr: any, i: number) => {
+      buildProbs({ type: th, levels, seed: s, n: cnt, edu, sub: esub, stage }).forEach((pr: any, i: number) => {
         const q = questionFor(pr, i, s, th);              // 발문·폼·단위·제시물(given/sh)
         const key = answerKeyFor(th, pr, i, s);           // ← /generate 와 다른 점: 정답 포함
         problems.push({

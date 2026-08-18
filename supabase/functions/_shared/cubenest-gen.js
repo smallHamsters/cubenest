@@ -1,6 +1,6 @@
 /*!
  * cubenest-gen.js — CubeNest 공용 문제 생성기 모듈 (마스터 §5.1·§7.3)
- * 버전: 0.1.0  ·  의존: CubeNest.core(silhouettes·exposedFaces·reverseCounts)
+ * 버전: 0.4.0  ·  의존: CubeNest.core · genConfig(스테이지·밴드) · hidden(가림 정리)
  *
  * 목적: quiz·worksheets가 "같은 seed → 같은 문제(모양+하위질문)"를 얻도록 생성 로직을 단일화.
  *   - 각 모듈이 genShape를 각자 인라인하면 표류(같은 버그 2회 수정) → §8.1 위반.
@@ -14,14 +14,15 @@
  *   coreShape(sh) → { gx,gy,gz,edge, cells:[[x,y,z]] }  (core 입력 어댑터)
  *   isConcave(sh) → bool  (노출면 > 2×(위+앞+옆 실루엣); core 필요)
  *   hiddenCells(sh, mode) → [{x,y,z}]  (occ=겨냥도 뒤쪽 가림 / surround=이웃 가림)
- *   levelPool(levels, type) → 유형별 허용 난이도(facesDraw=최상 제외)
- *   genProblem({type,level,seed,index,cfg,edu,core}) → { sh, level, which?, rc?, dir?, hmode?, hcells? }
- *   genSession({type,levels,seed,n,config,edu,core}) → [genProblem 결과...]
+ *   makeShape(rng, cfg) → 스테이지 규칙(직육면체·가림금지·개수밴드)을 지킨 모양. genShape 대신 쓴다
+ *   levelPool(levels, type) → (구) 폴백. 지금은 genConfig.support(type, stage) 가 정본
+ *   genProblem({type,level,stage,seed,index,cfg,edu,core}) → { sh, level, stage, which?, rc?, dir?, ... }
+ *   genSession({type,levels,stage,seed,n,config,edu,core}) → [genProblem 결과...]
  *     · which(minmax)=min|max|diff · dir(facesMc)=front|side|top · sub(hidden)=A-a..A-f · hcols/hasHidden/count/kinds
  */
 (function (global) {
   'use strict';
-  var VERSION = '0.1.0';
+  var VERSION = '0.4.0';
 
   function coreRef(explicit) {
     return explicit || (global.CubeNest && global.CubeNest.core) || null;
@@ -85,6 +86,86 @@
     return C.exposedFaces(cs) > 2 * sum;
   }
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // 스테이지 규칙을 지키는 모양 만들기 (난이도 재설계 v0.4 §7)
+  //   cfg.box     = 직육면체로 낸다('하' 계산형) — 개수 = 가로×세로×높이 라 곱셈 한 번
+  //   cfg.flatten = 가림 금지(S2·S3) — '안 보이는 나무'는 초6에서 처음 배운다
+  //   cfg.nBand   = 개수 밴드. 재생성 후에도 이 안에 들어와야 한다
+  // ───────────────────────────────────────────────────────────────────────────
+  function hmObjOf(sh) {
+    var o = {}, x, z;
+    for (x = 0; x < sh.gx; x++) for (z = 0; z < sh.gz; z++) if (sh.hmap[x][z] > 0) o[x + ',' + z] = sh.hmap[x][z];
+    return o;
+  }
+  function hiddenRef() { return (global.CubeNest && global.CubeNest.hidden) || null; }
+
+  // 직육면체 — 밴드 안에 떨어지는 (가로·세로·높이) 조합 중 하나. 없으면 null.
+  function genBox(rng, cfg) {
+    var lo = cfg.nBand ? cfg.nBand[0] : cfg.nMin, hi = cfg.nBand ? cfg.nBand[1] : cfg.nMax;
+    var cand = [], a, b, h, t;
+    for (a = 1; a <= cfg.gx; a++) for (b = 1; b <= cfg.gz; b++) for (h = 1; h <= cfg.maxH; h++) {
+      t = a * b * h;
+      if (t >= lo && t <= hi && t > 1) cand.push([a, b, h]);
+    }
+    if (!cand.length) return null;
+    var c = cand[Math.floor(rng() * cand.length)];
+    var ox = Math.floor(rng() * (cfg.gx - c[0] + 1)), oz = Math.floor(rng() * (cfg.gz - c[1] + 1));
+    var H = {}, x, z;
+    for (x = 0; x < c[0]; x++) for (z = 0; z < c[1]; z++) H[(ox + x) + ',' + (oz + z)] = c[2];
+    return reshape({ gx: cfg.gx, gz: cfg.gz, maxH: cfg.maxH, edge: cfg.edge }, H);
+  }
+
+  function inBand(sh, cfg) {
+    if (!cfg || !cfg.nBand) return true;
+    return sh.count >= cfg.nBand[0] && sh.count <= cfg.nBand[1];
+  }
+  function bandGap(sh, cfg) {
+    if (!cfg || !cfg.nBand) return 0;
+    var lo = cfg.nBand[0], hi = cfg.nBand[1];
+    return sh.count < lo ? (lo - sh.count) : (sh.count > hi ? (sh.count - hi) : 0);
+  }
+
+  // genShape 대신 이것을 쓴다. 재생성 루프 안에서도 마찬가지 — 안 그러면 스테이지 규칙이 샌다.
+  function makeShape(rng, cfg) {
+    var HD = hiddenRef(), sh, best = null, g = 0;
+    if (cfg.box) {
+      sh = genBox(rng, cfg);                       // 직육면체는 가림이 없어 flatten 이 필요 없다
+      if (sh) return sh;
+    }
+    for (;;) {
+      sh = genShape(rng, cfg);
+      if (cfg.flatten && HD) {
+        var hm = hmObjOf(sh);
+        // 올림/내림을 번갈아 — 한쪽만 쓰면 개수가 한 방향으로 치우쳐 새 힌트가 된다.
+        if (HD.hasHidden(hm)) sh = reshape(sh, HD.flattenHidden(hm, (g % 2) ? 'raise' : 'lower'));
+      }
+      if (inBand(sh, cfg)) return sh;
+      if (best === null || bandGap(sh, cfg) < bandGap(best, cfg)) best = sh;
+      if (++g >= 40) return best;                  // 밴드를 못 맞추면 가장 가까운 것을 고른다
+    }
+  }
+
+  // 유형이 스스로 가림을 없애야 할 때(겨냥도에서 열 높이를 읽어야 성립하는 문항) 쓴다.
+  //   올림/내림 중 개수 밴드를 지키는 쪽을 고른다 — 한쪽으로 고정하면 flatten 이 밴드를 밀어낸다
+  //   (G-c 최상에서 실측 p90 이 밴드를 1 넘겼다). 둘 다 벗어나면 덜 벗어난 쪽.
+  function flattenInBand(sh, cfg, HD, preferRaise) {
+    if (!HD) return sh;
+    var hmv = hmObjOf(sh);
+    if (!HD.hasHidden(hmv)) return sh;
+    var a = reshape(sh, HD.flattenHidden(hmv, preferRaise ? 'raise' : 'lower'));
+    if (inBand(a, cfg)) return a;
+    var b = reshape(sh, HD.flattenHidden(hmv, preferRaise ? 'lower' : 'raise'));
+    if (inBand(b, cfg)) return b;
+    return bandGap(a, cfg) <= bandGap(b, cfg) ? a : b;
+  }
+
+  // 스테이지가 허용하는 서브만 남긴다(유형 고유축 pool ∩ 스테이지 게이트).
+  function poolGate(pool, subs) {
+    if (!subs || !subs.length) return pool;
+    var p = pool.filter(function (s) { return subs.indexOf(s) >= 0; });
+    return p.length ? p : subs.slice();
+  }
+
   // 안 보이는 나무: occ=겨냥도 뒤쪽 가림((x+1,y+1,z+1) 채워짐) / surround=앞·위·옆 이웃 모두 채워짐
   function hiddenCells(sh, mode) {
     var set = new Set(sh.cells.map(function (c) { return c.x + ',' + c.y + ',' + c.z; }));
@@ -102,31 +183,52 @@
   //   그래서 밴드 아래(1)는 큰 벌점을 줘, 밴드 위(7,8,…)를 항상 먼저 고르게 한다.
   function kindsGap(k) { return k < 2 ? 1000 : (k > 6 ? (k - 6) : 0); }
 
-  function levelPool(levels, type) {
-    var p = levels.slice();
-    if (type === 'facesDraw') { p = p.filter(function (l) { return l !== '최상'; }); if (!p.length) p = ['상']; }
-    return p;
-  }
+  // (구) 폴백. 지금은 genConfig.support(type, stage) 가 정본이다.
+  //   ~~facesDraw 최상 제외~~ 폐기 — 배제 사유가 '그리기 칸 수'였는데, 개수 밴드·높이 상한이
+  //   걸리고 출제 형식이 바뀐(모양 여러 개 × 각 한 면) 지금은 그 이유가 성립하지 않는다(§4.8).
+  function levelPool(levels, type) { return levels.slice(); }
 
   // 한 문항의 결정적 모양+하위질문
   function genProblem(o) {
     var C = coreRef(o.core);
     var rng = rngFrom(o.seed + ':' + o.index);
-    var sh = genShape(rng, o.cfg);
-    var out = { sh: sh, level: o.level };
+    var sh = makeShape(rng, o.cfg);
+    var out = { sh: sh, level: o.level, stage: o.stage || null };
 
-    if (o.type === 'surface' && C) {                        // 겉넓이 오목 난이도 밴딩
-      var want = o.level === '최상' ? true : (o.level === '상' ? null : false);
-      if (want !== null) { var g = 0; while (g++ < 60 && isConcave(sh, C) !== want) sh = genShape(rng, o.cfg); out.sh = sh; }
+    // 겉넓이 오목 밴딩 + 정답값 상한(부피·겉넓이) — 두 조건을 한 루프에서 본다.
+    //   ⚠ 따로 돌리면 뒤에 도는 쪽이 앞의 조건을 깬다. 또 makeShape 가 가림 정리를 끝낸
+    //     모양을 주므로 오목 판정은 항상 '정리된 뒤'에 이뤄진다(순서가 뒤집히면 2.4% 뒤집힌다).
+    //   정답값 상한이 없으면 개수와 edge 가 곱으로 겹쳐 네 자리가 된다(옛 volume 중 최대 1701).
+    if ((o.type === 'surface' || o.type === 'volume') && C) {
+      var wantC = o.type !== 'surface' ? null
+        : (o.cfg && o.cfg.concave !== undefined && o.cfg.concave !== null ? o.cfg.concave
+           : (o.cfg && o.cfg.concave === null ? null
+              : (o.level === '최상' ? true : (o.level === '상' ? null : false))));
+      var capV = (o.cfg && o.cfg.answerMax) || null;
+      var eV = sh.edge || 1;
+      var valOf = function (s) { return o.type === 'volume' ? s.count * eV * eV * eV : s.exposed * eV * eV; };
+      var okOf = function (s) {
+        if (wantC !== null && isConcave(s, C) !== wantC) return false;
+        if (capV && valOf(s) > capV) return false;
+        return true;
+      };
+      var gS = 0;
+      while (gS++ < 60 && !okOf(sh)) sh = makeShape(rng, o.cfg);
+      // 재생성으로도 상한을 못 맞추면 모서리 길이를 줄인다.
+      //   개수는 밴드에 묶여 있고 edge 는 곱하는 수일 뿐이라, 모양을 흔들지 않고 값만 낮출 수 있다.
+      //   (S5 최상 volume: 52개 × 3cm³ = 1404 → edge 2 로 내려 416)
+      if (capV) { while (eV > 1 && valOf(sh) > capV) { eV -= 1; sh.edge = eV; } }
+      out.sh = sh;
     }
     if (o.type === 'minmax' && C) {                          // G군(최대·최소) G-a/b/c
       var MM = (global.CubeNest && global.CubeNest.minmax) || null;   // cubenest-minmax.js
       var HDm = (global.CubeNest && global.CubeNest.hidden) || null;
       var hmOf = function (s) { return C.heightMap(coreShape(s)); };
       // 서브 pool — G-a 삼면도(중~최상) / G-b 위+한방향(상~최상) / G-c 층 조건(중~상)
-      var gPool = o.level === '중' ? ['G-a', 'G-c']
+      var gPool = (o.level === '하' || o.level === '중') ? ['G-a', 'G-c']
                 : o.level === '상' ? ['G-a', 'G-b', 'G-c']
                 : ['G-a', 'G-b'];                            // 최상(G-c 는 상까지)
+      gPool = poolGate(gPool, o.cfg && o.cfg.subs);          // 스테이지 게이트(S2·S3 = G-c 만)
       var gsub = (o.sub && /^G-[abc]$/.test(o.sub)) ? o.sub
                : gPool[Math.floor(rngFrom(o.seed + ':gsub' + o.index)() * gPool.length)];
       var g2 = 0, r = rngFrom(o.seed + ':q' + o.index)();
@@ -134,7 +236,7 @@
       if (gsub === 'G-b' && MM) {
         // 폭이 생기려면 '높이≥2 이면서 칸≥2'인 줄이 있어야 한다(없으면 답이 하나로 고정).
         out.dir = rngFrom(o.seed + ':gd' + o.index)() < 0.5 ? 'front' : 'side';
-        while (g2++ < 60 && !MM.hasRange(hmOf(sh), out.dir)) sh = genShape(rng, o.cfg);
+        while (g2++ < 60 && !MM.hasRange(hmOf(sh), out.dir)) sh = makeShape(rng, o.cfg);
         out.rc = MM.minmaxFromTopAndSil(hmOf(sh), out.dir);
         out.which = r < 0.5 ? 'min' : 'max';                 // G-b 는 차이형 제외(교과 관례)
       } else if (gsub === 'G-c' && MM) {
@@ -145,17 +247,17 @@
         var fm = rngFrom(o.seed + ':gf' + o.index)() < 0.5 ? 'lower' : 'raise';
         var cand = [], g3 = 0;
         for (;;) {
-          if (HDm && HDm.hasHidden(hmOf(sh))) sh = reshape(sh, HDm.flattenHidden(hmOf(sh), fm));
+          sh = flattenInBand(sh, o.cfg, HDm, fm === 'raise');
           cand = MM.levelChoices(hmOf(sh), sh.maxH);      // 답이 1 이상이고 전부는 아닌 n
           if (cand.length || g3++ >= 60) break;
-          sh = genShape(rng, o.cfg);
+          sh = makeShape(rng, o.cfg);
         }
         out.n = cand.length ? cand[Math.floor(rngFrom(o.seed + ':gn' + o.index)() * cand.length)] : 2;
         out.count = MM.countAtLeast(hmOf(sh), out.n);
       } else {                                               // G-a — 현행 삼면도 최대·최소
         gsub = 'G-a';
         var rc = C.reverseCounts(coreShape(sh));
-        while (g2++ < 40 && rc.maxCount <= rc.minCount) { sh = genShape(rng, o.cfg); rc = C.reverseCounts(coreShape(sh)); }
+        while (g2++ < 40 && rc.maxCount <= rc.minCount) { sh = makeShape(rng, o.cfg); rc = C.reverseCounts(coreShape(sh)); }
         out.rc = rc;
         out.which = r < 0.34 ? 'min' : (r < 0.67 ? 'max' : 'diff');
       }
@@ -165,9 +267,11 @@
       var HD = (global.CubeNest && global.CubeNest.hidden) || null;   // cubenest-hidden.js
       var hmapOf = function (s) { return C.heightMap(coreShape(s)); };
       // 서브타입 선택 — 난이도별 pool(hidden 지원 중~최상): 중=유무·위치 / 상=+개수 / 최상=+종류수
-      var subPool = o.level === '중' ? ['A-a', 'A-b']
+      var subPool = o.level === '하' ? ['A-a', 'A-c', 'A-e']   // 판단 + 제시물이 곧 답의 재료
+                  : o.level === '중' ? ['A-a', 'A-b']
                   : o.level === '상' ? ['A-a', 'A-b', 'A-c', 'A-d', 'A-e']
                   : ['A-a', 'A-b', 'A-c', 'A-d', 'A-e', 'A-f'];      // 최상
+      subPool = poolGate(subPool, o.cfg && o.cfg.subs);        // 스테이지 게이트(S2·S3 = A-c/A-e 만)
       var sub = (o.sub && /^A-[abcdef]$/.test(o.sub)) ? o.sub   // 강제 지정(테스트/선택)
                 : subPool[Math.floor(rngFrom(o.seed + ':sub' + o.index)() * subPool.length)];
       var g3 = 0;
@@ -177,18 +281,18 @@
           // 그대로 두면 "있어요"만 눌러도 최상 99점이라, seed 로 답을 반반 정하고 그 쪽을 만든다.
           var wantHidden = rngFrom(o.seed + ':ah' + o.index)() < 0.5;
           if (wantHidden) {
-            while (g3++ < 80 && !HD.hasHidden(hmapOf(sh))) sh = genShape(rng, o.cfg);
+            while (g3++ < 80 && !HD.hasHidden(hmapOf(sh))) sh = makeShape(rng, o.cfg);
           } else {
             // '없음'은 최상에서 1% 뿐이라 재생성으로는 못 만난다(80회로도 45% 실패) → 직접 정리.
             // 올림만 쓰면 '없음' 모양만 개수가 커져 새 힌트가 된다 → 올림/내림을 반반 섞는다.
             var fmode = rngFrom(o.seed + ':am' + o.index)() < 0.5 ? 'lower' : 'raise';
-            sh = reshape(sh, HD.flattenHidden(hmapOf(sh), fmode));
+            sh = flattenInBand(sh, o.cfg, HD, fmode === 'raise');
           }
         } else if (sub === 'A-b') {                           // 위치: 숨은 나무 있어야
-          while (g3++ < 60 && !HD.hasHidden(hmapOf(sh))) sh = genShape(rng, o.cfg);
+          while (g3++ < 60 && !HD.hasHidden(hmapOf(sh))) sh = makeShape(rng, o.cfg);
         } else if (sub === 'A-d') {                           // 삼면도: 범위(max>min)
           var rcH = C.reverseCounts(coreShape(sh));
-          while (g3++ < 40 && rcH.maxCount <= rcH.minCount) { sh = genShape(rng, o.cfg); rcH = C.reverseCounts(coreShape(sh)); }
+          while (g3++ < 40 && rcH.maxCount <= rcH.minCount) { sh = makeShape(rng, o.cfg); rcH = C.reverseCounts(coreShape(sh)); }
           out.rc = rcH; var rq = rngFrom(o.seed + ':q' + o.index)(); out.which = rq < 0.34 ? 'min' : (rq < 0.67 ? 'max' : 'diff');
         } else if (sub === 'A-f') {                           // 종류 수: '정확한' 가짓수가 2..6이 되도록
           // enumerateByVisible 은 cap 없이 = 정확값. (cap 을 주면 초과 시 Infinity)
@@ -196,7 +300,7 @@
           var kk = HD.enumerateByVisible(hmapOf(sh));
           var afSh = sh, afKk = kk;                           // 밴드에 가장 가까운 후보 기억
           while (g3++ < 80 && (kk < 2 || kk > 6)) {
-            sh = genShape(rng, o.cfg); kk = HD.enumerateByVisible(hmapOf(sh));
+            sh = makeShape(rng, o.cfg); kk = HD.enumerateByVisible(hmapOf(sh));
             if (kindsGap(kk) < kindsGap(afKk)) { afSh = sh; afKk = kk; }
           }
           if (kk < 2 || kk > 6) { sh = afSh; kk = afKk; }     // 80회 실패 → 최선 후보 채택(정답은 언제나 정확값)
@@ -214,12 +318,16 @@
       var hmOfM = function (s) { return C.heightMap(coreShape(s)); };
       // H-a/H-b 는 답이 '삼면도 그리기'라 격자 부담이 크다 → facesDraw 와 같은 이유로 최상 제외(상만).
       var mPool = o.level === '상' ? ['H-c', 'H-d', 'H-a', 'H-b'] : ['H-c', 'H-d'];
+      mPool = poolGate(mPool, o.cfg && o.cfg.subs);            // 스테이지 게이트(S3=H-c / S4=H-c·H-d)
       var msub = (o.sub && /^H-[abcd]$/.test(o.sub)) ? o.sub
                : mPool[Math.floor(rngFrom(o.seed + ':msub' + o.index)() * mPool.length)];
       if (MP) {
         if (msub === 'H-d') {
           // 한 변 n = 등급(중 3·상 4·최상 5). n=2 는 전부 3면이라 출제하지 않는다.
-          var nn = o.level === '중' ? 3 : (o.level === '상' ? 4 : 5);
+          // ⚠ 한 변은 스테이지의 높이 상한을 넘을 수 없다 — 정육면체라 n 이 곧 높이다.
+          //   (S4=4층이라 n=5 가 불가능해졌다. 직육면체 일반화 전까지의 임시 상한.)
+          var nn = Math.min(o.level === '중' ? 3 : (o.level === '상' ? 4 : 5),
+                            Math.max(3, (o.cfg && o.cfg.maxH) || 5));
           var kk2 = Math.floor(rngFrom(o.seed + ':hk' + o.index)() * 4);   // 0~3면
           sh = reshape({ gx: nn, gz: nn, maxH: nn, edge: o.cfg.edge }, MP.solidCubeHmap(nn));
           out.n = nn; out.k = kk2; out.count = MP.paintedCubeCount(nn, kk2);
@@ -231,10 +339,10 @@
           var fm3 = rngFrom(o.seed + ':hf' + o.index)() < 0.5 ? 'lower' : 'raise';
           var g6 = 0, cands = [];
           for (;;) {
-            if (HDp && HDp.hasHidden(hmOfM(sh))) sh = reshape(sh, HDp.flattenHidden(hmOfM(sh), fm3));
+            sh = flattenInBand(sh, o.cfg, HDp, fm3 === 'raise');
             cands = MP.opCandidates(hmOfM(sh), sh.maxH, add);
             if (cands.length || g6++ >= 60) break;
-            sh = genShape(rng, o.cfg);
+            sh = makeShape(rng, o.cfg);
           }
           if (cands.length) {
             var pick = cands[Math.floor(rngFrom(o.seed + ':hop' + o.index)() * cands.length)];
@@ -251,10 +359,10 @@
           var fm2 = rngFrom(o.seed + ':hf' + o.index)() < 0.5 ? 'lower' : 'raise';
           var g5 = 0, cc;
           for (;;) {
-            if (HDp && HDp.hasHidden(hmOfM(sh))) sh = reshape(sh, HDp.flattenHidden(hmOfM(sh), fm2));
+            sh = flattenInBand(sh, o.cfg, HDp, fm2 === 'raise');
             cc = MP.completeCube(hmOfM(sh));
             if (cc.need >= 1 || g5++ >= 60) break;
-            sh = genShape(rng, o.cfg);
+            sh = makeShape(rng, o.cfg);
           }
           out.m = cc.m; out.need = cc.need;
         }
@@ -271,12 +379,15 @@
   // 세션 전체(레벨 시퀀스 포함). v0.2: 3축 gen-config(genConfig)로 cfg 해석.
   function cfgRef() { return (typeof CubeNest_genConfig !== "undefined" && CubeNest_genConfig)
     || (global.CubeNest && global.CubeNest.genConfig) || null; }
+  //   o.stage = 연령 스테이지(S2~S5). 없으면 gen-config 의 기본값(S4=초6)으로 떨어진다
+  //             → 스테이지를 모르는 기존 호출자는 지금까지와 같은 자리에 그대로 있는다.
   function genSession(o) {
     var C = coreRef(o.core);
     var CFG = cfgRef();
+    var stage = CFG ? CFG.normStage(o.stage) : null;
     var rngL = rngFrom(o.seed + ':L'), probs = [];
-    // 지원 등급 교집합(요청 levels ∩ 유형 지원). 없으면 유형 최소 지원 등급.
-    var support = CFG ? CFG.support(o.type) : (o.levels || ['중']);
+    // 지원 등급 교집합(요청 levels ∩ 그 스테이지에서 이 유형이 열려 있는가).
+    var support = CFG ? CFG.support(o.type, stage) : (o.levels || ['중']);
     var pool = (o.levels || support).filter(function (l) { return support.indexOf(l) >= 0; });
     if (!pool.length) {                     // 요청이 전부 미지원 → 가장 가까운 지원 등급 1개
       var ORD = ['하','중','상','최상'];
@@ -287,10 +398,10 @@
     }
     for (var i = 0; i < o.n; i++) {
       var lv = pool[Math.floor(rngL() * pool.length)];
-      // cfg 해석: 3축 프리셋(있으면) → 없으면 구 config.levels 폴백.
-      var cfg = CFG ? CFG.resolveCfg(o.type, lv, rngFrom(o.seed + ':cfg' + i))
+      // cfg 해석: 스테이지×등급 밴드(있으면) → 없으면 구 config.levels 폴백.
+      var cfg = CFG ? CFG.resolveCfg(o.type, stage, lv, rngFrom(o.seed + ':cfg' + i))
                     : (o.config && o.config.levels && o.config.levels[lv]);
-      probs.push(genProblem({ type: o.type, level: lv, seed: o.seed, index: i, cfg: cfg, edu: o.edu, core: C, sub: o.sub }));
+      probs.push(genProblem({ type: o.type, level: lv, stage: stage, seed: o.seed, index: i, cfg: cfg, edu: o.edu, core: C, sub: o.sub }));
     }
     return probs;
   }

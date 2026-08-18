@@ -5,7 +5,7 @@
 // 가져온다 — 로드 순서(core→genConfig→hidden→gen)와 번들 포함을 거기서 보장한다.
 // ─────────────────────────────────────────────────────────────────────────
 
-import { core, gen, iso, minmax as mm, manip as mp, GEN_CONFIG } from "./gen-modules.ts";
+import { core, gen, genConfig, iso, minmax as mm, manip as mp, GEN_CONFIG } from "./gen-modules.ts";
 
 // deno-lint-ignore no-explicit-any
 type Sh = any;
@@ -16,11 +16,14 @@ export function coreShape(sh: Sh) {
 }
 
 // 세션을 seed+params로 결정적으로 재생성 (generate·grade 공통)
+// stage = 연령 스테이지(S2~S5). 미지정이면 gen-config 기본값 S4(초6) — 기존 호출자는 그대로다.
+//   ⚠ /generate 와 /grade 가 같은 stage 를 넘겨야 재생성 모양이 같다(gsig 지문에 포함).
 export function buildProbs(p: {
-  type: string; levels: string[]; seed: string; n: number; edu?: string | null; sub?: string | null;
+  type: string; levels: string[]; seed: string; n: number;
+  edu?: string | null; sub?: string | null; stage?: string | null;
 }): Sh[] {
   return gen.genSession({
-    type: p.type, levels: p.levels, seed: p.seed, n: p.n,
+    type: p.type, levels: p.levels, seed: p.seed, n: p.n, stage: p.stage ?? null,
     config: GEN_CONFIG, edu: p.edu ?? null, core, sub: p.sub ?? null,
   });
 }
@@ -248,7 +251,11 @@ function presentSpec(pr: Sh, type: string) {
 export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
   const sh = pr.sh;
   const spec = presentSpec(pr, type);
-  const q: any = { level: pr.level ?? pr.lv, type, ask: spec.ask, form: spec.form, unit: spec.unit };
+  // stage·dim: 저학년은 겨냥도를 아직 안 배웠으므로(초5에서 처음 나온다) 3D 뷰어를 고정한다.
+  //   클라가 dim 을 스스로 정하지 않게 서버가 함께 내려보낸다 — 판단의 단일 출처.
+  const stage = pr.stage ?? null;
+  const dim = stage && genConfig.STAGES[stage] ? genConfig.STAGES[stage].dim : "any";
+  const q: any = { level: pr.level ?? pr.lv, type, stage, dim, ask: spec.ask, form: spec.form, unit: spec.unit };
 
   if (type === "minmax") {
     const gsub = pr.sub || "G-a";
