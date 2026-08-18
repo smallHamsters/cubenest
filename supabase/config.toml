@@ -7,3 +7,7 @@ verify_jwt = false
 [functions.worksheet]
 # 정답이 포함되는 경로 — 로그인 필수(게이트웨이가 JWT 검증). generate·grade 는 무료 익명이라 false 유지.
 verify_jwt = true
+
+[functions.config]
+# UI 메타데이터(스테이지·유형·등급)만 준다. 문제 공간·정답 규칙 미포함 → 무로그인 공개.
+verify_jwt = false

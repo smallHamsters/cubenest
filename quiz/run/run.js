@@ -185,14 +185,21 @@
       const renderThreeViews=sils=>FIG?FIG.renderThreeViews(sils):"";
       const drawDims=sh=>FIG.drawDims(sh);
       // 화면용 '칠하는' 격자(대화형). 종이 답란의 빈 격자는 FIG.renderDrawGrids 가 만든다.
-      function renderDrawInput(sh){
+      // views = 서버가 준 그릴 방향. 모양 1개면 세 면, 여러 개면 한 면(난이도 재설계 §4.8).
+      //   답란도 이 방향만 내야 한다 — 세 격자를 다 내면 안 물어본 방향이 '빈칸 정답'처럼 보인다.
+      function renderDrawInput(sh, views){
         const d=drawDims(sh);
-        const grid=(view,cols,rows)=>{
-          let cells=""; for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)cells+=`<button type="button" class="dcell" data-c="${c}" data-r="${r}"></button>`;
+        const vs=(views&&views.length)?views:["top","front","side"];
+        const grid=(view)=>{
+          const dd=d[view]; if(!dd) return "";
+          let cells=""; for(let r=0;r<dd.rows;r++)for(let c=0;c<dd.cols;c++)cells+=`<button type="button" class="dcell" data-c="${c}" data-r="${r}"></button>`;
           const label=view==="top"?"위":view==="front"?"앞":"옆";
-          return `<div class="dview"><div class="dgrid" data-view="${view}" style="grid-template-columns:repeat(${cols},24px)">${cells}</div><span>${label}</span></div>`;
+          return `<div class="dview"><div class="dgrid" data-view="${view}" style="grid-template-columns:repeat(${dd.cols},24px)">${cells}</div><span>${label}</span></div>`;
         };
-        return `<div class="draw">${grid("top",d.top.cols,d.top.rows)}${grid("front",d.front.cols,d.front.rows)}${grid("side",d.side.cols,d.side.rows)}</div><div class="hint">각 칸을 눌러 칠하세요. 위=발자국, 앞·옆=높이만큼 아래에서 위로.</div>`;
+        const hint=vs.length===1
+          ? `<div class="hint">${vs[0]==="top"?"위":vs[0]==="front"?"앞":"옆"}에서 본 모양만 칠하세요.</div>`
+          : `<div class="hint">각 칸을 눌러 칠하세요. 위=발자국, 앞·옆=높이만큼 아래에서 위로.</div>`;
+        return `<div class="draw">${vs.map(grid).join("")}</div>`+hint;
       }
       // 최소·최대 해설: 위에서 본 모양 격자에 '불변 높이'(min==max)는 숫자, '변동 칸'(min≠max)은 색칠+범위
       function renderMinMaxTop(mn,mx,gx,gz){
@@ -233,9 +240,15 @@
                                   :`<b style="color:#c33a4f">빨강으로 표시한 줄</b>에서 <b>${-d}개를 빼내요</b>`;
           return `<div class="viewer"><div id="iso">${g.iso||""}</div>${cap(txt)}</div>`;
         }
-        if(g.kind==="paintedCube")
+        if(g.kind==="paintedCube"){
+          // 직육면체로 일반화됨(§4.10) — box 가 없는 옛 인스턴스는 정육면체로 되읽는다.
+          const b=g.box||[g.n,g.n,g.n];
+          const dims=(b[0]===b[1]&&b[1]===b[2])
+            ? `한 변이 <b>${b[0]}개</b>인 정육면체`
+            : `가로 <b>${b[0]}</b>·세로 <b>${b[1]}</b>·높이 <b>${b[2]}</b>개인 직육면체`;
           return `<div class="viewer"><div id="iso">${g.iso||""}</div>`
-            +cap(`한 변이 <b>${g.n}개</b>인 정육면체예요. <b>겉면을 모두 색칠</b>한 뒤 낱개로 떼어냅니다`)+`</div>`;
+            +cap(`${dims}예요. <b>겉면을 모두 색칠</b>한 뒤 낱개로 떼어냅니다`)+`</div>`;
+        }
         return `<div class="viewer"><div id="iso">${g.iso||""}</div>`
           +cap("이 모양으로 <b>가장 작은 정육면체</b>를 만들려면?")+`</div>`;
       }
@@ -417,7 +430,8 @@
                     stage:gp.stage||null, dim:gp.dim||null};   // 스테이지·보기형태는 서버가 정한다
           if(PRM.type==="facesMc"){ pr.opts=gp.opts; pr.dir=gp.dir; }   // 정답 인덱스는 안 온다
           if(PRM.type==="minmax"){ pr.which=gp.which; pr.dir=gp.dir; pr.n=gp.n; }
-          if(PRM.type==="manip"){ pr.n=gp.n; pr.k=gp.k; pr.delta=gp.delta; }
+          if(PRM.type==="manip"){ pr.n=gp.n; pr.k=gp.k; pr.delta=gp.delta; pr.box=gp.box||null; }
+          if(PRM.type==="facesDraw"){ pr.views=gp.views||null; }   // 그릴 방향(§4.8)
           if(PRM.type==="hidden"){ pr.which=gp.which; }
           S.probs.push(pr);
         });
@@ -453,7 +467,7 @@
         }else if(form==="mc"){
           ans=`<div class="opts">${pr.opts.map((v,i)=>`<button class="opt" data-i="${i}">${renderSil(v)}</button>`).join("")}</div>`;
         }else if(form==="draw"){
-          ans=renderDrawInput(sh);
+          ans=renderDrawInput(sh, pr.views);
         }
         const askText=pr.ask||T.ask;
         const edgeTxt=T.edge?`<br>쌓기나무 한 모서리 = ${sh.edge}cm`:"";
@@ -1020,7 +1034,7 @@
             c+=`<div class="hmcell ${sh.hmap[x][z]>0?"fill":"empty"}" style="grid-column:${x+1};grid-row:${z+1}"></div>`;
           return `<div class="ansline">답 · 색칠된 칸에 수를 쓰세요</div><div class="hmgrid" style="grid-template-columns:repeat(${sh.gx},28px)">${c}</div>`;
         }
-        if(F==="draw"&&sh) return `<div class="ansline">답 · 칸을 칠해 그리세요</div>`+FIG.renderDrawGrids(sh);
+        if(F==="draw"&&sh) return `<div class="ansline">답 · 칸을 칠해 그리세요</div>`+FIG.renderDrawGrids(sh, 18, null, pr.views);
         return `<div class="ansline">답 <u>&nbsp;</u> ${unit}</div>`;
       }
       // 정답지용 한 줄 표기. 정답의 단일 출처는 서버 answerKey 다(로컬 재계산 없음).

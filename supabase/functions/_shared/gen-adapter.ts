@@ -55,8 +55,10 @@ function drawCorrect(sh: Sh, view:string, c:number, r:number){const H=sh.maxH;
   if(view==="front")return (H-1-r) < frontSil(sh).a[c];
   return (H-1-r) < sideSil(sh).a[c];
 }
-function drawCorrectCells(sh: Sh){const d:any=drawDims(sh),out:string[]=[];
-  ["top","front","side"].forEach((view)=>{const dd=d[view];for(let r=0;r<dd.rows;r++)for(let c=0;c<dd.cols;c++)if(drawCorrect(sh,view,c,r))out.push(view+","+c+","+r);});
+// views 를 주면 그 방향만 정답으로 삼는다(§4.8 — 모양 여러 개 × 각 한 면).
+//   주지 않으면 위·앞·옆 전부(기존 동작).
+function drawCorrectCells(sh: Sh, views?: string[] | null){const d:any=drawDims(sh),out:string[]=[];
+  (views && views.length ? views : ["top","front","side"]).forEach((view)=>{const dd=d[view];if(!dd)return;for(let r=0;r<dd.rows;r++)for(let c=0;c<dd.cols;c++)if(drawCorrect(sh,view,c,r))out.push(view+","+c+","+r);});
   return out;
 }
 
@@ -84,7 +86,11 @@ export function answerKeyFor(type: string, pr: Sh, idx: number, seed: string): a
     case "manip": {
       // H군 — H-c 정육면체 완성 / H-d 색칠 정육면체
       const msub = pr.sub || "H-c";
-      if (msub === "H-d") return { type: "num", value: mp.paintedCubeCount(pr.n, pr.k), n: pr.n, k: pr.k };
+      if (msub === "H-d") {
+        // 직육면체 a×b×c 로 일반화됨. box 가 없는 옛 인스턴스는 정육면체로 되읽는다.
+        const bx = pr.box || [pr.n, pr.n, pr.n];
+        return { type: "num", value: mp.paintedBoxCount(bx[0], bx[1], bx[2], pr.k), box: bx, k: pr.k };
+      }
       // H-a/H-b — 조작 후 모양의 삼면도. facesDraw 와 같은 drawSil 집합 일치로 채점.
       if ((msub === "H-a" || msub === "H-b") && pr.resSh) return { type: "drawSil", cells: drawCorrectCells(pr.resSh) };
       const cc = mp.completeCube(core.heightMap(cs));        // 재계산(서버가 정답의 단일 출처)
@@ -118,7 +124,7 @@ export function answerKeyFor(type: string, pr: Sh, idx: number, seed: string): a
       const built = makeSilOpts(correctSil, gen.rngFrom(seed + ":o" + idx));
       return { type: "mc", correct: built.correct };
     }
-    case "facesDraw": return { type: "drawSil", cells: drawCorrectCells(sh) };
+    case "facesDraw": return { type: "drawSil", cells: drawCorrectCells(sh, pr.views) };
     default: return { type: "num", value: st.count };
   }
 }
@@ -233,7 +239,14 @@ function presentSpec(pr: Sh, type: string) {
       : (HIDDEN_ASK[s] || base.ask);
   } else if (type === "manip") {
     const s = pr.sub || "H-c";
-    if (s === "H-d") ask = `겉면을 모두 색칠한 뒤 낱개로 떼어내면, <b>${PAINT_K[pr.k]}</b> 쌓기나무는 몇 개일까요?`;
+    if (s === "H-d") {
+      // 직육면체로 일반화되면서 치수를 발문에 밝힌다 — 겨냥도만으로 안쪽까지 세는 문항이 아니고,
+      // 공식으로 푸는 문항이라 치수가 조건이다(정육면체 시절엔 '한 변 n'이 그림에 보였다).
+      const bx = pr.box || [pr.n, pr.n, pr.n];
+      const dims = bx[0] === bx[1] && bx[1] === bx[2] ? `한 변이 <b>${bx[0]}개</b>인 정육면체`
+                                                      : `가로 <b>${bx[0]}</b>·세로 <b>${bx[1]}</b>·높이 <b>${bx[2]}</b>개인 직육면체`;
+      ask = `${dims}의 겉면을 모두 색칠한 뒤 낱개로 떼어내면, <b>${PAINT_K[pr.k]}</b> 쌓기나무는 몇 개일까요?`;
+    }
     else if (s === "H-a" || s === "H-b") {
       form = "draw"; unit = "";
       ask = (pr.delta > 0 ? `표시한 줄에 <b>${pr.delta}개를 더 쌓은</b> 뒤` : `표시한 줄에서 <b>${-pr.delta}개를 빼낸</b> 뒤`)
@@ -281,9 +294,10 @@ export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
     const msub = pr.sub || "H-c";
     q.sub = msub;
     if (msub === "H-d") {
-      // n·k 는 문제의 조건이지 답이 아니다(답 = 그 조건에서의 개수).
-      q.n = pr.n; q.k = pr.k;
-      q.given = { gx: sh.gx, gz: sh.gz, kind: "paintedCube", n: pr.n,
+      // 상자 치수·k 는 문제의 조건이지 답이 아니다(답 = 그 조건에서의 개수).
+      q.n = pr.n; q.k = pr.k; q.box = pr.box || null;
+      q.box = pr.box || null;
+      q.given = { gx: sh.gx, gz: sh.gz, kind: "paintedCube", n: pr.n, box: pr.box || null,
                   iso: iso.renderIso({ gx: sh.gx, gz: sh.gz, cells: sh.cells }, 0,
                                      null, { paint: { L: "#7fb3e8", R: "#5b93cc", T: "#a9d1f5" } }) };
     } else if ((msub === "H-a" || msub === "H-b") && pr.resSh) {
@@ -312,6 +326,9 @@ export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
   }
 
   q.sh = sh;
+  // facesDraw 출제 형식 — 그릴 방향. 모양 1개면 세 면, 여러 개면 한 면(§4.8).
+  //   답란도 이 방향만 그려야 한다(안 그리면 빈 격자가 정답인 것처럼 보인다).
+  if (type === "facesDraw") q.views = pr.views || ["top", "front", "side"];
   if (type === "facesMc") {
     const dir = pr.dir;
     const correctSil = dir === "front" ? frontSil(sh) : dir === "side" ? sideSil(sh) : topSil(sh);

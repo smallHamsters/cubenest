@@ -95,6 +95,42 @@
       edge:      { "하": 1, "중": [1, 2], "상": [2, 3], "최상": [2, 2] },
       answerMax: { "하": 99, "중": 300, "상": 999, "최상": 999 },
       concave:   { "하": false, "중": false, "상": null, "최상": true }
+    },
+
+    // heightmap — 1차 축이 개수가 아니라 **칸 수**다(아이가 쓰는 건 칸마다 숫자 하나).
+    //   개수 밴드를 그냥 적용하면 최상 칸 수가 오히려 늘어난다(실측 17 → p90 23).
+    //   고유축 = 굴곡(인접 칸 높이차 평균). remap v0.7 이 지정했는데 구현되지 않았던 축이다.
+    heightmap: {
+      foot: {                                    // 칸 수 상한(=발자국). 스테이지 × 등급
+        S1: { "하": 2, "중": 3, "상": 4,  "최상": 5  },
+        S2: { "하": 3, "중": 4, "상": 5,  "최상": 6  },
+        S3: { "하": 4, "중": 6, "상": 7,  "최상": 9  },
+        S4: { "하": 6, "중": 9, "상": 12, "최상": 15 },
+        S5: { "하": 8, "중": 12, "상": 16, "최상": 20 }
+      },
+      // 열 높이 배수(개수 = 칸 수 × 이 배수) — 등급이 오를수록 높이 변화가 커진다
+      hMul:   { "하": [1.0, 1.35], "중": [1.25, 1.7], "상": [1.5, 2.1], "최상": [1.8, 3.0] },
+      rugged: { "하": [0, 0.75],   "중": [0.6, 1.1],  "상": [0.9, 1.3], "최상": [1.15, 99] }
+    },
+
+    // hidden — A-f(여러 가지 종류)의 정답이 곧 고유축. 예전엔 {2,3,4,6} 네 값뿐이라
+    //   찍어서 25% 맞았다. 숨은 열을 2개 이상 만들면 가짓수 = Π(D−1) 가 퍼진다.
+    hidden: {
+      kinds: { "하": [2, 3], "중": [3, 4], "상": [4, 9], "최상": [9, 27] },
+      hcolsMin: { "하": 1, "중": 1, "상": 2, "최상": 2 }   // A-f 에서 요구할 숨은 열 최소 개수
+    },
+
+    // manip — 개수 밴드가 1차 축이 아니다(§4.2 예외).
+    //   H-d: 제시물이 꽉 찬 상자라 셀 일이 없다 → 축은 '상자 모양 × k'
+    //   H-c: 부담은 개수가 아니라 정답값('더 필요한 개수')
+    //   H-c: 답 = m³ − 개수 라 **개수 밴드로는 답을 제어할 수 없다**(넓고 낮으면 답이 폭발한다.
+    //        실측: 개수 밴드만 걸었을 때 하 등급 정답이 56, 최상이 106). 그래서 목표 답에서
+    //        거꾸로 모양을 만든다 — 한 변 m 정육면체에서 need 개를 덜어낸 계단 모양.
+    //        need 상한 = m³ − (m + m² − 1)  (모든 열을 1까지 내리고 한 열만 m 으로 남긴 최소)
+    manip: {
+      boxTotal: { "하": [8, 18], "중": [18, 36], "상": [36, 64], "최상": [64, 100] },
+      cubeM:    { "하": 3, "중": 3, "상": 4, "최상": 4 },
+      needBand: { "하": [2, 6], "중": [7, 16], "상": [10, 25], "최상": [26, 45] }
     }
   };
 
@@ -132,6 +168,25 @@
   // 그 스테이지에서 열린 유형 목록(랜딩 카드 필터용)
   function typesFor(stage) { return Object.keys(GATE[normStage(stage)] || {}); }
 
+  // ── facesDraw 출제 형식 (§4.8) ──
+  //   모양이 1개면 위·앞·옆 세 면을 모두 그린다. 모양이 여러 개면 모양마다 한 면씩.
+  //   여러 모양은 '같은 방향의 문항을 2~3개 연속 배치'로 구현한다 — 모양마다 따로 채점되므로
+  //   하나를 틀려도 나머지가 살아남는다. bool 채점을 유지하면서 부담을 분산하는 장치다.
+  var DRAW_FORM = {
+    "하":   { views: 1, group: 2 },      // 모양 2개 × 각 한 면
+    "중":   { views: 1, group: 3 },      // 모양 3개 × 각 한 면
+    "상":   { views: 3, group: 1 },      // 모양 1개 × 세 면
+    "최상": { views: 3, group: 1 }
+  };
+  function viewsFor(type, label) {
+    if (type !== "facesDraw") return null;
+    return (DRAW_FORM[label] || DRAW_FORM["상"]).views;
+  }
+  function groupFor(type, label) {
+    if (type !== "facesDraw") return 1;
+    return (DRAW_FORM[label] || DRAW_FORM["상"]).group;
+  }
+
   function nearestLevel(label) {
     var i = ORDER.indexOf(label);
     return i >= 0 ? label : "중";
@@ -163,6 +218,17 @@
     var f = clampInt(band(rng, fLo, fHi), fLo, fHi);
 
     var ax = TYPE_AXES[type] || {};
+
+    // ── heightmap 은 축이 반대다: 칸 수(발자국)를 먼저 정하고 개수가 따라온다 ──
+    if (type === "heightmap" && ax.foot) {
+      var fCap = Math.min((ax.foot[stage] || ax.foot.S4)[label] || fHi, cells);
+      f = Math.max(1, fCap);
+      var mul = ax.hMul[label] || [1, 2];
+      var nLo2 = Math.max(f, Math.round(f * mul[0])), nHi2 = Math.min(f * maxH, Math.round(f * mul[1]));
+      if (nHi2 < nLo2) nHi2 = nLo2;
+      n = clampInt(band(rng, nLo2, nHi2), nLo2, nHi2);
+      lo = f; hi = f * maxH;                    // 개수 밴드는 느슨하게(칸 수가 1차 축이라)
+    }
     return {
       gx: g.gx, gz: g.gz, maxH: maxH,
       fMin: f, fMax: f, nMin: n, nMax: n,          // genShape 계약 불변
@@ -171,6 +237,14 @@
       box: !!(BOX_TYPES[type] && label === "하" && rng() < BOX_RATE),
       answerMax: ax.answerMax ? ax.answerMax[label] : null,
       concave: ax.concave ? ax.concave[label] : null,
+      rugged: ax.rugged ? ax.rugged[label] : null,        // heightmap 굴곡 목표
+      kinds: ax.kinds ? ax.kinds[label] : null,           // hidden A-f 가짓수 밴드
+      hcolsMin: ax.hcolsMin ? ax.hcolsMin[label] : null,  // A-f 숨은 열 최소
+      boxTotal: ax.boxTotal ? ax.boxTotal[label] : null,  // manip H-d 상자 총 개수
+      cubeM: ax.cubeM ? Math.min(ax.cubeM[label], maxH) : null,   // manip H-c 목표 정육면체 한 변
+      needBand: ax.needBand ? ax.needBand[label] : null,  // manip H-c 정답값 밴드
+      views: viewsFor(type, label),                       // facesDraw 출제 형식
+      group: groupFor(type, label),                       // 같은 방향을 몇 문항 연속으로
       flatten: !!STAGES[stage].flatten,             // S2·S3 는 가림 금지
       subs: subsFor(type, stage),
       _meta: { stage: stage, label: label, grid: b.grid, n: n, foot: f }

@@ -159,6 +159,32 @@
     return bandGap(a, cfg) <= bandGap(b, cfg) ? a : b;
   }
 
+  // H-c 전용 모양 — 한 변 m 정육면체에서 need 개를 덜어낸 계단.
+  //   H-c 의 답은 m³ − 개수 라, 일반 개수 밴드로는 답을 제어할 수 없다(넓고 낮으면 답이 폭발).
+  //   그래서 목표 답에서 거꾸로 만든다. 높이를 x·z 양방향으로 비증가로 유지하면
+  //   h(x+1,z+1) ≤ h(x,z) 가 자동 성립해 **가림이 생기지 않는다** — 겨냥도로 개수를 셀 수 있다.
+  //   (0,0)은 항상 m 으로 남겨 목표 정육면체 크기가 m 으로 고정된다.
+  function genCubeGap(rng, m, need, edge) {
+    var h = [], x, z;
+    for (x = 0; x < m; x++) { h.push([]); for (z = 0; z < m; z++) h[x].push(m); }
+    var total = m * m * m, target = total - need, guard = 0;
+    while (total > target && guard++ < 5000) {
+      var cand = [];
+      for (x = 0; x < m; x++) for (z = 0; z < m; z++) {
+        if (x === 0 && z === 0) continue;                 // 최고 높이 m 유지
+        if (h[x][z] <= 1) continue;                       // 발자국은 꽉 채운 상태로 둔다(연결·범위 보장)
+        var sx = (x + 1 < m) ? h[x + 1][z] : 0, sz = (z + 1 < m) ? h[x][z + 1] : 0;
+        if (h[x][z] - 1 >= sx && h[x][z] - 1 >= sz) cand.push([x, z]);
+      }
+      if (!cand.length) break;
+      var c = cand[Math.floor(rng() * cand.length)];
+      h[c[0]][c[1]] -= 1; total -= 1;
+    }
+    var H = {};
+    for (x = 0; x < m; x++) for (z = 0; z < m; z++) H[x + ',' + z] = h[x][z];
+    return reshape({ gx: m, gz: m, maxH: m, edge: edge || 1 }, H);
+  }
+
   // 스테이지가 허용하는 서브만 남긴다(유형 고유축 pool ∩ 스테이지 게이트).
   function poolGate(pool, subs) {
     if (!subs || !subs.length) return pool;
@@ -181,7 +207,39 @@
   // '가장 가까운 후보'를 고르는 기준(정답을 잘라 맞추는 대신 문제를 고른다).
   //   k=1 = 숨은 나무가 없어 모양이 하나로 확정 → 답은 맞아도 A-f 문제로는 무의미하다.
   //   그래서 밴드 아래(1)는 큰 벌점을 줘, 밴드 위(7,8,…)를 항상 먼저 고르게 한다.
-  function kindsGap(k) { return k < 2 ? 1000 : (k > 6 ? (k - 6) : 0); }
+  function kindsGap(k, bd) {
+    var lo = bd ? bd[0] : 2, hi = bd ? bd[1] : 6;
+    if (k < 2) return 1000 + (lo - k);        // k=1 = 모양이 하나로 확정 → A-f 문제가 아니다
+    return k < lo ? (lo - k) : (k > hi ? (k - hi) : 0);
+  }
+
+  // 굴곡 — 인접한 두 칸(4-이웃)의 높이차 평균. heightmap 의 고유축(§4.9).
+  //   칸 수를 눌러도 이것으로 변별력이 살아난다(실측: 등급에 이미 단조).
+  function ruggedOf(sh) {
+    var d = [], x, z, h, nx, nz, k;
+    for (x = 0; x < sh.gx; x++) for (z = 0; z < sh.gz; z++) {
+      h = sh.hmap[x][z]; if (!h) continue;
+      for (k = 0; k < 2; k++) {
+        nx = x + (k ? 0 : 1); nz = z + (k ? 1 : 0);
+        if (nx < sh.gx && nz < sh.gz && sh.hmap[nx][nz] > 0) d.push(Math.abs(h - sh.hmap[nx][nz]));
+      }
+    }
+    if (!d.length) return 0;
+    var s = 0, i; for (i = 0; i < d.length; i++) s += d[i];
+    return s / d.length;
+  }
+  // 목표 밴드에 들어오는 모양을 찾는다. 못 찾으면 가장 가까운 것(정답을 자르지 않는다).
+  function bandRegen(rng, cfg, sh, valOf, bd, tries) {
+    var gap = function (v) { return v < bd[0] ? (bd[0] - v) : (v > bd[1] ? (v - bd[1]) : 0); };
+    var best = sh, bd0 = gap(valOf(sh)), g = 0;
+    while (bd0 > 0 && g++ < (tries || 60)) {
+      sh = makeShape(rng, cfg);
+      var d = gap(valOf(sh));
+      if (d < bd0) { bd0 = d; best = sh; }
+      if (d === 0) return sh;
+    }
+    return bd0 === 0 ? sh : best;
+  }
 
   // (구) 폴백. 지금은 genConfig.support(type, stage) 가 정본이다.
   //   ~~facesDraw 최상 제외~~ 폐기 — 배제 사유가 '그리기 칸 수'였는데, 개수 밴드·높이 상한이
@@ -219,6 +277,26 @@
       //   (S5 최상 volume: 52개 × 3cm³ = 1404 → edge 2 로 내려 416)
       if (capV) { while (eV > 1 && valOf(sh) > capV) { eV -= 1; sh.edge = eV; } }
       out.sh = sh;
+    }
+
+    // heightmap — 칸 수는 cfg 가 이미 정했다(1차 축). 여기서는 굴곡을 목표 밴드에 맞춘다.
+    if (o.type === 'heightmap' && o.cfg && o.cfg.rugged) {
+      sh = bandRegen(rng, o.cfg, sh, ruggedOf, o.cfg.rugged, 60);
+      out.sh = sh; out.rugged = ruggedOf(sh);
+    }
+
+    // facesDraw — 모양이 1개면 세 면 전부, 여러 개면 모양마다 한 면씩(§4.8).
+    //   '여러 개'는 같은 방향 문항을 group 개씩 연속 배치하는 것으로 구현한다.
+    //   모양마다 따로 채점되므로 하나를 틀려도 나머지가 살아남는다(bool 채점 유지).
+    if (o.type === 'facesDraw') {
+      var nv = (o.cfg && o.cfg.views) || 3;
+      if (nv >= 3) out.views = ['top', 'front', 'side'];
+      else {
+        var grp = Math.max(1, (o.cfg && o.cfg.group) || 1);
+        var gi = Math.floor(o.index / grp);                 // 한 묶음은 같은 방향
+        var DIRS = ['top', 'front', 'side'];
+        out.views = [DIRS[Math.floor(rngFrom(o.seed + ':fdv' + gi)() * 3)]];
+      }
     }
     if (o.type === 'minmax' && C) {                          // G군(최대·최소) G-a/b/c
       var MM = (global.CubeNest && global.CubeNest.minmax) || null;   // cubenest-minmax.js
@@ -294,17 +372,42 @@
           var rcH = C.reverseCounts(coreShape(sh));
           while (g3++ < 40 && rcH.maxCount <= rcH.minCount) { sh = makeShape(rng, o.cfg); rcH = C.reverseCounts(coreShape(sh)); }
           out.rc = rcH; var rq = rngFrom(o.seed + ':q' + o.index)(); out.which = rq < 0.34 ? 'min' : (rq < 0.67 ? 'max' : 'diff');
-        } else if (sub === 'A-f') {                           // 종류 수: '정확한' 가짓수가 2..6이 되도록
+        } else if (sub === 'A-f') {                           // 종류 수: 가짓수가 등급 밴드에 들도록
           // enumerateByVisible 은 cap 없이 = 정확값. (cap 을 주면 초과 시 Infinity)
           // 예전엔 cap=6 이 정답으로 반환돼, 실제 9·216가지인 모양도 "6가지"로 출제됐다.
-          var kk = HD.enumerateByVisible(hmapOf(sh));
-          var afSh = sh, afKk = kk;                           // 밴드에 가장 가까운 후보 기억
-          while (g3++ < 80 && (kk < 2 || kk > 6)) {
-            sh = makeShape(rng, o.cfg); kk = HD.enumerateByVisible(hmapOf(sh));
-            if (kindsGap(kk) < kindsGap(afKk)) { afSh = sh; afKk = kk; }
+          // 밴드는 이제 등급이 정한다(하 2~3 … 최상 9~27) — 정답이 {2,3,4,6} 네 값뿐이라
+          // 찍어서 25% 맞던 문제를 고친다. 가짓수 = Π(D−1) 이라 숨은 열이 2개 이상이어야 퍼진다.
+          var afBand = (o.cfg && o.cfg.kinds) || [2, 6];
+          var afMinCols = (o.cfg && o.cfg.hcolsMin) || 1;
+          var afGapOf = function (s) {
+            var h = hmapOf(s);
+            return kindsGap(HD.enumerateByVisible(h), afBand)
+                 + (HD.hiddenColumns(h).length >= afMinCols ? 0 : 100);
+          };
+          // ⚠ A-f 는 **발자국 정책이 다르다.** 가짓수 = Π(D−1) 이라 열 높이가 갈라져야 하는데,
+          //   cfg 의 발자국은 문제마다 고정이다. 넓고 낮게 뽑힌 cfg(예: 4×4 에 13칸·14개)로는
+          //   어떤 모양을 뽑아도 앞대각 높이차가 1 이라 **가짓수가 영원히 1**이다(실측 200/200 = 1가지).
+          //   그래서 이 서브만 매 시도마다 개수 밴드 안에서 발자국을 다시 고른다 —
+          //   평균 높이가 1.6 이상 되도록 발자국 상한을 조여 높이가 몰리게 한다.
+          var afRng = rngFrom(o.seed + ':afc' + o.index);
+          var afCells = o.cfg.gx * o.cfg.gz;
+          var afTry = function () {
+            var nn = o.cfg.nBand[0] + Math.floor(afRng() * (o.cfg.nBand[1] - o.cfg.nBand[0] + 1));
+            var fLo = Math.max(2, Math.ceil(nn / o.cfg.maxH));
+            var fHi = Math.max(fLo, Math.min(afCells, Math.ceil(nn / 1.6)));
+            var c2 = {}, kc; for (kc in o.cfg) c2[kc] = o.cfg[kc];
+            c2.nMin = c2.nMax = nn;
+            c2.fMin = c2.fMax = fLo + Math.floor(afRng() * (fHi - fLo + 1));
+            return makeShape(rng, c2);
+          };
+          var afSh = sh, afGap = afGapOf(sh);
+          while (g3++ < 240 && afGap > 0) {
+            sh = afTry();
+            var gk = afGapOf(sh);
+            if (gk < afGap) { afSh = sh; afGap = gk; }
           }
-          if (kk < 2 || kk > 6) { sh = afSh; kk = afKk; }     // 80회 실패 → 최선 후보 채택(정답은 언제나 정확값)
-          out.kinds = kk;
+          sh = afSh;                                          // 실패해도 최선 후보(정답은 언제나 정확값)
+          out.kinds = HD.enumerateByVisible(hmapOf(sh));
         }
         var hm = hmapOf(sh);
         out.hcols = HD.hiddenColumns(hm);                     // 숨은 열 위치(A-a/b/f)
@@ -324,13 +427,28 @@
       if (MP) {
         if (msub === 'H-d') {
           // 한 변 n = 등급(중 3·상 4·최상 5). n=2 는 전부 3면이라 출제하지 않는다.
-          // ⚠ 한 변은 스테이지의 높이 상한을 넘을 수 없다 — 정육면체라 n 이 곧 높이다.
-          //   (S4=4층이라 n=5 가 불가능해졌다. 직육면체 일반화 전까지의 임시 상한.)
-          var nn = Math.min(o.level === '중' ? 3 : (o.level === '상' ? 4 : 5),
-                            Math.max(3, (o.cfg && o.cfg.maxH) || 5));
-          var kk2 = Math.floor(rngFrom(o.seed + ':hk' + o.index)() * 4);   // 0~3면
-          sh = reshape({ gx: nn, gz: nn, maxH: nn, edge: o.cfg.edge }, MP.solidCubeHmap(nn));
-          out.n = nn; out.k = kk2; out.count = MP.paintedCubeCount(nn, kk2);
+          // 직육면체 a×b×c 로 일반화(§4.10). 정육면체만 쓰던 시절엔 최고 높이 4층 확정으로
+          // 한 변 5 가 불가능해져 문항 공간이 8개로 줄었다. 넓히면 스테이지별 4~8상자 × k 가 된다.
+          //   각 변 ≥2(c=1 이면 낱개가 전부 위·아래 두 면을 갖게 되어 분해가 성립하지 않는다)
+          //   높이 c ≤ 스테이지 상한. 총 개수는 등급 밴드(boxTotal).
+          var bt = (o.cfg && o.cfg.boxTotal) || [8, 100];
+          var cap = Math.max(2, (o.cfg && o.cfg.maxH) || 4);
+          var gxB = Math.max(2, (o.cfg && o.cfg.gx) || 5), gzB = Math.max(2, (o.cfg && o.cfg.gz) || 5);
+          var bx = [], aa, bb, cc2, tt;
+          for (aa = 2; aa <= gxB; aa++) for (bb = 2; bb <= gzB; bb++) for (cc2 = 2; cc2 <= cap; cc2++) {
+            tt = aa * bb * cc2;
+            if (tt >= bt[0] && tt <= bt[1]) bx.push([aa, bb, cc2]);
+          }
+          if (!bx.length) bx = [[2, 2, Math.min(2, cap)]];     // 밴드가 비면 최소 상자
+          var bsel = bx[Math.floor(rngFrom(o.seed + ':hbox' + o.index)() * bx.length)];
+          // k 는 정답이 0 이 아닌 값에서 고른다 — 얇은 상자는 0면·1면이 0 이라 문항이 안 된다.
+          var allK = MP.paintedBoxAll(bsel[0], bsel[1], bsel[2]);
+          var ks = [0, 1, 2, 3].filter(function (k) { return allK[k] > 0; });
+          if (!ks.length) ks = [3];
+          var kk2 = ks[Math.floor(rngFrom(o.seed + ':hk' + o.index)() * ks.length)];
+          sh = reshape({ gx: gxB, gz: gzB, maxH: cap, edge: o.cfg.edge },
+                       MP.solidBoxHmap(bsel[0], bsel[1], bsel[2]));
+          out.box = bsel; out.n = bsel[0]; out.k = kk2; out.count = allK[kk2];
         } else if (msub === 'H-a' || msub === 'H-b') {
           // 겨냥도 + 표시된 열에 ±k → 바뀐 모양의 삼면도를 그린다.
           // 성립 조건 3가지를 한 루프에서: ① 숨은 열 없음(높이를 읽을 수 있어야) ②
@@ -357,13 +475,15 @@
           // ⚠ 겨냥도를 보고 현재 개수를 세야 하므로 숨은 열이 있으면 문제가 성립하지 않는다.
           //   (G-c 와 같은 이유) + 이미 정육면체면 '더 필요한 수'가 0이라 출제 불가.
           var fm2 = rngFrom(o.seed + ':hf' + o.index)() < 0.5 ? 'lower' : 'raise';
-          var g5 = 0, cc;
-          for (;;) {
-            sh = flattenInBand(sh, o.cfg, HDp, fm2 === 'raise');
-            cc = MP.completeCube(hmOfM(sh));
-            if (cc.need >= 1 || g5++ >= 60) break;
-            sh = makeShape(rng, o.cfg);
-          }
+          // H-c 의 부담은 개수가 아니라 정답값('더 필요한 개수')이다. 답에서 거꾸로 모양을 만든다.
+          var mC = Math.max(2, (o.cfg && o.cfg.cubeM) || 3);
+          var nb = (o.cfg && o.cfg.needBand) || [2, 6];
+          var needMaxPossible = mC * mC * mC - (mC + mC * mC - 1);
+          var nLoC = Math.max(1, Math.min(nb[0], needMaxPossible));
+          var nHiC = Math.max(nLoC, Math.min(nb[1], needMaxPossible));
+          var needT = nLoC + Math.floor(rngFrom(o.seed + ':hcn' + o.index)() * (nHiC - nLoC + 1));
+          sh = genCubeGap(rngFrom(o.seed + ':hcs' + o.index), mC, needT, o.cfg && o.cfg.edge);
+          var cc = MP.completeCube(hmOfM(sh));               // 서버가 정답의 단일 출처 — 되계산해 확인
           out.m = cc.m; out.need = cc.need;
         }
       }

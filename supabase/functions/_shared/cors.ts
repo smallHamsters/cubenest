@@ -16,7 +16,7 @@ export function corsHeaders(origin: string | null): Record<string, string> {
   const ok = origin && list.includes(origin);
   return {
     "Access-Control-Allow-Origin": ok ? origin! : list[0],
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",   // GET = /config(UI 메타)
     "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Anon-Id",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin",

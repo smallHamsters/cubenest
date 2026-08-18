@@ -81,15 +81,20 @@
   // 삼면도 격자(비대화형). filled = Set<"view,c,r"> 를 주면 그 칸을 칠한다 —
   //   drawSil 정답은 answerKey.cells 가 바로 그 형식이라, 모양이 없어도 정답 그림을 그릴 수 있다
   //   (H-a/H-b 처럼 클라가 '조작 후 모양'을 모르는 경우에 이 경로가 필요하다).
-  function renderDrawGrids(sh, cell, filled) {
+  //   views = ['front'] 처럼 방향을 주면 그 격자만 그린다(모양 여러 개 × 각 한 면 출제).
+  //   안 주면 위·앞·옆 세 개(기존 동작).
+  var VLABEL = { top: '위', front: '앞', side: '옆' };
+  function renderDrawGrids(sh, cell, filled, views) {
     var d = drawDims(sh), px = cell || 18;
-    var grid = function (view, cols, rows, label) {
+    var vs = (views && views.length) ? views : ['top', 'front', 'side'];
+    var grid = function (view) {
+      var dd = d[view]; if (!dd) return '';
       var c = '', r, x;
-      for (r = 0; r < rows; r++) for (x = 0; x < cols; x++)
+      for (r = 0; r < dd.rows; r++) for (x = 0; x < dd.cols; x++)
         c += '<div class="dcell' + (filled && filled.has(view + ',' + x + ',' + r) ? ' on' : '') + '"></div>';
-      return '<div class="dview"><div class="dgrid" style="grid-template-columns:repeat(' + cols + ',' + px + 'px)">' + c + '</div><span>' + label + '</span></div>';
+      return '<div class="dview"><div class="dgrid" style="grid-template-columns:repeat(' + dd.cols + ',' + px + 'px)">' + c + '</div><span>' + (VLABEL[view] || view) + '</span></div>';
     };
-    return '<div class="draw">' + grid('top', d.top.cols, d.top.rows, '위') + grid('front', d.front.cols, d.front.rows, '앞') + grid('side', d.side.cols, d.side.rows, '옆') + '</div>';
+    return '<div class="draw">' + vs.map(grid).join('') + '</div>';
   }
 
   // ── 서버가 준 제시물(given) → 렌더용 모양 ──

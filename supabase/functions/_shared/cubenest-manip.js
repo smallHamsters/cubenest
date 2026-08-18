@@ -52,10 +52,28 @@
   }
   function paintedCubeAll(n) { return [0, 1, 2, 3].map(function (k) { return paintedCubeCount(n, k); }); }
 
+  // ── H-d 일반화: 직육면체 a×b×c ──
+  //   정육면체와 구조가 같다(꼭짓점 8 · 모서리 · 면 · 속). 합 = a·b·c 로 검증됨.
+  //   왜 넓혔나: 최고 높이 4층 확정으로 한 변 5 정육면체가 불가능해져 문항 공간이 8개로
+  //   줄었다. 직육면체로 넓히면 30상자 × k4 = 120개가 되고 정답 최댓값은 오히려 54→42 로 준다.
+  //   ⚠ 각 변 ≥2. c=1 이면 모든 낱개가 위·아래 두 면을 갖게 되어 이 분해가 성립하지 않는다.
+  function paintedBoxCount(a, b, c, k) {
+    var A = a - 2, B = b - 2, C = c - 2;
+    if (A < 0 || B < 0 || C < 0) return 0;
+    if (k === 3) return 8;
+    if (k === 2) return 4 * (A + B + C);
+    if (k === 1) return 2 * (A * B + B * C + A * C);
+    if (k === 0) return A * B * C;
+    return 0;
+  }
+  function paintedBoxAll(a, b, c) { return [0, 1, 2, 3].map(function (k) { return paintedBoxCount(a, b, c, k); }); }
+
   // 한 변 n 인 꽉 찬 정육면체의 높이지도(렌더·채점용)
-  function solidCubeHmap(n) {
+  function solidCubeHmap(n) { return solidBoxHmap(n, n, n); }
+  // a(가로 x) × b(세로 z) × c(높이 y) 꽉 찬 직육면체의 높이지도
+  function solidBoxHmap(a, b, c) {
     var hm = {}, x, z;
-    for (x = 0; x < n; x++) for (z = 0; z < n; z++) hm[x + ',' + z] = n;
+    for (x = 0; x < a; x++) for (z = 0; z < b; z++) hm[x + ',' + z] = c;
     return hm;
   }
 
@@ -131,6 +149,7 @@
     extents: extents,
     completeCube: completeCube,
     paintedCubeCount: paintedCubeCount, paintedCubeAll: paintedCubeAll, solidCubeHmap: solidCubeHmap,
+    paintedBoxCount: paintedBoxCount, paintedBoxAll: paintedBoxAll, solidBoxHmap: solidBoxHmap,
     applyDelta: applyDelta, footConnected: footConnected
   };
   global.CubeNest = global.CubeNest || {};

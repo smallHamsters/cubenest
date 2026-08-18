@@ -63,6 +63,15 @@
   NS.api = {
     generate: function (req) { return call("generate", req); },
     grade: function (req) { return call("grade", req); },
+    // UI 메타데이터(스테이지·유형·지원 등급). 랜딩이 levels 를 하드코딩하지 않도록 서버가 준다.
+    //   실패해도 화면이 죽지 않게 호출부가 폴백을 갖는다 — 이건 문제 생성이 아니라 표시용이다.
+    config: async function () {
+      try {
+        var res = await fetch(BASE + "/config", { method: "GET", headers: { "X-Anon-Id": anonId() } });
+        if (!res.ok) return null;
+        return await res.json();
+      } catch (e) { return null; }
+    },
     // 문제지: 정답까지 오는 경로라 로그인 필수 — Supabase 게이트웨이가 JWT 를 검증한다.
     // 액세스 토큰은 CubeNest.auth 가 단일 진실(§6.2). 없으면 서버가 401 을 준다.
     worksheet: async function (req) {

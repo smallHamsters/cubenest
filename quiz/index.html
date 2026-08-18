@@ -188,6 +188,15 @@
           </div>
         </div>
         <div class="fg">
+          <span class="label">학년</span>
+          <div class="chips" role="group" aria-label="학년" data-filter="stage">
+            <button type="button" class="chip" data-val="S2" aria-pressed="false">초3~4</button>
+            <button type="button" class="chip" data-val="S3" aria-pressed="false">초5</button>
+            <button type="button" class="chip" data-val="S4" aria-pressed="true">초6</button>
+            <button type="button" class="chip" data-val="S5" aria-pressed="false">중1~2</button>
+          </div>
+        </div>
+        <div class="fg">
           <span class="label">난이도</span>
           <div class="chips" role="group" aria-label="난이도" data-filter="levels">
             <button type="button" class="chip" data-val="하" aria-pressed="false"><span class="dot"></span>하</button>
@@ -237,6 +246,7 @@
      퀴즈 랜딩·플레이는 무로그인이 원칙이라(마스터 §6.3) 여기서 게이트를 걸지 않는다. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.1.0"></script>
+<script src="run/api-client.js?v=0.2.0"></script>
 <script>
 if((navigator.language||'').toLowerCase().startsWith('ko')) document.querySelector('[data-brand]').textContent='큐브네스트';
 
@@ -312,7 +322,36 @@ const G={
 };
 
 /* ---------- 상태 (edu = 교육과정 태그 필터) ---------- */
-const state={ edu:'all', dim:'all', count:DEFAULT_COUNT, levels:new Set(DEFAULT_LEVELS) };
+const DEFAULT_STAGE='S4';                       // 초6 — 교과 핵심이자 제품의 원점
+const STAGE_LABEL={S2:'초3~4',S3:'초5',S4:'초6',S5:'중1~2'};
+// ⚠ 정본은 서버 /config 다. 이 표는 그것이 못 올 때만 쓰는 폴백이며, 서버 GATE 와 같아야 한다.
+//   (하드코딩을 두 곳에 두면 반드시 표류한다 — 카드의 levels 가 서버 지원 등급과 어긋나
+//    'count 상'처럼 존재하지 않는 등급을 팔던 것이 그 사례다.)
+const ALL4=['하','중','상','최상'];
+let SRV=null;                                    // /config 응답(오면 이걸 쓴다)
+const GATE_FB={
+  S2:{count:null,heightmap:null,hidden:['A-c','A-e'],minmax:['G-c']},
+  S3:{count:null,heightmap:null,hidden:['A-c','A-e'],minmax:['G-c'],facesMc:null,manip:['H-c']},
+  S4:{count:null,volume:null,surface:null,heightmap:null,facesMc:null,facesDraw:null,
+      hidden:['A-a','A-b','A-c','A-d','A-e','A-f'],minmax:['G-a','G-b','G-c'],manip:['H-c','H-d']},
+  S5:{count:null,volume:null,surface:null,heightmap:null,facesMc:null,facesDraw:null,
+      hidden:['A-a','A-b','A-c','A-d','A-e','A-f'],minmax:['G-a','G-b','G-c'],manip:['H-a','H-b','H-c','H-d']}
+};
+// 이 유형(+서브)이 그 스테이지에서 열려 있는가 / 열려 있으면 지원 등급은?
+function gateFor(t, stage){
+  const key=t.type||t.id;
+  if(SRV){
+    const st=(SRV.stages||[]).find(s=>s.id===stage); if(!st) return null;
+    const e=st.types&&st.types[key]; if(!e) return null;
+    if(t.sub && e.subs && e.subs.indexOf(t.sub)<0) return null;
+    return e.levels||ALL4;
+  }
+  const g=GATE_FB[stage]; if(!g || !(key in g)) return null;
+  const subs=g[key];
+  if(t.sub && subs && subs.indexOf(t.sub)<0) return null;
+  return ALL4;
+}
+const state={ edu:'all', dim:'all', count:DEFAULT_COUNT, stage:DEFAULT_STAGE, levels:new Set(DEFAULT_LEVELS) };
 const kidsOf=id=>TYPES.filter(t=>t.cat===id);
 
 /* ---------- 1행 이벤트 ---------- */
@@ -324,6 +363,7 @@ document.querySelectorAll('.frow-top [data-filter]').forEach(group=>{
     if(kind==='edu'){ state.edu=val; setSingle(group,btn); renderAcc(); }
     else if(kind==='dim'){ state.dim=val; setSingle(group,btn); }
     else if(kind==='count'){ state.count=+val; setSingle(group,btn); }
+    else if(kind==='stage'){ state.stage=val; setSingle(group,btn); renderAcc(); }
     else if(kind==='levels'){ toggleSet(state.levels,val,btn); }
     render();
   });
@@ -365,9 +405,15 @@ document.getElementById('reset').addEventListener('click',()=>{
 function match(t){
   if(state.edu!=='all' && !t.edu.includes(state.edu)) return false;
   if(state.dim!=='all' && !(t.dim==='both'||t.dim===state.dim)) return false;
-  if(!t.levels.some(l=>state.levels.has(l))) return false;
+  if(t.status==='live'){
+    const lv=gateFor(t,state.stage);
+    if(!lv) return false;                          // 이 학년에는 없는 유형
+    if(!lv.some(l=>state.levels.has(l))) return false;
+  } else if(!t.levels.some(l=>state.levels.has(l))) return false;
   return true;
 }
+// 카드에 표시할 등급 — live 는 서버(또는 폴백) 게이트, soon 은 카드의 예정값
+function levelsOf(t){ return (t.status==='live' ? (gateFor(t,state.stage)||t.levels) : t.levels); }
 
 /* ---------- 결과 렌더 ---------- */
 const grid=document.getElementById('grid'), countEl=document.getElementById('count');
@@ -382,7 +428,8 @@ function render(){
     const soon=t.status==='soon';
     const ci=CATS.findIndex(c=>c.id===t.cat), si=kidsOf(t.cat).findIndex(x=>x.id===t.id);
     const no=(ci+1)+'-'+(si+1);
-    const lv=LEVELS.map(l=>{ const has=t.levels.includes(l),on=has&&state.levels.has(l); return has?`<b class="${on?'on':''}">${l}</b>`:''; }).join('');
+    const sup=levelsOf(t);
+    const lv=LEVELS.map(l=>{ const has=sup.includes(l),on=has&&state.levels.has(l); return has?`<b class="${on?'on':''}">${l}</b>`:''; }).join('');
     const eduTags=t.edu.map(e=>`<span class="tag ${e==='think'?'think':''}">${eduLabel[e]}</span>`).join('');
     const card=document.createElement('article'); card.className='card'+(soon?' soon':'');
     card.innerHTML=`
@@ -398,10 +445,13 @@ function render(){
 }
 
 function start(t){
-  const lvls=LEVELS.filter(l=>state.levels.has(l)&&t.levels.includes(l));
-  const use=(lvls.length?lvls:t.levels);
+  const sup=levelsOf(t);
+  const lvls=LEVELS.filter(l=>state.levels.has(l)&&sup.includes(l));
+  const use=(lvls.length?lvls:sup);
   const codes=use.map(l=>LVL_CODE[l]).sort().join('');
   let url='run/?type='+encodeURIComponent(t.type||t.id)+'&lv='+codes+'&n='+state.count;
+  // stage 는 /generate·/grade 양쪽에 같이 가야 한다(gsig 지문 포함) — run 이 URL 에서 읽어 넘긴다.
+  if(state.stage && state.stage!==DEFAULT_STAGE) url+='&stage='+state.stage;
   if(t.sub) url+='&sub='+encodeURIComponent(t.sub);
   if(state.dim && state.dim!=='all') url+='&dim='+state.dim;
   location.href=url;   // /quiz/ → /quiz/run/ (상대경로)
@@ -416,6 +466,7 @@ function syncURL(){
   if(state.edu!=='all')p.set('edu',state.edu);
   if(state.dim!=='all')p.set('dim',state.dim);
   if(state.count!==DEFAULT_COUNT)p.set('n',state.count);
+  if(state.stage!==DEFAULT_STAGE)p.set('stage',state.stage);
   if(levelsDiffer())p.set('lv',[...state.levels].map(l=>LVL_CODE[l]).sort().join(''));
   const q=p.toString(); history.replaceState(null,'',q?`?${q}`:location.pathname);
 }
@@ -424,6 +475,7 @@ function loadURL(){
   if(p.get('edu'))state.edu=p.get('edu');
   if(p.get('dim'))state.dim=p.get('dim');
   if(p.get('n'))state.count=+p.get('n');
+  const st=(p.get('stage')||'').toUpperCase(); if(/^S[2-5]$/.test(st)) state.stage=st;
   if(p.get('lv'))state.levels=new Set([...p.get('lv')].map(c=>CODE_LVL[c]).filter(Boolean));
   syncTopDOM();
 }
@@ -431,9 +483,18 @@ function syncTopDOM(){
   ['edu','dim'].forEach(k=>document.querySelectorAll(`.frow-top [data-filter="${k}"] button`).forEach(b=>b.setAttribute('aria-pressed', b.dataset.val===state[k]?'true':'false')));
   document.querySelectorAll('.frow-top [data-filter="count"] button').forEach(b=>b.setAttribute('aria-pressed', +b.dataset.val===state.count?'true':'false'));
   document.querySelectorAll('.frow-top [data-filter="levels"] button').forEach(b=>b.setAttribute('aria-pressed', state.levels.has(b.dataset.val)?'true':'false'));
+  document.querySelectorAll('.frow-top [data-filter="stage"] button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.val===state.stage?'true':'false'));
 }
 
 loadURL(); renderAcc(); render();
+
+// 등급·게이트의 단일 출처는 서버다. 못 받아도 폴백으로 이미 그려 뒀으므로 화면은 죽지 않는다.
+(async function(){
+  try{
+    const c = window.CubeNest && CubeNest.api && CubeNest.api.config ? await CubeNest.api.config() : null;
+    if(c && c.stages && c.stages.length){ SRV=c; renderAcc(); render(); }
+  }catch(e){}
+})();
 </script>
 </body>
 </html>

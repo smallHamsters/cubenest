@@ -61,6 +61,9 @@ Deno.serve(async (req: Request) => {
           ask: q.ask, form: q.form, unit: q.unit,
           given: q.given ?? null, sh: q.sh ?? null,
           opts: q.opts ?? null,                           // facesMc 보기
+          views: q.views ?? null,                         // facesDraw 그릴 방향(§4.8) — 답란이 이것만 낸다
+          box: q.box ?? null,                             // manip H-d 상자 치수
+          stage: q.stage ?? null, dim: q.dim ?? null,
           answerKey: key,
         });
       });

@@ -235,7 +235,7 @@
   var LEVELS=["하","중","상","최상"], LVCODE={"하":"1","중":"2","상":"3","최상":"4"}, CODELV={"1":"하","2":"중","3":"상","4":"최상"};
   var TITLE={}; TYPES.forEach(function(t){ TITLE[t.v]=t.t; });
   // mix = [{v:"hidden:A-b", n:3}] — 여러 유형을 한 장에. 비어 있으면 select 의 유형 1종.
-  var mk={ pick:"count", mix:[], levels:["중","상"], n:10 };
+  var mk={ pick:"count", mix:[], levels:["중","상"], n:10, stage:"" };   // stage = 연령 스테이지(S2~S5). 빈 값 = 서버 기본 S4(초6)
   var MAXN=30;
 
   // ── URL 재현: ?t=<theme[:sub]:n> (반복) & lv=<코드> & seed=... ──
@@ -252,6 +252,7 @@
     var p=new URLSearchParams();
     list.forEach(function(m){ p.append("t", m.v+":"+m.n); });
     p.set("lv", mk.levels.map(function(l){return LVCODE[l];}).sort().join(""));
+    if(mk.stage) p.set("st", mk.stage);      // 스테이지가 다르면 같은 seed 라도 다른 문제지다
     if(seed) p.set("seed", seed);
     return p.toString();
   }
@@ -265,7 +266,8 @@
     }).filter(function(m){ return TITLE[m.v]; });
     if(!mix.length) return null;
     var lv=(p.get("lv")||"23").split("").map(function(c){return CODELV[c];}).filter(Boolean);
-    return { mix:mix, levels:lv.length?lv:["중","상"], seed:p.get("seed")||null };
+    var st=(p.get("st")||"").toUpperCase(); if(!/^S[2-5]$/.test(st)) st="";
+    return { mix:mix, levels:lv.length?lv:["중","상"], seed:p.get("seed")||null, stage:st };
   }
 
   function mixRowsHTML(){
@@ -334,9 +336,10 @@
       // 단일 유형은 mix 없이 보낸다 — 서버가 seed 를 그대로 써서 **quiz 와 같은 문제**가 나온다
       // (mix 는 항목마다 seed#i 로 스트림을 나누므로 quiz 세션과 어긋난다).
       var one=list.length===1?list[0].v.split(":"):null;
-      var req = one ? { theme:one[0], sub:one[1]||undefined, n:list[0].n, levels:mk.levels, seed:seed||undefined }
+      var st=mk.stage||undefined;
+      var req = one ? { theme:one[0], sub:one[1]||undefined, n:list[0].n, levels:mk.levels, seed:seed||undefined, stage:st }
                     : { mix:list.map(function(m){ var a=m.v.split(":"); return {theme:a[0], sub:a[1]||undefined, n:m.n}; }),
-                        levels:mk.levels, seed:seed||undefined };
+                        levels:mk.levels, seed:seed||undefined, stage:st };
       var r=await api.worksheet(req);
       var qs=mkQuery(list, r.seed);
       history.replaceState(null,"","./?"+qs);                 // 새로고침·공유 재현용
@@ -365,7 +368,9 @@
                answerText:answerText(p), answerFigure:answerFigure(p, gsh, FIG),
                correct:null, scratch:null };
     });
-    return { meta:{ title:label, grade:"초등 6학년", type:r.problems&&r.problems[0]&&r.problems[0].type,
+    var GRADE={S2:"초등 3~4학년",S3:"초등 5학년",S4:"초등 6학년",S5:"중학 1~2학년"};
+    var st0=(r.problems&&r.problems[0]&&r.problems[0].stage)||"S4";
+    return { meta:{ title:label, grade:(GRADE[st0]||"초등 6학년"), type:r.problems&&r.problems[0]&&r.problems[0].type,
                     n:probs.length, seed:r.seed, url:url||null,
                     date:new Date().toISOString().slice(0,10), source:"worksheets" },
              problems:probs };
@@ -373,7 +378,7 @@
   function answerArea(p, sh, FIG){
     if(p.form==="bool") return '<div class="ansline">답 &nbsp; ☐ 있어요 &nbsp;&nbsp; ☐ 없어요</div>';
     if(p.form==="mc")   return '<div class="ansline">답 <u>&nbsp;</u> 번</div>';
-    if(p.form==="draw"&&sh) return '<div class="ansline">답 · 칸을 칠해 그리세요</div>'+FIG.renderDrawGrids(sh);
+    if(p.form==="draw"&&sh) return '<div class="ansline">답 · 칸을 칠해 그리세요</div>'+FIG.renderDrawGrids(sh, 18, null, p.views);
     if((p.form==="markCells"||p.form==="hm")&&sh){
       var c="",x,z,cls=p.form==="hm"?"hmcell":"mcell";
       for(z=0;z<sh.gz;z++)for(x=0;x<sh.gx;x++)
@@ -397,7 +402,7 @@
   // (H-a/H-b 는 클라가 '조작 후 모양'을 모르므로 이 경로가 유일하다.)
   function answerFigure(p, sh, FIG){
     if(!p.answerKey||p.answerKey.type!=="drawSil"||!sh) return null;
-    return FIG.renderDrawGrids(sh, 18, new Set(p.answerKey.cells||[]));
+    return FIG.renderDrawGrids(sh, 18, new Set(p.answerKey.cells||[]), p.views);
   }
 
   function renderEmpty(){
@@ -493,7 +498,7 @@
   //            ② 없으면 quiz 가 넘긴 payload  ③ 둘 다 없으면 생성 폼만
   var fromUrl=readUrl();
   if(fromUrl){
-    mk.mix=fromUrl.mix; mk.levels=fromUrl.levels;
+    mk.mix=fromUrl.mix; mk.levels=fromUrl.levels; mk.stage=fromUrl.stage||"";
     renderEmpty();                                  // 폼을 먼저 그려 두고(실패해도 조작 가능)
     (function(){
       var go=function(){ makeNew(fromUrl.seed); };
