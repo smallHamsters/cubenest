@@ -131,7 +131,12 @@
   .isofig svg{width:100%;max-height:190px;}
   .threeviews{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:2px 0;}
   .pv{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  /* ⚠ renderSil 의 SVG 는 viewBox 만 있고 고유 폭이 없다. flex 안에서 폭을 안 주면
+     0 으로 찌그러져 실루엣이 사실상 안 보인다(인쇄 실촬영에서 삼면도가 10px 로 나왔다).
+     → 문제 제시물에서는 폭을 명시한다. 실루엣이 안 보이면 문제를 풀 수가 없다. */
   .pv svg{display:block;height:auto;max-height:62px;}
+  .q-fig .pv svg{width:66px;max-height:none;}
+  .q-fig .threeviews{gap:10px;}
   .pv span{font-size:10.5px;font-weight:800;color:var(--muted);}
   .rotcap,.rothint{font-size:11px;color:var(--muted);font-weight:600;text-align:center;line-height:1.4;}
   .rotcap b,.rothint b{color:var(--accent-ink);}
@@ -164,6 +169,20 @@
     .sheet + .sheet{break-before:page;page-break-before:always;}
     .q{break-inside:avoid;page-break-inside:avoid;}
     .viewer{background:#fff;border-color:#d7dee8;}
+
+    /* ── 2단 조판 ──
+       실촬영에서 오른쪽 절반이 통째로 비어 6문항이 A4 두 장을 먹었다.
+       시중 문제집이 전부 2단인 데는 이유가 있다 — 그림이 세로로 길어 1단은 낭비가 크다.
+       .q 는 break-inside:avoid 라 문항이 단 경계에서 잘리지 않는다. */
+    .sheet{column-count:2;column-gap:10mm;}
+    .sheet-head,.akey-head{column-span:all;}
+    .q{padding:10px 0;}
+    .q-body{gap:10px;}
+    .q-ans{min-width:0;}                 /* 1단 시절의 170px 하한이 2단에서 줄바꿈을 강제한다 */
+    .viewer{min-width:0;max-width:100%;}
+    .isofig svg{max-height:150px;}
+    /* 정답지는 표라서 1단이 낫다 */
+    .akey{column-count:1;}
   }
 </style>
 </head>

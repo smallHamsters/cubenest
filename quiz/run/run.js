@@ -1072,6 +1072,11 @@
             figure: figureOf(pr,i),                                   // 제시물 그림(SVG/HTML) — 인쇄 시 벡터 그대로
             answerArea: answerAreaOf(pr,i),                           // 종이에서 답을 적는 자리(폼별)
             answerText: answerTextOf(pr,i), answerFigure: answerFigureOf(pr,i),
+            // 문제지가 "이 문항은 지면에서 풀리는가"를 판단하는 근거.
+            //   top 이 있으면 위모양을 함께 준 문항이라 종이에서 답이 정해진다 → QR 불필요.
+            //   given 이 있으면 제시물이 2D(삼면도·층별·위수 등)라 역시 QR 이 필요 없다.
+            //   둘 다 없으면 겨냥도 형상뿐이라 돌려봐야 한다 → 그 문항에만 QR 이 붙는다.
+            top: pr.top||null, given: pr.given||null,
             // F2 직렬화(모양 재현이 필요한 후속 기능용). 결과 화면은 전 문항 채점 후에만
             // 도달하므로 explain 으로 모양이 복원돼 여기서 null 이 되지 않는다.
             shape: shapeOf(pr,i) && CORE ? CORE.serialize(coreShape(shapeOf(pr,i))) : null,

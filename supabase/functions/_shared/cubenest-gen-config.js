@@ -277,9 +277,13 @@
       views: viewsFor(type, label),                       // facesDraw 출제 형식
       group: groupFor(type, label),                       // 같은 방향을 몇 문항 연속으로
       flatten: !!STAGES[stage].flatten,             // S2·S3 는 가림 자체 금지
-      // 겨냥도 6종만: 가림은 남기되 숨은 열 높이를 1 로 고정 → 위모양과 함께 주면 답이 유일해진다
+      // 겨냥도 6종만: 가림은 남기되 숨은 열 높이를 1 로 고정 → 위모양과 함께 주면 답이 유일해진다.
+      //   ⚠ 위모양 동봉은 **capHidden 스테이지(S4·S5)에서만** 한다.
+      //     S2·S3 은 flattenHidden 으로 가림이 아예 없어 겨냥도만으로 이미 결정적이라 불필요하고,
+      //     무엇보다 위모양을 주면 top 을 물을 수 없게 되어 **S3 의 facesMc 가 위·앞·옆 전부를
+      //     내지 못한다**(§7.9-2 확정 위반). 실제 인쇄 미리보기에서 이 충돌이 드러났다.
       capHidden: !!(STAGES[stage].capHidden && ISO_TYPES[type]),
-      withTop: !!ISO_TYPES[type],                   // 제시물에 '위에서 본 모양'을 동봉
+      withTop: !!(STAGES[stage].capHidden && ISO_TYPES[type]),
       subs: subsFor(type, stage),
       _meta: { stage: stage, label: label, grid: b.grid, n: n, foot: f }
     };

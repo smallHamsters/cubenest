@@ -266,6 +266,15 @@ function presentSpec(pr: Sh, type: string) {
           + "의 <b>위·앞·옆에서 본 모양</b>을 각 칸을 칠해 그리세요.";
     } else ask = "이 모양에 쌓기나무를 더 놓아 <b>가장 작은 정육면체</b>를 만들려고 해요. 몇 개가 더 필요할까요?";
   }
+  // facesDraw — 발문이 답란과 어긋나면 안 된다.
+  //   위모양을 제시물로 주면 top 이 답에서 빠져 답란은 앞·옆 2칸인데, 발문만 "위·앞·옆"이면
+  //   아이가 없는 칸을 찾는다(인쇄 실촬영에서 실제로 이 불일치가 나왔다).
+  if (type === "facesDraw" && pr.views && pr.views.length) {
+    const L: Record<string, string> = { top: "위", front: "앞", side: "옆" };
+    const names = pr.views.map((v: string) => L[v] || v).join("·");
+    ask = "쌓기나무로 쌓은 모양입니다. <b>" + names + "</b>에서 본 모양을 각 칸을 칠해 그려 보세요.";
+  }
+
   // ── 문말 단서 (문제집 관행) ──
   if (type === "surface") ask += NOTE_SURFACE;
   if (type === "hidden" && (pr.sub || "") === "A-f") ask += NOTE_KINDS;
