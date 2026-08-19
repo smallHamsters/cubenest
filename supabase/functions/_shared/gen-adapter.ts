@@ -193,13 +193,17 @@ function hiddenGiven(pr: Sh, sh: Sh) {
 // ── 발문·답 형식 (문제의 일부라 서버가 단일 출처) ──
 //   quiz 화면과 worksheets 문제지가 같은 문구를 써야 한다. 클라 두 곳에서 각자 조립하면
 //   반드시 표류한다(마스터 §8.1) → 여기서 한 번만 만든다. 정답은 물론 들어가지 않는다.
+// 발문 규격(시중 문제집 3종 공통 관행):
+//   ① [상황 선언] + [요구] 2문장 · 45~55자
+//   ② 단서는 문말 괄호로 별행
+//   ③ 부정형 핵심어(아닌·다른·없는·잘못된)는 <b> 강조 — 오답 유도 방지
 const TYPE_SPEC: Record<string, { ask: string; form: string; unit: string }> = {
-  count:     { ask: "쌓기나무는 모두 몇 개일까요?", form: "num", unit: "개" },
-  volume:    { ask: "이 모양의 부피는 얼마일까요?", form: "num", unit: "cm³" },
-  surface:   { ask: "겉넓이는 얼마일까요? (바닥 포함)", form: "num", unit: "cm²" },
-  heightmap: { ask: "위에서 본 모양의 각 칸에 쌓인 나무 수를 쓰세요.", form: "hm", unit: "" },
-  facesMc:   { ask: "이 모양을 앞에서 본 모양을 고르세요.", form: "mc", unit: "" },
-  facesDraw: { ask: "위·앞·옆에서 본 모양을 각 칸을 칠해 그리세요.", form: "draw", unit: "" },
+  count:     { ask: "쌓기나무로 쌓은 모양입니다. 쌓기나무는 모두 몇 개일까요?", form: "num", unit: "개" },
+  volume:    { ask: "쌓기나무로 쌓은 모양입니다. 이 모양의 부피는 얼마일까요?", form: "num", unit: "cm³" },
+  surface:   { ask: "쌓기나무로 쌓은 모양입니다. 이 모양의 겉넓이는 얼마일까요?", form: "num", unit: "cm²" },
+  heightmap: { ask: "쌓기나무로 쌓은 모양입니다. 위에서 본 모양의 각 칸에 쌓인 나무 수를 써 보세요.", form: "hm", unit: "" },
+  facesMc:   { ask: "쌓기나무로 쌓은 모양입니다. 앞에서 본 모양을 고르세요.", form: "mc", unit: "" },
+  facesDraw: { ask: "쌓기나무로 쌓은 모양입니다. 위·앞·옆에서 본 모양을 각 칸을 칠해 그려 보세요.", form: "draw", unit: "" },
   minmax:    { ask: "세 방향에서 본 모양이 되는 쌓기나무 개수는?", form: "num", unit: "개" },
   hidden:    { ask: "안 보이는 쌓기나무를 생각해 보세요.", form: "num", unit: "개" },
   manip:     { ask: "조건에 맞는 쌓기나무 수를 구하세요.", form: "num", unit: "개" },
@@ -218,11 +222,20 @@ const HIDDEN_ASK: Record<string, string> = {
 };
 const PAINT_K = ["색칠되지 않은", "한 면만 색칠된", "두 면이 색칠된", "세 면이 색칠된"];
 
+// 문말 단서 — 문제집이 전 문항에서 붙이는 것만 옮겼다. 별행 우측이 관행이라 <br> 로 띄운다.
+const NOTE_SURFACE = "<br><small>(단, 바닥에 닿는 면도 포함합니다.)</small>";
+const NOTE_KINDS   = "<br><small>(단, 돌렸을 때 같은 모양은 한 가지로 봅니다.)</small>";
+// 위모양을 함께 주는 6종의 규약 — 이 한 줄이 있어야 답이 유일해진다.
+//   겨냥도에 안 보이는 자리의 높이는 그림만으로 정해지지 않는다. 교과·문제집은 이 자유도를
+//   "위모양에 있는데 겨냥도에 안 보이면 그 자리는 1개"로 고정하고, 생성기도 그렇게 만든다.
+const NOTE_HIDDEN1 = "<br><small>(단, 위에서 본 모양에는 있는데 보이지 않는 자리에는 쌓기나무가 1개씩 있습니다.)</small>";
+
 function presentSpec(pr: Sh, type: string) {
   const base = TYPE_SPEC[type] || TYPE_SPEC.count;
   let ask = base.ask, form = base.form, unit = base.unit;
   if (type === "facesMc") {
-    ask = (pr.dir === "front" ? "앞" : pr.dir === "side" ? "옆" : "위") + "에서 본 모양을 고르세요.";
+    ask = "쌓기나무로 쌓은 모양입니다. "
+        + (pr.dir === "front" ? "앞" : pr.dir === "side" ? "옆" : "위") + "에서 본 모양을 고르세요.";
   } else if (type === "minmax") {
     const s = pr.sub || "G-a";
     ask = MINMAX_ASK(s, pr.which, pr.dir, pr.n);
@@ -253,6 +266,11 @@ function presentSpec(pr: Sh, type: string) {
           + "의 <b>위·앞·옆에서 본 모양</b>을 각 칸을 칠해 그리세요.";
     } else ask = "이 모양에 쌓기나무를 더 놓아 <b>가장 작은 정육면체</b>를 만들려고 해요. 몇 개가 더 필요할까요?";
   }
+  // ── 문말 단서 (문제집 관행) ──
+  if (type === "surface") ask += NOTE_SURFACE;
+  if (type === "hidden" && (pr.sub || "") === "A-f") ask += NOTE_KINDS;
+  // 위모양을 함께 주고 숨은 열을 1로 고정한 6종에만. 이 규약이 있어야 답이 유일해진다.
+  if (pr.withTop && pr.hasHidden) ask += NOTE_HIDDEN1;
   return { ask, form, unit };
 }
 
@@ -326,6 +344,15 @@ export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
   }
 
   q.sh = sh;
+  // ── 위에서 본 모양 동봉 (겨냥도 6종) ──
+  //   겨냥도만 주면 숨은 열의 높이가 정해지지 않아 종이에서 답이 유일하지 않다.
+  //   시중 문제집 3종이 예외 없이 위모양을 함께 주고, 숨은 열은 1개로 규약한다.
+  //   생성기가 capHiddenToOne 으로 그 규약을 이미 지켰으므로, 위모양만 붙이면 답이 유일해진다.
+  //   → 이 6종이 3D 회전 없이도 지면에서 풀린다.
+  //   ⚠ facesMc·facesDraw 는 위모양이 곧 정답의 일부다. 그래서 이 둘은 생성기가
+  //     묻는 방향에서 top 을 빼 두고(gen: dir·views), 대신 위모양을 제시물로 준다.
+  //     이것이 문제집의 표준 조합이다 — "위에서 본 모양 + 겨냥도 → 앞·옆 그리기".
+  if (pr.withTop) q.top = topSil(sh);
   // facesDraw 출제 형식 — 그릴 방향. 모양 1개면 세 면, 여러 개면 한 면(§4.8).
   //   답란도 이 방향만 그려야 한다(안 그리면 빈 격자가 정답인 것처럼 보인다).
   if (type === "facesDraw") q.views = pr.views || ["top", "front", "side"];

@@ -23,10 +23,14 @@ Deno.serve((req: Request) => {
   const stages = genConfig.stages().map((s: any) => {
     const types: Record<string, any> = {};
     for (const t of genConfig.typesFor(s.id)) {
+      const subs = genConfig.subsFor(t, s.id);
       types[t] = {
         label: TYPE_LABEL[t] ?? t,
         levels: genConfig.support(t, s.id),     // 실제 지원 등급 — 랜딩은 이것만 노출한다
-        subs: genConfig.subsFor(t, s.id),       // null = 전 서브
+        subs,                                   // null = 전 서브
+        // 지면(worksheets 독립 생성)에서 성립하는가. 서브별로 갈리는 유형은 서브 단위로 준다.
+        paper: subs ? subs.filter((sb: string) => genConfig.paperSafe(t, sb))
+                    : (genConfig.paperSafe(t, null) ? true : false),
       };
     }
     return { id: s.id, grade: s.grade, age: s.age, dim: s.dim, types };

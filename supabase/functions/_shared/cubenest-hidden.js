@@ -69,6 +69,31 @@
     return out;
   }
 
+  // ── capHiddenToOne: 숨은 열의 높이를 1로 내린다 ──
+  //   왜: 겨냥도 + 위에서 본 모양만으로 **개수가 유일하게 정해지게** 하려는 것이다.
+  //   숨은 열은 그림에 안 보이므로 높이가 1..D-1 어디든 같은 겨냥도가 나온다(enumerateByVisible).
+  //   교과·시중 문제집은 이 자유도를 "보이는 위 면 ≠ 위모양이면 그 자리에 1개 있다"는
+  //   **규약으로 고정**한다 — 3종 문제집이 예외 없이 이 관행을 따른다.
+  //
+  //   flattenHidden 과 역할이 다르다:
+  //     flattenHidden  = 가림 자체를 없앤다 → '안 보이는 나무' 개념이 사라진다(저학년용)
+  //     capHiddenToOne = 가림은 남기고 높이만 1로 고정 → **개념은 살고 답은 유일해진다**
+  //
+  //   ⚠ 높이를 1 로 내려도 숨음은 유지된다(숨음 조건상 D ≥ 2 이므로 1 < D).
+  //     자기 값이 내려가면서 뒤쪽 열(x-1,z-1)의 숨음이 풀릴 수는 있는데,
+  //     그건 '덜 숨는' 방향이라 결정성을 해치지 않는다.
+  function capHiddenToOne(hmap) {
+    var out = {}, k, i;
+    for (k in hmap) out[k] = hmap[k];
+    // 사슬 뒤쪽(x+z 큰 칸)부터 훑어야 앞대각이 확정된 뒤 자기 숨음을 판정한다.
+    var fp = footprint(out).sort(function (a, b) { return (b[0] + b[1]) - (a[0] + a[1]); });
+    for (i = 0; i < fp.length; i++) {
+      var x = fp[i][0], z = fp[i][1];
+      if (H(out, x + 1, z + 1) > out[x + "," + z]) out[x + "," + z] = 1;
+    }
+    return out;
+  }
+
   // ── layersToShape: 층별 모양 → 셀 배열 ──
   //   layers = [ Set<"x,z">|Array<[x,z]> , ... ] (index 0 = 1층). 중력 준수(아래층 포함 가정).
   //   반환 cells = [[x,y,z]...] (y=0 바닥).
@@ -111,6 +136,7 @@
     H: H, footprint: footprint,
     visibleTopFootprint: visibleTopFootprint,
     hiddenColumns: hiddenColumns, hasHidden: hasHidden, flattenHidden: flattenHidden,
+    capHiddenToOne: capHiddenToOne,
     layersToShape: layersToShape, layersCount: layersCount,
     enumerateByVisible: enumerateByVisible
   };

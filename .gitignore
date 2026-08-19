@@ -5,6 +5,7 @@ supabase/.env.*
 supabase/.branches/
 supabase/.temp/
 
+.ref/*
 .vscode
 .claude/settings.local.json
 .env

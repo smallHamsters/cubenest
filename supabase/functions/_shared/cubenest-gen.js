@@ -138,6 +138,10 @@
         var hm = hmObjOf(sh);
         // 올림/내림을 번갈아 — 한쪽만 쓰면 개수가 한 방향으로 치우쳐 새 힌트가 된다.
         if (HD.hasHidden(hm)) sh = reshape(sh, HD.flattenHidden(hm, (g % 2) ? 'raise' : 'lower'));
+      } else if (cfg.capHidden && HD) {
+        // 가림은 남기고 숨은 열 높이만 1 로. 위모양을 함께 주면 개수가 유일해진다(교과 관행).
+        var hm2 = hmObjOf(sh);
+        if (HD.hasHidden(hm2)) sh = reshape(sh, HD.capHiddenToOne(hm2));
       }
       if (inBand(sh, cfg)) return sh;
       if (best === null || bandGap(sh, cfg) < bandGap(best, cfg)) best = sh;
@@ -285,17 +289,29 @@
       out.sh = sh; out.rugged = ruggedOf(sh);
     }
 
+    // 위모양 동봉 여부(겨냥도 6종). 어댑터가 이 값을 보고 q.top 을 붙인다.
+    out.withTop = !!(o.cfg && o.cfg.withTop);
+    // 숨은 열이 실제로 있을 때만 '숨은 자리는 1개' 규약 문구를 붙인다(없으면 군더더기).
+    if (out.withTop) {
+      var HDt = hiddenRef();
+      out.hasHidden = !!(HDt && HDt.hasHidden(hmObjOf(sh)));
+    }
+
     // facesDraw — 모양이 1개면 세 면 전부, 여러 개면 모양마다 한 면씩(§4.8).
     //   '여러 개'는 같은 방향 문항을 group 개씩 연속 배치하는 것으로 구현한다.
     //   모양마다 따로 채점되므로 하나를 틀려도 나머지가 살아남는다(bool 채점 유지).
+    //   ⚠ 위모양을 제시물로 주는 스테이지에서는 **묻는 방향에서 top 을 뺀다** —
+    //     위모양이 곧 top 의 정답이라 함께 주면 답을 알려주는 셈이다.
+    //     대신 문제집 표준 조합 "위에서 본 모양 + 겨냥도 → 앞·옆 그리기"가 된다.
     if (o.type === 'facesDraw') {
+      var withTop = !!(o.cfg && o.cfg.withTop);
+      var DIRS = withTop ? ['front', 'side'] : ['top', 'front', 'side'];
       var nv = (o.cfg && o.cfg.views) || 3;
-      if (nv >= 3) out.views = ['top', 'front', 'side'];
+      if (nv >= 3) out.views = DIRS.slice();                // withTop 이면 앞·옆 2면
       else {
         var grp = Math.max(1, (o.cfg && o.cfg.group) || 1);
         var gi = Math.floor(o.index / grp);                 // 한 묶음은 같은 방향
-        var DIRS = ['top', 'front', 'side'];
-        out.views = [DIRS[Math.floor(rngFrom(o.seed + ':fdv' + gi)() * 3)]];
+        out.views = [DIRS[Math.floor(rngFrom(o.seed + ':fdv' + gi)() * DIRS.length)]];
       }
     }
     if (o.type === 'minmax' && C) {                          // G군(최대·최소) G-a/b/c
@@ -490,8 +506,10 @@
       out.sh = sh; out.sub = msub;
     }
     if (o.type === 'facesMc') {                              // 위·앞·옆 고르기: 방향
+      // ⚠ 위모양을 제시물로 주는 스테이지에서는 top 을 묻지 않는다 — 정답을 함께 주는 셈이다.
+      var mcDirs = (o.cfg && o.cfg.withTop) ? ['front', 'side'] : ['front', 'side', 'top'];
       var rngD = rngFrom(o.seed + ':d' + o.index);
-      out.dir = ['front', 'side', 'top'][Math.floor(rngD() * 3)];
+      out.dir = mcDirs[Math.floor(rngD() * mcDirs.length)];
     }
     return out;
   }

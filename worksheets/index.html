@@ -84,6 +84,13 @@
   .sheet-head h1{font-size:19px;font-weight:800;margin:0;letter-spacing:-.02em;}
   .sheet-head .sub{color:var(--muted);font-size:12.5px;}
   .sheet-head .sp{flex:1;}
+  /* QR — 스캔 실패하면 잉크 낭비라 인쇄 크기를 넉넉히 잡는다(실측: 26mm 까지 스캔 성공). */
+  .qrbox{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .qrbox svg{display:block;width:74px;height:74px;}
+  .qrbox span{font-size:9px;color:var(--muted);white-space:nowrap;}
+  .q-qr{float:right;margin:0 0 4px 8px;}
+  .q-qr svg{width:52px;height:52px;}
+  .q-qr span{font-size:8px;}
   .namebox{font-size:12.5px;color:var(--muted);white-space:nowrap;}
   .namebox u{display:inline-block;min-width:76px;border-bottom:1px solid var(--muted-2);text-decoration:none;}
 
@@ -189,6 +196,8 @@
 <script src="../assets/js/mydata.js?v=0.1.0"></script>
 <script src="../assets/js/cubenest-iso.js?v=0.1.0"></script>
 <script src="../assets/js/cubenest-figures.js?v=0.1.0"></script>
+<script src="../assets/js/vendor/qrcode-generator.js"></script>
+<script src="../assets/js/cubenest-qr.js?v=0.2.0"></script>
 <script src="../quiz/run/api-client.js?v=1"></script>
 <script>
 (function(){
@@ -234,6 +243,31 @@
   ];
   var LEVELS=["하","중","상","최상"], LVCODE={"하":"1","중":"2","상":"3","최상":"4"}, CODELV={"1":"하","2":"중","3":"상","4":"최상"};
   var TITLE={}; TYPES.forEach(function(t){ TITLE[t.v]=t.t; });
+  var ALL_TYPES=TYPES.slice();                 // 폴백(서버 /config 가 정본)
+
+  // ── 지면 게이트 ──
+  //   worksheets 에서 **직접** 만드는 문제지는 종이만으로 풀리는 유형만 낸다.
+  //   quiz 를 거쳐 만든 문제지는 이 게이트를 적용하지 않는다 — 지면 성립성을 따지지 않고
+  //   QR·링크로 3D 화면에 잇는다(사용자 결정 260819).
+  //   서버가 유형별 paper 플래그를 준다: true=전 서브 / 배열=그 서브만 / false=제외.
+  function applyPaperGate(cfg, stage){
+    if(!cfg || !cfg.stages) return;
+    var st=null, i;
+    for(i=0;i<cfg.stages.length;i++) if(cfg.stages[i].id===(stage||cfg.defaultStage)) st=cfg.stages[i];
+    if(!st) return;
+    var keep=[];
+    ALL_TYPES.forEach(function(t){
+      var a=t.v.split(':'), key=a[0], sub=a[1]||null;
+      var e=st.types&&st.types[key]; if(!e) return;                 // 그 학년에 없는 유형
+      var pp=e.paper;
+      if(pp===true){ keep.push(t); return; }
+      if(pp===false||!pp) return;
+      if(sub && pp.indexOf(sub)>=0) keep.push(t);                   // 서브 단위 허용
+      else if(!sub && pp.length) keep.push(t);
+    });
+    if(keep.length){ TYPES=keep; TITLE={}; TYPES.forEach(function(t){ TITLE[t.v]=t.t; });
+      if(!TITLE[mk.pick]) mk.pick=TYPES[0].v; }
+  }
   // mix = [{v:"hidden:A-b", n:3}] — 여러 유형을 한 장에. 비어 있으면 select 의 유형 1종.
   var mk={ pick:"count", mix:[], levels:["중","상"], n:10, stage:"" };   // stage = 연령 스테이지(S2~S5). 빈 값 = 서버 기본 S4(초6)
   var MAXN=30;
@@ -360,8 +394,11 @@
     var ISO=window.CubeNest&&window.CubeNest.iso;
     var probs=(r.problems||[]).map(function(p,i){
       var sh=p.given?FIG.shapeFromGiven(p.given):null;
+      // 겨냥도 6종은 **위에서 본 모양을 함께** 실어야 종이에서 답이 유일해진다(서버가 p.top 을 준다).
+      //   교과 규약: 위모양에 있는데 겨냥도에 안 보이는 자리는 1개. 발문에도 그 단서가 붙어 온다.
+      var topFig = p.top ? '<div class="pv">'+FIG.renderSil(p.top,"#3f8fd0")+'<span>위에서 본 모양</span></div>' : "";
       var figure = p.given ? FIG.renderGiven(p.given)
-                 : (p.sh&&ISO ? '<div class="viewer"><div class="isofig">'+ISO.renderIso({gx:p.sh.gx,gz:p.sh.gz,cells:p.sh.cells},0)+'</div></div>' : "");
+                 : (p.sh&&ISO ? '<div class="viewer"><div class="isofig">'+ISO.renderIso({gx:p.sh.gx,gz:p.sh.gz,cells:p.sh.cells},0)+'</div>'+topFig+'</div>' : "");
       var gsh = sh || (p.sh||null);
       return { n:i+1, type:p.type, sub:p.sub, level:p.level, ask:p.ask,
                figure:figure, answerArea:answerArea(p, gsh, FIG),
@@ -416,7 +453,36 @@
     bindMaker();
   }
 
-  function problemHTML(p){
+  // ── QR ──
+  //   지면에서 3D 가 필요한 문항은 QR 로 화면에 잇는다(사용자 결정 260819).
+  //   URL 이 곧 문제지·문항 사양이라(?t=… / ?type=&seed=…) 링크 하나면 같은 문제가 열린다.
+  var QRM = window.CubeNest && window.CubeNest.qr;
+  function absUrl(rel){ try{ return new URL(rel, location.href).href; }catch(e){ return rel; } }
+  function qrBox(url, label, cls){
+    if(!QRM || !url) return "";
+    try{
+      return '<div class="'+(cls||"qrbox")+'">'+QRM.svg(absUrl(url), {size:74, margin:3})
+           + '<span>'+esc(label)+'</span></div>';
+    }catch(e){ return ""; }
+  }
+  // 시트 머리: 문제지 전체(또는 원래 퀴즈 세션)를 여는 QR
+  function sheetQR(m){
+    var u = (m && (m.quizUrl || m.url)) || null;
+    return u ? qrBox(u, "휴대폰으로 열기") : "";
+  }
+  // 문항 개별: 그 문항만 바로 여는 QR. **3D 로 돌려봐야 하는 문항에만** 붙인다.
+  //   위모양을 함께 주는 6종은 지면에서 답이 정해지므로 QR 이 필요 없다 — 지면이 깔끔해야 한다.
+  function needs3D(p){
+    if(p.top) return false;      // 위모양 동봉 → 종이만으로 결정된다
+    return !p.given;             // 제시물이 형상(sh)뿐이면 돌려봐야 한다
+  }
+  function problemQR(p, m){
+    if(!needs3D(p) || !m || !m.quizUrl) return "";
+    var u = m.quizUrl + (m.quizUrl.indexOf("?") >= 0 ? "&" : "?") + "q=" + (p.n - 1);
+    return qrBox(u, "돌려보기", "qrbox q-qr");
+  }
+
+  function problemHTML(p, m){
     var work="";
     if(p.scratch&&(p.scratch.child||p.scratch.tutor)){
       work='<div class="work"><div class="work-h">아이가 푼 연습장</div><div class="work-img">'
@@ -426,7 +492,7 @@
     }
     return '<div class="q">'
       +'<div class="q-head"><span class="q-no">'+p.n+'번</span><span class="q-ask">'+(p.ask||"")+'</span></div>'
-      +'<div class="q-body"><div class="q-fig">'+(p.figure||"")+'</div>'
+      +'<div class="q-body"><div class="q-fig">'+problemQR(p,m)+(p.figure||"")+'</div>'
       +'<div class="q-ans">'+(p.answerArea||'<div class="ansline">답 <u>&nbsp;</u></div>')+work+'</div></div>'
       +'</div>';
   }
@@ -445,7 +511,7 @@
     var m=pl.meta||{}, ps=pl.problems||[];
     var head='<div class="sheet-head"><div><h1>'+esc(m.title||"쌓기나무")+' 문제지</h1>'
       +'<div class="sub">'+esc(m.grade||"")+' · '+ps.length+'문항 · '+esc(m.date||"")+'</div></div>'
-      +'<div class="sp"></div><div class="namebox">이름 <u>&nbsp;</u></div></div>';
+      +'<div class="sp"></div>'+sheetQR(m)+'<div class="namebox">이름 <u>&nbsp;</u></div></div>';
 
     main.innerHTML=
       '<div class="page">'
@@ -458,7 +524,7 @@
       +  '<button class="btn ghost" id="backBtn" type="button">← 퀴즈로</button>'
       +  '<button class="btn" id="printBtn" type="button">인쇄 · PDF로 저장</button>'
       +'</div>'
-      +'<section class="sheet">'+head+ps.map(problemHTML).join("")+'</section>'
+      +'<section class="sheet">'+head+ps.map(function(p){return problemHTML(p,m);}).join("")+'</section>'
       +'<section class="sheet akey"><h2>정답지</h2>'
       +  '<div class="sub">'+esc(m.title||"")+' · '+esc(m.date||"")+' · seed '+esc(m.seed||"")+'</div>'
       +  ps.map(answerRow).join("")
@@ -510,6 +576,16 @@
     var pl=loadPayload();
     if(pl&&pl.problems&&pl.problems.length) render(pl); else renderEmpty();
   }
+
+  // 지면 게이트는 서버가 정본이다. 폴백 목록으로 이미 그려 뒀으므로 실패해도 화면은 죽지 않는다.
+  //   ⚠ quiz 위임 문제지(from=quiz)에는 적용하지 않는다 — 그쪽은 QR 로 잇는다.
+  (async function(){
+    if(new URLSearchParams(location.search).get("from")==="quiz") return;
+    try{
+      var c = window.CubeNest && CubeNest.api && CubeNest.api.config ? await CubeNest.api.config() : null;
+      if(c){ applyPaperGate(c, mk.stage); if(!readUrl()) renderEmpty(); }
+    }catch(e){}
+  })();
 })();
 </script>
 

@@ -341,7 +341,9 @@
         // 연령 스테이지(S2~S5). 없으면 서버 기본 S4(초6) — 스테이지를 모르는 링크는 지금까지와 같다.
         //   ⚠ /generate 와 /grade 에 같은 값이 가야 한다(gsig 지문 포함). GRADE_PARAMS 참조.
         let stage=(p.get("stage")||"").toUpperCase(); if(!/^S[2-5]$/.test(stage)) stage="";
-        return {type,levels,n,seed,dim,restart,view,sub,stage};
+        // 문제지 QR 이 '이 문항'으로 바로 들어오게 하는 진입점(0-based). 세트는 그대로 복원된다.
+        let q=parseInt(p.get("q"),10); if(!(q>=0&&q<30)) q=-1;
+        return {type,levels,n,seed,dim,restart,view,sub,stage,q};
       }
       const PRM=loadParams();
       const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[],state:[]};
@@ -427,7 +429,7 @@
           // 두 곳이 각자 만들면 반드시 표류한다(§8.1) → 서버 단일 출처로 옮겼다.
           const pr={type:PRM.type,lv,sh,given:gp.given||null,id:p.id,gsig:p.gsig,
                     ask:gp.ask, form:gp.form, unit:gp.unit, sub:gp.sub||null,
-                    stage:gp.stage||null, dim:gp.dim||null};   // 스테이지·보기형태는 서버가 정한다
+                    stage:gp.stage||null, dim:gp.dim||null, top:gp.top||null};  // 스테이지·보기형태·위모양은 서버가 정한다
           if(PRM.type==="facesMc"){ pr.opts=gp.opts; pr.dir=gp.dir; }   // 정답 인덱스는 안 온다
           if(PRM.type==="minmax"){ pr.which=gp.which; pr.dir=gp.dir; pr.n=gp.n; }
           if(PRM.type==="manip"){ pr.n=gp.n; pr.k=gp.k; pr.delta=gp.delta; pr.box=gp.box||null; }
@@ -491,11 +493,17 @@
           : (has3D
           ? `<div class="viewer"><div id="v3d" class="v3d"></div><div class="rotrow2"><div class="rothint">손가락·마우스로 <b>돌려서</b> 위·앞·옆을 확인해요</div><button id="reset3d" class="rotbtn2" type="button">정면</button></div></div>`
           : `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotrow"><button id="rl" class="rotbtn wide" type="button" aria-label="왼쪽으로 90도 돌리기">${ARC_CCW}<span>90°</span></button><div id="compass" class="compass" aria-hidden="true">${renderCompass(0)}</div><button id="rr" class="rotbtn wide" type="button" aria-label="오른쪽으로 90도 돌리기">${ARC_CW}<span>90°</span></button></div><div class="rotcap" id="rotcap">버튼으로 쌓기나무를 <b>돌려서</b> 뒤·옆면을 확인해요</div></div>`);
+        // 위에서 본 모양 동봉(겨냥도 6종) — 서버가 pr.top 을 줄 때만.
+        //   겨냥도만으로는 안 보이는 자리의 높이가 정해지지 않는다. 위모양을 함께 줘야
+        //   "위모양에 있는데 안 보이면 그 자리는 1개"라는 교과 규약으로 답이 유일해진다.
+        const topHTML = pr.top
+          ? `<div class="viewer topgiven"><div class="pv">${renderSil(pr.top,"#3f8fd0")}<span>위에서 본 모양</span></div></div>`
+          : "";
         qcard.innerHTML=`
           <div class="qhead"><span class="lv">${pr.lv}</span><span class="mode">${viewLabel}</span><button type="button" id="feedbackBtn" class="qfb" aria-label="이 문제에 의견 보내기"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span>의견</span></button></div>
           <div class="qnav"><div class="qnav-dots" id="palette"></div><button class="qnav-result" id="resultBtn" type="button" disabled>결과 보기</button></div>
           <div class="qtext"><b class="qnum">${S.idx+1}번</b> ${askText}${edgeTxt}</div>
-          ${viewerHTML}
+          ${viewerHTML}${topHTML}
           <div class="answer">${ans}</div>`;
         if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;} if(EXPLODE&&EXPLODE.dispose){EXPLODE.dispose();EXPLODE=null;} disposeExpViews();
         if(!isViews && !isHidden && !isManip){
@@ -1160,5 +1168,8 @@
         Loader.hide();   // 로드 완료 → 즉시 퀴즈 표시
         // /my "결과보기"(view=result): 복원된 채점 상태로 결과 화면. 없으면 세션 복원(마지막 위치)으로 폴백.
         if(PRM.view==="result" && saved && Array.isArray(saved.state) && saved.state.some(x=>x&&x.answered)){ showResult(); return; }
+        // 문제지 QR(?q=n)로 들어오면 그 문항부터 연다 — 종이에서 3D 가 필요한 문항을 눌러 온 경우다.
+        //   세션은 그대로 복원되므로 앞뒤 문항으로도 이동할 수 있다.
+        if(PRM.q>=0 && PRM.q<S.probs.length) S.idx=PRM.q;
         renderProblem();
       })();

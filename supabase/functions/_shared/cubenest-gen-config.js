@@ -38,28 +38,37 @@
   //   flatten=true 면 '안 보이는 나무'를 강제로 없앤다 — 그 개념은 초6에서 처음 배운다.
   //   dim: '3d'=회전 가능한 뷰어 고정 / 'any'=2D 겨냥도 허용. 겨냥도는 초5에서 처음 배운다.
   var STAGES = {
-    S1: { grade: "초1~2", age: "6~7",   open: false, flatten: true,  dim: "3d"  },
-    S2: { grade: "초3~4", age: "8~9",   open: true,  flatten: true,  dim: "3d"  },
-    S3: { grade: "초5",   age: "10",    open: true,  flatten: true,  dim: "3d"  },
-    S4: { grade: "초6",   age: "11",    open: true,  flatten: false, dim: "any" },
-    S5: { grade: "중1~2", age: "12~13", open: true,  flatten: false, dim: "any" }
+    //   flattenHidden = 가림 자체를 없앤다(저학년 — '안 보이는 나무'는 초6 개념)
+    //   capHidden     = 가림은 남기고 숨은 열 높이를 1 로 고정한다
+    //     → 겨냥도 + 위모양만으로 개수가 유일해진다. 시중 문제집 3종이 예외 없이 쓰는 관행이고,
+    //       개념(숨은 나무 추론)을 살리면서 지면에서도 풀리게 하는 유일한 방법이다.
+    S1: { grade: "초1~2", age: "6~7",   open: false, flatten: true,  capHidden: false, dim: "3d"  },
+    S2: { grade: "초3~4", age: "8~9",   open: true,  flatten: true,  capHidden: false, dim: "3d"  },
+    S3: { grade: "초5",   age: "10",    open: true,  flatten: true,  capHidden: false, dim: "3d"  },
+    S4: { grade: "초6",   age: "11",    open: true,  flatten: false, capHidden: true,  dim: "any" },
+    S5: { grade: "중1~2", age: "12~13", open: true,  flatten: false, capHidden: true,  dim: "any" }
   };
   var DEFAULT_STAGE = "S4";              // 교과 핵심이자 제품의 원점 — 미지정 시 기존 동작 유지
   var STAGE_ORDER = ["S1", "S2", "S3", "S4", "S5"];
 
   // ── ① 스테이지 × 등급 → 개수 밴드 · 격자 · 높이 상한 ──
   //   한 칸에 약 1.4배씩 오르는 하나의 자. 스테이지끼리 두 칸씩 겹쳐 절벽을 없앤다.
+  //   ⚠ v0.4 재조정 — 시중 문제집 3종 실측(64면)에 맞췄다.
+  //     3권 공통: 바닥 3×3 이 80~85%(사용 칸 4~8) · 최고 3층이 90% · 세는 유형 총 개수 7~13개.
+  //     이전 값(S4 최상 26~36)은 문제집 '심화' 대역(최대 23)마저 넘었다. 한 스테이지씩 내렸다.
+  //     문제집의 큰 수(27·64·125)는 전부 '세지 않고 공식으로 푸는' 정육면체 유형이라
+  //     여기가 아니라 manip 고유축(boxTotal·needBand)이 담당한다.
   var BANDS = {
-    S1: { "하": { n: [2, 4],   grid: "XS", maxH: 2 }, "중": { n: [4, 6],   grid: "S", maxH: 2 },
-          "상": { n: [6, 8],   grid: "S",  maxH: 2 }, "최상": { n: [8, 10],  grid: "S", maxH: 2 } },
-    S2: { "하": { n: [5, 8],   grid: "S",  maxH: 3 }, "중": { n: [8, 11],  grid: "S", maxH: 3 },
-          "상": { n: [11, 15], grid: "M",  maxH: 3 }, "최상": { n: [15, 20], grid: "M", maxH: 3 } },
-    S3: { "하": { n: [7, 10],  grid: "S",  maxH: 3 }, "중": { n: [10, 14], grid: "M", maxH: 3 },
-          "상": { n: [14, 20], grid: "M",  maxH: 3 }, "최상": { n: [20, 28], grid: "M", maxH: 3 } },
-    S4: { "하": { n: [8, 12],  grid: "S",  maxH: 4 }, "중": { n: [12, 18], grid: "M", maxH: 4 },
-          "상": { n: [18, 26], grid: "M",  maxH: 4 }, "최상": { n: [26, 36], grid: "L", maxH: 4 } },
-    S5: { "하": { n: [12, 18], grid: "M",  maxH: 4 }, "중": { n: [18, 26], grid: "M", maxH: 5 },
-          "상": { n: [26, 36], grid: "L",  maxH: 5 }, "최상": { n: [36, 52], grid: "L", maxH: 5 } }
+    S1: { "하": { n: [2, 4],   grid: "XS", maxH: 2 }, "중": { n: [3, 5],   grid: "S", maxH: 2 },
+          "상": { n: [4, 6],   grid: "S",  maxH: 2 }, "최상": { n: [6, 8],   grid: "S", maxH: 2 } },
+    S2: { "하": { n: [4, 6],   grid: "S",  maxH: 3 }, "중": { n: [6, 8],   grid: "S", maxH: 3 },
+          "상": { n: [8, 11],  grid: "S",  maxH: 3 }, "최상": { n: [10, 14], grid: "M", maxH: 3 } },
+    S3: { "하": { n: [5, 8],   grid: "S",  maxH: 3 }, "중": { n: [8, 11],  grid: "S", maxH: 3 },
+          "상": { n: [10, 14], grid: "S",  maxH: 4 }, "최상": { n: [13, 18], grid: "M", maxH: 4 } },
+    S4: { "하": { n: [6, 9],   grid: "S",  maxH: 3 }, "중": { n: [9, 13],  grid: "S", maxH: 3 },
+          "상": { n: [12, 18], grid: "M",  maxH: 4 }, "최상": { n: [16, 24], grid: "M", maxH: 4 } },
+    S5: { "하": { n: [9, 13],  grid: "S",  maxH: 3 }, "중": { n: [12, 18], grid: "M", maxH: 4 },
+          "상": { n: [16, 24], grid: "M",  maxH: 4 }, "최상": { n: [22, 32], grid: "L", maxH: 5 } }
   };
 
   // ── ① 유형 게이트 — 개수만 줄인다고 저학년용이 되지 않는다 ──
@@ -101,15 +110,17 @@
     //   개수 밴드를 그냥 적용하면 최상 칸 수가 오히려 늘어난다(실측 17 → p90 23).
     //   고유축 = 굴곡(인접 칸 높이차 평균). remap v0.7 이 지정했는데 구현되지 않았던 축이다.
     heightmap: {
-      foot: {                                    // 칸 수 상한(=발자국). 스테이지 × 등급
-        S1: { "하": 2, "중": 3, "상": 4,  "최상": 5  },
+      // 칸 수 상한(=발자국). 문제집 실측 '사용 칸 4~8' 에 맞춰 v0.4 에서 낮췄다.
+      foot: {
+        S1: { "하": 2, "중": 3, "상": 3,  "최상": 4  },
         S2: { "하": 3, "중": 4, "상": 5,  "최상": 6  },
-        S3: { "하": 4, "중": 6, "상": 7,  "최상": 9  },
-        S4: { "하": 6, "중": 9, "상": 12, "최상": 15 },
-        S5: { "하": 8, "중": 12, "상": 16, "최상": 20 }
+        S3: { "하": 4, "중": 5, "상": 6,  "최상": 7  },
+        S4: { "하": 4, "중": 6, "상": 8,  "최상": 9  },
+        S5: { "하": 6, "중": 8, "상": 11, "최상": 13 }
       },
-      // 열 높이 배수(개수 = 칸 수 × 이 배수) — 등급이 오를수록 높이 변화가 커진다
-      hMul:   { "하": [1.0, 1.35], "중": [1.25, 1.7], "상": [1.5, 2.1], "최상": [1.8, 3.0] },
+      // 열 높이 배수(개수 = 칸 수 × 이 배수) — 등급이 오를수록 높이 변화가 커진다.
+      //   foot × hMul 이 그 등급의 개수 밴드 안에 떨어지도록 맞춰 뒀다.
+      hMul:   { "하": [1.3, 1.7], "중": [1.5, 2.0], "상": [1.7, 2.2], "최상": [1.9, 2.5] },
       rugged: { "하": [0, 0.75],   "중": [0.6, 1.1],  "상": [0.9, 1.3], "최상": [1.15, 99] }
     },
 
@@ -140,6 +151,18 @@
   var BOX_TYPES = { count: 1, volume: 1, surface: 1 };
   var BOX_RATE = 0.5;                     // '하' 문항의 절반
 
+  // ── 겨냥도(3D 형상)를 그대로 제시하는 6종 ──
+  //   이 6종에만 capHiddenToOne + 위모양 동봉을 적용한다.
+  //   ⚠ hidden(A-a~f)·minmax·manip 에는 절대 적용하지 않는다 —
+  //     A-f 의 정답이 곧 '숨은 열의 자유도 곱'이라, 높이를 1 로 고정하면 정답이 항상 1이 된다.
+  //     A-a/A-b 도 가림 자체가 문제의 대상이므로 손대면 안 된다.
+  var ISO_TYPES = { count: 1, volume: 1, surface: 1, heightmap: 1, facesMc: 1, facesDraw: 1 };
+
+  // ── 지면(worksheets 독립 생성) 적합도 ──
+  //   위모양 동봉 후 6종은 3D 회전 없이 풀린다 → paper-safe.
+  //   H-a/H-b 만 제외: '표시한 줄'이 빨강 색상뿐이라 흑백 인쇄에서 지시 대상이 사라진다.
+  var PAPER_UNSAFE = { "manip:H-a": 1, "manip:H-b": 1 };
+
   // ── 헬퍼 ──
   function pick(rng, arr) { return arr[Math.floor(rng() * arr.length)]; }
   function band(rng, lo, hi) { return lo + (hi - lo) * rng(); }
@@ -167,6 +190,14 @@
   }
   // 그 스테이지에서 열린 유형 목록(랜딩 카드 필터용)
   function typesFor(stage) { return Object.keys(GATE[normStage(stage)] || {}); }
+
+  // 지면(worksheets 독립 생성)에서 성립하는가.
+  //   위모양 동봉 + 숨은 열 높이 1 규약으로 겨냥도 6종이 지면에서 풀리게 됐다.
+  //   남은 예외는 H-a/H-b 뿐 — '표시한 줄'이 빨강 색상뿐이라 흑백 인쇄에서 지시 대상이 사라진다.
+  //   ⚠ quiz 를 거쳐 만든 문제지는 이 게이트를 적용하지 않는다(QR·링크로 잇는다).
+  function paperSafe(type, sub) {
+    return !PAPER_UNSAFE[sub ? (type + ":" + sub) : type];
+  }
 
   // ── facesDraw 출제 형식 (§4.8) ──
   //   모양이 1개면 위·앞·옆 세 면을 모두 그린다. 모양이 여러 개면 모양마다 한 면씩.
@@ -245,7 +276,10 @@
       needBand: ax.needBand ? ax.needBand[label] : null,  // manip H-c 정답값 밴드
       views: viewsFor(type, label),                       // facesDraw 출제 형식
       group: groupFor(type, label),                       // 같은 방향을 몇 문항 연속으로
-      flatten: !!STAGES[stage].flatten,             // S2·S3 는 가림 금지
+      flatten: !!STAGES[stage].flatten,             // S2·S3 는 가림 자체 금지
+      // 겨냥도 6종만: 가림은 남기되 숨은 열 높이를 1 로 고정 → 위모양과 함께 주면 답이 유일해진다
+      capHidden: !!(STAGES[stage].capHidden && ISO_TYPES[type]),
+      withTop: !!ISO_TYPES[type],                   // 제시물에 '위에서 본 모양'을 동봉
       subs: subsFor(type, stage),
       _meta: { stage: stage, label: label, grid: b.grid, n: n, foot: f }
     };
@@ -256,7 +290,7 @@
     GRID: GRID, ORDER: ORDER,
     STAGES: STAGES, STAGE_ORDER: STAGE_ORDER, DEFAULT_STAGE: DEFAULT_STAGE,
     BANDS: BANDS, GATE: GATE, TYPE_AXES: TYPE_AXES,
-    stages: stages, typesFor: typesFor, subsFor: subsFor,
+    stages: stages, typesFor: typesFor, subsFor: subsFor, paperSafe: paperSafe,
     support: support, resolveCfg: resolveCfg, normStage: normStage
   };
   global.CubeNest = global.CubeNest || {};
