@@ -1021,7 +1021,16 @@
         const html = pr.type==="minmax" ? renderGGiven(pr)
                    : pr.type==="manip"  ? renderMGiven(pr)
                    : pr.type==="hidden" ? renderHiddenGiven(pr,sh)
-                   : (sh ? `<div class="viewer">${renderIso(sh,0)}</div>` : "");   // 3D 6종 = 2D 겨냥도로 인쇄
+                   // 3D 6종 = 2D 겨냥도로 인쇄. ⚠ 위모양(pr.top)을 반드시 함께 실어야 한다 —
+                   //   겨냥도만 인쇄하면 안 보이는 자리의 높이가 정해지지 않아 종이에서 답이 없다.
+                   //   게다가 payload 에 top 이 있으면 문제지가 "지면에서 풀린다"고 판단해 QR 도 안 붙여
+                   //   위모양도 QR 도 없는 최악의 조합이 된다(실제 흐름 자동검증에서 이 상태로 나왔다).
+                   //   ⚠ 겨냥도는 반드시 .isofig 로 감싼다. renderIso 의 SVG 는 viewBox 만 있고
+                   //     고유 폭이 없어서, 감싸지 않으면 문제지에서 크기 규칙이 안 먹어 아주 작게 나온다
+                   //     (독립 생성 경로 toPayload 는 감싸는데 여기만 빠져 있었다 — 실촬영에서 드러남).
+                   : (sh ? `<div class="viewer"><div class="isofig">${renderIso(sh,0)}</div>`
+                         + (pr.top ? `<div class="pv">${renderSil(pr.top,"#3f8fd0")}<span>위에서 본 모양</span></div>` : "")
+                         + `</div>` : "");
         // 화면 렌더러는 문항이 하나뿐이라 id="iso" 를 쓰지만, 문제지엔 여러 문항이 한 페이지에
         // 들어가 id 가 중복된다 → 클래스로 바꿔 넘긴다.
         return html.replace(/id="iso"/g,'class="isofig"');
