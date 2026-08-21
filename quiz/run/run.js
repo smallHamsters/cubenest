@@ -236,9 +236,8 @@
       function renderMGiven(pr){
         const g=pr.given, cap=t=>`<div class="rotcap">${t}</div>`;
         if(g.kind==="isoMark"){
-          const d=g.delta, txt=d>0?`<b style="color:#c33a4f">빨강으로 표시한 줄</b>에 <b>${d}개를 더 쌓아요</b>`
-                                  :`<b style="color:#c33a4f">빨강으로 표시한 줄</b>에서 <b>${-d}개를 빼내요</b>`;
-          return `<div class="viewer"><div id="iso">${g.iso||""}</div>${cap(txt)}</div>`;
+          // 문구는 공용 모듈이 단일 출처다(FIG.givenCaption) — 미리보기·문제지와 같은 말을 써야 한다.
+          return `<div class="viewer"><div id="iso">${g.iso||""}</div>${cap(FIG?FIG.givenCaption(g):"")}</div>`;
         }
         if(g.kind==="paintedCube"){
           // 직육면체로 일반화됨(§4.10) — box 가 없는 옛 인스턴스는 정육면체로 되읽는다.
@@ -482,7 +481,7 @@
         const force3D=(pr.dim||"any")==="3d";
         const has3D=!!window.THREE && !!VIEWER && (force3D || PRM.dim!=="2d") && !isViews && !isHidden && !isManip;
         const gk=(pr.given&&pr.given.kind)||"";
-        const GIVENLABEL={numTop:"위에서 본 수",sils:"위·앞·옆",layers:"층별 모양",topOneSil:"위 + 한 방향",isoTop:"2D 겨냥도",paintedCube:"색칠한 정육면체"};
+        const GIVENLABEL={numTop:"위에서 본 수",sils:"위·앞·옆",layers:"층별 모양",topOneSil:"위 + 한 방향",isoTop:"2D 겨냥도",isoMark:"겨냥도 + 표시한 줄",paintedCube:"색칠한 정육면체"};
         const viewLabel=(isViews||isHidden||isManip)?(GIVENLABEL[gk]||"2D 겨냥도"):(has3D?"3D 문제":"2D 겨냥도");
         const viewerHTML=isViews
           ? renderGGiven(pr)

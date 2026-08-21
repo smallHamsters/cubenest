@@ -104,7 +104,9 @@
           manip: ["H-c"] },
     S4: { count: true, volume: true, surface: true, heightmap: true,
           facesMc: true, facesDraw: true,
-          hidden: ALL_A, minmax: ALL_G, manip: ["H-c", "H-d"] },
+          // H-a/H-b 는 '그리기'가 열린 학년에만 둔다(사용자 결정 260821) — 답이 삼면도라
+          // facesDraw 가 열린 스테이지가 곧 이 둘이 성립하는 스테이지다. 현재는 S4 뿐.
+          hidden: ALL_A, minmax: ALL_G, manip: ["H-a", "H-b", "H-c", "H-d"] },
     S5: { count: true, volume: true, surface: true, heightmap: true,
           facesMc: true, facesDraw: true,
           hidden: ALL_A, minmax: ALL_G, manip: ["H-a", "H-b", "H-c", "H-d"] }

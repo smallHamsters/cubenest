@@ -189,6 +189,25 @@
     return reshape({ gx: m, gz: m, maxH: m, edge: edge || 1 }, H);
   }
 
+  // H-c(정육면체 완성) 모양 — 정답값(need)에서 거꾸로 만든다.
+  //   H-c 의 부담은 개수가 아니라 정답값('더 필요한 개수')이라, 개수 밴드로는 제어할 수 없다.
+  //   ⚠ 겨냥도로 현재 개수를 세야 하므로 숨은 열이 있으면 성립하지 않는데, genCubeGap 의
+  //     비증가 높이 구성이 그것을 구조적으로 막는다. 이미 정육면체면 답이 0이라 출제 불가인 것도
+  //     need ≥ 1 을 목표로 잡아 피한다.
+  //   H-a/H-b 가 후보를 못 찾았을 때의 대체 경로도 **이 함수를 쓴다** — 두 곳에서 각자 만들면
+  //   한쪽만 밴드를 지키게 된다(실제로 그랬다).
+  function buildHc(o, MP, hmOfM) {
+    var mC = Math.max(2, (o.cfg && o.cfg.cubeM) || 3);
+    var nb = (o.cfg && o.cfg.needBand) || [2, 6];
+    var needMaxPossible = mC * mC * mC - (mC + mC * mC - 1);
+    var nLoC = Math.max(1, Math.min(nb[0], needMaxPossible));
+    var nHiC = Math.max(nLoC, Math.min(nb[1], needMaxPossible));
+    var needT = nLoC + Math.floor(rngFrom(o.seed + ':hcn' + o.index)() * (nHiC - nLoC + 1));
+    var shC = genCubeGap(rngFrom(o.seed + ':hcs' + o.index), mC, needT, o.cfg && o.cfg.edge);
+    var cc = MP.completeCube(hmOfM(shC));                  // 서버가 정답의 단일 출처 — 되계산해 확인
+    return { sh: shC, m: cc.m, need: cc.need };
+  }
+
   // 스테이지가 허용하는 서브만 남긴다(유형 고유축 pool ∩ 스테이지 게이트).
   function poolGate(pool, subs) {
     if (!subs || !subs.length) return pool;
@@ -435,8 +454,11 @@
       var MP = (global.CubeNest && global.CubeNest.manip) || null;
       var HDp = (global.CubeNest && global.CubeNest.hidden) || null;
       var hmOfM = function (s) { return C.heightMap(coreShape(s)); };
-      // H-a/H-b 는 답이 '삼면도 그리기'라 격자 부담이 크다 → facesDraw 와 같은 이유로 최상 제외(상만).
-      var mPool = o.level === '상' ? ['H-c', 'H-d', 'H-a', 'H-b'] : ['H-c', 'H-d'];
+      // H-a/H-b 등급 제한('상만', v0.10.2)은 폐기한다. 스테이지 게이트가 생긴 뒤로 "어느 등급에
+      // 낼지"는 GATE 와 support() 가 정하는데(열려 있으면 4등급 전부), 여기서 한 번 더 거르면
+      // **랜딩은 4등급을 파는데 생성기는 상에서만 뽑는** 어긋남이 된다. 격자 부담은 등급이
+      // 개수·격자·높이로 이미 조절한다(실측 답안칸: 하·중 27 / 상·최상 48).
+      var mPool = ['H-c', 'H-d', 'H-a', 'H-b'];
       mPool = poolGate(mPool, o.cfg && o.cfg.subs);            // 스테이지 게이트(S3=H-c / S4=H-c·H-d)
       var msub = (o.sub && /^H-[abcd]$/.test(o.sub)) ? o.sub
                : mPool[Math.floor(rngFrom(o.seed + ':msub' + o.index)() * mPool.length)];
@@ -471,36 +493,43 @@
           // 결과가 연결·비어있지 않음 ③ 삼면도가 실제로 달라짐(안 그러면 답=원본).
           var add = msub === 'H-a';
           var fm3 = rngFrom(o.seed + ':hf' + o.index)() < 0.5 ? 'lower' : 'raise';
-          var g6 = 0, cands = [];
+          // ⚠ resolveCfg 는 발자국 f 와 개수 n 을 **하나의 값으로 고정**한다. 그래서 n = f×maxH
+          //   (모든 열이 높이 상한) 이면 H-a 는 더 쌓을 자리가 없고, 같은 cfg 로 60번을 다시
+          //   뽑아도 결과가 같다 — 실측 S4 하·중에서 3% 가 이 포화로 H-c 대체로 떨어졌다.
+          //   그래서 첫 실패에서 cfg 를 개수 밴드 전체로 넓혀 여유 있는 모양이 나오게 한다.
+          //   (nBand 는 그대로라 makeShape 의 밴드 준수 검사는 변하지 않는다.)
+          var cfgTry = o.cfg, g6 = 0, cands = [];
           for (;;) {
-            sh = flattenInBand(sh, o.cfg, HDp, fm3 === 'raise');
+            sh = flattenInBand(sh, cfgTry, HDp, fm3 === 'raise');
             cands = MP.opCandidates(hmOfM(sh), sh.maxH, add);
             if (cands.length || g6++ >= 60) break;
-            sh = makeShape(rng, o.cfg);
+            if (g6 === 1 && cfgTry.nBand) {
+              var cells6 = cfgTry.gx * cfgTry.gz;
+              cfgTry = Object.assign({}, o.cfg, {
+                nMin: cfgTry.nBand[0], nMax: cfgTry.nBand[1],
+                fMin: Math.max(1, cfgTry.fMin - 1), fMax: Math.min(cells6, cfgTry.fMax + 2)
+              });
+            }
+            sh = makeShape(rng, cfgTry);
           }
           if (cands.length) {
             var pick = cands[Math.floor(rngFrom(o.seed + ':hop' + o.index)() * cands.length)];
             out.target = pick[0]; out.delta = pick[1];
             out.resSh = reshape(sh, MP.applyDelta(hmOfM(sh), pick[0], pick[1]));
           } else {
-            msub = 'H-c';                                  // 끝내 못 만들면 같은 등급의 H-c 로 대체
-            out.m = MP.completeCube(hmOfM(sh)).m; out.need = MP.completeCube(hmOfM(sh)).need;
+            // 끝내 못 만들면 같은 등급의 H-c 로 대체한다.
+            // ⚠ 예전엔 여기서 '현재 모양'에 completeCube 를 돌렸다. 그러면 정답이 m³−개수 라
+            //   needBand 를 통째로 무시하고(S4 상에서 46~52, 밴드는 [10,25]),
+            //   모양이 이미 정육면체면 need=0 인 출제 불가 문항이 나왔다.
+            //   → 정상 H-c 와 **같은 경로**(buildHc)로 만든다.
+            msub = 'H-c';
+            var hcF = buildHc(o, MP, hmOfM);
+            sh = hcF.sh; out.m = hcF.m; out.need = hcF.need;
           }
         } else {
           msub = 'H-c';
-          // ⚠ 겨냥도를 보고 현재 개수를 세야 하므로 숨은 열이 있으면 문제가 성립하지 않는다.
-          //   (G-c 와 같은 이유) + 이미 정육면체면 '더 필요한 수'가 0이라 출제 불가.
-          var fm2 = rngFrom(o.seed + ':hf' + o.index)() < 0.5 ? 'lower' : 'raise';
-          // H-c 의 부담은 개수가 아니라 정답값('더 필요한 개수')이다. 답에서 거꾸로 모양을 만든다.
-          var mC = Math.max(2, (o.cfg && o.cfg.cubeM) || 3);
-          var nb = (o.cfg && o.cfg.needBand) || [2, 6];
-          var needMaxPossible = mC * mC * mC - (mC + mC * mC - 1);
-          var nLoC = Math.max(1, Math.min(nb[0], needMaxPossible));
-          var nHiC = Math.max(nLoC, Math.min(nb[1], needMaxPossible));
-          var needT = nLoC + Math.floor(rngFrom(o.seed + ':hcn' + o.index)() * (nHiC - nLoC + 1));
-          sh = genCubeGap(rngFrom(o.seed + ':hcs' + o.index), mC, needT, o.cfg && o.cfg.edge);
-          var cc = MP.completeCube(hmOfM(sh));               // 서버가 정답의 단일 출처 — 되계산해 확인
-          out.m = cc.m; out.need = cc.need;
+          var hc0 = buildHc(o, MP, hmOfM);
+          sh = hc0.sh; out.m = hc0.m; out.need = hc0.need;
         }
       }
       out.sh = sh; out.sub = msub;

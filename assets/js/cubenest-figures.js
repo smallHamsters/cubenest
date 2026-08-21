@@ -116,8 +116,22 @@
     return { gx: gx, gz: gz, maxH: g.maxH || Math.max(1, maxH), hmap: hmap, cells: cells, edge: 1, _partial: partial };
   }
 
+  // 제시물 자체가 말해 주지 못하는 조건을 한 줄로. **여기가 단일 출처다.**
+  //   isoMark(H-a/H-b)는 '어느 줄인가'가 겨냥도의 빨강뿐이라, 이 문구가 없으면
+  //   미리보기·문제지에서 빨강이 무슨 뜻인지 알 길이 없다(run.js 에만 있던 문구를 승격).
+  function givenCaption(g) {
+    if (!g) return '';
+    if (g.kind === 'isoMark') {
+      var d = g.delta;
+      return d > 0
+        ? '<b style="color:#c33a4f">빨강으로 표시한 줄</b>에 <b>' + d + '개를 더 쌓아요</b>'
+        : '<b style="color:#c33a4f">빨강으로 표시한 줄</b>에서 <b>' + (-d) + '개를 빼내요</b>';
+    }
+    return '';   // 나머지는 발문이 조건을 다 말한다 — 캡션을 붙이면 같은 말이 두 번 나온다
+  }
+
   // ── 제시물 그림 (종류별) ──
-  //   opts.caption = 그림 아래 안내 문구(HTML 허용). 없으면 그림만.
+  //   opts.caption = 그림 아래 안내 문구(HTML 허용). 안 주면 givenCaption 이 정한다.
   function renderGiven(g, opts) {
     opts = opts || {};
     var body = '';
@@ -131,7 +145,8 @@
     }
     else if (g.kind === 'isoTop') body = '<div class="isofig">' + (g.iso || '') + '</div>' + (g.top ? pv(renderSil(g.top, B), '위에서 본 모양') : '');
     else if (g.kind === 'isoMark' || g.kind === 'paintedCube') body = '<div class="isofig">' + (g.iso || '') + '</div>';
-    var cap = opts.caption ? '<div class="rotcap">' + opts.caption + '</div>' : '';
+    var capTxt = (opts.caption != null) ? opts.caption : givenCaption(g);
+    var cap = capTxt ? '<div class="rotcap">' + capTxt + '</div>' : '';
     return '<div class="viewer">' + body + cap + '</div>';
   }
 
@@ -183,7 +198,7 @@
     renderSil: renderSil, renderThreeViews: renderThreeViews,
     renderTopNums: renderTopNums, renderLayers: renderLayers,
     drawDims: drawDims, renderDrawGrids: renderDrawGrids,
-    shapeFromGiven: shapeFromGiven, renderGiven: renderGiven,
+    shapeFromGiven: shapeFromGiven, renderGiven: renderGiven, givenCaption: givenCaption,
     renderQuestion: renderQuestion, answerText: answerText
   };
   global.CubeNest = global.CubeNest || {};
