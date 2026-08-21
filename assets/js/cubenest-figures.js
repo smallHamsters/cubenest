@@ -16,7 +16,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.1.0';
+  var VERSION = '0.2.0';   // 0.2.0 = renderQuestion·answerText 승격(미리보기·문제지 공용)
   var B = '#3f8fd0', G = '#4fae72', R = '#d0546f';   // 위·앞·옆 방향색
 
   // ── 방향별 실루엣: 앞=x별 max_z, 옆=z별 max_x(막대) / 위=발자국(격자) ──

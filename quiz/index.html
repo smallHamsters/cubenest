@@ -206,6 +206,13 @@
 .pv-body .opt{position:relative;border:1.5px solid var(--line);background:var(--panel);border-radius:13px;padding:8px;display:flex;align-items:center;justify-content:center;min-height:92px;}
 .pv-body .opt svg{width:76px;height:76px;max-width:100%;}
 .pv-body .optno{position:absolute;top:6px;left:9px;font-size:11px;font-weight:800;color:var(--muted-2);}
+/* 그리기 정답 격자 — 문제지 정답지와 같은 렌더러(FIG.renderDrawGrids)를 쓰므로 클래스도 같다 */
+.pv-body .draw{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:8px;}
+.pv-body .dview{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.pv-body .dview span{font-size:12px;font-weight:800;color:#0b6e3e;}
+.pv-body .dgrid{display:grid;gap:2px;background:#b7e2c7;padding:2px;border-radius:6px;}
+.pv-body .dcell{width:20px;height:20px;background:#fff;border-radius:3px;}
+.pv-body .dcell.on{background:#4fae72;}
 </style>
 </head>
 <body>
@@ -339,6 +346,11 @@
 <script src="run/api-client.js?v=0.2.0"></script>
 <script>
 if((navigator.language||'').toLowerCase().startsWith('ko')) document.querySelector('[data-brand]').textContent='큐브네스트';
+
+/* F1 계측 — 동의 후 로드된 gtag 가 있을 때만(quiz/run 과 같은 가드).
+   ⚠ 이 페이지는 consent.js 를 싣지 않아 gtag 가 없다. 그래도 **정의는 있어야 한다** —
+     없으면 호출한 함수가 ReferenceError 로 통째로 죽는다(예시 미리보기가 이걸로 안 열렸다). */
+function track(name,params){ try{ if(window.gtag) window.gtag('event',name,params||{}); }catch(e){} }
 
 const LEVELS=['하','중','상','최상'];
 const LVL_CODE={'하':'1','중':'2','상':'3','최상':'4'}, CODE_LVL={'1':'하','2':'중','3':'상','4':'최상'};
@@ -494,7 +506,11 @@ const catAcc=document.getElementById('catAcc');
 function renderAcc(){
   catAcc.innerHTML='';
   CATS.forEach((c,ci)=>{
-    const kids=kidsOf(c.id).filter(t=> state.edu==='all' || t.edu.includes(state.edu));
+    // ⚠ 학년 게이트를 카드 격자만 적용하고 이 목록엔 안 걸어 두면, 유아에게 '안 보이는 나무'가
+    //   버젓이 보이고 눌리기까지 한다(서버는 닫힌 유형이라 엉뚱한 등급으로 떨어진다).
+    //   카드와 같은 규칙(gateFor)을 쓴다. status:'soon' 은 학년과 무관한 예고라 그대로 둔다.
+    const kids=kidsOf(c.id).filter(t=> (state.edu==='all' || t.edu.includes(state.edu))
+                                       && (t.status!=='live' || !!gateFor(t,state.stage)));
     if(!kids.length) return;
     const det=document.createElement('details'); det.className='cat-det'; if(c.id==='hidden')det.open=true;
     const sum=document.createElement('summary');
@@ -590,8 +606,11 @@ function start(t){
    같은 서버·같은 렌더러를 쓰면 "예시로 본 것"과 "실제 푸는 것"이 정의상 같다.
    정답은 여기서도 /generate 응답에 없다 — 눌렀을 때 /grade 가 answerKey 를 준다(§6.7 은닉 유지). */
 const FIG=(window.CubeNest&&window.CubeNest.figures)||null;
-const PV={t:null,probs:[],i:0,seed:'',levels:[],n:3,busy:false};
+const PV={t:null,probs:[],i:0,seed:'',levels:[],n:3};
 const pvEl=id=>document.getElementById(id);
+// 요청 토큰 — 예시를 연달아 누르면 앞선 요청이 늦게 도착해 **다른 유형의 문항**을 그리거나
+// 빈 모달이 남는다(실제로 두 번 눌러 재현했다). 늦게 온 응답은 여기서 버린다.
+let PVREQ=0;
 
 function levelsForStart(t){
   const sup=levelsOf(t);
@@ -610,24 +629,28 @@ function openPreview(t){
   pvFetch();
 }
 function closePreview(){
+  PVREQ++;                                   // 진행 중이던 요청의 응답을 무효화
   const back=pvEl('pvBack'); back.classList.remove('show'); back.hidden=true;
   document.body.style.overflow=''; PV.t=null; PV.probs=[];
 }
 async function pvFetch(){
-  if(PV.busy) return; PV.busy=true;
+  const my=++PVREQ;
   pvEl('pvBody').innerHTML='<div class="pv-load">예시를 불러오는 중…</div>';
   pvEl('pvCnt').textContent='–';
+  const t=PV.t;
   try{
     const r=await CubeNest.api.generate({
-      theme:PV.t.type||PV.t.id, sub:PV.t.sub||undefined,
+      theme:t.type||t.id, sub:t.sub||undefined,
       levels:PV.levels, n:PV.n, seed:PV.seed, stage:state.stage,
     });
+    if(my!==PVREQ) return;                   // 그 사이 다른 유형을 눌렀거나 닫았다
     PV.probs=(r.problems||[]).map(p=>({id:p.id,gsig:p.gsig,gp:p._gp,ans:null}));
     PV.i=0; pvRender();
   }catch(e){
+    if(my!==PVREQ) return;
     pvEl('pvBody').innerHTML='<div class="pv-err">'+(e&&e.rate?'요청이 조금 많았어요. 잠시 뒤 다시 눌러 주세요.'
       :e&&e.network?'인터넷 연결을 확인해 주세요.':'예시를 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.')+'</div>';
-  }finally{ PV.busy=false; }
+  }
 }
 // explain(제출 후 공개되는 모양) → 렌더러가 먹는 sh
 function pvShape(ex){
@@ -662,16 +685,25 @@ async function pvToggleAnswer(){
     const r=await CubeNest.api.grade({id:p.id, gsig:p.gsig, answer:null,
       params:{theme:PV.t.type||PV.t.id, levels:PV.levels, n:PV.n, edu:null,
               stage:state.stage, sub:PV.t.sub||undefined}});
-    p.ans=pvAnswerHTML(r.answerKey||{}, r.explain, p.gp.unit||'');
+    p.ans=pvAnswerHTML(r.answerKey||{}, r.explain, p.gp);
     track('quiz_preview_answer',{type:PV.t.type||PV.t.id,stage:state.stage});
   }catch(e){
     p.ans='<div class="pv-ans" style="background:var(--del-soft);border-color:#f2c3cf;color:#a52a49">정답을 불러오지 못했어요.</div>';
   }finally{ btn.disabled=false; pvRender(); }
 }
-function pvAnswerHTML(key, explain, unit){
-  const sh=pvShape(explain);
-  if(FIG&&sh&&key.type==='drawSil')   return `<div class="pv-ans">정답 — 위·앞·옆에서 본 모양${FIG.renderThreeViews(FIG.silsOf(sh))}</div>`;
+// 정답을 '읽을 수 있는 것'으로. 좌표 나열·"아래 그림 참고" 같은 표기는 미리보기에선 무의미하다.
+function pvAnswerHTML(key, explain, gp){
+  const sh=pvShape(explain), unit=(gp&&gp.unit)||'';
+  const VL={top:'위',front:'앞',side:'옆'};
+  if(FIG&&sh&&key.type==='drawSil'){
+    // ⚠ 반드시 물어본 방향(gp.views)만 그린다 — 세 칸을 다 그리면 안 물어본 면까지 알려준다.
+    const vs=(gp&&gp.views&&gp.views.length)?gp.views:['top','front','side'];
+    return `<div class="pv-ans">정답 — <b>${vs.map(v=>VL[v]||v).join('·')}</b>에서 본 모양`
+      +FIG.renderDrawGrids(sh,20,new Set(key.cells||[]),vs)+`</div>`;
+  }
   if(FIG&&sh&&key.type==='markCount') return `<div class="pv-ans">정답 — 칸마다 쌓인 나무 수<div style="margin-top:6px">${FIG.renderTopNums(sh)}</div></div>`;
+  // 숨은 칸(A-b) — "(0,0)" 대신 위에서 본 모양에 그 칸을 초록으로 표시한다.
+  if(FIG&&sh&&key.type==='markCells') return `<div class="pv-ans">정답 — <b>초록</b>이 안 보이는 나무가 숨은 칸<div style="margin-top:6px">${FIG.renderTopNums(sh,new Set(key.cells||[]))}</div></div>`;
   return `<div class="pv-ans">정답 <b>${FIG?FIG.answerText(key,unit):'—'}</b></div>`;
 }
 pvEl('pvClose').onclick=closePreview;
