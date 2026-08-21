@@ -311,20 +311,9 @@
         for(let i=opts.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[opts[i],opts[j]]=[opts[j],opts[i]];}
         return {opts,correct:opts.findIndex(o=>silSig(o)===key)};
       }
-      // 나침반: 위에서 본 정사각형이 회전(원래 '앞'면=아래 굵은 선). 얼마나·어느 쪽으로 돌렸는지 직관 표시.
-      function renderCompass(k){
-        const ang=k*90;
-        return `<svg viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="30" cy="30" r="26" fill="var(--panel-2)" stroke="var(--line)"/>
-          <g transform="rotate(${ang} 30 30)">
-            <rect x="19" y="19" width="22" height="22" rx="3" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.5"/>
-            <line x1="19" y1="41" x2="41" y2="41" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/>
-            <path d="M30 47 l-3.4 -4.4 h6.8 z" fill="var(--accent)"/>
-          </g>
-        </svg>`;
-      }
-      const ARC_CW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 12a8.5 8.5 0 1 1-2.6-6.1"/><path d="M20.5 4.5v4.5h-4.5"/></svg>';
-      const ARC_CCW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5v4.5h4.5"/></svg>';
+      // [삭제 260821] 나침반·90° 회전 버튼 — 2D 제시물은 서버가 그린 겨냥도 한 장이라
+      //   돌릴 대상이 없고, 3D 는 뷰어가 직접 돌린다. 예전 회전은 #iso 그림만 갱신하고
+      //   답란은 그대로 둬서 heightmap·facesMc 의 방향 기준을 어긋나게 만들었다.
 
       let CURVIEW=null;
       let VIEWLABEL="";      // renderProblem 이 정한 보기 형태 표시(의견 폼과 공유)
@@ -416,10 +405,13 @@
         else if(F==="hm"){ raw.forEach(c=>{const inp=qcard.querySelector('.hmcell input[data-x="'+c.x+'"][data-z="'+c.z+'"]'); if(inp&&c.v!=null)inp.value=c.v;}); }
         else if(F==="draw"){ const set=new Set(raw); qcard.querySelectorAll(".dcell").forEach(cell=>{cell.classList.toggle("on",set.has(cell.closest(".dgrid").dataset.view+","+cell.dataset.c+","+cell.dataset.r));}); }
       }
+      // ⚠ dim 은 화이트리스트를 통과한 값만 보낸다. PRM.dim 의 기본값 "all" 은
+      //   SKEY(이어풀기 키)에 들어 있어 바꾸면 기존 세션이 전부 끊기므로 그대로 두고,
+      //   요청에서만 걸러낸다.
       // [PoC 1단계] 생성만 서버 API 경유(async). 채점·해설은 아직 로컬(다음 단계).
       async function buildSession(){
         S.probs=[];
-        const resp=await CubeNest.api.generate({theme:PRM.type,given:[],ask:null,levels:PRM.levels,seed:PRM.seed,n:PRM.n,config:GEN_CONFIG,edu:PRM.edu,sub:PRM.sub||undefined,stage:PRM.stage||undefined});
+        const resp=await CubeNest.api.generate({theme:PRM.type,given:[],ask:null,levels:PRM.levels,seed:PRM.seed,n:PRM.n,config:GEN_CONFIG,edu:PRM.edu,sub:PRM.sub||undefined,stage:PRM.stage||undefined,dim:(PRM.dim==="2d"||PRM.dim==="3d")?PRM.dim:undefined});
         resp.problems.forEach((p,i)=>{
           const gp=p._gp;                       // 서버 생성 인스턴스(정답 필드는 들어 있지 않다)
           const lv=gp.level;
@@ -429,9 +421,19 @@
           // 발문·답 형식·단위는 **서버가 준 것을 그대로 쓴다**(gp.ask/form/unit).
           // 예전엔 여기서 유형·서브별로 조립했는데, worksheets 문제지가 같은 문구를 써야 해서
           // 두 곳이 각자 만들면 반드시 표류한다(§8.1) → 서버 단일 출처로 옮겼다.
+          // dim = **제시물의 형태**("3d"|"2d"). 서버가 정하지만 여기서 한 번 정규화한다 —
+          //   ⚠ 위의 sh 는 given 이 있으면 givenShape 로 만든 **부분모양**이라 항상 truthy 다.
+          //     그래서 "형상을 실제로 받았는가"(gp.sh)를 기준으로 삼아야 한다. 부분모양을
+          //     3D 로 띄우면 숨은 열이 전부 높이 1인 거짓 입체가 된다.
+          //   이 한 줄이 옛 응답도 함께 바로잡는다 — 예전 서버는 S2·S3 의 minmax/manip/hidden 을
+          //     dim:"3d" 라고 보냈지만 형상이 없어 애초에 3D 가 불가능했다.
+          const dim=(gp.sh && gp.dim!=="2d") ? "3d" : "2d";
           const pr={type:PRM.type,lv,sh,given:gp.given||null,id:p.id,gsig:p.gsig,
                     ask:gp.ask, form:gp.form, unit:gp.unit, sub:gp.sub||null,
-                    stage:gp.stage||null, dim:gp.dim||null, top:gp.top||null};  // 스테이지·보기형태·위모양은 서버가 정한다
+                    stage:gp.stage||null, dim, top:gp.top||null,
+                    // 모서리 길이는 발문에 없다. 2D 는 형상이 없어 sh.edge 가 givenShape 의
+                    //   하드코딩 1 이므로, 서버가 준 이 값이 유일한 출처다.
+                    edge:gp.edge==null?null:gp.edge};  // 스테이지·제시물 형태·위모양은 서버가 정한다
           if(PRM.type==="facesMc"){ pr.opts=gp.opts; pr.dir=gp.dir; }   // 정답 인덱스는 안 온다
           if(PRM.type==="minmax"){ pr.which=gp.which; pr.dir=gp.dir; pr.n=gp.n; }
           if(PRM.type==="manip"){ pr.n=gp.n; pr.k=gp.k; pr.delta=gp.delta; pr.box=gp.box||null; }
@@ -443,9 +445,9 @@
 
       /* ===== 렌더 ===== */
       const qcard=document.getElementById("qcard"),resultEl=document.getElementById("result");
-      let ROT=0,PICK=-1;
+      let PICK=-1;
       function renderProblem(){
-        ROT=0;PICK=-1;
+        PICK=-1;
         const pr=S.probs[S.idx],T=TYPES[pr.type],sh=pr.sh;
         document.getElementById("pg-type").textContent=T.title;
         updateProgress();
@@ -474,23 +476,21 @@
           ans=renderDrawInput(sh, pr.views);
         }
         const askText=pr.ask||T.ask;
-        const edgeTxt=T.edge?`<br>쌓기나무 한 모서리 = ${sh.edge}cm`:"";
+        // 문구는 FIG.edgeNote 가 단일 출처다(문제지·미리보기와 같은 말을 쓴다).
+        //   pr.edge 가 유일한 값 출처다 — 2D 는 형상이 없어 sh.edge 가 1 로 고정이라,
+        //   이 값을 안 쓰면 edge≠1 인 부피·겉넓이 문항이 "1cm" 로 표시돼 전원 오답이 된다.
+        const eNote=FIG?FIG.edgeNote({type:pr.type,edge:pr.edge!=null?pr.edge:sh.edge}):"";
+        const edgeTxt=eNote?`<br>${eNote}`:"";
         const isViews=pr.type==="minmax";
         const isHidden=pr.type==="hidden";
         const isManip=pr.type==="manip";
-        // 저학년(S2·S3)은 정적 겨냥도를 아직 안 배웠다 — 겨냥도는 초5 교과다.
-        //   서버가 문항마다 dim 을 내려보내므로(gen-adapter) 클라가 따로 판단하지 않는다.
-        //   dim==="3d" 면 URL 의 ?dim=2d 보다 서버 판단이 우선한다.
-        const force3D=(pr.dim||"any")==="3d";
-        // dim==="2d" = 서버가 "이 유형은 3D 금지"라고 판정한 것(현재 facesDraw).
-        //   URL 의 ?dim=3d 로도 못 뚫도록 다른 항보다 앞에 둔다.
-        const force2D=(pr.dim||"")==="2d";
-        const has3D=!!window.THREE && !!VIEWER && !force2D && (force3D || PRM.dim!=="2d") && !isViews && !isHidden && !isManip;
-        // 회전 버튼 없는 고정 겨냥도. 회전은 #iso 그림만 돌리고 답란은 안 돌리는데,
-        //   facesDraw 는 답 자체가 방향에 매여 있어 돌려 놓고 그리면 기준이 어긋난다
-        //   (개수·부피처럼 방향 무관한 답이면 지금껏 문제가 안 됐다).
-        //   판단의 출처를 서버 한 곳으로 유지하려고 유형 이름이 아니라 force2D 로 켠다.
-        const noRot=force2D;
+        // dim = 제시물의 형태. 서버가 정하고 buildSession 이 "3d"|"2d" 로 정규화했다.
+        //   ?dim= 는 /generate 요청에만 실린다 — 저학년 3D 고정 등은 서버가 판단한다.
+        const is2D=pr.dim==="2d";
+        // ⚠ THREE·viewer 로드 실패도 여기서 걸러진다. 예전엔 실패하면 3D 유형이 조용히
+        //   '회전되는 2D'로 떨어져, 방향 의존 유형(heightmap·facesMc)의 기준을 망가뜨렸다.
+        //   이제 실패하면 회전 없는 정적 겨냥도로 간다 — 위모양이 함께 오므로 답은 유일하다.
+        const has3D=!is2D && !!window.THREE && !!VIEWER;
         const gk=(pr.given&&pr.given.kind)||"";
         const GIVENLABEL={numTop:"위에서 본 수",sils:"위·앞·옆",layers:"층별 모양",topOneSil:"위 + 한 방향",isoTop:"2D 겨냥도",isoMark:"겨냥도 + 표시한 줄",paintedCube:"색칠한 정육면체"};
         const viewLabel=(isViews||isHidden||isManip)?(GIVENLABEL[gk]||"2D 겨냥도"):(has3D?"3D 문제":"2D 겨냥도");
@@ -503,9 +503,12 @@
           ? renderHiddenGiven(pr,sh)
           : (has3D
           ? `<div class="viewer"><div id="v3d" class="v3d"></div><div class="rotrow2"><div class="rothint">손가락·마우스로 <b>돌려서</b> 위·앞·옆을 확인해요</div><button id="reset3d" class="rotbtn2" type="button">정면</button></div></div>`
-          : (noRot
-          ? `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotcap">겨냥도와 <b>위에서 본 모양</b>을 보고 각 칸을 칠해요</div></div>`
-          : `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotrow"><button id="rl" class="rotbtn wide" type="button" aria-label="왼쪽으로 90도 돌리기">${ARC_CCW}<span>90°</span></button><div id="compass" class="compass" aria-hidden="true">${renderCompass(0)}</div><button id="rr" class="rotbtn wide" type="button" aria-label="오른쪽으로 90도 돌리기">${ARC_CW}<span>90°</span></button></div><div class="rotcap" id="rotcap">버튼으로 쌓기나무를 <b>돌려서</b> 뒤·옆면을 확인해요</div></div>`));
+          // 2D = **서버가 그린 겨냥도**를 그대로 쓴다. 클라가 sh 로 다시 그리면 안 된다 —
+          //   2D 응답의 sh 는 숨은 열이 전부 높이 1인 부분모양이라 거짓 그림이 된다.
+          //   (형상을 못 받았을 때만 renderIso 로 폴백 = 3D 인데 THREE 로드 실패)
+          : `<div class="viewer"><div id="iso">${(pr.given&&pr.given.iso)||renderIso(sh,0)}</div>${
+              pr.top?`<div class="rotcap">겨냥도와 <b>위에서 본 모양</b>을 함께 보고 ${form==="draw"?"각 칸을 칠해요":"답을 구해요"}</div>`:""
+            }</div>`);
         // 위에서 본 모양 동봉(겨냥도 6종) — 서버가 pr.top 을 줄 때만.
         //   겨냥도만으로는 안 보이는 자리의 높이가 정해지지 않는다. 위모양을 함께 줘야
         //   "위모양에 있는데 안 보이면 그 자리는 1개"라는 교과 규약으로 답이 유일해진다.
@@ -519,18 +522,9 @@
           ${viewerHTML}${topHTML}
           <div class="answer">${ans}</div>`;
         if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;} if(EXPLODE&&EXPLODE.dispose){EXPLODE.dispose();EXPLODE=null;} disposeExpViews();
-        if(!isViews && !isHidden && !isManip){
-        if(has3D){
+        if(has3D && !isViews && !isHidden && !isManip){
           CURVIEW=VIEWER.createViewer(document.getElementById("v3d"),{THREE:window.THREE,shape:coreShape(sh),showLabels:true});
           const rb=document.getElementById("reset3d"); if(rb)rb.onclick=()=>{CURVIEW&&CURVIEW.reset();track("quiz_view_reset",{});};
-        }else if(!noRot){
-          const updRot=()=>{document.getElementById("iso").innerHTML=renderIso(sh,ROT);document.getElementById("compass").innerHTML=renderCompass(ROT);document.getElementById("rotcap").innerHTML=`버튼으로 쌓기나무를 <b>돌려서</b> 뒤·옆면을 확인해요`;};
-          // ⚠ null 가드 — .onclick 직접 대입이라 요소가 없으면 TypeError 로 renderProblem 이
-          //   통째로 죽고 빈 카드가 뜬다. 분기 조건과 이중으로 막는다.
-          const bl=document.getElementById("rl"), br=document.getElementById("rr");
-          if(bl)bl.onclick=()=>{ROT=(ROT+3)%4;updRot();track("quiz_rotate",{dir:"ccw",deg:ROT*90});};
-          if(br)br.onclick=()=>{ROT=(ROT+1)%4;updRot();track("quiz_rotate",{dir:"cw",deg:ROT*90});};
-        }
         }
         if(SCRATCH) SCRATCH.show(S.idx);
         const fb0=document.getElementById("fb"); fb0.className="fb"; fb0.innerHTML=""; fb0.hidden=false;
@@ -769,6 +763,9 @@
         }
         const st=S.state[S.idx]||{}, key=st.key||{}, ok=!!st.ok;
         // 해설용 모양 — 제출 후엔 밝혀도 되므로 explain 으로 되만든다(은닉 유형은 이때 처음 받는다).
+        //   ⚠ 뒤의 pr.sh 폴백은 2D 응답에선 **부분모양**(숨은 열 높이 1)이라 거짓 그림이 된다.
+        //     explainFor 가 유형과 무관하게 항상 cells 를 주고 채점 실패 시엔 위에서 return 하므로
+        //     실제로는 닿지 않는 길이다. 해설의 3D 는 제출 후라 dim 을 보지 않는다(의도).
         const sh=(st.explain&&shFromCells(st.explain))||pr.sh;
         let sol="";
         if(F==="num"){
@@ -1096,7 +1093,9 @@
           const pr=S.probs[i];
           problems.push({
             n:i+1, type:pr.type, sub:pr.sub||null, level:pr.lv, edu:PRM.edu||null,
-            ask:pr.ask||TYPES[pr.type].ask,
+            // ⚠ 모서리 길이를 발문에 합쳐 넣는다. 문제지는 ask 만 인쇄하므로,
+            //   안 넣으면 부피·겉넓이가 **모서리 길이 없이** 인쇄돼 종이에서 답을 구할 수 없다.
+            ask:(pr.ask||TYPES[pr.type].ask)+(FIG&&FIG.edgeNote({type:pr.type,edge:pr.edge!=null?pr.edge:(pr.sh&&pr.sh.edge)})?' '+FIG.edgeNote({type:pr.type,edge:pr.edge!=null?pr.edge:(pr.sh&&pr.sh.edge)}):''),
             figure: figureOf(pr,i),                                   // 제시물 그림(SVG/HTML) — 인쇄 시 벡터 그대로
             answerArea: answerAreaOf(pr,i),                           // 종이에서 답을 적는 자리(폼별)
             answerText: answerTextOf(pr,i), answerFigure: answerFigureOf(pr,i),

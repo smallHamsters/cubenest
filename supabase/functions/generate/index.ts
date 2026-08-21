@@ -18,6 +18,10 @@ Deno.serve(async (req: Request) => {
   const seed = (body.seed && String(body.seed)) || Math.random().toString(36).slice(2, 9);
   const edu = body.edu ?? null;
   const stage = body.stage ?? null;                 // 연령 스테이지(S2~S5). 없으면 서버 기본 S4(초6)
+  // 제시물의 형태 요청. 화이트리스트로만 받는다(그 외는 null = 서버 기본).
+  //   ⚠ buildProbs·paramsHash 에는 절대 넣지 않는다 — dim 은 정답을 바꾸지 않으므로
+  //     지문에 넣으면 진행 중이던 세션·공유 링크의 gsig 가 전부 403 이 된다(stage 때 겪었다).
+  const dim = body.dim === "2d" ? "2d" : body.dim === "3d" ? "3d" : null;
   if (!theme) return json(req, { error: "theme 필요" }, 400);
 
   // TODO: 매트릭스 검증(theme,given,ask,subtype 존재 조합인지)
@@ -41,7 +45,7 @@ Deno.serve(async (req: Request) => {
         // present(모양 통째 중복)는 폐지 — 클라 소비처가 없는데 모양만 한 번 더 노출시켰다.
         grade: "server", answerKey: null,
         gsig: await sign(id, ph),
-        _gp: questionFor(pr, i, seed, theme),   // 렌더용 질문 데이터(현행 run 호환)
+        _gp: questionFor(pr, i, seed, theme, dim),   // 렌더용 질문 데이터(현행 run 호환)
       };
     }));
     return json(req, { seed, version: { gen: "1.0.0", config: "1.0.0" }, count: problems.length, problems });

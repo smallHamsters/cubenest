@@ -167,6 +167,10 @@
 .pv-ans{margin:12px 0 0;padding:11px 13px;border-radius:12px;background:var(--add-soft);border:1px solid #b7e2c7;color:#0b6e3e;font-weight:700;font-size:14px;}
 .pv-ans b{font-size:16px;}
 .pv-note{font-size:12px;color:var(--muted-2);font-weight:600;margin:10px 0 0;line-height:1.6;}
+/* 미리보기 3D. ⚠ touch-action:none 필수 — .pv-back 이 overflow-y:auto 라, 없으면
+   태블릿에서 회전 드래그가 모달 스크롤로 먹혀 돌릴 수가 없다.
+   높이는 정적 겨냥도 자리와 맞춰 로드 전후 레이아웃 점프를 막는다. */
+.pv3d{width:100%;height:230px;border-radius:12px;overflow:hidden;background:var(--panel-2);border:1px solid var(--line);touch-action:none;}
 .pv-load{text-align:center;color:var(--muted);font-size:13.5px;font-weight:700;padding:44px 0;}
 .pv-err{text-align:center;color:var(--del);font-size:13.5px;font-weight:700;padding:36px 0;}
 
@@ -312,7 +316,7 @@
 <script src="../assets/js/auth.js?v=0.1.0"></script>
 <!-- 예시 미리보기용 렌더러 — quiz/run·worksheets 와 **같은 그림**을 쓴다(재발명 금지, 마스터 §5.1). -->
 <script src="../assets/js/cubenest-iso.js?v=0.1.0"></script>
-<script src="../assets/js/cubenest-figures.js?v=0.2.0"></script>
+<script src="../assets/js/cubenest-figures.js?v=0.3.0"></script>
 <script src="run/api-client.js?v=0.2.0"></script>
 <script>
 if((navigator.language||'').toLowerCase().startsWith('ko')) document.querySelector('[data-brand]').textContent='큐브네스트';
@@ -633,6 +637,26 @@ const pvEl=id=>document.getElementById(id);
 // 요청 토큰 — 예시를 연달아 누르면 앞선 요청이 늦게 도착해 **다른 유형의 문항**을 그리거나
 // 빈 모달이 남는다(실제로 두 번 눌러 재현했다). 늦게 온 응답은 여기서 버린다.
 let PVREQ=0;
+// 랜딩은 three.js·core·viewer 를 처음부터 싣지 않는다(첫 화면 무게). [예시]를 눌러
+//   3D 제시물을 만났을 때만 지연 로드한다. 프라미스를 모듈 스코프에 한 번만 두어
+//   중복 로드를 막고, 실패하면 거부 상태로 남겨 재시도 폭주도 막는다(정적 SVG 로 폴백).
+// ⚠ 순서 강제: createViewer 는 호출 시점에 core 와 THREE 가 없으면 예외를 던진다.
+// ⚠ ?v= 는 quiz/run/index.html 과 **같은 값**을 쓴다 — 캐시를 공유하고 버전 표류를 막는다.
+let P3D=null;
+function load3D(){
+  if(P3D) return P3D;
+  const one=src=>new Promise((ok,no)=>{const el=document.createElement('script');
+    el.src=src; el.async=false; el.onload=ok; el.onerror=()=>no(new Error(src)); document.head.appendChild(el);});
+  P3D=Promise.resolve()
+    .then(()=>window.THREE?null:one('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'))
+    .then(()=>(window.CubeNest&&CubeNest.core)?null:one('../assets/js/cubenest-core.js?v=0.3.0'))
+    .then(()=>(window.CubeNest&&CubeNest.viewer)?null:one('../assets/js/cubenest-viewer.js?v=0.2.3'));
+  return P3D;
+}
+// WebGL 컨텍스트는 브라우저당 개수 상한이 있다. pvBody.innerHTML 을 갈아 끼우면
+//   캔버스가 고아가 되므로 **덮어쓰기 전에** 반드시 정리한다.
+let PV3D=null, PVMOUNT=0;
+function disposePV3D(){ PVMOUNT++; if(PV3D){ try{PV3D.dispose();}catch(e){} PV3D=null; } }
 
 function levelsForStart(t){
   const sup=levelsOf(t);
@@ -640,6 +664,7 @@ function levelsForStart(t){
   return lvls.length?lvls:sup;
 }
 function openPreview(t){
+  disposePV3D();
   PV.t=t; PV.i=0; PV.probs=[]; PV.levels=levelsForStart(t);
   PV.seed=Math.random().toString(36).slice(2,9);
   const back=pvEl('pvBack'); back.hidden=false; back.classList.add('show');
@@ -651,12 +676,12 @@ function openPreview(t){
   pvFetch();
 }
 function closePreview(){
-  PVREQ++;                                   // 진행 중이던 요청의 응답을 무효화
+  PVREQ++; disposePV3D();                                   // 진행 중이던 요청의 응답을 무효화
   const back=pvEl('pvBack'); back.classList.remove('show'); back.hidden=true;
   document.body.style.overflow=''; PV.t=null; PV.probs=[];
 }
 async function pvFetch(){
-  const my=++PVREQ;
+  const my=++PVREQ; disposePV3D();
   pvEl('pvBody').innerHTML='<div class="pv-load">예시를 불러오는 중…</div>';
   pvEl('pvCnt').textContent='–';
   const t=PV.t;
@@ -664,6 +689,8 @@ async function pvFetch(){
     const r=await CubeNest.api.generate({
       theme:t.type||t.id, sub:t.sub||undefined,
       levels:PV.levels, n:PV.n, seed:PV.seed, stage:state.stage,
+      // 제시물의 형태를 [시작]과 똑같이 요청한다 — 예시와 실제 문제가 어긋나면 미리보기가 아니다.
+      dim:state.dim==='2d'?'2d':undefined,
     });
     if(my!==PVREQ) return;                   // 그 사이 다른 유형을 눌렀거나 닫았다
     PV.probs=(r.problems||[]).map(p=>({id:p.id,gsig:p.gsig,gp:p._gp,ans:null}));
@@ -686,17 +713,39 @@ function pvShape(ex){
 const FORMNOTE={num:'답을 숫자로 써요.',mc:'보기 중 하나를 골라요.',bool:'‘있어요 / 없어요’로 답해요.',
   hm:'위에서 본 모양의 칸마다 수를 써요.',markCells:'해당하는 칸을 눌러 표시해요.',draw:'칸을 칠해 그려요.'};
 function pvRender(){
+  // ⚠ 여기가 유일한 누수 차단점이다 — pvToggleAnswer 의 finally 가 정답 토글마다
+  //   pvRender 를 부르고, 아래에서 pvBody.innerHTML 을 통째로 갈아 끼운다.
+  disposePV3D();
   const p=PV.probs[PV.i]; if(!p){ pvEl('pvBody').innerHTML='<div class="pv-err">예시가 없어요.</div>'; return; }
-  // gp.dim==='2d' = 서버가 '이 유형은 3D 금지'라고 판정한 것(facesDraw) → 돌려 보라고 하면 안 된다.
-  const gp=p.gp, is3D=(gp.dim==='3d')||(gp.dim!=='2d' && !gp.given && !!gp.sh);
+  // dim = 제시물의 형태. **형상을 실제로 받았는가**가 기준이다(run.js 와 같은 정규화) —
+  //   ⓐ 예전엔 gp.given 을 안 봐서 S2·S3 의 안보이는나무·최대최소·조작에 "손가락으로 돌려"
+  //      라는 거짓 안내가 떴다. 그 유형들은 형상 자체가 오지 않아 3D 가 불가능하다.
+  //   ⓑ dim==='3d' 만 보면 옛 응답의 "any"(스테이지 정책이 그대로 새던 값)를 놓친다.
+  const gp=p.gp, is3D=!!gp.sh && gp.dim!=='2d';
   pvEl('pvCnt').textContent=(PV.i+1)+' / '+PV.probs.length;
   pvEl('pvLevel').textContent=gp.level||PV.levels.join('·');
   pvEl('pvPrev').disabled=PV.i<=0; pvEl('pvNext').disabled=PV.i>=PV.probs.length-1;
   const fig=FIG?FIG.renderQuestion(gp):'';
   const note=(is3D?'실제 퀴즈에서는 이 모양을 <b>손가락으로 돌려</b> 뒤·옆을 확인할 수 있어요. ':'')
     +(FORMNOTE[gp.form]||'');
-  pvEl('pvBody').innerHTML=`<p class="pv-ask">${gp.ask||''}</p>${fig}<p class="pv-note">${note}</p>`
+  // 모서리 길이는 발문에 없다 — 이게 없으면 부피·겉넓이 예시는 답을 구할 수 없는 문제로 보인다.
+  const eNote=FIG?FIG.edgeNote(gp):'';
+  pvEl('pvBody').innerHTML=`<p class="pv-ask">${gp.ask||''}${eNote?' '+eNote:''}</p>${is3D?'<div id="pv3d" class="pv3d"></div>':fig}<p class="pv-note">${note}</p>`
     +(p.ans?p.ans:'');
+  // 3D 는 실제 퀴즈와 같은 뷰어를 띄운다 — 정적 그림으로는 "돌려서 확인한다"가 전해지지 않는다.
+  if(is3D){
+    const my=PVMOUNT;                                  // disposePV3D 가 올린 현재 세대
+    load3D().then(()=>{
+      if(my!==PVMOUNT) return;                         // 그 사이 넘겼거나 닫았다
+      const host=pvEl('pv3d'); if(!host||!window.CubeNest||!CubeNest.viewer) return;
+      PV3D=CubeNest.viewer.createViewer(host,{THREE:window.THREE,showLabels:true,
+        shape:{gx:gp.sh.gx,gy:gp.sh.maxH,gz:gp.sh.gz,edge:gp.sh.edge,
+               cells:gp.sh.cells.map(c=>[c.x,c.y,c.z])}});
+    }).catch(()=>{                                     // CDN 차단·오프라인 → 정적 겨냥도로
+      if(my!==PVMOUNT) return;
+      const host=pvEl('pv3d'); if(host) host.outerHTML=fig;
+    });
+  }
   pvEl('pvAnsBtn').textContent=p.ans?'정답 숨기기':'정답 보기';
 }
 async function pvToggleAnswer(){

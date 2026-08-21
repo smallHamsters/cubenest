@@ -16,7 +16,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="../../assets/js/cubenest-core.js?v=0.3.0"></script>
     <script src="../../assets/js/cubenest-iso.js?v=0.1.0"></script>
-    <script src="../../assets/js/cubenest-figures.js?v=0.2.0"></script>
+    <script src="../../assets/js/cubenest-figures.js?v=0.3.0"></script>
     <script src="./api-client.js?v=1"></script>
     <script src="../../assets/js/cubenest-viewer.js?v=0.2.3"></script>
     <!-- 프리뷰 폴백(리포에선 아래 nav.css 가 덮어씀 — 여기 규칙은 리포 밖 단독 미리보기 전용).
@@ -379,6 +379,8 @@
     <script src="../../assets/js/consent.js"></script>
 
 
-    <script src="./run.js"></script>
+    <!-- ⚠ ?v= 를 반드시 올릴 것. 없으면 옛 run.js 가 캐시에 남아 새 서버 응답을 만난다
+         (서버가 2D 에서 형상을 빼는 단계적 배포의 전제가 이 한 줄이다). -->
+    <script src="./run.js?v=0.14.0"></script>
   </body>
 </html>

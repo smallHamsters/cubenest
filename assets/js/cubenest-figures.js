@@ -16,7 +16,8 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.2.0';   // 0.2.0 = renderQuestion·answerText 승격(미리보기·문제지 공용)
+  var VERSION = '0.3.0';   // 0.3.0 = edgeNote 승격(모서리 길이 단일 출처)
+                           // 0.2.0 = renderQuestion·answerText 승격(미리보기·문제지 공용)
   var B = '#3f8fd0', G = '#4fae72', R = '#d0546f';   // 위·앞·옆 방향색
 
   // ── 방향별 실루엣: 앞=x별 max_z, 옆=z별 max_x(막대) / 위=발자국(격자) ──
@@ -119,6 +120,14 @@
   // 제시물 자체가 말해 주지 못하는 조건을 한 줄로. **여기가 단일 출처다.**
   //   isoMark(H-a/H-b)는 '어느 줄인가'가 겨냥도의 빨강뿐이라, 이 문구가 없으면
   //   미리보기·문제지에서 빨강이 무슨 뜻인지 알 길이 없다(run.js 에만 있던 문구를 승격).
+  // 모서리 길이 안내. **발문에는 들어 있지 않고** 서버가 준 q.edge 로만 전달된다.
+  //   여기가 단일 출처다 — 예전엔 퀴즈 화면(run.js)에만 이 문구가 있어서
+  //   문제지와 미리보기는 부피·겉넓이를 **모서리 길이 없이** 내보냈다(답을 구할 수 없다).
+  function edgeNote(q) {
+    if (!q || (q.type !== 'volume' && q.type !== 'surface')) return '';
+    return '쌓기나무 한 모서리 = ' + (q.edge == null ? 1 : q.edge) + 'cm';
+  }
+
   function givenCaption(g) {
     if (!g) return '';
     if (g.kind === 'isoMark') {
@@ -199,7 +208,7 @@
     renderTopNums: renderTopNums, renderLayers: renderLayers,
     drawDims: drawDims, renderDrawGrids: renderDrawGrids,
     shapeFromGiven: shapeFromGiven, renderGiven: renderGiven, givenCaption: givenCaption,
-    renderQuestion: renderQuestion, answerText: answerText
+    renderQuestion: renderQuestion, answerText: answerText, edgeNote: edgeNote
   };
   global.CubeNest = global.CubeNest || {};
   global.CubeNest.figures = API;

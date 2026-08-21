@@ -286,20 +286,37 @@ function presentSpec(pr: Sh, type: string) {
 // 렌더용 질문 데이터(_gp). **정답은 절대 넣지 않는다.**
 //   예전엔 q.correct(facesMc 정답 번호)·q.rc(min/max)·q.kinds(A-f 정답)를 그대로 보내
 //   JSON 에서 숫자 하나만 읽으면 답이 나왔다. 지금은 전부 /grade 응답으로만 간다.
-// 3D 회전을 쓰는 6종은 형상(sh)을 유지한다 — 돌려서 가려진 나무를 확인하는 것이 풀이 과정이라
-// 은닉이 설계상 불가능하다(수용). minmax·hidden 은 3D 뷰어를 안 쓰므로 형상을 뺀다.
-export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
+// **dim = 제시물(given)의 형태**다. "클라가 어떤 뷰어를 띄울지"가 아니다.
+//   dim==="3d" 일 때만 형상(sh)을 보낸다 — 돌려서 가려진 나무를 확인하는 것이 풀이 과정이라
+//   그때는 은닉이 설계상 불가능하다(수용). dim==="2d" 면 서버가 겨냥도를 그려 보내고
+//   형상은 보내지 않는다 → **2D 모드에서는 은닉이 성립한다.**
+//
+// 형상을 안 보내는 유형. 이 넷은 스테이지와 무관하게 제시물이 이미 서버가 그린 2D 다.
+//   ⚠ 예전엔 이들이 STAGES[stage].dim 을 그대로 물려받아 S2·S3 에서 q.dim==="3d" 라고
+//     **거짓말을 했다** — 형상이 없어 3D 를 띄우는 것 자체가 불가능한데도. dim 은 스테이지
+//     단위인데 given 은 유형·서브 단위로 정해진다는 어긋남이 원인이었다.
+const GIVEN_ONLY: Record<string, 1> = { hidden: 1, minmax: 1, manip: 1, facesDraw: 1 };
+
+// 최종 dim 은 "3d" | "2d" 둘 중 하나뿐이다. "any"(스테이지 정책)는 여기서 소멸한다 —
+//   밖으로 내보내면 클라가 다시 추측해야 해서 판단의 단일 출처가 깨진다.
+export function resolveDim(stage: string | null, type: string, req?: string | null): "3d" | "2d" {
+  // facesDraw 가 2D 인 이유(사용자 결정 260821): ① 위모양 + 문말 단서로 답이 이미 유일하다.
+  //   ② 오히려 3D 를 앞·옆으로 돌리면 **답 실루엣을 그대로 읽을 수 있어** 문항이 무의미해진다.
+  if (GIVEN_ONLY[type]) return "2d";
+  // 저학년(S0~S3)은 겨냥도를 아직 안 배웠으므로(초5에서 처음 나온다) 3D 고정이 요청보다 우선한다.
+  const sd = stage && genConfig.STAGES[stage] ? genConfig.STAGES[stage].dim : "any";
+  if (sd === "3d") return "3d";
+  return req === "2d" ? "2d" : "3d";               // dim:"any" 스테이지(S4·S5)만 요청을 받는다
+}
+
+export function questionFor(pr: Sh, idx: number, seed: string, type: string, reqDim?: string | null) {
   const sh = pr.sh;
   const spec = presentSpec(pr, type);
-  // stage·dim: 저학년은 겨냥도를 아직 안 배웠으므로(초5에서 처음 나온다) 3D 뷰어를 고정한다.
-  //   클라가 dim 을 스스로 정하지 않게 서버가 함께 내려보낸다 — 판단의 단일 출처.
   const stage = pr.stage ?? null;
-  let dim = stage && genConfig.STAGES[stage] ? genConfig.STAGES[stage].dim : "any";
-  // facesDraw 만 2D 고정(사용자 결정 260821). 두 가지 이유가 겹친다 —
-  //   ① 위모양 + 문말 단서가 이미 답을 유일하게 만든다(3D 가 필요 없다).
-  //   ② 오히려 3D 를 앞·옆으로 돌리면 **답 실루엣을 그대로 읽을 수 있어** 문항이 무의미해진다.
-  //   facesDraw 는 S4·S5 에만 열려 있고 두 스테이지 모두 dim:"any" 라, 저학년 3D 고정과 겹치지 않는다.
-  if (type === "facesDraw") dim = "2d";
+  // ⚠ dim 은 **표현 전용**이다. 절대 buildProbs/genSession 에 넘기지 말 것 —
+  //   /generate(dim 있음)와 /grade(dim 없음)의 rng 스트림이 갈라져 조용한 오채점이 난다.
+  //   answerKeyFor·explainFor 도 dim 을 모른다. 그래서 gsig(paramsHash)에도 넣지 않는다.
+  const dim = resolveDim(stage, type, reqDim);
   const q: any = { level: pr.level ?? pr.lv, type, stage, dim, ask: spec.ask, form: spec.form, unit: spec.unit };
 
   if (type === "minmax") {
@@ -357,7 +374,25 @@ export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
     return q;
   }
 
-  q.sh = sh;
+  if (dim === "3d") {
+    q.sh = sh;
+  } else {
+    // 2D = 제시물이 서버가 그린 겨냥도 한 장이다. 형상을 안 보내므로 클라가 돌릴 수 없고,
+    //   돌릴 수 없으니 heightmap·facesMc 의 "답란은 회전을 모른다" 결함도 함께 사라진다.
+    //   maxH 는 답안 격자의 행 수(H-a/H-b 의 isoMark 가 이미 같은 이유로 싣는 값)다.
+    q.given = { gx: sh.gx, gz: sh.gz, maxH: sh.maxH, kind: "isoTop",
+                iso: iso.renderIso({ gx: sh.gx, gz: sh.gz, cells: sh.cells }, 0), top: topSil(sh) };
+    // [과도기 260821] 캐시에 남은 옛 클라(given.iso 를 모른다)를 위해 형상도 함께 보낸다.
+    //   이 줄이 있는 동안 2D 은닉은 아직 성립하지 않는다. 클라 배포가 퍼진 뒤 삭제할 것.
+    q.sh = sh;
+  }
+  // ⚠ 모서리 길이. 발문에는 안 들어 있고 오직 이 값으로만 학생에게 전달된다.
+  //   ① 2D 는 형상이 없어 클라가 sh.edge 를 못 읽는다(givenShape 는 edge:1 하드코딩) —
+  //      안 보내면 edge≠1 인 문항이 "한 모서리 = 1cm" 로 표시돼 전원 오답.
+  //   ② /worksheets 독립 생성은 예전부터 이 값을 아예 못 받아 **모서리 길이 없이 인쇄**됐다
+  //      (그 문구가 run.js 에만 있었다). 한 필드로 두 경로를 함께 고친다.
+  if (type === "volume" || type === "surface") q.edge = sh.edge;
+
   // ── 위에서 본 모양 동봉 (겨냥도 6종) ──
   //   겨냥도만 주면 숨은 열의 높이가 정해지지 않아 종이에서 답이 유일하지 않다.
   //   시중 문제집 3종이 예외 없이 위모양을 함께 주고, 숨은 열은 1개로 규약한다.

@@ -64,7 +64,8 @@ Deno.serve(async (req: Request) => {
           views: q.views ?? null,                         // facesDraw 그릴 방향(§4.8) — 답란이 이것만 낸다
           top: q.top ?? null,                             // 위에서 본 모양(겨냥도 6종) — 지면 결정성의 핵심
           box: q.box ?? null,                             // manip H-d 상자 치수
-          stage: q.stage ?? null, dim: q.dim ?? null,
+          edge: q.edge ?? null,                           // 부피·겉넓이의 모서리 길이(발문에 없다)
+          stage: q.stage ?? null,
           answerKey: key,
         });
       });
