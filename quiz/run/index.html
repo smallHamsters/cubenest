@@ -179,10 +179,13 @@
       .sol-hidden{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:4px}
       .sol-draw{display:flex;flex-direction:column;gap:14px;align-items:center;margin-top:4px}
       .sol-draw .sol-pic{display:flex;flex-direction:column;align-items:center;gap:4px;width:100%}
-      .sol-draw .sol-pic span{font-size:12px;font-weight:800;color:var(--muted-2)}
-      .sol-draw .threeviews{gap:16px}
-      .sol-draw .pv svg{width:104px;height:104px;max-height:none}
-      .sol-draw .pv span{font-size:13px}
+      /* ⚠ 자식 선택자여야 한다 — 자손으로 두면 해설 격자의 방향 라벨(.dview>span)까지 잡아먹는다. */
+      .sol-draw .sol-pic>span{font-size:12px;font-weight:800;color:var(--muted-2)}
+      /* 해설 정답 격자 — 답안 격자(24px)와 **같은 크기**로 그린다(FIG.renderDrawGrids).
+         .dcell.on 기본값은 입력용 보라라, 해설에서는 정답 초록으로 덮는다(.okcell 과 같은 색). */
+      .sol-draw .draw{margin:0}
+      .sol-draw .dcell{cursor:default}
+      .sol-draw .dcell.on{background:#4fae72}
       .sol-draw .expv-hi{width:100%;max-width:340px;height:230px;margin:0 auto}
       .mm-txt{margin-bottom:8px}
       .mm-top{text-align:center;margin:8px 0}

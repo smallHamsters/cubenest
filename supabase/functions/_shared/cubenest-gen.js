@@ -189,10 +189,26 @@
     return reshape({ gx: m, gz: m, maxH: m, edge: edge || 1 }, H);
   }
 
+  // 재시도가 '같은 종류의 모양'만 낳는 것을 막는다.
+  //   resolveCfg 는 발자국 f 와 개수 n 을 **하나의 값으로 고정**한다(genShape 계약). 그래서
+  //   그 (f, n) 조합이 유형 조건을 구조적으로 만족할 수 없으면 60번을 다시 뽑아도 결과가 같다.
+  //   첫 실패에서 개수 밴드 전체로 넓혀 다른 모양이 나오게 한다.
+  //   ⚠ nBand 는 그대로 넘기므로 makeShape 의 밴드 준수 검사는 변하지 않는다.
+  function widenCfg(cfg) {
+    if (!cfg || !cfg.nBand) return cfg;
+    var cells = cfg.gx * cfg.gz;
+    return Object.assign({}, cfg, {
+      nMin: cfg.nBand[0], nMax: cfg.nBand[1],
+      fMin: Math.max(1, cfg.fMin - 1), fMax: Math.min(cells, cfg.fMax + 2)
+    });
+  }
+
   // H-c(정육면체 완성) 모양 — 정답값(need)에서 거꾸로 만든다.
   //   H-c 의 부담은 개수가 아니라 정답값('더 필요한 개수')이라, 개수 밴드로는 제어할 수 없다.
   //   ⚠ 겨냥도로 현재 개수를 세야 하므로 숨은 열이 있으면 성립하지 않는데, genCubeGap 의
-  //     비증가 높이 구성이 그것을 구조적으로 막는다. 이미 정육면체면 답이 0이라 출제 불가인 것도
+  //     비증가 높이 구성이 그것을 구조적으로 막는다. 발자국이 m×m 로 꽉 차 있어
+  //     **비어 보이는 칸 자체가 없으므로** isDeterminate 도 항상 참이다(실측 400/400).
+  //     그래서 G-c·H-a/H-b 와 달리 여기엔 재시도 조건을 걸지 않는다. 이미 정육면체면 답이 0이라 출제 불가인 것도
   //     need ≥ 1 을 목표로 잡아 피한다.
   //   H-a/H-b 가 후보를 못 찾았을 때의 대체 경로도 **이 함수를 쓴다** — 두 곳에서 각자 만들면
   //   한쪽만 밴드를 지키게 된다(실제로 그랬다).
@@ -357,13 +373,22 @@
         //   → 숨은 열이 없는 모양으로만 출제한다. 두 조건(숨은 열 없음 + 쓸 만한 n 존재)을
         //     한 루프에서 함께 만족시켜야 한다 — 따로 처리하면 n 을 찾느라 모양을 다시 뽑을 때
         //     숨은 열이 되살아난다(실측 200문항 중 2건이 '풀 수 없는 문제'로 나갔다).
+        //   ⚠ '숨은 열 없음'만으로는 부족하다(260821 사용자 신고) — **비어 보이는 칸**에
+        //     나무가 숨어 있을 수도 있어서, 그러면 위에서 본 모양이 확정되지 않는다.
+        //     isDeterminate 가 그 빈 칸까지 본다. 실측 1회 수용률 42~61% 라 재시도로 충분하고,
+        //     개수 밴드는 makeShape 가 계속 지킨다(수리로 깎으면 밴드가 15~30% 깨진다).
         var fm = rngFrom(o.seed + ':gf' + o.index)() < 0.5 ? 'lower' : 'raise';
-        var cand = [], g3 = 0;
+        //   ⚠ 재시도는 widenCfg 로 넓혀서 한다 — 고정된 (f, n) 이 결정성을 구조적으로 못
+        //     만족하면 60번을 다시 뽑아도 그대로다(실측 1~4% 가 이 상태로 나갔다).
+        var cand = [], g3 = 0, cfgG = o.cfg;
         for (;;) {
-          sh = flattenInBand(sh, o.cfg, HDm, fm === 'raise');
-          cand = MM.levelChoices(hmOf(sh), sh.maxH);      // 답이 1 이상이고 전부는 아닌 n
+          sh = flattenInBand(sh, cfgG, HDm, fm === 'raise');
+          cand = HDm && !HDm.isDeterminate(hmOf(sh))
+            ? []                                          // 겨냥도가 모양을 확정하지 못한다 → 다시
+            : MM.levelChoices(hmOf(sh), sh.maxH);         // 답이 1 이상이고 전부는 아닌 n
           if (cand.length || g3++ >= 60) break;
-          sh = makeShape(rng, o.cfg);
+          if (g3 === 1) cfgG = widenCfg(o.cfg);
+          sh = makeShape(rng, cfgG);
         }
         out.n = cand.length ? cand[Math.floor(rngFrom(o.seed + ':gn' + o.index)() * cand.length)] : 2;
         out.count = MM.countAtLeast(hmOf(sh), out.n);
@@ -496,20 +521,16 @@
           // ⚠ resolveCfg 는 발자국 f 와 개수 n 을 **하나의 값으로 고정**한다. 그래서 n = f×maxH
           //   (모든 열이 높이 상한) 이면 H-a 는 더 쌓을 자리가 없고, 같은 cfg 로 60번을 다시
           //   뽑아도 결과가 같다 — 실측 S4 하·중에서 3% 가 이 포화로 H-c 대체로 떨어졌다.
-          //   그래서 첫 실패에서 cfg 를 개수 밴드 전체로 넓혀 여유 있는 모양이 나오게 한다.
-          //   (nBand 는 그대로라 makeShape 의 밴드 준수 검사는 변하지 않는다.)
+          //   그래서 첫 실패에서 cfg 를 개수 밴드 전체로 넓힌다(widenCfg).
           var cfgTry = o.cfg, g6 = 0, cands = [];
           for (;;) {
             sh = flattenInBand(sh, cfgTry, HDp, fm3 === 'raise');
-            cands = MP.opCandidates(hmOfM(sh), sh.maxH, add);
+            // ⚠ 숨은 열이 없어도 **비어 보이는 칸**에 나무가 숨을 수 있으면 위에서 본 모양이
+            //   확정되지 않는다(260821 사용자 신고). isDeterminate 가 그 칸까지 본다.
+            cands = (HDp && !HDp.isDeterminate(hmOfM(sh)))
+              ? [] : MP.opCandidates(hmOfM(sh), sh.maxH, add);
             if (cands.length || g6++ >= 60) break;
-            if (g6 === 1 && cfgTry.nBand) {
-              var cells6 = cfgTry.gx * cfgTry.gz;
-              cfgTry = Object.assign({}, o.cfg, {
-                nMin: cfgTry.nBand[0], nMax: cfgTry.nBand[1],
-                fMin: Math.max(1, cfgTry.fMin - 1), fMax: Math.min(cells6, cfgTry.fMax + 2)
-              });
-            }
+            if (g6 === 1) cfgTry = widenCfg(o.cfg);
             sh = makeShape(rng, cfgTry);
           }
           if (cands.length) {

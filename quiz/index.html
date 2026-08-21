@@ -379,7 +379,7 @@ const TYPES=[
   { id:'surface',  cat:'calc',    name:'겉넓이 구하기',    chip:'겉넓이',      edu:['curr','think'], desc:'바닥까지 포함해 겉넓이를 구해요.',         dim:'both', levels:['중','상'],     status:'live', glyph:'faces' },
   { id:'facesMc',  cat:'views',   name:'위·앞·옆 모양 고르기', chip:'모양 고르기', edu:['curr','think'], desc:'맞는 앞/옆에서 본 모양을 골라요.',      dim:'both',   levels:['하','중'],     status:'live', glyph:'panels' },
   { id:'heightmap',cat:'views',   name:'위에서 본 수 쓰기',chip:'수 쓰기',     edu:['curr','think'], desc:'겨냥도를 보고 위 모양 각 칸에 수를 써요.', dim:'both',   levels:['하','중'],     status:'live', glyph:'topnum' },
-  { id:'facesDraw',cat:'views',   name:'위·앞·옆 그리기',  chip:'그리기',      edu:['curr','think'], desc:'세 방향에서 본 모양을 칸으로 칠해요.',     dim:'both', levels:['중','상'],     status:'live', glyph:'draw' },
+  { id:'facesDraw',cat:'views',   name:'위·앞·옆 그리기',  chip:'그리기',      edu:['curr','think'], desc:'세 방향에서 본 모양을 칸으로 칠해요.',     dim:'2d', levels:['중','상'],     status:'live', glyph:'draw' },
   { id:'minmax-Ga', type:'minmax', sub:'G-a', cat:'minmax', name:'삼면도 최대·최소',   chip:'삼면도 최대최소', edu:['curr','think'], desc:'위·앞·옆 세 방향만 보고 가능한 개수의 범위를 찾아요.', dim:'2d', levels:['중','상','최상'], status:'live', glyph:'range' },
   { id:'minmax-Gb', type:'minmax', sub:'G-b', cat:'minmax', name:'위+한 방향 최대·최소', chip:'위+한 방향',    edu:['think'],        desc:'위 모양과 한 방향 모양만으로 최대·최소를 구해요.',    dim:'2d', levels:['상','최상'],      status:'live', glyph:'range' },
   { id:'minmax-Gc', type:'minmax', sub:'G-c', cat:'minmax', name:'몇 층 이상 세기',     chip:'n층 이상',      edu:['curr','think'], desc:'겨냥도를 보고 정해진 층수 이상 쌓인 칸을 세요.',      dim:'2d', levels:['중','상'],        status:'live', glyph:'range' },
@@ -665,7 +665,8 @@ const FORMNOTE={num:'답을 숫자로 써요.',mc:'보기 중 하나를 골라�
   hm:'위에서 본 모양의 칸마다 수를 써요.',markCells:'해당하는 칸을 눌러 표시해요.',draw:'칸을 칠해 그려요.'};
 function pvRender(){
   const p=PV.probs[PV.i]; if(!p){ pvEl('pvBody').innerHTML='<div class="pv-err">예시가 없어요.</div>'; return; }
-  const gp=p.gp, is3D=(gp.dim==='3d')||(!gp.given&&gp.sh);
+  // gp.dim==='2d' = 서버가 '이 유형은 3D 금지'라고 판정한 것(facesDraw) → 돌려 보라고 하면 안 된다.
+  const gp=p.gp, is3D=(gp.dim==='3d')||(gp.dim!=='2d' && !gp.given && !!gp.sh);
   pvEl('pvCnt').textContent=(PV.i+1)+' / '+PV.probs.length;
   pvEl('pvLevel').textContent=gp.level||PV.levels.join('·');
   pvEl('pvPrev').disabled=PV.i<=0; pvEl('pvNext').disabled=PV.i>=PV.probs.length-1;

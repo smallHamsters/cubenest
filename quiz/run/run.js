@@ -145,7 +145,9 @@
       }
       function quizContext(){
         const pr=(typeof S!=="undefined"&&S.probs&&S.probs[S.idx])||{}, T=(pr.type&&TYPES[pr.type])||{};
-        const viewLabel=(window.THREE&&PRM.dim!=="2d")?"3D 문제":"2D 겨냥도";
+        // ⚠ 여기서 다시 계산하지 않는다 — 옛 식은 pr.dim·유형을 안 봐서 2D 문항에도
+        //   "3D 문제"라고 찍혔다. renderProblem 이 정한 값을 그대로 쓴다.
+        const viewLabel=VIEWLABEL||"-";
         return "(개선·오류 신고 시 아래 정보가 도움이 됩니다. 필요 없으면 지워 주세요.)\n"
           + "유형: "+(T.title||pr.type||"-")+" · 난이도: "+(pr.lv||"-")+" · 문항: "+(S.idx+1)+"/"+S.n+"\n"
           + "보기 형태: "+viewLabel+"\n"
@@ -325,6 +327,7 @@
       const ARC_CCW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4.5v4.5h4.5"/></svg>';
 
       let CURVIEW=null;
+      let VIEWLABEL="";      // renderProblem 이 정한 보기 형태 표시(의견 폼과 공유)
 
       /* ===== 세션 구성 ===== */
       function loadParams(){
@@ -479,10 +482,19 @@
         //   서버가 문항마다 dim 을 내려보내므로(gen-adapter) 클라가 따로 판단하지 않는다.
         //   dim==="3d" 면 URL 의 ?dim=2d 보다 서버 판단이 우선한다.
         const force3D=(pr.dim||"any")==="3d";
-        const has3D=!!window.THREE && !!VIEWER && (force3D || PRM.dim!=="2d") && !isViews && !isHidden && !isManip;
+        // dim==="2d" = 서버가 "이 유형은 3D 금지"라고 판정한 것(현재 facesDraw).
+        //   URL 의 ?dim=3d 로도 못 뚫도록 다른 항보다 앞에 둔다.
+        const force2D=(pr.dim||"")==="2d";
+        const has3D=!!window.THREE && !!VIEWER && !force2D && (force3D || PRM.dim!=="2d") && !isViews && !isHidden && !isManip;
+        // 회전 버튼 없는 고정 겨냥도. 회전은 #iso 그림만 돌리고 답란은 안 돌리는데,
+        //   facesDraw 는 답 자체가 방향에 매여 있어 돌려 놓고 그리면 기준이 어긋난다
+        //   (개수·부피처럼 방향 무관한 답이면 지금껏 문제가 안 됐다).
+        //   판단의 출처를 서버 한 곳으로 유지하려고 유형 이름이 아니라 force2D 로 켠다.
+        const noRot=force2D;
         const gk=(pr.given&&pr.given.kind)||"";
         const GIVENLABEL={numTop:"위에서 본 수",sils:"위·앞·옆",layers:"층별 모양",topOneSil:"위 + 한 방향",isoTop:"2D 겨냥도",isoMark:"겨냥도 + 표시한 줄",paintedCube:"색칠한 정육면체"};
         const viewLabel=(isViews||isHidden||isManip)?(GIVENLABEL[gk]||"2D 겨냥도"):(has3D?"3D 문제":"2D 겨냥도");
+        VIEWLABEL=viewLabel;                     // 의견 폼이 화면과 같은 말을 쓰도록(아래 quizContext)
         const viewerHTML=isViews
           ? renderGGiven(pr)
           : isManip
@@ -491,7 +503,9 @@
           ? renderHiddenGiven(pr,sh)
           : (has3D
           ? `<div class="viewer"><div id="v3d" class="v3d"></div><div class="rotrow2"><div class="rothint">손가락·마우스로 <b>돌려서</b> 위·앞·옆을 확인해요</div><button id="reset3d" class="rotbtn2" type="button">정면</button></div></div>`
-          : `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotrow"><button id="rl" class="rotbtn wide" type="button" aria-label="왼쪽으로 90도 돌리기">${ARC_CCW}<span>90°</span></button><div id="compass" class="compass" aria-hidden="true">${renderCompass(0)}</div><button id="rr" class="rotbtn wide" type="button" aria-label="오른쪽으로 90도 돌리기">${ARC_CW}<span>90°</span></button></div><div class="rotcap" id="rotcap">버튼으로 쌓기나무를 <b>돌려서</b> 뒤·옆면을 확인해요</div></div>`);
+          : (noRot
+          ? `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotcap">겨냥도와 <b>위에서 본 모양</b>을 보고 각 칸을 칠해요</div></div>`
+          : `<div class="viewer"><div id="iso">${renderIso(sh,0)}</div><div class="rotrow"><button id="rl" class="rotbtn wide" type="button" aria-label="왼쪽으로 90도 돌리기">${ARC_CCW}<span>90°</span></button><div id="compass" class="compass" aria-hidden="true">${renderCompass(0)}</div><button id="rr" class="rotbtn wide" type="button" aria-label="오른쪽으로 90도 돌리기">${ARC_CW}<span>90°</span></button></div><div class="rotcap" id="rotcap">버튼으로 쌓기나무를 <b>돌려서</b> 뒤·옆면을 확인해요</div></div>`));
         // 위에서 본 모양 동봉(겨냥도 6종) — 서버가 pr.top 을 줄 때만.
         //   겨냥도만으로는 안 보이는 자리의 높이가 정해지지 않는다. 위모양을 함께 줘야
         //   "위모양에 있는데 안 보이면 그 자리는 1개"라는 교과 규약으로 답이 유일해진다.
@@ -509,10 +523,13 @@
         if(has3D){
           CURVIEW=VIEWER.createViewer(document.getElementById("v3d"),{THREE:window.THREE,shape:coreShape(sh),showLabels:true});
           const rb=document.getElementById("reset3d"); if(rb)rb.onclick=()=>{CURVIEW&&CURVIEW.reset();track("quiz_view_reset",{});};
-        }else{
+        }else if(!noRot){
           const updRot=()=>{document.getElementById("iso").innerHTML=renderIso(sh,ROT);document.getElementById("compass").innerHTML=renderCompass(ROT);document.getElementById("rotcap").innerHTML=`버튼으로 쌓기나무를 <b>돌려서</b> 뒤·옆면을 확인해요`;};
-          document.getElementById("rl").onclick=()=>{ROT=(ROT+3)%4;updRot();track("quiz_rotate",{dir:"ccw",deg:ROT*90});};
-          document.getElementById("rr").onclick=()=>{ROT=(ROT+1)%4;updRot();track("quiz_rotate",{dir:"cw",deg:ROT*90});};
+          // ⚠ null 가드 — .onclick 직접 대입이라 요소가 없으면 TypeError 로 renderProblem 이
+          //   통째로 죽고 빈 카드가 뜬다. 분기 조건과 이중으로 막는다.
+          const bl=document.getElementById("rl"), br=document.getElementById("rr");
+          if(bl)bl.onclick=()=>{ROT=(ROT+3)%4;updRot();track("quiz_rotate",{dir:"ccw",deg:ROT*90});};
+          if(br)br.onclick=()=>{ROT=(ROT+1)%4;updRot();track("quiz_rotate",{dir:"cw",deg:ROT*90});};
         }
         }
         if(SCRATCH) SCRATCH.show(S.idx);
@@ -872,10 +889,15 @@
               +`<div class="mm-views">`
               +(before?`<div class="mmv"><div class="mmv-h">조작 전</div>${renderIso(before,0)}</div>`:``)
               +`<div class="mmv"><div class="mmv-h">조작 후</div>${renderIso(sh,0)}</div></div>`
-              +`<div class="sol-pic">${renderThreeViews(silsOf(sh))}<span>정답(조작 후 위·앞·옆)</span></div></div>`;
+              // 정답 그림은 **답안 격자와 같은 렌더러·같은 크기**로 그린다(FIG.renderDrawGrids).
+              //   renderThreeViews(silsOf) 는 실루엣의 '실제 최고 높이'로 행 수를 정해서,
+              //   아이가 칠한 격자(등급 maxH 행)보다 납작하게 나와 나란히 비교할 수 없었다.
+              +`<div class="sol-pic">${FIG?FIG.renderDrawGrids(sh,24,truth,pr.views):""}<span>정답(조작 후 위·앞·옆)</span></div></div>`;
           }else{
             const vis3d = (VIEWER&&window.THREE) ? `<div class="expv expv-hi" id="expDraw"></div>` : `<div class="sol-pic">${renderIso(sh,0)}</div>`;
-            sol=`<div class="sol-draw"><div class="sol-pic">${renderThreeViews(silsOf(sh))}<span>정답</span></div>${vis3d}</div>`;
+            // pr.views 를 넘기는 것이 중요하다 — 한 면만 물어본 등급(§4.8)에서도
+            //   지금까지는 해설이 삼면을 다 그려 답안 격자와 칸 수가 달랐다.
+            sol=`<div class="sol-draw"><div class="sol-pic">${FIG?FIG.renderDrawGrids(sh,24,truth,pr.views):""}<span>정답</span></div>${vis3d}</div>`;
           }
         }else if(F==="bool"){                          // A-a 유무
           const truth=key.value?1:0;
@@ -1064,7 +1086,9 @@
       // 정답이 '그림'인 유형(삼면도 그리기)은 정답 그림도 함께 넘긴다.
       function answerFigureOf(pr,i){
         const st=S.state[i], key=st&&st.key; if(!key||key.type!=="drawSil") return null;
-        const sh=shapeOf(pr,i); return sh?renderThreeViews(silsOf(sh)):null;
+        const sh=shapeOf(pr,i);
+        // 18px = 문제지 .dcell 크기. worksheets 독립 생성 경로와 같은 값이라야 인쇄물이 안 갈라진다.
+        return (sh&&FIG)?FIG.renderDrawGrids(sh,18,new Set(key.cells||[]),pr.views):null;
       }
       async function buildWorksheetPayload(){
         const problems=[];

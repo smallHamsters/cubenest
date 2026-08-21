@@ -294,7 +294,12 @@ export function questionFor(pr: Sh, idx: number, seed: string, type: string) {
   // stage·dim: 저학년은 겨냥도를 아직 안 배웠으므로(초5에서 처음 나온다) 3D 뷰어를 고정한다.
   //   클라가 dim 을 스스로 정하지 않게 서버가 함께 내려보낸다 — 판단의 단일 출처.
   const stage = pr.stage ?? null;
-  const dim = stage && genConfig.STAGES[stage] ? genConfig.STAGES[stage].dim : "any";
+  let dim = stage && genConfig.STAGES[stage] ? genConfig.STAGES[stage].dim : "any";
+  // facesDraw 만 2D 고정(사용자 결정 260821). 두 가지 이유가 겹친다 —
+  //   ① 위모양 + 문말 단서가 이미 답을 유일하게 만든다(3D 가 필요 없다).
+  //   ② 오히려 3D 를 앞·옆으로 돌리면 **답 실루엣을 그대로 읽을 수 있어** 문항이 무의미해진다.
+  //   facesDraw 는 S4·S5 에만 열려 있고 두 스테이지 모두 dim:"any" 라, 저학년 3D 고정과 겹치지 않는다.
+  if (type === "facesDraw") dim = "2d";
   const q: any = { level: pr.level ?? pr.lv, type, stage, dim, ask: spec.ask, form: spec.form, unit: spec.unit };
 
   if (type === "minmax") {

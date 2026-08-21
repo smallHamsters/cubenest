@@ -39,6 +39,29 @@
   }
   function hasHidden(hmap) { return hiddenColumns(hmap).length > 0; }
 
+  // ── ambiguousEmpties: 나무가 '숨을 수 있는' 빈 칸 ──
+  //   놓인 열이 다 보인다고 해서 겨냥도만으로 모양이 정해지는 것은 아니다.
+  //   **비어 보이는 칸**에 1개짜리 나무가 있어도 그림이 똑같을 수 있기 때문이다.
+  //   가림 규칙은 "(x+1,y+1,z+1) 이 차 있으면 안 보임" 이므로, 빈 칸 (x,z) 의 바닥 나무
+  //   (y=0) 는 앞대각 (x+1,z+1) 이 **2층 이상**일 때 완전히 가려진다.
+  //   → 그런 빈 칸이 하나라도 있으면 아이는 위에서 본 모양을 확정할 수 없다.
+  //
+  //   격자 크기를 안 받아도 된다: 높이 2 이상인 칸에서 뒤(x-1,z-1)로 한 칸 물러나 보므로
+  //   결과 좌표는 항상 격자 안이다(x-1>=0, z-1>=0 만 확인하면 된다).
+  function ambiguousEmpties(hmap) {
+    var out = [], k, p, a, b;
+    for (k in hmap) {
+      if (!(hmap[k] >= 2)) continue;                 // 2층 이상만 뒤를 가릴 수 있다
+      p = k.split(","); a = +p[0]; b = +p[1];
+      if (a < 1 || b < 1) continue;                  // 뒤가 격자 밖이면 숨을 자리가 없다
+      if (H(hmap, a - 1, b - 1) === 0) out.push([a - 1, b - 1]);
+    }
+    return out;
+  }
+  // 겨냥도만으로 모양이 유일한가 = 숨은 열도 없고, 나무가 숨을 빈 칸도 없다.
+  //   겨냥도는 바닥 격자를 전부 그리므로 아이는 칸 위치를 안다 — 남은 불확실성은 이 둘뿐이다.
+  function isDeterminate(hmap) { return !hasHidden(hmap) && ambiguousEmpties(hmap).length === 0; }
+
   // ── flattenHidden: 숨은 열이 하나도 없는 높이지도로 정리 (A-a '없음' 문항용) ──
   //   숨음 ⟺ h(x+1,z+1) > h(x,z) 이므로, 대각선 사슬 (x+t, z+t) 을 따라 높이가
   //   뒤로 갈수록 작거나 같으면 아무 열도 안 숨는다. 발자국은 그대로 두고 높이만 고쳐 그 조건을 만든다.
@@ -136,6 +159,7 @@
     H: H, footprint: footprint,
     visibleTopFootprint: visibleTopFootprint,
     hiddenColumns: hiddenColumns, hasHidden: hasHidden, flattenHidden: flattenHidden,
+    ambiguousEmpties: ambiguousEmpties, isDeterminate: isDeterminate,
     capHiddenToOne: capHiddenToOne,
     layersToShape: layersToShape, layersCount: layersCount,
     enumerateByVisible: enumerateByVisible
