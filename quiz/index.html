@@ -16,24 +16,12 @@
 <meta name="theme-color" content="#3f3fbf" />
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-<!-- 프로덕션: <link rel="stylesheet" href="../assets/css/tokens.css"> -->
+<link rel="stylesheet" href="../assets/css/tokens.css" />
 <!-- 공용 헤더 — 스타일은 nav.css 단일 출처, 마크업은 아래 인라인(마스터 §8.1). -->
 <link rel="stylesheet" href="../assets/css/nav.css" />
 <link rel="stylesheet" href="../assets/css/auth.css" />
 <style>
-  /* ===== tokens.css (공유 단일 소스 사본) ===== */
-  :root{
-    --panel:#ffffff; --panel-2:#f7f9fc; --bg:#eef2f7;
-    --ink:#182233; --muted:#6a7789; --muted-2:#8a95a6;
-    --line:#e5eaf1; --line-2:#eef2f7;
-    --accent:#3f3fbf; --accent-ink:#2d2d95; --accent-soft:#ecebfb;
-    --add:#0f9d58; --add-soft:#e6f5ec; --del:#e0466b; --del-soft:#fce9ee;
-    --shadow:0 6px 22px rgba(24,34,51,.12), 0 1px 3px rgba(24,34,51,.08);
-    --shadow-sm:0 2px 8px rgba(24,34,51,.10);
-    --shadow-lg:0 18px 50px rgba(24,34,51,.16), 0 3px 10px rgba(24,34,51,.08);
-    --r:16px; --r-lg:22px;
-    --font:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
-  }
+  /* 나무색·방향색 — tokens.css 에 없는 이 페이지 고유 변수(글리프 SVG 가 쓴다) */
   .glyph,.brand{ --w-top:#e6c9a0; --w-left:#d8a76e; --w-right:#c8965a; --w-shadow:rgba(160,110,50,.28); }
   .glyph{ --d-top:#3f8fd0; --d-front:var(--add); --d-side:var(--del); }
 
@@ -52,119 +40,107 @@
 
   .page{max-width:1180px;margin:0 auto;padding:16px clamp(16px,4vw,40px) 56px}
 
+  /* ── 필터 두 줄 ──
+     [찾기] 를 바꾸면 아래 목록이 바뀌고, [풀기] 는 목록을 안 바꾸고 시작할 때 적용된다.
+     이 계약을 왼쪽 라벨로 눈에 보이게 못 박는다 — 예전엔 다섯 개가 한 줄에 섞여 있어
+     눌러도 목록이 안 변하는 것들이 필터처럼 보였다. */
   .filters{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);margin-bottom:18px}
-  .frow{padding:13px 16px}
-  .frow + .frow{border-top:1px solid var(--line)}
-  .frow-top{display:flex;flex-wrap:wrap;align-items:center;gap:14px 22px}
-  .fg{display:flex;align-items:center;gap:10px}
-  .fg > .label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.02em;white-space:nowrap}
-  .reset{border:none;background:none;color:var(--accent);font-weight:600;font-size:13px;cursor:pointer;padding:7px 10px;border-radius:9px;margin-left:auto}
-  .reset:hover{background:var(--accent-soft)}
+  .frow{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap;padding:12px 16px}
+  .frow + .frow{border-top:1px solid var(--line);background:var(--panel-2);border-radius:0 0 var(--r-lg) var(--r-lg)}
+  .flabel{flex:none;font-size:11.5px;font-weight:800;color:var(--accent-ink);background:var(--accent-soft);
+          padding:4px 10px;border-radius:999px;letter-spacing:.02em}
+  .frow + .frow .flabel{color:var(--muted);background:var(--line-2)}
+  .fg{display:flex;align-items:center;gap:8px}
+  .fg > label{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+  .reset{border:1px solid var(--line);background:var(--panel);color:var(--accent-ink);font-family:inherit;
+         font-weight:700;font-size:13px;cursor:pointer;padding:0 12px;min-height:44px;border-radius:11px;margin-left:auto}
 
-  .seg{display:inline-flex;gap:5px;background:var(--panel-2);padding:4px;border-radius:12px}
-  .seg button{border:none;background:none;cursor:pointer;padding:7px 12px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted);transition:.15s;white-space:nowrap}
-  .seg button[aria-pressed="true"]{background:var(--panel);color:var(--accent-ink);box-shadow:var(--shadow-sm)}
-  .seg button:hover{color:var(--ink)}
+  /* select — 사이트 공통(worksheets .fg select)과 같은 레시피, 높이만 44px 로 */
+  .fsel{font-family:inherit;font-size:13.5px;padding:0 30px 0 11px;min-height:44px;border:1px solid var(--line);
+        border-radius:11px;background:var(--panel);color:var(--ink);cursor:pointer;max-width:100%;
+        appearance:none;-webkit-appearance:none;
+        background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%236a7789' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+        background-repeat:no-repeat;background-position:right 10px center;background-size:11px}
+  .fsel:disabled{background-color:var(--line-2);color:var(--muted-2);cursor:not-allowed}
+  .fsel:focus-visible{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
 
-  .chips{display:inline-flex;flex-wrap:wrap;gap:7px}
-  .chip{border:1px solid var(--line);background:var(--panel);cursor:pointer;padding:7px 12px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);display:inline-flex;align-items:center;gap:6px;transition:.15s}
-  .chip:hover{border-color:#cfd8e6}
-  .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent;color:var(--accent-ink)}
-  .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--muted-2)}
-  .chip[aria-pressed="true"] .dot{background:var(--accent)}
+  /* 학년 — native radio. 화살표 키 이동이 공짜이고, renderStages 가 innerHTML 을 갈아엎어도 안전하다. */
+  .seg{display:inline-flex;gap:6px;flex-wrap:wrap}
+  .seg input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+  /* 라벨 자체가 탭 타깃이다 — 44px(CLAUDE.md §기술)이고 select 와 높이가 맞는다. */
+  .seg label{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 13px;
+             border:1px solid var(--line);background:var(--panel);border-radius:11px;
+             font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;
+             white-space:nowrap;transition:.15s;user-select:none}
+  .seg input:checked + label{background:var(--accent-soft);border-color:transparent;color:var(--accent-ink)}
+  .seg input:disabled + label{opacity:.45;cursor:not-allowed;background:var(--line-2);border-color:transparent}
+  .seg input:focus-visible + label{outline:2.5px solid var(--accent);outline-offset:2px}
 
-  .types-head{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.02em;margin-bottom:10px}
-  .tabs{display:inline-flex;flex-wrap:wrap;gap:6px;background:var(--panel-2);padding:4px;border-radius:12px}
-  .tabs button{border:none;background:none;cursor:pointer;padding:8px 13px;border-radius:9px;font-size:13px;font-weight:600;color:var(--muted);transition:.15s;white-space:nowrap}
-  .tabs button[aria-pressed="true"]{background:var(--panel);color:var(--accent-ink);box-shadow:var(--shadow-sm)}
-  .tabs button:hover{color:var(--ink)}
-  .subrow{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .subrow .label{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
-
-  .results-head{display:flex;align-items:baseline;gap:10px;justify-content:space-between;margin:2px 2px 14px;flex-wrap:wrap}
+  .results-head{display:flex;align-items:baseline;gap:10px;justify-content:space-between;margin:2px 2px 12px;flex-wrap:wrap}
   .results-head .count{font-weight:800;font-size:15px}
   .results-head .count b{color:var(--accent-ink)}
   .results-head .hint{font-size:12.5px;color:var(--muted)}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:14px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm);padding:16px;display:flex;flex-direction:column;gap:11px;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
-  .card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#dbe3ef}
-  .card.soon{opacity:.92}
-  .card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-  /* 카드 글리프 — 공용 헤더의 .site-brand .glyph 와 이름이 겹치므로 카드 안으로 한정한다. */
-  .card-top .glyph{width:46px;height:46px;flex:none;border-radius:var(--r);background:var(--panel-2);display:grid;place-items:center}
-  .card-top .glyph svg{width:30px;height:30px}
-  .badge{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
-  .card h3{margin:0;font-size:15.5px;letter-spacing:-.01em}
-  .card .desc{margin:0;color:var(--muted);font-size:13px;min-height:2.6em}
-  .tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-  .tag{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:8px;background:var(--panel-2);color:var(--muted)}
-  .tag.think{background:var(--accent-soft);color:var(--accent-ink)}
-  .lv{display:inline-flex;gap:3px;align-items:center}
-  .lv b{font-size:11px;font-weight:800;padding:2px 6px;border-radius:5px;background:var(--line-2);color:var(--muted-2);line-height:1.25}
-  .lv b.on{background:var(--accent-soft);color:var(--accent-ink)}
-  .card .cta{margin-top:auto;border:none;cursor:pointer;font-weight:700;font-size:14px;padding:10px 14px;border-radius:var(--r);background:var(--accent);color:#fff;transition:.15s}
-  .card .cta:hover{background:var(--accent-ink)}
-  .card .cta.locked{background:var(--panel-2);color:var(--muted-2);cursor:not-allowed}
+  /* ── 카드 ──
+     아코디언을 없애고 이 한 벌만 남긴다. 뺀 것: 번호 뱃지(필터로 순서가 바뀌는 그리드에서
+     고정 번호는 거짓 정보) · 차원 태그(실제 dim 은 서버가 정한다) · 등급 뱃지 4개(전 카드 동일). */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+  .gsec{grid-column:1/-1;margin:10px 2px 0;font-size:12.5px;font-weight:800;color:var(--muted);
+        letter-spacing:.02em;display:flex;align-items:center;gap:7px}
+  .gsec:first-child{margin-top:0}
+  .gsec b{font-weight:800;color:var(--muted-2);font-size:11.5px}
+  .gsec-soon{color:var(--muted-2);margin-top:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);
+        padding:13px;display:flex;flex-direction:column;gap:7px;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+  .card.soon{opacity:.6}
+  .card-top{display:flex;align-items:center;gap:8px}
+  .card-top .glyph{width:34px;height:34px;flex:none;border-radius:10px;background:var(--panel-2);display:grid;place-items:center}
+  .card-top .glyph svg{width:24px;height:24px}
+  .card h3{margin:0;font-size:14.5px;letter-spacing:-.01em;line-height:1.3}
+  .card .desc{margin:0;color:var(--muted);font-size:12.5px;line-height:1.45;flex:1}
+  .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:7px;background:var(--accent-soft);color:var(--accent-ink);align-self:flex-start}
+  .cta-row{margin-top:auto;display:flex;gap:6px}
+  .cta{flex:1;border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:13.5px;min-height:44px;
+       border-radius:11px;background:var(--accent);color:#fff;transition:.15s}
+  .cta.locked{background:var(--panel-2);color:var(--muted-2);cursor:not-allowed}
+  .btn-peek{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--accent-ink);cursor:pointer;
+            font-family:inherit;font-weight:700;font-size:13px;padding:0 12px;min-height:44px;border-radius:11px;white-space:nowrap;transition:.15s}
 
-  .empty{grid-column:1/-1;text-align:center;padding:48px 20px;color:var(--muted);border:1.5px dashed var(--line);border-radius:var(--r-lg);background:rgba(255,255,255,.5)}
+  .empty{grid-column:1/-1;text-align:center;padding:44px 20px;color:var(--muted);border:1.5px dashed var(--line);border-radius:var(--r-lg);background:rgba(255,255,255,.5)}
   .empty b{display:block;color:var(--ink);margin-bottom:6px;font-size:15px}
-
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(16px);background:var(--ink);color:#fff;padding:12px 18px;border-radius:var(--r);font-size:14px;font-weight:600;box-shadow:var(--shadow-lg);opacity:0;pointer-events:none;transition:.25s;z-index:40;max-width:90vw}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;border-radius:6px}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
   .footnote{max-width:1180px;margin:0 auto;padding:0 clamp(16px,4vw,40px) 40px;color:var(--muted-2);font-size:12px;line-height:1.7}
-  .footnote code{background:var(--panel-2);padding:1px 6px;border-radius:6px}
 
-/* 카테고리 아코디언(드롭다운) */
-.frow-types{display:block;}
-.types-head{font-weight:800;font-size:14px;color:var(--ink);margin-bottom:10px;}
-.types-sub{font-weight:600;font-size:12px;color:var(--muted);margin-left:6px;}
-.cat-acc{display:flex;flex-direction:column;gap:8px;}
-.cat-det{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;box-shadow:var(--shadow-sm);}
-.cat-det[open]{border-color:#d3dbe6;}
-.cat-det summary{display:flex;align-items:center;gap:10px;padding:13px 15px;cursor:pointer;list-style:none;font-weight:800;color:var(--ink);user-select:none;}
-.cat-det summary::-webkit-details-marker{display:none;}
-.cat-det summary:hover{background:var(--panel-2);}
-.cat-no{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;background:var(--accent);color:#fff;font-size:13px;font-weight:800;flex:none;}
-.cat-nm{flex:1;font-size:15px;}
-.cat-ct{font-size:11px;font-weight:800;color:var(--accent-ink);background:var(--accent-soft);padding:2px 9px;border-radius:999px;}
-.cat-arw{color:var(--muted-2);font-size:12px;transition:transform .2s;}
-.cat-det[open] .cat-arw{transform:rotate(180deg);}
-.cat-subs{display:flex;flex-direction:column;gap:5px;padding:6px 10px 12px;border-top:1px solid var(--line-2);}
-.acc-sub{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:var(--panel-2);color:var(--ink);font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;transition:background .15s,border-color .15s,transform .1s;text-align:left;}
-.acc-sub:hover{background:var(--accent-soft);border-color:var(--accent);transform:translateX(2px);}
-.acc-sub.soon{opacity:.5;cursor:not-allowed;}
-.acc-sub.soon:hover{background:var(--panel-2);border-color:var(--line);transform:none;}
-.acc-no{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:22px;padding:0 6px;border-radius:7px;background:#fff;border:1px solid var(--line);color:var(--accent-ink);font-size:12px;font-weight:800;flex:none;}
-.acc-nm{flex:1;}
-.acc-go{font-size:12px;font-weight:800;color:var(--accent);}
-.acc-badge{font-size:10px;font-weight:800;color:var(--muted);background:var(--line-2);padding:2px 8px;border-radius:999px;}
-/* 카드 번호 배지 */
-.card-top{position:relative;}
-.card-no{position:absolute;top:0;right:0;font-size:11px;font-weight:800;color:var(--accent-ink);background:var(--accent-soft);padding:3px 9px;border-radius:999px;}
+  /* hover 는 마우스에서만 — 터치에서 탭하면 hover 잔상이 '눌린 것처럼' 남는다(nav.css 와 같은 가드). */
+  @media (hover:hover) and (pointer:fine){
+    .card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#dbe3ef}
+    .cta:hover{background:var(--accent-ink)}
+    .cta.locked:hover{background:var(--panel-2)}
+    .btn-peek:hover{background:var(--accent-soft);border-color:var(--accent)}
+    .reset:hover{background:var(--accent-soft);border-color:var(--accent)}
+    .seg label:hover{color:var(--ink)}
+  }
 
-/* 학년 한 줄 설명 — 고르고 나서야 무슨 학년인지 알게 되는 일이 없도록 */
-.fg-stage{align-items:flex-start;}
-.fg-stage > .label{padding-top:8px;}
-.stagecol{display:flex;flex-direction:column;gap:5px;}
-.stagenote{font-size:12px;font-weight:600;color:var(--muted);padding-left:2px;max-width:44ch;line-height:1.5;}
-.stagenote b{color:var(--accent-ink);font-weight:800;}
+  /* 반응형 — 예전엔 폭 브레이크포인트가 0개였다(모바일 우선 제품인데 모바일이 가장 길었다). */
+  @media (max-width:640px){
+    .frow{gap:8px 12px;padding:11px 12px}
+    .fg{flex:1 1 100%}
+    .fg > label{flex:none;min-width:52px}
+    .fsel{flex:1}
+    .reset{margin-left:0;flex:1 1 100%}
+    .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+    .card{padding:11px}
+  }
+  @media (max-width:400px){
+    .seg{width:100%}
+    .seg label{padding:0 10px;font-size:12.5px}
+  }
 
 /* ===== 예시 미리보기 =====
    첫 사용자는 "어떤 문제인지" 몰라서 못 고르고, 숙련된 선생님은 "이 유형이 맞는지"를
    확인하고 고른다. 둘 다 시작 전에 실제 문항 하나를 봐야 해결된다.
    문항은 실제 /generate 로 뽑고, 정답은 /grade 로만 받는다(정답 은닉 유지 — 마스터 §6.7). */
-.card .cta-row{margin-top:auto;display:flex;gap:8px;}
-.card .cta-row .cta{margin-top:0;flex:1;}
-.btn-peek{border:1px solid var(--line);background:var(--panel);color:var(--accent-ink);cursor:pointer;
-  font-family:inherit;font-weight:700;font-size:13px;padding:10px 12px;border-radius:var(--r);white-space:nowrap;transition:.15s;}
-.btn-peek:hover{background:var(--accent-soft);border-color:var(--accent);}
-.acc-peek{flex:none;border:1px solid var(--line);background:#fff;color:var(--accent-ink);cursor:pointer;
-  font-family:inherit;font-weight:800;font-size:12px;padding:6px 10px;border-radius:9px;}
-.acc-peek:hover{background:var(--accent-soft);border-color:var(--accent);}
-
 .pv-back{position:fixed;inset:0;z-index:60;background:rgba(24,34,51,.45);display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
 .pv-back.show{display:flex;}
 .pv-modal{background:var(--panel);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);width:100%;max-width:560px;margin:auto;overflow:hidden;}
@@ -173,7 +149,7 @@
 .pv-badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);}
 .pv-badge.plain{background:var(--panel-2);color:var(--muted);border:1px solid var(--line);}
 .pv-x{border:none;background:none;cursor:pointer;color:var(--muted);font-size:22px;line-height:1;padding:2px 6px;border-radius:8px;}
-.pv-x:hover{background:var(--panel-2);color:var(--ink);}
+@media (hover:hover) and (pointer:fine){ .pv-x:hover{background:var(--panel-2);color:var(--ink);} }
 .pv-body{padding:14px 16px 4px;min-height:180px;}
 .pv-ask{font-size:15.5px;font-weight:700;line-height:1.5;margin:0 0 12px;}
 .pv-ask small{font-weight:600;color:var(--muted);}
@@ -183,9 +159,11 @@
 .pv-pager button:disabled{color:var(--muted-2);cursor:default;}
 .pv-foot .grow{flex:1;}
 .pv-btn{border:1px solid var(--line);background:var(--panel);color:var(--accent-ink);cursor:pointer;font-family:inherit;font-weight:800;font-size:13px;padding:10px 13px;border-radius:12px;}
-.pv-btn:hover{background:var(--accent-soft);border-color:var(--accent);}
 .pv-btn.primary{background:var(--accent);color:#fff;border-color:transparent;}
-.pv-btn.primary:hover{background:var(--accent-ink);}
+@media (hover:hover) and (pointer:fine){
+  .pv-btn:hover{background:var(--accent-soft);border-color:var(--accent);}
+  .pv-btn.primary:hover{background:var(--accent-ink);}
+}
 .pv-ans{margin:12px 0 0;padding:11px 13px;border-radius:12px;background:var(--add-soft);border:1px solid #b7e2c7;color:#0b6e3e;font-weight:700;font-size:14px;}
 .pv-ans b{font-size:16px;}
 .pv-note{font-size:12px;color:var(--muted-2);font-weight:600;margin:10px 0 0;line-height:1.6;}
@@ -241,80 +219,72 @@
     <div class="hero-inner">
       <span class="eyebrow">교과수학 · 사고력수학 · 경시 대비</span>
       <h1>쌓기나무 퀴즈</h1>
-      <p>교육과정·난이도·차원·유형으로 골라 바로 풀어요. 개수부터 부피·겉넓이, 위·앞·옆 관찰까지.</p>
+      <p>학년을 고르고 풀고 싶은 것을 누르면 바로 시작해요. 개수부터 부피·겉넓이, 위·앞·옆 관찰까지.</p>
     </div>
   </section>
 
   <div class="page">
-    <section class="filters" aria-label="퀴즈 필터">
-      <div class="frow frow-top">
+    <section class="filters" aria-label="퀴즈 조건">
+      <!-- [찾기] — 여기를 바꾸면 아래 카드 목록이 바뀐다. -->
+      <div class="frow" id="rowFind">
+        <span class="flabel">찾기</span>
         <div class="fg">
-          <span class="label">교육과정</span>
-          <div class="seg" role="group" aria-label="교육과정" data-filter="edu">
-            <button type="button" data-val="all" aria-pressed="true">전체</button>
-            <button type="button" data-val="curr" aria-pressed="false">교과수학</button>
-            <button type="button" data-val="think" aria-pressed="false">사고력수학</button>
-          </div>
-        </div>
-        <!-- 학년 칩은 서버 /config 의 열린 스테이지로 그린다(단일 출처). 아래 마크업은 폴백. -->
-        <div class="fg fg-stage">
-          <span class="label">학년</span>
-          <div class="stagecol">
-            <div class="chips" role="group" aria-label="학년" data-filter="stage" id="stageChips">
-              <button type="button" class="chip" data-val="S0" aria-pressed="false">유아</button>
-              <button type="button" class="chip" data-val="S1" aria-pressed="false">초1~2</button>
-              <button type="button" class="chip" data-val="S2" aria-pressed="false">초3~4</button>
-              <button type="button" class="chip" data-val="S3" aria-pressed="false">초5</button>
-              <button type="button" class="chip" data-val="S4" aria-pressed="true">초6</button>
-            </div>
-            <div class="stagenote" id="stageNote"></div>
-          </div>
+          <label for="fEdu">교육과정</label>
+          <select class="fsel" id="fEdu">
+            <option value="all">전체</option>
+            <option value="curr">교과수학</option>
+            <option value="think">사고력수학</option>
+          </select>
         </div>
         <div class="fg">
-          <span class="label">난이도</span>
-          <div class="chips" role="group" aria-label="난이도" data-filter="levels">
-            <button type="button" class="chip" data-val="하" aria-pressed="false"><span class="dot"></span>하</button>
-            <button type="button" class="chip" data-val="중" aria-pressed="true"><span class="dot"></span>중</button>
-            <button type="button" class="chip" data-val="상" aria-pressed="true"><span class="dot"></span>상</button>
-            <button type="button" class="chip" data-val="최상" aria-pressed="true"><span class="dot"></span>최상</button>
-          </div>
+          <label id="stageLbl">학년</label>
+          <!-- 학년 라디오는 서버 /config 의 열린 스테이지로 그린다(renderStages). 아래는 폴백. -->
+          <div class="seg" id="stageSeg" role="radiogroup" aria-labelledby="stageLbl"></div>
         </div>
         <div class="fg">
-          <span class="label">차원</span>
-          <div class="seg" role="group" aria-label="차원" data-filter="dim">
-            <button type="button" data-val="all" aria-pressed="true">전체</button>
-            <button type="button" data-val="3d" aria-pressed="false">3D만</button>
-            <button type="button" data-val="2d" aria-pressed="false">2D만</button>
-          </div>
-        </div>
-        <div class="fg">
-          <span class="label">퀴즈 수</span>
-          <div class="seg" role="group" aria-label="퀴즈 수" data-filter="count">
-            <button type="button" data-val="10" aria-pressed="true">10개 이하</button>
-            <button type="button" data-val="20" aria-pressed="false">20개 이하</button>
-            <button type="button" data-val="30" aria-pressed="false">30개 이하</button>
-          </div>
+          <label for="fConcept">개념유형</label>
+          <select class="fsel" id="fConcept"></select>
         </div>
         <button class="reset" id="reset" type="button">초기화</button>
       </div>
 
-      <div class="frow frow-types">
-        <div class="types-head">문제유형 <span class="types-sub">카테고리를 펼쳐 세부 유형을 골라요</span></div>
-        <div class="cat-acc" id="catAcc" aria-label="문제유형 목록"></div>
+      <!-- [풀기] — 목록을 바꾸지 않는다. '시작'을 누를 때 적용된다. -->
+      <div class="frow" id="rowPlay">
+        <span class="flabel">풀기</span>
+        <div class="fg">
+          <label id="lvLbl">난이도</label>
+          <!-- 복수 선택(checkbox). 학년 칩과 같은 .seg 패턴을 공유한다. -->
+          <div class="seg" id="lvSeg" role="group" aria-labelledby="lvLbl"></div>
+        </div>
+        <div class="fg">
+          <label for="fCount">문항 수</label>
+          <select class="fsel" id="fCount">
+            <option value="10">10개</option>
+            <option value="20">20개</option>
+            <option value="30">30개</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label id="dimLbl">문제 유형</label>
+          <!-- 제시물이 3D 입체인지 2D 겨냥도인지. 단일 선택(radio). -->
+          <div class="seg" id="dimSeg" role="radiogroup" aria-labelledby="dimLbl">
+            <input type="radio" name="dim" id="dim-auto" value="auto" checked><label for="dim-auto">3D 입체</label>
+            <input type="radio" name="dim" id="dim-2d" value="2d"><label for="dim-2d" id="dim2dLbl">2D 겨냥도</label>
+          </div>
+        </div>
       </div>
     </section>
 
     <section aria-label="퀴즈 유형 목록">
       <div class="results-head">
         <span class="count" id="count"></span>
-        <span class="hint">유형을 고르면 그 조건으로 퀴즈가 시작돼요</span>
+        <span class="hint">유형을 누르면 위 조건으로 바로 시작돼요</span>
       </div>
       <div class="grid" id="grid"></div>
     </section>
   </div>
 
-  <p class="footnote">프로토타입 v0.8.0 · 배포 시 <code>quiz/index.html</code>, 상대경로 · 무로그인 · 필터는 주소(URL)로 공유돼요.<br>교육과정(교과/사고력)은 트랙이 아니라 <b>태그</b> — 한 유형이 둘 다 가질 수 있어요. 사고력·경시 유형은 전부 <b>자체 생성 문항</b>입니다.</p>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <p class="footnote">로그인 없이 바로 풀 수 있어요 · 고른 조건은 주소(URL)로 공유돼요.<br>교육과정(교과·사고력)은 트랙이 아니라 <b>태그</b>라 한 유형이 둘 다 가질 수 있어요. 모든 문항은 CubeNest가 직접 만듭니다.</p>
 
   <!-- 예시 미리보기 — 실제 서버 문항 3개를 뽑아 보여준다(정답은 /grade 로만). -->
   <div class="pv-back" id="pvBack" role="dialog" aria-modal="true" aria-labelledby="pvTitle" hidden>
@@ -354,7 +324,6 @@ function track(name,params){ try{ if(window.gtag) window.gtag('event',name,param
 
 const LEVELS=['하','중','상','최상'];
 const LVL_CODE={'하':'1','중':'2','상':'3','최상':'4'}, CODE_LVL={'1':'하','2':'중','3':'상','4':'최상'};
-const DEFAULT_LEVELS=['중','상','최상'];
 const DEFAULT_COUNT=10;
 
 /* ---------- 상위개념 (개념 묶음 · 트랙 없음) ---------- */
@@ -428,12 +397,14 @@ const DEFAULT_STAGE='S4';                       // 초6 — 교과 핵심이자 
 // 학년 목록의 정본도 서버 /config(genConfig.stages)다. 아래는 폴백이며 서버와 같아야 한다.
 //   유아·초1~2 는 교과에 '쌓기나무'가 없지만 사고력 '도형' 교재에는 있어서 연다(260820).
 //   중1~2(S5)는 노출하지 않는다 — 서버 STAGES.S5.open=false.
+//   ⚠ dim 을 반드시 서버 STAGES[].dim 과 같은 값으로 유지할 것 — '보기' 컨트롤이 이걸 보고
+//     비활성 여부를 정한다. 없으면 /config 실패 경로에서 UI 가 거짓말을 한다.
 const STAGE_FB=[
-  {id:'S0',grade:'유아',  note:"사고력 '도형' 첫걸음 — 2~7개를 눈으로 세요"},
-  {id:'S1',grade:'초1~2',note:'초등 저학년 — 3~11개, 위에서 본 모양 찾기까지'},
-  {id:'S2',grade:'초3~4',note:'쌓기나무 개수·층별 세기'},
-  {id:'S3',grade:'초5',  note:'겨냥도·위앞옆(삼면도)이 나오는 학년'},
-  {id:'S4',grade:'초6',  note:"교과 '공간과 입체' — 부피·겉넓이·안 보이는 나무"},
+  {id:'S0',grade:'유아',  dim:'3d'},
+  {id:'S1',grade:'초1~2',dim:'3d'},
+  {id:'S2',grade:'초3~4',dim:'3d'},
+  {id:'S3',grade:'초5',  dim:'3d'},
+  {id:'S4',grade:'초6',  dim:'any'},
 ];
 const stageList=()=> (SRV&&SRV.stages&&SRV.stages.length)?SRV.stages:STAGE_FB;
 const stageInfo=id=> stageList().find(s=>s.id===id)||null;
@@ -467,119 +438,170 @@ function gateFor(t, stage){
   if(t.sub && subs && subs.indexOf(t.sub)<0) return null;
   return ALL4;
 }
-const state={ edu:'all', dim:'all', count:DEFAULT_COUNT, stage:DEFAULT_STAGE, levels:new Set(DEFAULT_LEVELS) };
-const kidsOf=id=>TYPES.filter(t=>t.cat===id);
+/* ---------- 난이도 ----------
+   칩 4개 복수 선택, 기본 중·상. 난이도는 목록을 거르지 않는다(열린 유형은 언제나 4등급을
+   지원한다) — 그래서 [풀기] 줄에 있고, 시작할 때 lv 코드로만 쓰인다. */
+const DEFAULT_LV_CODES='23';
+const codesOfLevels=set=>LEVELS.filter(l=>set.has(l)).map(l=>LVL_CODE[l]).sort().join('');
+const levelsOfCodes=c=>new Set([...c].map(x=>CODE_LVL[x]).filter(Boolean));
 
-/* ---------- 1행 이벤트 ---------- */
-document.querySelectorAll('.frow-top [data-filter]').forEach(group=>{
-  const kind=group.dataset.filter;
-  group.addEventListener('click',e=>{
-    const btn=e.target.closest('button'); if(!btn) return;
-    const val=btn.dataset.val;
-    if(kind==='edu'){ state.edu=val; setSingle(group,btn); renderAcc(); }
-    else if(kind==='dim'){ state.dim=val; setSingle(group,btn); }
-    else if(kind==='count'){ state.count=+val; setSingle(group,btn); }
-    else if(kind==='stage'){ state.stage=val; setSingle(group,btn); renderStageNote(); renderAcc(); }
-    else if(kind==='levels'){ toggleSet(state.levels,val,btn); }
-    render();
-  });
+const DEFAULTS={ edu:'all', dim:'auto', count:DEFAULT_COUNT, stage:DEFAULT_STAGE, concept:'all' };
+const state={ edu:'all', dim:'auto', count:DEFAULT_COUNT, stage:DEFAULT_STAGE,
+              concept:'all',                   // 'all' | 'cat:<id>' | 'type:<id>' — UI 라벨은 '개념유형'
+              levels:levelsOfCodes(DEFAULT_LV_CODES) };
+
+/* ---------- 필터 이벤트 ----------
+   ⚠ click 이 아니라 change 위임이다. native radio 는 화살표 키로 click 없이 값이 바뀐다.
+   그리고 renderStages() 가 학년 라디오를 innerHTML 로 갈아엎으므로 **위임이어야** 한다. */
+document.querySelector('.filters').addEventListener('change',e=>{
+  const el=e.target;
+  if(el.name==='stage'){ state.stage=el.value; syncDimControl(); renderConceptSelect(); render(); return; }
+  if(el.name==='dim'){ state.dim=el.value; syncURL(); return; }
+  if(el.name==='lv'){
+    // ⚠ 최소 하나는 켜져 있어야 한다. 0개가 되면 start() 의 lvls.length?lvls:sup 때문에
+    //   조용히 '전 등급'으로 시작해 버린다 — 끄려는 클릭을 되돌린다.
+    if(!el.checked && state.levels.size<=1){ el.checked=true; return; }
+    el.checked ? state.levels.add(el.value) : state.levels.delete(el.value);
+    syncURL(); return;                          // 목록은 안 바뀐다
+  }
+  switch(el.id){
+    case 'fEdu':     state.edu=el.value; renderConceptSelect(); render(); return;
+    case 'fConcept': state.concept=el.value; render(); return;
+    case 'fCount':   state.count=+el.value; syncURL(); return;
+  }
 });
-function setSingle(group,btn){ group.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', b===btn?'true':'false')); }
 
-/* ---------- 학년 칩 (열린 스테이지 = 서버 /config 단일 출처) ---------- */
+/* ---------- 학년 라디오 (열린 스테이지 = 서버 /config 단일 출처) ---------- */
 function renderStages(){
-  const box=document.getElementById('stageChips'); if(!box) return;
+  const box=document.getElementById('stageSeg'); if(!box) return;
   const list=stageList();
   if(!list.some(s=>s.id===state.stage)) state.stage=DEFAULT_STAGE;   // 닫힌 학년으로 들어온 링크
-  box.innerHTML=list.map(s=>`<button type="button" class="chip" data-val="${s.id}" aria-pressed="${s.id===state.stage}">${s.grade}</button>`).join('');
-  renderStageNote();
+  box.innerHTML=list.map(s=>
+    `<input type="radio" name="stage" id="stg-${s.id}" value="${s.id}"${s.id===state.stage?' checked':''}>`
+   +`<label for="stg-${s.id}">${s.grade}</label>`).join('');
 }
-function renderStageNote(){
-  const el=document.getElementById('stageNote'); if(!el) return;
-  const s=stageInfo(state.stage);
-  el.innerHTML=s?`<b>${s.grade}</b> · ${s.note||''}`:'';
-}
-function toggleSet(set,val,btn){ const on=!(btn.getAttribute('aria-pressed')==='true'); btn.setAttribute('aria-pressed', on?'true':'false'); on?set.add(val):set.delete(val); }
 
-/* ---------- 카테고리 아코디언(드롭다운) ---------- */
-const catAcc=document.getElementById('catAcc');
-function renderAcc(){
-  catAcc.innerHTML='';
-  CATS.forEach((c,ci)=>{
-    // ⚠ 학년 게이트를 카드 격자만 적용하고 이 목록엔 안 걸어 두면, 유아에게 '안 보이는 나무'가
-    //   버젓이 보이고 눌리기까지 한다(서버는 닫힌 유형이라 엉뚱한 등급으로 떨어진다).
-    //   카드와 같은 규칙(gateFor)을 쓴다. status:'soon' 은 학년과 무관한 예고라 그대로 둔다.
-    const kids=kidsOf(c.id).filter(t=> (state.edu==='all' || t.edu.includes(state.edu))
-                                       && (t.status!=='live' || !!gateFor(t,state.stage)));
-    if(!kids.length) return;
-    const det=document.createElement('details'); det.className='cat-det'; if(c.id==='hidden')det.open=true;
-    const sum=document.createElement('summary');
-    sum.innerHTML=`<span class="cat-no">${ci+1}</span><span class="cat-nm">${c.name}</span><span class="cat-ct">${kids.length}</span><span class="cat-arw">▾</span>`;
-    det.appendChild(sum);
-    const wrap=document.createElement('div'); wrap.className='cat-subs';
-    kids.forEach((t,si)=>{
-      const soon=t.status==='soon';
-      const b=document.createElement('button'); b.type='button'; b.className='acc-sub'+(soon?' soon':'');
-      b.disabled=soon;
-      b.innerHTML=`<span class="acc-no">${ci+1}-${si+1}</span><span class="acc-nm">${t.name}</span>${soon?'<span class="acc-badge">곧</span>':'<span class="acc-go">시작 ›</span>'}`;
-      if(!soon) b.addEventListener('click',()=>start(t));
-      if(soon){ wrap.appendChild(b); return; }
-      // 예시 보기 — 목록에서도 바로 "어떤 문제인지" 확인할 수 있어야 고를 수 있다.
-      const row=document.createElement('div'); row.style.cssText='display:flex;gap:6px;align-items:stretch';
-      b.style.flex='1';
-      const pk=document.createElement('button'); pk.type='button'; pk.className='acc-peek'; pk.textContent='예시';
-      pk.setAttribute('aria-label',t.name+' 예시 문제 보기');
-      pk.addEventListener('click',()=>openPreview(t));
-      row.appendChild(b); row.appendChild(pk); wrap.appendChild(row);
-      return;
-    });
-    det.appendChild(wrap); catAcc.appendChild(det);
+/* ---------- 개념유형 드롭다운 ----------
+   ⚠ UI 라벨 '개념유형' = 코드의 concept. [풀기] 의 '문제 유형'(3D/2D)은 state.dim 이다 — 헷갈리지 말 것.
+   카테고리로 묶고 각 그룹 맨 위에 "○○ 전체 (n)" 을 둔다(optgroup 라벨은 선택할 수 없으므로).
+   ⚠ 옵션 구성은 현재 학년·교육과정에 달렸다. 다시 그릴 때 선택을 보존하되,
+     그 사이 사라진 유형이면 'all' 로 되돌린다. 여기서 render() 를 부르면 무한 루프다. */
+function renderConceptSelect(){
+  const sel=document.getElementById('fConcept'); if(!sel) return;
+  const vis=TYPES.filter(visibleByFind);
+  let html=`<option value="all">전체 — ${vis.length}가지</option>`;
+  CATS.forEach(c=>{
+    const kids=vis.filter(t=>t.cat===c.id); if(!kids.length) return;
+    html+=`<optgroup label="${c.name}">`
+        + `<option value="cat:${c.id}">${c.name} 전체 (${kids.length})</option>`
+        + kids.map(t=>`<option value="type:${t.id}">${t.name}${t.status==='soon'?' (곧 공개)':''}</option>`).join('')
+        + `</optgroup>`;
   });
+  sel.innerHTML=html;
+  const keep=[...sel.options].some(o=>o.value===state.concept);
+  if(!keep) state.concept='all';               // 학년을 바꿔 사라진 유형
+  sel.value=state.concept;
+}
+
+/* ---------- 난이도 칩 ---------- */
+function renderLevelChips(){
+  const box=document.getElementById('lvSeg'); if(!box) return;
+  box.innerHTML=LEVELS.map(l=>
+    `<input type="checkbox" name="lv" id="lv-${LVL_CODE[l]}" value="${l}"${state.levels.has(l)?' checked':''}>`
+   +`<label for="lv-${LVL_CODE[l]}">${l}</label>`).join('');
+}
+
+/* ---------- 보기(3D/2D) ----------
+   서버가 유형·학년별로 제시 형태를 정하므로 사용자 선택이 먹는 범위는 좁다.
+   학년이 3D 고정이면 아예 못 고르게 하고 **사유를 라벨 안에** 넣는다(안내 줄을 따로 두지 않는다). */
+function syncDimControl(){
+  const box=document.getElementById('dimSeg'); if(!box) return;
+  const st=stageInfo(state.stage), fixed3D=!!st && st.dim==='3d';
+  // 사유를 칩 글자 안에 넣는다 — 안내 줄을 따로 두지 않기로 했다.
+  const lbl=document.getElementById('dim2dLbl');
+  if(lbl) lbl.textContent=fixed3D?'2D 겨냥도 (초6부터)':'2D 겨냥도';
+  box.querySelectorAll('input').forEach(i=>{ i.disabled=fixed3D; });
+  if(fixed3D) state.dim='auto';
+  const cur=box.querySelector(`input[value="${state.dim}"]`); if(cur) cur.checked=true;
+}
+
+/* ---------- 컨트롤 ← 상태 ----------
+   ⚠ 예전 syncTopDOM 은 [data-filter] button 을 찾았다. select 로 바뀌면 0개 매치라
+     **에러 없이 아무 일도 안 일어난다**. 그리고 select 에 없는 값을 value 로 넣으면
+     조용히 빈 칸이 되므로 loadURL 검증이 반드시 선행돼야 한다. */
+function syncControls(){
+  const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
+  set('fEdu',state.edu); set('fCount',String(state.count));
+  const seg=document.getElementById('stageSeg');
+  if(seg){ const r=seg.querySelector(`input[value="${state.stage}"]`); if(r) r.checked=true; }
+  renderLevelChips();            // 칩은 value 대입이 아니라 checked 로 맞춘다
+  renderConceptSelect();
+  syncDimControl();              // 3D 고정 여부까지 여기서 정해진다(dim 칩 checked 포함)
 }
 
 document.getElementById('reset').addEventListener('click',()=>{
-  state.edu='all'; state.dim='all'; state.count=DEFAULT_COUNT;
-  state.levels=new Set(DEFAULT_LEVELS);
-  syncTopDOM(); renderAcc(); render();
+  // 예전엔 학년을 안 건드려 "초기화했는데 학년만 남는" 모순이 있었다. DEFAULTS 하나로 전부 되돌린다.
+  Object.assign(state, DEFAULTS);
+  state.levels=levelsOfCodes(DEFAULT_LV_CODES);
+  renderStages(); syncControls(); render();
 });
 
-/* ---------- 필터 로직 ---------- */
-function match(t){
+/* ---------- 필터 로직 ----------
+   [찾기] 두 축(교육과정·학년) + 문제유형만 목록을 거른다.
+   ⚠ 난이도·차원 조건을 여기 두면 "아랫줄은 목록을 안 바꾼다"는 계약이 즉시 깨진다.
+     특히 soon 카드에 걸려 있던 t.levels 검사를 지우는 것이 중요했다 — 안 지우면
+     난이도만 바꿔도 '준비 중' 카드가 사라졌다. */
+function visibleByFind(t){
   if(state.edu!=='all' && !t.edu.includes(state.edu)) return false;
-  if(state.dim!=='all' && !(t.dim==='both'||t.dim===state.dim)) return false;
-  if(t.status==='live'){
-    const lv=gateFor(t,state.stage);
-    if(!lv) return false;                          // 이 학년에는 없는 유형
-    if(!lv.some(l=>state.levels.has(l))) return false;
-  } else if(!t.levels.some(l=>state.levels.has(l))) return false;
+  if(t.status==='live' && !gateFor(t,state.stage)) return false;   // 이 학년에는 없는 유형
   return true;
 }
-// 카드에 표시할 등급 — live 는 서버(또는 폴백) 게이트, soon 은 카드의 예정값
+function match(t){
+  if(!visibleByFind(t)) return false;
+  if(state.concept==='all') return true;
+  if(state.concept.startsWith('cat:'))  return t.cat===state.concept.slice(4);
+  if(state.concept.startsWith('type:')) return t.id===state.concept.slice(5);
+  return true;
+}
+// 시작 URL 의 lv 코드를 정할 때 쓴다(카드 표시용은 아니다 — 뱃지는 전 카드가 같아 폐지했다).
 function levelsOf(t){ return (t.status==='live' ? (gateFor(t,state.stage)||t.levels) : t.levels); }
 
 /* ---------- 결과 렌더 ---------- */
 const grid=document.getElementById('grid'), countEl=document.getElementById('count');
-const dimLabel={both:'2D·3D','2d':'2D','3d':'3D'};
-const eduLabel={curr:'교과',think:'사고력'};
 function render(){
-  const list=TYPES.filter(match);
-  countEl.innerHTML=`<b>${list.length}</b>개 유형`;
+  // 풀 수 있는 것 먼저(카테고리 순), '준비 중'은 전부 맨 뒤로.
+  //   soon 4종이 각자 카테고리를 차지하면 카드 1~2장짜리 섹션이 4줄을 낭비한다 → 한 묶음으로.
+  const ord=t=>t.status==='soon'?999:CATS.findIndex(c=>c.id===t.cat);
+  const list=TYPES.filter(match).sort((a,b)=>ord(a)-ord(b)
+    || CATS.findIndex(c=>c.id===a.cat)-CATS.findIndex(c=>c.id===b.cat));
+  countEl.innerHTML=`<b>${list.length}</b>가지`;
   grid.innerHTML='';
-  if(!list.length){ grid.innerHTML=`<div class="empty"><b>조건에 맞는 유형이 없어요</b>필터를 조금 줄여보세요.</div>`; syncURL(); return; }
+  if(!list.length){
+    grid.innerHTML=`<div class="empty"><b>조건에 맞는 개념유형이 없어요</b>학년이나 개념유형을 바꿔 보세요.</div>`;
+    syncURL(); return;
+  }
+  // 카테고리 섹션 헤더 — 아코디언이 주던 '개념 묶음' 가치를 클릭 0회로 보전한다.
+  //   CATS 순서상 추론·구성·변환·세기가 뒤라 '준비 중' 6종이 자연스럽게 맨 아래로 모인다.
+  let lastKey=null;
   list.forEach(t=>{
     const soon=t.status==='soon';
-    const ci=CATS.findIndex(c=>c.id===t.cat), si=kidsOf(t.cat).findIndex(x=>x.id===t.id);
-    const no=(ci+1)+'-'+(si+1);
-    const sup=levelsOf(t);
-    const lv=LEVELS.map(l=>{ const has=sup.includes(l),on=has&&state.levels.has(l); return has?`<b class="${on?'on':''}">${l}</b>`:''; }).join('');
-    const eduTags=t.edu.map(e=>`<span class="tag ${e==='think'?'think':''}">${eduLabel[e]}</span>`).join('');
+    const key=soon?'__soon':t.cat;
+    if(key!==lastKey){
+      lastKey=key;
+      const c=CATS.find(x=>x.id===t.cat);
+      const n=list.filter(x=>(x.status==='soon'?'__soon':x.cat)===key).length;
+      const h=document.createElement('h2'); h.className='gsec'+(soon?' gsec-soon':'');
+      h.innerHTML=`${soon?'곧 공개':(c?c.name:'')} <b>${n}</b>`;
+      grid.appendChild(h);
+    }
+    // 사고력 전용 유형만 태그를 단다 — 대부분이 교과·사고력 둘 다라 전부 달면 배경 소음이 된다.
+    const only=t.edu.length===1&&t.edu[0]==='think';
     const card=document.createElement('article'); card.className='card'+(soon?' soon':'');
     card.innerHTML=`
-      <div class="card-top"><span class="glyph">${G[t.glyph]()}</span><span class="card-no">${no}</span>${soon?'<span class="badge">곧 공개</span>':''}</div>
-      <h3>${t.name}</h3>
+      <div class="card-top"><span class="glyph">${G[t.glyph]()}</span><h3>${t.name}</h3></div>
       <p class="desc">${t.desc}</p>
-      <div class="tags"><span class="tag">${dimLabel[t.dim]}</span>${eduTags}<span class="lv">${lv}</span></div>
-      <div class="cta-row">${soon?'':'<button type="button" class="btn-peek">예시 보기</button>'}<button class="cta ${soon?'locked':''}" ${soon?'disabled':''}>${soon?'준비 중':'시작하기'}</button></div>`;
+      ${only?'<span class="tag">사고력</span>':''}
+      <div class="cta-row">${soon?'':'<button type="button" class="btn-peek">예시</button>'}<button class="cta ${soon?'locked':''}" ${soon?'disabled':''}>${soon?'준비 중':'시작'}</button></div>`;
     if(!soon){
       card.querySelector('.cta').addEventListener('click',()=>start(t));
       card.querySelector('.btn-peek').addEventListener('click',()=>openPreview(t));
@@ -598,7 +620,7 @@ function start(t){
   // stage 는 /generate·/grade 양쪽에 같이 가야 한다(gsig 지문 포함) — run 이 URL 에서 읽어 넘긴다.
   if(state.stage && state.stage!==DEFAULT_STAGE) url+='&stage='+state.stage;
   if(t.sub) url+='&sub='+encodeURIComponent(t.sub);
-  if(state.dim && state.dim!=='all') url+='&dim='+state.dim;
+  if(state.dim==='2d') url+='&dim=2d';   // 'auto' 는 서버 판단에 맡긴다(파라미터 미첨부)
   location.href=url;   // /quiz/ → /quiz/run/ (상대경로)
 }
 /* ---------- 예시 미리보기 ----------
@@ -720,39 +742,42 @@ let toastTimer;
 function showToast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2800); }
 
 /* ---------- URL 동기화 ---------- */
-function levelsDiffer(){ if(state.levels.size!==DEFAULT_LEVELS.length) return true; return DEFAULT_LEVELS.some(l=>!state.levels.has(l)); }
 function syncURL(){
   const p=new URLSearchParams();
-  if(state.edu!=='all')p.set('edu',state.edu);
-  if(state.dim!=='all')p.set('dim',state.dim);
-  if(state.count!==DEFAULT_COUNT)p.set('n',state.count);
-  if(state.stage!==DEFAULT_STAGE)p.set('stage',state.stage);
-  if(levelsDiffer())p.set('lv',[...state.levels].map(l=>LVL_CODE[l]).sort().join(''));
+  if(state.edu!==DEFAULTS.edu)     p.set('edu',state.edu);
+  if(state.concept!==DEFAULTS.concept) p.set('c',state.concept);
+  if(state.dim!==DEFAULTS.dim)     p.set('dim',state.dim);
+  if(state.count!==DEFAULTS.count) p.set('n',state.count);
+  if(state.stage!==DEFAULTS.stage) p.set('stage',state.stage);
+  const lvc=codesOfLevels(state.levels);
+  if(lvc!==DEFAULT_LV_CODES) p.set('lv',lvc);
   const q=p.toString(); history.replaceState(null,'',q?`?${q}`:location.pathname);
 }
+/* ⚠ 전부 화이트리스트로 검증한다. 예전엔 무검증이라 ?edu=xyz 면 결과가 0개가 되고
+   ?n=99 는 그대로 start() 까지 갔다. 게다가 select 는 목록에 없는 값을 value 로 넣으면
+   **에러 없이 빈 칸**이 되므로, 검증이 syncControls() 보다 반드시 앞서야 한다. */
 function loadURL(){
   const p=new URLSearchParams(location.search);
-  if(p.get('edu'))state.edu=p.get('edu');
-  if(p.get('dim'))state.dim=p.get('dim');
-  if(p.get('n'))state.count=+p.get('n');
+  const edu=p.get('edu');   if(['all','curr','think'].includes(edu)) state.edu=edu;
+  const dim=p.get('dim');   if(dim==='2d') state.dim='2d';           // 구 'all'·'3d' 는 auto 로 흡수
+  const n=parseInt(p.get('n'),10); if([10,20,30].includes(n)) state.count=n;
   const st=(p.get('stage')||'').toUpperCase(); if(/^S[0-5]$/.test(st)) state.stage=st;
-  if(p.get('lv'))state.levels=new Set([...p.get('lv')].map(c=>CODE_LVL[c]).filter(Boolean));
-  syncTopDOM();
-}
-function syncTopDOM(){
-  ['edu','dim'].forEach(k=>document.querySelectorAll(`.frow-top [data-filter="${k}"] button`).forEach(b=>b.setAttribute('aria-pressed', b.dataset.val===state[k]?'true':'false')));
-  document.querySelectorAll('.frow-top [data-filter="count"] button').forEach(b=>b.setAttribute('aria-pressed', +b.dataset.val===state.count?'true':'false'));
-  document.querySelectorAll('.frow-top [data-filter="levels"] button').forEach(b=>b.setAttribute('aria-pressed', state.levels.has(b.dataset.val)?'true':'false'));
-  document.querySelectorAll('.frow-top [data-filter="stage"] button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.val===state.stage?'true':'false'));
+  // lv = '1234' 의 비어 있지 않은 부분집합만 받는다(중복·잡문자 제거 후 하나도 안 남으면 기본 유지)
+  const lvSet=levelsOfCodes(p.get('lv')||'');
+  if(lvSet.size) state.levels=lvSet;
+  const c=p.get('c');
+  if(c==='all'||(c&&(c.startsWith('cat:')&&CATS.some(x=>'cat:'+x.id===c) || c.startsWith('type:')&&TYPES.some(x=>'type:'+x.id===c)))) state.concept=c;
 }
 
-loadURL(); renderStages(); renderAcc(); render();
+loadURL(); renderStages(); syncControls(); render();
 
 // 학년·등급·게이트의 단일 출처는 서버다. 못 받아도 폴백으로 이미 그려 뒀으므로 화면은 죽지 않는다.
 (async function(){
   try{
     const c = window.CubeNest && CubeNest.api && CubeNest.api.config ? await CubeNest.api.config() : null;
-    if(c && c.stages && c.stages.length){ SRV=c; renderStages(); renderAcc(); render(); }
+    // ⚠ renderStages() 가 닫힌 학년을 기본값으로 되돌릴 수 있다 → 그 뒤 반드시 syncControls().
+    //   안 하면 학년 라디오만 튀고 보기 select 의 disabled·라벨과 문제유형 옵션이 옛 학년 기준으로 남는다.
+    if(c && c.stages && c.stages.length){ SRV=c; renderStages(); syncControls(); render(); }
   }catch(e){}
 })();
 </script>
