@@ -58,6 +58,9 @@
 - 렌더링: 직교 카메라, 큐브 InstancedMesh 2그룹.
 - 언어 한국어(브랜드: ko→큐브네스트 / else CubeNest). 모바일 가로 우선(44px+, hover 미사용). 계측 `track()`→GA4, 동의 후만.
 - **DB 스키마는 마이그레이션 파일(`supabase/migrations/`)로 관리**, 적용은 대시보드 SQL Editor. `verify_jwt=true` 전환·저장 Edge 경유 금지(RLS로 충분, 익명 플레이 깨짐).
+- **배포는 두 갈래이고 순서가 있다 — 클라 먼저, 서버 나중.** 정적 사이트 = `git push` → GitHub Pages(origin/main). 서버 = `supabase functions deploy config generate grade worksheet`. 둘은 따로 나가므로 **한쪽만 배포하면 조용히 어긋난다** — 오류가 아니라 "안 바뀐 것처럼" 보인다.
+  - 클라는 `/config`(열린 학년·유형·등급)를 **정본**으로 삼는다. 서버를 먼저 배포하면 옛 클라가 **없어진 학년을 계속 팔고**(칩은 남는데 유형이 0개), 그 학년으로 시작한 퀴즈는 `normStage()`가 기본값으로 떨어뜨려 **다른 학년 문제가 조용히 나온다**(260821 중1~2 제거 때 실제로 발생).
+  - 확인: `curl .../functions/v1/config` 의 `version` == `cubenest-gen-config.js` 의 `VERSION`, 그리고 라이브 HTML에 그 커밋의 표식이 있는지.
 
 ## 데이터·수익화
 - **login-free-first:** 무료 도구는 클라만으로 완결. 로그인은 저장·유료의 선택 강화층.
