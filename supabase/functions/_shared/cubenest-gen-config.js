@@ -20,7 +20,7 @@
  *   난이도 = "얼마나 많이"가 아니라 "무엇이 부담인가"로 정한다.
  * ==========================================================================*/
 (function (global) {
-  var VERSION = "cfg-0.4.0";
+  var VERSION = "cfg-0.4.1";   // 0.4.1 = STAGES[].note 폐기(소비처 0, /config 응답에서도 제거)
 
   var ORDER = ["하", "중", "상", "최상"];
 
@@ -42,17 +42,19 @@
     //   capHidden     = 가림은 남기고 숨은 열 높이를 1 로 고정한다
     //     → 겨냥도 + 위모양만으로 개수가 유일해진다. 시중 문제집 3종이 예외 없이 쓰는 관행이고,
     //       개념(숨은 나무 추론)을 살리면서 지면에서도 풀리게 하는 유일한 방법이다.
-    //   note = 랜딩 학년 칩 아래에 그대로 노출되는 한 줄 설명(표기의 단일 출처)
-    S0: { grade: "유아",   age: "5~7",   open: true,  flatten: true,  capHidden: false, dim: "3d",
-          note: "사고력 '도형' 첫걸음 — 2~7개를 눈으로 세요" },
-    S1: { grade: "초1~2", age: "7~8",   open: true,  flatten: true,  capHidden: false, dim: "3d",
-          note: "초등 저학년 — 3~11개, 위에서 본 모양 찾기까지" },
-    S2: { grade: "초3~4", age: "8~9",   open: true,  flatten: true,  capHidden: false, dim: "3d",
-          note: "쌓기나무 개수·층별 세기" },
-    S3: { grade: "초5",   age: "10",    open: true,  flatten: true,  capHidden: false, dim: "3d",
-          note: "겨냥도·위앞옆(삼면도)이 나오는 학년" },
-    S4: { grade: "초6",   age: "11",    open: true,  flatten: false, capHidden: true,  dim: "any",
-          note: "교과 '공간과 입체' — 부피·겉넓이·안 보이는 나무" },
+    //   ※ 예전엔 랜딩 칩 아래 한 줄 설명을 담는 note 필드가 있었다. 랜딩이 그 줄을 없애
+    //     소비처가 0이 되어 폐기했다(v0.13.0). 문구에 있던 '이 학년은 무엇을 하는가'는
+    //     아래 각 줄 주석으로 옮겨 남긴다 — 스테이지를 손볼 때 필요한 판단 근거다.
+    S0: { grade: "유아",   age: "5~7",   open: true,  flatten: true,  capHidden: false, dim: "3d"  },
+    //   유아 = 사고력 '도형' 첫걸음. 2~7개를 눈으로 센다(교과에는 쌓기나무가 없다)
+    S1: { grade: "초1~2", age: "7~8",   open: true,  flatten: true,  capHidden: false, dim: "3d"  },
+    //   초1~2 = 3~11개. 개수 세기 + 위(앞)에서 본 모양 고르기까지
+    S2: { grade: "초3~4", age: "8~9",   open: true,  flatten: true,  capHidden: false, dim: "3d"  },
+    //   초3~4 = 개수·층별 세기
+    S3: { grade: "초5",   age: "10",    open: true,  flatten: true,  capHidden: false, dim: "3d"  },
+    //   초5 = 겨냥도·위앞옆(삼면도)이 교과에 처음 나오는 학년
+    S4: { grade: "초6",   age: "11",    open: true,  flatten: false, capHidden: true,  dim: "any" },
+    //   초6 = 교과 '공간과 입체'. 부피·겉넓이·안 보이는 나무 — 제품의 원점
     // 중1~2 는 노출하지 않는다(사용자 결정 260820). 설계는 남겨 둔다 — 다시 열 때 재작성하지 않으려고.
     S5: { grade: "중1~2", age: "12~13", open: false, flatten: false, capHidden: true,  dim: "any" }
   };
@@ -207,8 +209,7 @@
   function stages() {                     // 노출용 목록(랜딩 단일 출처)
     return STAGE_ORDER.filter(function (s) { return STAGES[s].open; })
       .map(function (s) {
-        return { id: s, grade: STAGES[s].grade, age: STAGES[s].age, dim: STAGES[s].dim,
-                 note: STAGES[s].note || null };
+        return { id: s, grade: STAGES[s].grade, age: STAGES[s].age, dim: STAGES[s].dim };
       });
   }
 
