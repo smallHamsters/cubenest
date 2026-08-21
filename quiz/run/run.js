@@ -340,7 +340,7 @@
         let sub=p.get("sub")||"";           // 안 보이는 나무 서브 강제(A-a~f)
         // 연령 스테이지(S2~S5). 없으면 서버 기본 S4(초6) — 스테이지를 모르는 링크는 지금까지와 같다.
         //   ⚠ /generate 와 /grade 에 같은 값이 가야 한다(gsig 지문 포함). GRADE_PARAMS 참조.
-        let stage=(p.get("stage")||"").toUpperCase(); if(!/^S[2-5]$/.test(stage)) stage="";
+        let stage=(p.get("stage")||"").toUpperCase(); if(!/^S[0-5]$/.test(stage)) stage="";
         // 문제지 QR 이 '이 문항'으로 바로 들어오게 하는 진입점(0-based). 세트는 그대로 복원된다.
         let q=parseInt(p.get("q"),10); if(!(q>=0&&q<30)) q=-1;
         return {type,levels,n,seed,dim,restart,view,sub,stage,q};
@@ -1055,16 +1055,12 @@
         return `<div class="ansline">답 <u>&nbsp;</u> ${unit}</div>`;
       }
       // 정답지용 한 줄 표기. 정답의 단일 출처는 서버 answerKey 다(로컬 재계산 없음).
+      //   표기 자체는 공용 모듈(FIG.answerText)이 만든다 — worksheets 독립 생성·quiz 미리보기와
+      //   같은 문구여야 하므로 세 곳에 각자 두지 않는다(§8.1).
       function answerTextOf(pr,i){
         const st=S.state[i], key=st&&st.key; if(!key) return "—";
         const T=TYPES[pr.type], unit=pr.unit||T.unit||"";
-        if(key.type==="num")  return key.value+unit+(key.min!=null?`  (최소 ${key.min} · 최대 ${key.max})`:"");
-        if(key.type==="bool") return key.value?"있어요":"없어요";
-        if(key.type==="mc")   return (key.correct+1)+"번";
-        if(key.type==="markCells")  return (key.cells||[]).map(c=>"("+c+")").join(" ")||"없음";
-        if(key.type==="markCount"){ const g=key.grid||{}; return Object.keys(g).map(k=>"("+k+")="+g[k]).join(" "); }
-        if(key.type==="drawSil")    return "아래 그림 참고";
-        return "—";
+        return FIG?FIG.answerText(key,unit):"—";
       }
       // 정답이 '그림'인 유형(삼면도 그리기)은 정답 그림도 함께 넘긴다.
       function answerFigureOf(pr,i){

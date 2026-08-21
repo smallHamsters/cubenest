@@ -1,6 +1,6 @@
 /*!
  * cubenest-gen.js — CubeNest 공용 문제 생성기 모듈 (마스터 §5.1·§7.3)
- * 버전: 0.4.0  ·  의존: CubeNest.core · genConfig(스테이지·밴드) · hidden(가림 정리)
+ * 버전: 0.5.0  ·  의존: CubeNest.core · genConfig(스테이지·밴드) · hidden(가림 정리)
  *
  * 목적: quiz·worksheets가 "같은 seed → 같은 문제(모양+하위질문)"를 얻도록 생성 로직을 단일화.
  *   - 각 모듈이 genShape를 각자 인라인하면 표류(같은 버그 2회 수정) → §8.1 위반.
@@ -22,7 +22,7 @@
  */
 (function (global) {
   'use strict';
-  var VERSION = '0.4.0';
+  var VERSION = '0.5.0';   // 0.5.0 = 세션 내 중복 회피(§genSession)
 
   function coreRef(explicit) {
     return explicit || (global.CubeNest && global.CubeNest.core) || null;
@@ -507,7 +507,11 @@
     }
     if (o.type === 'facesMc') {                              // 위·앞·옆 고르기: 방향
       // ⚠ 위모양을 제시물로 주는 스테이지에서는 top 을 묻지 않는다 — 정답을 함께 주는 셈이다.
-      var mcDirs = (o.cfg && o.cfg.withTop) ? ['front', 'side'] : ['front', 'side', 'top'];
+      // 스테이지가 방향을 제한하면(cfg.mcDirs — 유아=위만, 초1~2=위·앞) 그것을 먼저 따른다.
+      var mcDirs = (o.cfg && o.cfg.mcDirs && o.cfg.mcDirs.length)
+        ? o.cfg.mcDirs.filter(function (d) { return !(o.cfg.withTop && d === 'top'); })
+        : ((o.cfg && o.cfg.withTop) ? ['front', 'side'] : ['front', 'side', 'top']);
+      if (!mcDirs.length) mcDirs = ['front', 'side'];
       var rngD = rngFrom(o.seed + ':d' + o.index);
       out.dir = mcDirs[Math.floor(rngD() * mcDirs.length)];
     }
@@ -534,12 +538,48 @@
       support.forEach(function(l){ var d=Math.abs(ORD.indexOf(l)-want); if(d<bd){bd=d;best=l;} });
       pool = [best];
     }
+    // ── 세션 내 중복 회피 ──
+    //   밴드가 좁은 저학년·하 등급은 문제 공간 자체가 작다(실측: S0 하 = 서로 다른 모양 11개,
+    //   S1 하 = 45개, S2 heightmap 하 = 22개). 중복 회피가 없으면 8문항 세션에서 같은 문항이
+    //   두 번 나오는 비율이 S0 하 100% · S2 count 하 61% · S2 heightmap 하 78% 였다.
+    //   → seed 에 재시도 소금(#t)을 붙여 다시 뽑는다. index 는 그대로 두어 facesDraw 묶음
+    //     로직(index/group)이 깨지지 않는다. 같은 seed·n → 같은 세션이라 결정성도 유지된다.
+    //   ⚠ 공간이 문항 수보다 작으면(예: S0 하 11가지에 12문항) 중복은 불가피하다 —
+    //     MAX_TRY 를 소진하면 마지막 후보를 그대로 쓴다(문항 미생성보다 낫다).
+    //   ⚠ 중복 판정은 **아이 눈에 같은가**로 한다 — 원 JSON 비교는 소용이 없다.
+    //     같은 모양이 격자 반대편에 놓이거나 등급 라벨만 달라도 다른 문자열이 되는데,
+    //     아이에게는 똑같은 문제다(실측: 원 JSON 키로는 S0 하 중복률이 100% → 100% 로 그대로였다).
+    //     그래서 모양을 점유 범위 기준으로 정규화하고 등급 라벨을 뺀 것을 키로 쓴다.
+    function dupKey(p) {
+      var rest = {}, k;
+      for (k in p) if (k !== 'sh' && k !== 'level') rest[k] = p[k];
+      var s = p.sh, sig = '';
+      if (s && s.hmap) {
+        var occ = [], x, z;
+        for (x = 0; x < s.gx; x++) for (z = 0; z < s.gz; z++) if (s.hmap[x][z] > 0) occ.push([x, z, s.hmap[x][z]]);
+        if (occ.length) {
+          var mx = Infinity, mz = Infinity;
+          occ.forEach(function (c) { if (c[0] < mx) mx = c[0]; if (c[1] < mz) mz = c[1]; });
+          sig = occ.map(function (c) { return (c[0] - mx) + ',' + (c[1] - mz) + ':' + c[2]; }).sort().join(' ');
+        }
+      }
+      return sig + '|' + JSON.stringify(rest);
+    }
+    var seen = {}, MAX_TRY = 24;
     for (var i = 0; i < o.n; i++) {
       var lv = pool[Math.floor(rngL() * pool.length)];
-      // cfg 해석: 스테이지×등급 밴드(있으면) → 없으면 구 config.levels 폴백.
-      var cfg = CFG ? CFG.resolveCfg(o.type, stage, lv, rngFrom(o.seed + ':cfg' + i))
-                    : (o.config && o.config.levels && o.config.levels[lv]);
-      probs.push(genProblem({ type: o.type, level: lv, stage: stage, seed: o.seed, index: i, cfg: cfg, edu: o.edu, core: C, sub: o.sub }));
+      var pr = null, key = '';
+      for (var t = 0; t < MAX_TRY; t++) {
+        var sd = t ? (o.seed + '#' + t) : o.seed;
+        // cfg 해석: 스테이지×등급 밴드(있으면) → 없으면 구 config.levels 폴백.
+        var cfg = CFG ? CFG.resolveCfg(o.type, stage, lv, rngFrom(sd + ':cfg' + i))
+                      : (o.config && o.config.levels && o.config.levels[lv]);
+        pr = genProblem({ type: o.type, level: lv, stage: stage, seed: sd, index: i, cfg: cfg, edu: o.edu, core: C, sub: o.sub });
+        key = dupKey(pr);
+        if (!seen[key]) break;
+      }
+      seen[key] = 1;
+      probs.push(pr);
     }
     return probs;
   }

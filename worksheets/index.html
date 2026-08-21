@@ -214,7 +214,7 @@
 <script src="../assets/js/auth.js?v=0.1.0"></script>
 <script src="../assets/js/mydata.js?v=0.1.0"></script>
 <script src="../assets/js/cubenest-iso.js?v=0.1.0"></script>
-<script src="../assets/js/cubenest-figures.js?v=0.1.0"></script>
+<script src="../assets/js/cubenest-figures.js?v=0.2.0"></script>
 <script src="../assets/js/vendor/qrcode-generator.js"></script>
 <script src="../assets/js/cubenest-qr.js?v=0.2.0"></script>
 <script src="../quiz/run/api-client.js?v=1"></script>
@@ -319,7 +319,7 @@
     }).filter(function(m){ return TITLE[m.v]; });
     if(!mix.length) return null;
     var lv=(p.get("lv")||"23").split("").map(function(c){return CODELV[c];}).filter(Boolean);
-    var st=(p.get("st")||"").toUpperCase(); if(!/^S[2-5]$/.test(st)) st="";
+    var st=(p.get("st")||"").toUpperCase(); if(!/^S[0-5]$/.test(st)) st="";
     return { mix:mix, levels:lv.length?lv:["중","상"], seed:p.get("seed")||null, stage:st };
   }
 
@@ -424,7 +424,7 @@
                answerText:answerText(p), answerFigure:answerFigure(p, gsh, FIG),
                correct:null, scratch:null };
     });
-    var GRADE={S2:"초등 3~4학년",S3:"초등 5학년",S4:"초등 6학년",S5:"중학 1~2학년"};
+    var GRADE={S0:"유아",S1:"초등 1~2학년",S2:"초등 3~4학년",S3:"초등 5학년",S4:"초등 6학년",S5:"중학 1~2학년"};
     var st0=(r.problems&&r.problems[0]&&r.problems[0].stage)||"S4";
     return { meta:{ title:label, grade:(GRADE[st0]||"초등 6학년"), type:r.problems&&r.problems[0]&&r.problems[0].type,
                     n:probs.length, seed:r.seed, url:url||null,
@@ -444,15 +444,11 @@
     }
     return '<div class="ansline">답 <u>&nbsp;</u> '+esc(p.unit||"")+'</div>';
   }
+  // 정답 한 줄 표기 = 공용 모듈(cubenest-figures). quiz 미리보기와 같은 문구를 써야 해서
+  // 여기서 다시 만들지 않는다(마스터 §8.1 — 두 곳에 두면 반드시 표류한다).
   function answerText(p){
-    var k=p.answerKey; if(!k) return "—";
-    if(k.type==="num")  return k.value+(p.unit||"")+(k.min!=null?"  (최소 "+k.min+" · 최대 "+k.max+")":"");
-    if(k.type==="bool") return k.value?"있어요":"없어요";
-    if(k.type==="mc")   return (k.correct+1)+"번";
-    if(k.type==="markCells") return (k.cells||[]).map(function(c){return "("+c+")";}).join(" ")||"없음";
-    if(k.type==="markCount"){ var g=k.grid||{}; return Object.keys(g).map(function(kk){return "("+kk+")="+g[kk];}).join(" "); }
-    if(k.type==="drawSil") return "아래 그림 참고";
-    return "—";
+    var FIG=window.CubeNest&&window.CubeNest.figures;
+    return FIG?FIG.answerText(p.answerKey, p.unit||""):"—";
   }
   // drawSil 정답 그림: answerKey.cells 가 "view,c,r" 형식이라 모양 없이도 칠할 수 있다.
   // (H-a/H-b 는 클라가 '조작 후 모양'을 모르므로 이 경로가 유일하다.)

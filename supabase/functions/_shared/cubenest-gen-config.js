@@ -20,13 +20,13 @@
  *   난이도 = "얼마나 많이"가 아니라 "무엇이 부담인가"로 정한다.
  * ==========================================================================*/
 (function (global) {
-  var VERSION = "cfg-0.3.0";
+  var VERSION = "cfg-0.4.0";
 
   var ORDER = ["하", "중", "상", "최상"];
 
   // ── 격자 (높이는 격자가 아니라 스테이지·등급이 정한다) ──
   var GRID = {
-    XS: { gx: 2, gz: 2 },   // S1 전용 — S1 보류 중이라 현재 미사용
+    XS: { gx: 2, gz: 2 },   // 유아·초1~2 하위 등급 — 한눈에 세지는 크기
     S:  { gx: 3, gz: 3 },
     M:  { gx: 4, gz: 4 },
     L:  { gx: 5, gz: 5 }
@@ -42,14 +42,22 @@
     //   capHidden     = 가림은 남기고 숨은 열 높이를 1 로 고정한다
     //     → 겨냥도 + 위모양만으로 개수가 유일해진다. 시중 문제집 3종이 예외 없이 쓰는 관행이고,
     //       개념(숨은 나무 추론)을 살리면서 지면에서도 풀리게 하는 유일한 방법이다.
-    S1: { grade: "초1~2", age: "6~7",   open: false, flatten: true,  capHidden: false, dim: "3d"  },
-    S2: { grade: "초3~4", age: "8~9",   open: true,  flatten: true,  capHidden: false, dim: "3d"  },
-    S3: { grade: "초5",   age: "10",    open: true,  flatten: true,  capHidden: false, dim: "3d"  },
-    S4: { grade: "초6",   age: "11",    open: true,  flatten: false, capHidden: true,  dim: "any" },
-    S5: { grade: "중1~2", age: "12~13", open: true,  flatten: false, capHidden: true,  dim: "any" }
+    //   note = 랜딩 학년 칩 아래에 그대로 노출되는 한 줄 설명(표기의 단일 출처)
+    S0: { grade: "유아",   age: "5~7",   open: true,  flatten: true,  capHidden: false, dim: "3d",
+          note: "사고력 '도형' 첫걸음 — 2~7개를 눈으로 세요" },
+    S1: { grade: "초1~2", age: "7~8",   open: true,  flatten: true,  capHidden: false, dim: "3d",
+          note: "초등 저학년 — 3~11개, 위에서 본 모양 찾기까지" },
+    S2: { grade: "초3~4", age: "8~9",   open: true,  flatten: true,  capHidden: false, dim: "3d",
+          note: "쌓기나무 개수·층별 세기" },
+    S3: { grade: "초5",   age: "10",    open: true,  flatten: true,  capHidden: false, dim: "3d",
+          note: "겨냥도·위앞옆(삼면도)이 나오는 학년" },
+    S4: { grade: "초6",   age: "11",    open: true,  flatten: false, capHidden: true,  dim: "any",
+          note: "교과 '공간과 입체' — 부피·겉넓이·안 보이는 나무" },
+    // 중1~2 는 노출하지 않는다(사용자 결정 260820). 설계는 남겨 둔다 — 다시 열 때 재작성하지 않으려고.
+    S5: { grade: "중1~2", age: "12~13", open: false, flatten: false, capHidden: true,  dim: "any" }
   };
   var DEFAULT_STAGE = "S4";              // 교과 핵심이자 제품의 원점 — 미지정 시 기존 동작 유지
-  var STAGE_ORDER = ["S1", "S2", "S3", "S4", "S5"];
+  var STAGE_ORDER = ["S0", "S1", "S2", "S3", "S4", "S5"];
 
   // ── ① 스테이지 × 등급 → 개수 밴드 · 격자 · 높이 상한 ──
   //   한 칸에 약 1.4배씩 오르는 하나의 자. 스테이지끼리 두 칸씩 겹쳐 절벽을 없앤다.
@@ -58,9 +66,16 @@
   //     이전 값(S4 최상 26~36)은 문제집 '심화' 대역(최대 23)마저 넘었다. 한 스테이지씩 내렸다.
   //     문제집의 큰 수(27·64·125)는 전부 '세지 않고 공식으로 푸는' 정육면체 유형이라
   //     여기가 아니라 manip 고유축(boxTotal·needBand)이 담당한다.
+  //   S0·S1 은 v0.5 에서 열었다(유아·초등 저학년). 시중 유아 사고력 '도형' 교재 실측 기준:
+  //     쌓기나무 문항의 개수는 2~8개, 높이 2층, 바닥 2×2~3×3 이 거의 전부다.
+  //     S0 최상 ↔ S1 하, S1 최상 ↔ S2 상 이 겹치도록 두어 학년 경계에서 절벽이 없다.
   var BANDS = {
-    S1: { "하": { n: [2, 4],   grid: "XS", maxH: 2 }, "중": { n: [3, 5],   grid: "S", maxH: 2 },
-          "상": { n: [4, 6],   grid: "S",  maxH: 2 }, "최상": { n: [6, 8],   grid: "S", maxH: 2 } },
+    S0: { "하": { n: [2, 3],   grid: "XS", maxH: 2 }, "중": { n: [3, 4],   grid: "XS", maxH: 2 },
+          "상": { n: [4, 5],   grid: "S",  maxH: 2 }, "최상": { n: [5, 7],   grid: "S",  maxH: 2 } },
+    // ⚠ S1 '하' 를 XS(2×2)로 두면 facesMc '앞' 보기가 2~3개밖에 안 나온다 —
+    //   2칸 막대는 서로 다른 실루엣이 8가지뿐이라 오답 후보가 고갈된다(실측 2.9%). 그래서 S 로 둔다.
+    S1: { "하": { n: [3, 4],   grid: "S",  maxH: 2 }, "중": { n: [4, 6],   grid: "S", maxH: 2 },
+          "상": { n: [6, 8],   grid: "S",  maxH: 3 }, "최상": { n: [8, 11],  grid: "S", maxH: 3 } },
     S2: { "하": { n: [4, 6],   grid: "S",  maxH: 3 }, "중": { n: [6, 8],   grid: "S", maxH: 3 },
           "상": { n: [8, 11],  grid: "S",  maxH: 3 }, "최상": { n: [10, 14], grid: "M", maxH: 3 } },
     S3: { "하": { n: [5, 8],   grid: "S",  maxH: 3 }, "중": { n: [8, 11],  grid: "S", maxH: 3 },
@@ -77,7 +92,12 @@
   var ALL_A = ["A-a", "A-b", "A-c", "A-d", "A-e", "A-f"];
   var ALL_G = ["G-a", "G-b", "G-c"];
   var GATE = {
-    S1: { count: true },
+    // 유아·초1~2 — 교과에는 '쌓기나무'가 없지만 사고력 '도형' 교재에는 있다.
+    //   그 교재가 내는 것은 딱 두 가지다: ① 몇 개인지 세기 ② 위(앞)에서 보면 어떤 모양인지 고르기.
+    //   ②는 facesMc 를 그대로 쓰되 **묻는 방향을 제한**한다(TYPE_AXES.facesMc.dirs) —
+    //   '앞·옆'은 높이를 읽어야 하는 삼면도 개념이라 유아에겐 위(발자국)부터가 맞다.
+    S0: { count: true, facesMc: true },
+    S1: { count: true, facesMc: true },
     S2: { count: true, heightmap: true, hidden: ["A-c", "A-e"], minmax: ["G-c"] },
     S3: { count: true, heightmap: true, hidden: ["A-c", "A-e"], minmax: ["G-c"],
           facesMc: true,                        // 위·앞·옆 전부 — 방향 개념이 삼면도의 핵심
@@ -106,12 +126,22 @@
       concave:   { "하": false, "중": false, "상": null, "최상": true }
     },
 
+    // facesMc — 고유축은 '어느 방향을 묻는가'다. 개수를 줄여도 앞·옆은 높이 추론이 필요해
+    //   저학년에게 어렵고, 위(발자국)는 그림자 찾기라 유아 교재의 표준 문항이다.
+    //   지정이 없는 스테이지는 종전대로 위·앞·옆 전부(위모양을 함께 주는 스테이지는 앞·옆만).
+    facesMc: {
+      dirs: { S0: ["top"], S1: ["top", "front"] }
+    },
+
     // heightmap — 1차 축이 개수가 아니라 **칸 수**다(아이가 쓰는 건 칸마다 숫자 하나).
     //   개수 밴드를 그냥 적용하면 최상 칸 수가 오히려 늘어난다(실측 17 → p90 23).
     //   고유축 = 굴곡(인접 칸 높이차 평균). remap v0.7 이 지정했는데 구현되지 않았던 축이다.
     heightmap: {
       // 칸 수 상한(=발자국). 문제집 실측 '사용 칸 4~8' 에 맞춰 v0.4 에서 낮췄다.
       foot: {
+        // S0·S1 은 heightmap 이 게이트에서 닫혀 있어 실제로는 쓰이지 않는다.
+        // (스테이지를 열 때 값이 없어 S4 로 떨어지는 사고를 막으려고 함께 둔다.)
+        S0: { "하": 2, "중": 2, "상": 3,  "최상": 3  },
         S1: { "하": 2, "중": 3, "상": 3,  "최상": 4  },
         S2: { "하": 3, "중": 4, "상": 5,  "최상": 6  },
         S3: { "하": 4, "중": 5, "상": 6,  "최상": 7  },
@@ -174,7 +204,10 @@
   }
   function stages() {                     // 노출용 목록(랜딩 단일 출처)
     return STAGE_ORDER.filter(function (s) { return STAGES[s].open; })
-      .map(function (s) { return { id: s, grade: STAGES[s].grade, age: STAGES[s].age, dim: STAGES[s].dim }; });
+      .map(function (s) {
+        return { id: s, grade: STAGES[s].grade, age: STAGES[s].age, dim: STAGES[s].dim,
+                 note: STAGES[s].note || null };
+      });
   }
 
   // 유형이 그 스테이지에서 열려 있으면 4등급 전부 지원한다.
@@ -276,6 +309,8 @@
       needBand: ax.needBand ? ax.needBand[label] : null,  // manip H-c 정답값 밴드
       views: viewsFor(type, label),                       // facesDraw 출제 형식
       group: groupFor(type, label),                       // 같은 방향을 몇 문항 연속으로
+      // facesMc 에서 물을 수 있는 방향. null = 종전대로(gen 이 정한다).
+      mcDirs: (ax.dirs && ax.dirs[stage]) ? ax.dirs[stage].slice() : null,
       flatten: !!STAGES[stage].flatten,             // S2·S3 는 가림 자체 금지
       // 겨냥도 6종만: 가림은 남기되 숨은 열 높이를 1 로 고정 → 위모양과 함께 주면 답이 유일해진다.
       //   ⚠ 위모양 동봉은 **capHidden 스테이지(S4·S5)에서만** 한다.

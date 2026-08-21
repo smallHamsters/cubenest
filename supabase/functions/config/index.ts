@@ -33,7 +33,7 @@ Deno.serve((req: Request) => {
                     : (genConfig.paperSafe(t, null) ? true : false),
       };
     }
-    return { id: s.id, grade: s.grade, age: s.age, dim: s.dim, types };
+    return { id: s.id, grade: s.grade, age: s.age, dim: s.dim, note: s.note ?? null, types };
   });
 
   const r = json(req, {

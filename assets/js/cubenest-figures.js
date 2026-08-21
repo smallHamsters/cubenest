@@ -1,6 +1,7 @@
 /*!
  * cubenest-figures.js — 문제 제시물(도형) SVG 렌더러 공용 모듈
- * 버전: 0.1.0  ·  의존성 없음(순수 문자열 생성). 겨냥도는 cubenest-iso 소관.
+ * 버전: 0.2.0  ·  순수 문자열 생성. 겨냥도(SVG)는 cubenest-iso 소관 —
+ *   renderQuestion 만 예외로 CubeNest.iso 를 **있으면** 쓴다(겨냥도 6종은 서버가 모양만 주므로).
  *
  * 목적: quiz/run 이 인라인으로 갖고 있던 실루엣·삼면도·위에서 본 수·층별 렌더러를 승격한다.
  *       worksheets(문제지)가 같은 그림을 그려야 하는데 재구현하면 두 곳이 표류한다(마스터 §8.1).
@@ -134,13 +135,56 @@
     return '<div class="viewer">' + body + cap + '</div>';
   }
 
+  // ── 문제 한 덩어리(제시물 + 보기)를 **비대화형**으로 ──
+  //   q = 서버가 준 질문 객체. /generate 의 `_gp` 와 /worksheet 의 problem 이 같은 필드를 쓴다:
+  //     given(2D 제시물) · sh(겨냥도 6종의 형상) · top(위에서 본 모양) · opts(facesMc 보기) · form
+  //   미리보기(quiz 랜딩)·문제지가 같은 그림을 써야 하므로 여기 한 곳에서만 조립한다(마스터 §8.1).
+  //   ⚠ 정답은 절대 그리지 않는다 — facesMc 보기의 순서만 서버가 주고 정답 번호는 /grade 소관.
+  function renderQuestion(q, opts) {
+    opts = opts || {};
+    if (!q) return '';
+    var ISO = (global.CubeNest && global.CubeNest.iso) || null;
+    var body;
+    if (q.given) {
+      body = renderGiven(q.given, { caption: opts.caption });
+    } else if (q.sh) {
+      // 겨냥도 6종 — 서버가 모양을 주므로 클라가 그린다. 퀴즈 화면에선 3D 로 돌려보는 자리다.
+      var iso = ISO ? ISO.renderIso({ gx: q.sh.gx, gz: q.sh.gz, cells: q.sh.cells }, 0) : '';
+      body = '<div class="viewer"><div class="isofig">' + iso + '</div>'
+        + (q.top ? pv(renderSil(q.top, B), '위에서 본 모양') : '')
+        + (opts.caption ? '<div class="rotcap">' + opts.caption + '</div>' : '')
+        + '</div>';
+    } else body = '';
+    // facesMc 의 보기는 '답란'이 아니라 문제의 일부다 — 보기 없이는 문제가 성립하지 않는다.
+    if (q.form === 'mc' && q.opts && q.opts.length) {
+      body += '<div class="opts">' + q.opts.map(function (o, i) {
+        return '<div class="opt"><span class="optno">' + (i + 1) + '</span>' + renderSil(o) + '</div>';
+      }).join('') + '</div>';
+    }
+    return body;
+  }
+
+  // 정답 한 줄 표기. 정답의 단일 출처는 서버 answerKey 다(로컬 재계산 없음).
+  function answerText(key, unit) {
+    if (!key) return '—';
+    unit = unit || '';
+    if (key.type === 'num')  return key.value + unit + (key.min != null ? '  (최소 ' + key.min + ' · 최대 ' + key.max + ')' : '');
+    if (key.type === 'bool') return key.value ? '있어요' : '없어요';
+    if (key.type === 'mc')   return (key.correct + 1) + '번';
+    if (key.type === 'markCells') return (key.cells || []).map(function (c) { return '(' + c + ')'; }).join(' ') || '없음';
+    if (key.type === 'markCount') { var g = key.grid || {}; return Object.keys(g).map(function (k) { return '(' + k + ')=' + g[k]; }).join(' '); }
+    if (key.type === 'drawSil') return '아래 그림 참고';
+    return '—';
+  }
+
   var API = {
     VERSION: VERSION,
     frontSil: frontSil, sideSil: sideSil, topSil: topSil, silsOf: silsOf,
     renderSil: renderSil, renderThreeViews: renderThreeViews,
     renderTopNums: renderTopNums, renderLayers: renderLayers,
     drawDims: drawDims, renderDrawGrids: renderDrawGrids,
-    shapeFromGiven: shapeFromGiven, renderGiven: renderGiven
+    shapeFromGiven: shapeFromGiven, renderGiven: renderGiven,
+    renderQuestion: renderQuestion, answerText: answerText
   };
   global.CubeNest = global.CubeNest || {};
   global.CubeNest.figures = API;

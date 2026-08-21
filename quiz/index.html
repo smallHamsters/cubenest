@@ -144,6 +144,68 @@
 /* 카드 번호 배지 */
 .card-top{position:relative;}
 .card-no{position:absolute;top:0;right:0;font-size:11px;font-weight:800;color:var(--accent-ink);background:var(--accent-soft);padding:3px 9px;border-radius:999px;}
+
+/* 학년 한 줄 설명 — 고르고 나서야 무슨 학년인지 알게 되는 일이 없도록 */
+.fg-stage{align-items:flex-start;}
+.fg-stage > .label{padding-top:8px;}
+.stagecol{display:flex;flex-direction:column;gap:5px;}
+.stagenote{font-size:12px;font-weight:600;color:var(--muted);padding-left:2px;max-width:44ch;line-height:1.5;}
+.stagenote b{color:var(--accent-ink);font-weight:800;}
+
+/* ===== 예시 미리보기 =====
+   첫 사용자는 "어떤 문제인지" 몰라서 못 고르고, 숙련된 선생님은 "이 유형이 맞는지"를
+   확인하고 고른다. 둘 다 시작 전에 실제 문항 하나를 봐야 해결된다.
+   문항은 실제 /generate 로 뽑고, 정답은 /grade 로만 받는다(정답 은닉 유지 — 마스터 §6.7). */
+.card .cta-row{margin-top:auto;display:flex;gap:8px;}
+.card .cta-row .cta{margin-top:0;flex:1;}
+.btn-peek{border:1px solid var(--line);background:var(--panel);color:var(--accent-ink);cursor:pointer;
+  font-family:inherit;font-weight:700;font-size:13px;padding:10px 12px;border-radius:var(--r);white-space:nowrap;transition:.15s;}
+.btn-peek:hover{background:var(--accent-soft);border-color:var(--accent);}
+.acc-peek{flex:none;border:1px solid var(--line);background:#fff;color:var(--accent-ink);cursor:pointer;
+  font-family:inherit;font-weight:800;font-size:12px;padding:6px 10px;border-radius:9px;}
+.acc-peek:hover{background:var(--accent-soft);border-color:var(--accent);}
+
+.pv-back{position:fixed;inset:0;z-index:60;background:rgba(24,34,51,.45);display:none;align-items:flex-start;justify-content:center;padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.pv-back.show{display:flex;}
+.pv-modal{background:var(--panel);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);width:100%;max-width:560px;margin:auto;overflow:hidden;}
+.pv-head{display:flex;align-items:center;gap:8px;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.pv-head h3{margin:0;font-size:16px;flex:1;min-width:120px;letter-spacing:-.01em;}
+.pv-badge{font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);}
+.pv-badge.plain{background:var(--panel-2);color:var(--muted);border:1px solid var(--line);}
+.pv-x{border:none;background:none;cursor:pointer;color:var(--muted);font-size:22px;line-height:1;padding:2px 6px;border-radius:8px;}
+.pv-x:hover{background:var(--panel-2);color:var(--ink);}
+.pv-body{padding:14px 16px 4px;min-height:180px;}
+.pv-ask{font-size:15.5px;font-weight:700;line-height:1.5;margin:0 0 12px;}
+.pv-ask small{font-weight:600;color:var(--muted);}
+.pv-foot{display:flex;align-items:center;gap:8px;padding:12px 16px 16px;flex-wrap:wrap;border-top:1px solid var(--line-2);}
+.pv-pager{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:800;color:var(--muted);}
+.pv-pager button{width:30px;height:30px;border:1px solid var(--line);background:var(--panel);border-radius:9px;cursor:pointer;color:var(--accent-ink);font-weight:800;font-family:inherit;}
+.pv-pager button:disabled{color:var(--muted-2);cursor:default;}
+.pv-foot .grow{flex:1;}
+.pv-btn{border:1px solid var(--line);background:var(--panel);color:var(--accent-ink);cursor:pointer;font-family:inherit;font-weight:800;font-size:13px;padding:10px 13px;border-radius:12px;}
+.pv-btn:hover{background:var(--accent-soft);border-color:var(--accent);}
+.pv-btn.primary{background:var(--accent);color:#fff;border-color:transparent;}
+.pv-btn.primary:hover{background:var(--accent-ink);}
+.pv-ans{margin:12px 0 0;padding:11px 13px;border-radius:12px;background:var(--add-soft);border:1px solid #b7e2c7;color:#0b6e3e;font-weight:700;font-size:14px;}
+.pv-ans b{font-size:16px;}
+.pv-note{font-size:12px;color:var(--muted-2);font-weight:600;margin:10px 0 0;line-height:1.6;}
+.pv-load{text-align:center;color:var(--muted);font-size:13.5px;font-weight:700;padding:44px 0;}
+.pv-err{text-align:center;color:var(--del);font-size:13.5px;font-weight:700;padding:36px 0;}
+
+/* 제시물 렌더러(cubenest-figures/iso)가 기대하는 클래스 — quiz/run 의 것과 같은 값이어야 한다 */
+.pv-body .viewer{background:var(--panel-2);border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.pv-body .viewer svg{width:100%;max-width:320px;height:auto;max-height:210px;}
+.pv-body .isofig svg{max-height:200px;}
+.pv-body .threeviews{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:4px 0 2px;}
+.pv-body .pv{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.pv-body .pv svg{display:block;max-height:80px;width:auto;}
+.pv-body .pv span{font-size:11px;font-weight:800;color:var(--muted);}
+.pv-body .rotcap{font-size:12px;color:var(--muted);font-weight:600;text-align:center;}
+.pv-body .rotcap b{color:var(--accent-ink);}
+.pv-body .opts{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:11px;}
+.pv-body .opt{position:relative;border:1.5px solid var(--line);background:var(--panel);border-radius:13px;padding:8px;display:flex;align-items:center;justify-content:center;min-height:92px;}
+.pv-body .opt svg{width:76px;height:76px;max-width:100%;}
+.pv-body .optno{position:absolute;top:6px;left:9px;font-size:11px;font-weight:800;color:var(--muted-2);}
 </style>
 </head>
 <body>
@@ -187,13 +249,18 @@
             <button type="button" data-val="think" aria-pressed="false">사고력수학</button>
           </div>
         </div>
-        <div class="fg">
+        <!-- 학년 칩은 서버 /config 의 열린 스테이지로 그린다(단일 출처). 아래 마크업은 폴백. -->
+        <div class="fg fg-stage">
           <span class="label">학년</span>
-          <div class="chips" role="group" aria-label="학년" data-filter="stage">
-            <button type="button" class="chip" data-val="S2" aria-pressed="false">초3~4</button>
-            <button type="button" class="chip" data-val="S3" aria-pressed="false">초5</button>
-            <button type="button" class="chip" data-val="S4" aria-pressed="true">초6</button>
-            <button type="button" class="chip" data-val="S5" aria-pressed="false">중1~2</button>
+          <div class="stagecol">
+            <div class="chips" role="group" aria-label="학년" data-filter="stage" id="stageChips">
+              <button type="button" class="chip" data-val="S0" aria-pressed="false">유아</button>
+              <button type="button" class="chip" data-val="S1" aria-pressed="false">초1~2</button>
+              <button type="button" class="chip" data-val="S2" aria-pressed="false">초3~4</button>
+              <button type="button" class="chip" data-val="S3" aria-pressed="false">초5</button>
+              <button type="button" class="chip" data-val="S4" aria-pressed="true">초6</button>
+            </div>
+            <div class="stagenote" id="stageNote"></div>
           </div>
         </div>
         <div class="fg">
@@ -242,10 +309,33 @@
   <p class="footnote">프로토타입 v0.8.0 · 배포 시 <code>quiz/index.html</code>, 상대경로 · 무로그인 · 필터는 주소(URL)로 공유돼요.<br>교육과정(교과/사고력)은 트랙이 아니라 <b>태그</b> — 한 유형이 둘 다 가질 수 있어요. 사고력·경시 유형은 전부 <b>자체 생성 문항</b>입니다.</p>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <!-- 예시 미리보기 — 실제 서버 문항 3개를 뽑아 보여준다(정답은 /grade 로만). -->
+  <div class="pv-back" id="pvBack" role="dialog" aria-modal="true" aria-labelledby="pvTitle" hidden>
+    <div class="pv-modal">
+      <div class="pv-head">
+        <h3 id="pvTitle">예시 문제</h3>
+        <span class="pv-badge" id="pvStage"></span>
+        <span class="pv-badge plain" id="pvLevel"></span>
+        <button type="button" class="pv-x" id="pvClose" aria-label="닫기">×</button>
+      </div>
+      <div class="pv-body" id="pvBody"></div>
+      <div class="pv-foot">
+        <span class="pv-pager"><button type="button" id="pvPrev" aria-label="이전 예시">‹</button><span id="pvCnt">–</span><button type="button" id="pvNext" aria-label="다음 예시">›</button></span>
+        <button type="button" class="pv-btn" id="pvAnsBtn">정답 보기</button>
+        <button type="button" class="pv-btn" id="pvNew">다른 예시</button>
+        <span class="grow"></span>
+        <button type="button" class="pv-btn primary" id="pvStart">이 유형 풀기 →</button>
+      </div>
+    </div>
+  </div>
+
 <!-- 공용 인증 — 헤더 계정 아이콘의 로그인 상태 표시만 담당한다.
      퀴즈 랜딩·플레이는 무로그인이 원칙이라(마스터 §6.3) 여기서 게이트를 걸지 않는다. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.1.0"></script>
+<!-- 예시 미리보기용 렌더러 — quiz/run·worksheets 와 **같은 그림**을 쓴다(재발명 금지, 마스터 §5.1). -->
+<script src="../assets/js/cubenest-iso.js?v=0.1.0"></script>
+<script src="../assets/js/cubenest-figures.js?v=0.2.0"></script>
 <script src="run/api-client.js?v=0.2.0"></script>
 <script>
 if((navigator.language||'').toLowerCase().startsWith('ko')) document.querySelector('[data-brand]').textContent='큐브네스트';
@@ -323,19 +413,33 @@ const G={
 
 /* ---------- 상태 (edu = 교육과정 태그 필터) ---------- */
 const DEFAULT_STAGE='S4';                       // 초6 — 교과 핵심이자 제품의 원점
-const STAGE_LABEL={S2:'초3~4',S3:'초5',S4:'초6',S5:'중1~2'};
+// 학년 목록의 정본도 서버 /config(genConfig.stages)다. 아래는 폴백이며 서버와 같아야 한다.
+//   유아·초1~2 는 교과에 '쌓기나무'가 없지만 사고력 '도형' 교재에는 있어서 연다(260820).
+//   중1~2(S5)는 노출하지 않는다 — 서버 STAGES.S5.open=false.
+const STAGE_FB=[
+  {id:'S0',grade:'유아',  note:"사고력 '도형' 첫걸음 — 2~7개를 눈으로 세요"},
+  {id:'S1',grade:'초1~2',note:'초등 저학년 — 3~11개, 위에서 본 모양 찾기까지'},
+  {id:'S2',grade:'초3~4',note:'쌓기나무 개수·층별 세기'},
+  {id:'S3',grade:'초5',  note:'겨냥도·위앞옆(삼면도)이 나오는 학년'},
+  {id:'S4',grade:'초6',  note:"교과 '공간과 입체' — 부피·겉넓이·안 보이는 나무"},
+];
+const stageList=()=> (SRV&&SRV.stages&&SRV.stages.length)?SRV.stages:STAGE_FB;
+const stageInfo=id=> stageList().find(s=>s.id===id)||null;
+const STAGE_LABEL_OF=id=>{ const s=stageInfo(id); return s?s.grade:id; };
 // ⚠ 정본은 서버 /config 다. 이 표는 그것이 못 올 때만 쓰는 폴백이며, 서버 GATE 와 같아야 한다.
 //   (하드코딩을 두 곳에 두면 반드시 표류한다 — 카드의 levels 가 서버 지원 등급과 어긋나
 //    'count 상'처럼 존재하지 않는 등급을 팔던 것이 그 사례다.)
 const ALL4=['하','중','상','최상'];
 let SRV=null;                                    // /config 응답(오면 이걸 쓴다)
 const GATE_FB={
+  S0:{count:null,facesMc:null},
+  S1:{count:null,facesMc:null},
   S2:{count:null,heightmap:null,hidden:['A-c','A-e'],minmax:['G-c']},
   S3:{count:null,heightmap:null,hidden:['A-c','A-e'],minmax:['G-c'],facesMc:null,manip:['H-c']},
   S4:{count:null,volume:null,surface:null,heightmap:null,facesMc:null,facesDraw:null,
-      hidden:['A-a','A-b','A-c','A-d','A-e','A-f'],minmax:['G-a','G-b','G-c'],manip:['H-c','H-d']},
-  S5:{count:null,volume:null,surface:null,heightmap:null,facesMc:null,facesDraw:null,
-      hidden:['A-a','A-b','A-c','A-d','A-e','A-f'],minmax:['G-a','G-b','G-c'],manip:['H-a','H-b','H-c','H-d']}
+      hidden:['A-a','A-b','A-c','A-d','A-e','A-f'],minmax:['G-a','G-b','G-c'],manip:['H-c','H-d']}
+  // S5(중1~2)는 노출하지 않는다. 서버가 닫았으므로 여기에도 두지 않는다 — 두면 폴백일 때만
+  // 존재하는 유령 학년이 생긴다.
 };
 // 이 유형(+서브)이 그 스테이지에서 열려 있는가 / 열려 있으면 지원 등급은?
 function gateFor(t, stage){
@@ -363,12 +467,26 @@ document.querySelectorAll('.frow-top [data-filter]').forEach(group=>{
     if(kind==='edu'){ state.edu=val; setSingle(group,btn); renderAcc(); }
     else if(kind==='dim'){ state.dim=val; setSingle(group,btn); }
     else if(kind==='count'){ state.count=+val; setSingle(group,btn); }
-    else if(kind==='stage'){ state.stage=val; setSingle(group,btn); renderAcc(); }
+    else if(kind==='stage'){ state.stage=val; setSingle(group,btn); renderStageNote(); renderAcc(); }
     else if(kind==='levels'){ toggleSet(state.levels,val,btn); }
     render();
   });
 });
 function setSingle(group,btn){ group.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed', b===btn?'true':'false')); }
+
+/* ---------- 학년 칩 (열린 스테이지 = 서버 /config 단일 출처) ---------- */
+function renderStages(){
+  const box=document.getElementById('stageChips'); if(!box) return;
+  const list=stageList();
+  if(!list.some(s=>s.id===state.stage)) state.stage=DEFAULT_STAGE;   // 닫힌 학년으로 들어온 링크
+  box.innerHTML=list.map(s=>`<button type="button" class="chip" data-val="${s.id}" aria-pressed="${s.id===state.stage}">${s.grade}</button>`).join('');
+  renderStageNote();
+}
+function renderStageNote(){
+  const el=document.getElementById('stageNote'); if(!el) return;
+  const s=stageInfo(state.stage);
+  el.innerHTML=s?`<b>${s.grade}</b> · ${s.note||''}`:'';
+}
 function toggleSet(set,val,btn){ const on=!(btn.getAttribute('aria-pressed')==='true'); btn.setAttribute('aria-pressed', on?'true':'false'); on?set.add(val):set.delete(val); }
 
 /* ---------- 카테고리 아코디언(드롭다운) ---------- */
@@ -389,7 +507,15 @@ function renderAcc(){
       b.disabled=soon;
       b.innerHTML=`<span class="acc-no">${ci+1}-${si+1}</span><span class="acc-nm">${t.name}</span>${soon?'<span class="acc-badge">곧</span>':'<span class="acc-go">시작 ›</span>'}`;
       if(!soon) b.addEventListener('click',()=>start(t));
-      wrap.appendChild(b);
+      if(soon){ wrap.appendChild(b); return; }
+      // 예시 보기 — 목록에서도 바로 "어떤 문제인지" 확인할 수 있어야 고를 수 있다.
+      const row=document.createElement('div'); row.style.cssText='display:flex;gap:6px;align-items:stretch';
+      b.style.flex='1';
+      const pk=document.createElement('button'); pk.type='button'; pk.className='acc-peek'; pk.textContent='예시';
+      pk.setAttribute('aria-label',t.name+' 예시 문제 보기');
+      pk.addEventListener('click',()=>openPreview(t));
+      row.appendChild(b); row.appendChild(pk); wrap.appendChild(row);
+      return;
     });
     det.appendChild(wrap); catAcc.appendChild(det);
   });
@@ -437,8 +563,11 @@ function render(){
       <h3>${t.name}</h3>
       <p class="desc">${t.desc}</p>
       <div class="tags"><span class="tag">${dimLabel[t.dim]}</span>${eduTags}<span class="lv">${lv}</span></div>
-      <button class="cta ${soon?'locked':''}" ${soon?'disabled':''}>${soon?'준비 중':'시작하기'}</button>`;
-    if(!soon) card.querySelector('.cta').addEventListener('click',()=>start(t));
+      <div class="cta-row">${soon?'':'<button type="button" class="btn-peek">예시 보기</button>'}<button class="cta ${soon?'locked':''}" ${soon?'disabled':''}>${soon?'준비 중':'시작하기'}</button></div>`;
+    if(!soon){
+      card.querySelector('.cta').addEventListener('click',()=>start(t));
+      card.querySelector('.btn-peek').addEventListener('click',()=>openPreview(t));
+    }
     grid.appendChild(card);
   });
   syncURL();
@@ -456,6 +585,104 @@ function start(t){
   if(state.dim && state.dim!=='all') url+='&dim='+state.dim;
   location.href=url;   // /quiz/ → /quiz/run/ (상대경로)
 }
+/* ---------- 예시 미리보기 ----------
+   왜 실제 /generate 를 쓰나: 손으로 만든 예시는 반드시 생성기와 어긋난다(문구·난이도·제시물).
+   같은 서버·같은 렌더러를 쓰면 "예시로 본 것"과 "실제 푸는 것"이 정의상 같다.
+   정답은 여기서도 /generate 응답에 없다 — 눌렀을 때 /grade 가 answerKey 를 준다(§6.7 은닉 유지). */
+const FIG=(window.CubeNest&&window.CubeNest.figures)||null;
+const PV={t:null,probs:[],i:0,seed:'',levels:[],n:3,busy:false};
+const pvEl=id=>document.getElementById(id);
+
+function levelsForStart(t){
+  const sup=levelsOf(t);
+  const lvls=LEVELS.filter(l=>state.levels.has(l)&&sup.includes(l));
+  return lvls.length?lvls:sup;
+}
+function openPreview(t){
+  PV.t=t; PV.i=0; PV.probs=[]; PV.levels=levelsForStart(t);
+  PV.seed=Math.random().toString(36).slice(2,9);
+  const back=pvEl('pvBack'); back.hidden=false; back.classList.add('show');
+  document.body.style.overflow='hidden';
+  pvEl('pvTitle').textContent=t.name;
+  pvEl('pvStage').textContent=STAGE_LABEL_OF(state.stage);
+  pvEl('pvLevel').textContent=PV.levels.join('·');
+  track('quiz_preview_open',{type:t.type||t.id,sub:t.sub||null,stage:state.stage});
+  pvFetch();
+}
+function closePreview(){
+  const back=pvEl('pvBack'); back.classList.remove('show'); back.hidden=true;
+  document.body.style.overflow=''; PV.t=null; PV.probs=[];
+}
+async function pvFetch(){
+  if(PV.busy) return; PV.busy=true;
+  pvEl('pvBody').innerHTML='<div class="pv-load">예시를 불러오는 중…</div>';
+  pvEl('pvCnt').textContent='–';
+  try{
+    const r=await CubeNest.api.generate({
+      theme:PV.t.type||PV.t.id, sub:PV.t.sub||undefined,
+      levels:PV.levels, n:PV.n, seed:PV.seed, stage:state.stage,
+    });
+    PV.probs=(r.problems||[]).map(p=>({id:p.id,gsig:p.gsig,gp:p._gp,ans:null}));
+    PV.i=0; pvRender();
+  }catch(e){
+    pvEl('pvBody').innerHTML='<div class="pv-err">'+(e&&e.rate?'요청이 조금 많았어요. 잠시 뒤 다시 눌러 주세요.'
+      :e&&e.network?'인터넷 연결을 확인해 주세요.':'예시를 불러오지 못했어요. 잠시 뒤 다시 시도해 주세요.')+'</div>';
+  }finally{ PV.busy=false; }
+}
+// explain(제출 후 공개되는 모양) → 렌더러가 먹는 sh
+function pvShape(ex){
+  if(!ex||!ex.cells) return null;
+  const cells=ex.cells.map(c=>({x:c[0],y:c[1],z:c[2]}));
+  const gx=ex.gx||Math.max(1,...cells.map(c=>c.x+1)), gz=ex.gz||Math.max(1,...cells.map(c=>c.z+1));
+  const hmap=[]; for(let x=0;x<gx;x++)hmap.push(new Array(gz).fill(0));
+  cells.forEach(c=>{ if(c.y+1>hmap[c.x][c.z]) hmap[c.x][c.z]=c.y+1; });
+  return {gx,gz,maxH:ex.maxH||Math.max(1,...cells.map(c=>c.y+1)),hmap,cells,edge:ex.edge==null?1:ex.edge};
+}
+const FORMNOTE={num:'답을 숫자로 써요.',mc:'보기 중 하나를 골라요.',bool:'‘있어요 / 없어요’로 답해요.',
+  hm:'위에서 본 모양의 칸마다 수를 써요.',markCells:'해당하는 칸을 눌러 표시해요.',draw:'칸을 칠해 그려요.'};
+function pvRender(){
+  const p=PV.probs[PV.i]; if(!p){ pvEl('pvBody').innerHTML='<div class="pv-err">예시가 없어요.</div>'; return; }
+  const gp=p.gp, is3D=(gp.dim==='3d')||(!gp.given&&gp.sh);
+  pvEl('pvCnt').textContent=(PV.i+1)+' / '+PV.probs.length;
+  pvEl('pvLevel').textContent=gp.level||PV.levels.join('·');
+  pvEl('pvPrev').disabled=PV.i<=0; pvEl('pvNext').disabled=PV.i>=PV.probs.length-1;
+  const fig=FIG?FIG.renderQuestion(gp):'';
+  const note=(is3D?'실제 퀴즈에서는 이 모양을 <b>손가락으로 돌려</b> 뒤·옆을 확인할 수 있어요. ':'')
+    +(FORMNOTE[gp.form]||'');
+  pvEl('pvBody').innerHTML=`<p class="pv-ask">${gp.ask||''}</p>${fig}<p class="pv-note">${note}</p>`
+    +(p.ans?p.ans:'');
+  pvEl('pvAnsBtn').textContent=p.ans?'정답 숨기기':'정답 보기';
+}
+async function pvToggleAnswer(){
+  const p=PV.probs[PV.i]; if(!p) return;
+  if(p.ans){ p.ans=null; pvRender(); return; }
+  const btn=pvEl('pvAnsBtn'); btn.disabled=true; btn.textContent='확인 중…';
+  try{
+    // 답 없이 채점을 요청하면 서버가 오답 판정과 함께 answerKey·explain 을 준다 — 정답의 단일 출처.
+    const r=await CubeNest.api.grade({id:p.id, gsig:p.gsig, answer:null,
+      params:{theme:PV.t.type||PV.t.id, levels:PV.levels, n:PV.n, edu:null,
+              stage:state.stage, sub:PV.t.sub||undefined}});
+    p.ans=pvAnswerHTML(r.answerKey||{}, r.explain, p.gp.unit||'');
+    track('quiz_preview_answer',{type:PV.t.type||PV.t.id,stage:state.stage});
+  }catch(e){
+    p.ans='<div class="pv-ans" style="background:var(--del-soft);border-color:#f2c3cf;color:#a52a49">정답을 불러오지 못했어요.</div>';
+  }finally{ btn.disabled=false; pvRender(); }
+}
+function pvAnswerHTML(key, explain, unit){
+  const sh=pvShape(explain);
+  if(FIG&&sh&&key.type==='drawSil')   return `<div class="pv-ans">정답 — 위·앞·옆에서 본 모양${FIG.renderThreeViews(FIG.silsOf(sh))}</div>`;
+  if(FIG&&sh&&key.type==='markCount') return `<div class="pv-ans">정답 — 칸마다 쌓인 나무 수<div style="margin-top:6px">${FIG.renderTopNums(sh)}</div></div>`;
+  return `<div class="pv-ans">정답 <b>${FIG?FIG.answerText(key,unit):'—'}</b></div>`;
+}
+pvEl('pvClose').onclick=closePreview;
+pvEl('pvBack').addEventListener('click',e=>{ if(e.target===pvEl('pvBack')) closePreview(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&PV.t) closePreview(); });
+pvEl('pvPrev').onclick=()=>{ if(PV.i>0){PV.i--;pvRender();} };
+pvEl('pvNext').onclick=()=>{ if(PV.i<PV.probs.length-1){PV.i++;pvRender();} };
+pvEl('pvNew').onclick=()=>{ PV.seed=Math.random().toString(36).slice(2,9); pvFetch(); };
+pvEl('pvAnsBtn').onclick=pvToggleAnswer;
+pvEl('pvStart').onclick=()=>{ const t=PV.t; closePreview(); if(t) start(t); };
+
 let toastTimer;
 function showToast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2800); }
 
@@ -475,7 +702,7 @@ function loadURL(){
   if(p.get('edu'))state.edu=p.get('edu');
   if(p.get('dim'))state.dim=p.get('dim');
   if(p.get('n'))state.count=+p.get('n');
-  const st=(p.get('stage')||'').toUpperCase(); if(/^S[2-5]$/.test(st)) state.stage=st;
+  const st=(p.get('stage')||'').toUpperCase(); if(/^S[0-5]$/.test(st)) state.stage=st;
   if(p.get('lv'))state.levels=new Set([...p.get('lv')].map(c=>CODE_LVL[c]).filter(Boolean));
   syncTopDOM();
 }
@@ -486,13 +713,13 @@ function syncTopDOM(){
   document.querySelectorAll('.frow-top [data-filter="stage"] button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.val===state.stage?'true':'false'));
 }
 
-loadURL(); renderAcc(); render();
+loadURL(); renderStages(); renderAcc(); render();
 
-// 등급·게이트의 단일 출처는 서버다. 못 받아도 폴백으로 이미 그려 뒀으므로 화면은 죽지 않는다.
+// 학년·등급·게이트의 단일 출처는 서버다. 못 받아도 폴백으로 이미 그려 뒀으므로 화면은 죽지 않는다.
 (async function(){
   try{
     const c = window.CubeNest && CubeNest.api && CubeNest.api.config ? await CubeNest.api.config() : null;
-    if(c && c.stages && c.stages.length){ SRV=c; renderAcc(); render(); }
+    if(c && c.stages && c.stages.length){ SRV=c; renderStages(); renderAcc(); render(); }
   }catch(e){}
 })();
 </script>
