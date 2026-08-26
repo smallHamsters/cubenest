@@ -825,6 +825,7 @@ function refreshTopCountsVisibility(){
 /* ---------- 큐브 렌더 동기화 (InstancedMesh) ---------- */
 function syncCubes(){                 // cells + layerSel → 두 그룹으로 분배·배치·모서리 재생성
   clampLayerSel();
+  clampHighlight();
   onCells.length=0; offCells.length=0; hiCells.length=0; cellIndex.clear();
   for(const k of cells){
     if(highlight.has(k)){ hiCells.push(k); continue; }   // 강조 큐브는 별도 그룹(불투명 강조색)
@@ -874,6 +875,12 @@ function clampLayerSel(){
   const occ=occupiedLayers();
   for(const iy of [...layerSel]) if(!occ.has(iy)) layerSel.delete(iy);   // 블록 없는 층은 선택에서 제거
   if(layerSel.size===0) layerSel='all';                                  // 모두 해제/사라지면 전체 (모두 선택은 유지)
+}
+function clampHighlight(){                       // 사라진 큐브의 선택(강조)은 남기지 않는다
+  // 삭제 지점마다 정리하지 않고 여기서 한 번에 — cells 를 비우거나 갈아끼우는 경로가 다섯이고
+  // (deleteCube·전체 지우기·restore·applyState·seed) 하나를 빠뜨린 게 이 버그의 원래 형태였다.
+  // 남은 키는 화면엔 안 보이지만, 같은 좌표에 다시 쌓는 순간 강조색으로 되살아난다.
+  for(const k of highlight) if(!cells.has(k)) highlight.delete(k);
 }
 function applyLayerStyle(){ syncCubes(); }   // 층 관찰 스타일 = 두 그룹 재분배(강조=불투명, 흐림=반투명)
 
@@ -1228,10 +1235,13 @@ function deleteCube(x,y,z){
    히스토리 (Undo / Redo)
    ============================================================ */
 let undoStack=[], redoStack=[];
-function snapshot(){ return {cells:[...cells], gx:state.gx,gy:state.gy,gz:state.gz}; }
+// hi = 선택(강조) 상태. 지운 큐브를 되돌리면 선택도 함께 돌아와야 하므로 스냅샷에 포함한다.
+//   pushHistory 는 편집 '전'에 불리므로, 삭제로 정리되기(clampHighlight) 전의 선택이 담긴다.
+function snapshot(){ return {cells:[...cells], hi:[...highlight], gx:state.gx,gy:state.gy,gz:state.gz}; }
 function pushHistory(){ undoStack.push(snapshot()); redoStack.length=0; updateHistBtns(); }
 function restore(s){
   cells.clear(); s.cells.forEach(k=>cells.add(k));
+  highlight.clear(); (s.hi||[]).forEach(k=>highlight.add(k));   // cells 복원 뒤에 — clampHighlight 가 지우지 않도록
   state.gx=s.gx; state.gy=s.gy; state.gz=s.gz;
   updateTarget(); buildFloor(); rebuildCubes(); syncAxesUI(); renderStats(); refreshLayers(); updateTopCounts();
 }
@@ -1455,6 +1465,7 @@ function applyState(st){
   cells.clear(); st.cells.forEach(k=>cells.add(k));
   undoStack.length=0; redoStack.length=0;
   layerSel='all';
+  highlight.clear();   // 새 모양 = 새 선택. 좌표가 겹쳐도 옛 선택이 옮겨붙지 않게.
   setEdge(st.edge);
   updateTarget(); buildFloor(); rebuildCubes();
   syncAxesUI(); refreshLayers(); renderStats(); updateTopCounts(); updateHistBtns();
