@@ -21,7 +21,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.2.0';
+  var VERSION = '0.3.0';
 
   var STORE_BASE = 'cubenest_my_v1';   // 개인 라이브러리(정본). 로그인 시 '__<uid>' 가 붙는다
   var NICK_BASE  = 'cubenest_nick';    // 표시 이름(닉네임). 로그인 시 '__<uid>' 가 붙는다
@@ -135,8 +135,8 @@
     }
   };
 
-  /* 자료(quiz·worksheet·shape)의 클라우드 저장은 다음 마일스톤이다(my_items·quiz_results).
-     지금 서버에 붙는 것은 **프로필뿐**이라 백엔드는 계속 로컬 하나다. */
+  /* 문제지·모양(my_items)의 클라우드 저장은 다음 마일스톤이다.
+     읽기 정본은 언제나 로컬이고 서버는 미러라, 백엔드는 계속 로컬 하나다. */
   function pickBackend() { return localBackend; }
 
   /* ── 프로필(서버 미러) ───────────────────────────────────
@@ -178,14 +178,90 @@
     return mine;
   }
 
+  /* ── 퀴즈 결과(서버 미러) ────────────────────────────────
+     quiz_results 는 **누적(append-only)** 이다. 멱등키 attempt_id 를 run.js 가 세션 시작 때
+     발급하므로, 같은 시도를 몇 번 올려도 unique(user_id,attempt_id) 가 한 행으로 접는다.
+     재현 가능한 산출물은 본문을 저장하지 않는다(§6.4) — (type·seed·n) 이 곧 문제 사양이다. */
+  function quizRow(it, id) {
+    var m = it.meta || {};
+    if (!m.attemptId || !m.type || !m.seed) return null;   // 멱등키 없는 옛 항목은 올리지 않는다
+    return {
+      user_id: id, attempt_id: m.attemptId,
+      type: String(m.type), seed: String(m.seed),
+      n: Math.max(1, +m.n || 0), score: Math.max(0, +m.score || 0),
+      title: it.title || null,
+      stage: m.stage || null, sub: m.sub || null
+    };
+  }
+  function rowToItem(r) {
+    return {
+      id: 'quiz_' + r.attempt_id, kind: 'quiz',
+      title: r.title || QUIZ_TYPE_LABEL[r.type] || r.type,
+      sub: r.n ? ('맞힌 문제 ' + r.score + '/' + r.n) : '',
+      ts: r.created_at ? Date.parse(r.created_at) : Date.now(),
+      meta: { type: r.type, seed: r.seed, n: r.n, score: r.score, attemptId: r.attempt_id,
+              stage: r.stage || null, sub: r.sub || null }
+    };
+  }
+  /* 한 건 올리기(best-effort). 실패해도 로컬 저장은 성공으로 남긴다 — 그게 미러의 정의다. */
+  function pushQuiz(it) {
+    var id = uid(), c = db();
+    if (!id || !c) return Promise.resolve(false);
+    var row = quizRow(it, id);
+    if (!row) return Promise.resolve(false);
+    return c.from('quiz_results')
+      .upsert(row, { onConflict: 'user_id,attempt_id', ignoreDuplicates: true })
+      .then(function (r) { return !(r && r.error); })
+      .catch(function () { return false; });
+  }
+
+  /* 양방향 동기화.
+     pull = 다른 기기에서 푼 기록 가져오기 / push = 이 기기(비로그인 시절 포함) 기록 올리기.
+     로그인 직후 한 번 돌면 '첫 로그인 승계'가 자동으로 끝난다 — 따로 pending intent 를 두지 않는다. */
+  function syncQuiz() {
+    var id = uid(), c = db();
+    if (!id || !c) return Promise.resolve({ ok: false, reason: 'offline' });
+    adopt(id);
+    return c.from('quiz_results')
+      .select('attempt_id,type,seed,n,score,title,stage,sub,created_at')
+      .order('created_at', { ascending: false })
+      .limit(MAX_ITEMS)
+      .then(function (r) {
+        if (!r || r.error) throw new Error('pull');
+        var store = readStore(), have = {};
+        store.items.forEach(function (it) { have[it.id] = true; });
+        // pull — 로컬에 없는 서버 행만 넣는다(로컬을 덮어쓰지 않는다).
+        var seen = {};
+        (r.data || []).forEach(function (row) {
+          seen[row.attempt_id] = true;
+          if (!have['quiz_' + row.attempt_id]) store.items.push(rowToItem(row));
+        });
+        store.items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+        if (store.items.length > MAX_ITEMS) store.items.length = MAX_ITEMS;
+        writeStore(store);
+        // push — 서버에 없는 로컬 퀴즈 기록(비로그인 시절 것 포함).
+        var todo = store.items.filter(function (it) {
+          return it.kind === 'quiz' && it.meta && it.meta.attemptId && !seen[it.meta.attemptId];
+        });
+        if (!todo.length) return { ok: true, pulled: (r.data || []).length, pushed: 0 };
+        return Promise.all(todo.map(pushQuiz)).then(function (res) {
+          var okN = res.filter(Boolean).length;
+          return { ok: okN === todo.length, pulled: (r.data || []).length, pushed: okN };
+        });
+      })
+      .catch(function () { return { ok: false, reason: 'network' }; });
+  }
+
   /* auth 배선 — 세션 복원과 계정 전환마다 프로필을 다시 읽는다.
      onAuthChange 는 등록 즉시 1회 동기 호출되므로(auth.js) ready 와 겹쳐 두 번 돌 수 있다 — 멱등이라 무해. */
   function wireAuth() {
     var A = auth();
     if (!A) return;
     try {
-      if (A.ready && A.ready.then) A.ready.then(function () { syncProfile(); });
-      if (A.onAuthChange) A.onAuthChange(function (loggedIn) { if (loggedIn) syncProfile(); });
+      if (A.ready && A.ready.then) A.ready.then(function () { syncProfile(); syncQuiz(); });
+      if (A.onAuthChange) A.onAuthChange(function (loggedIn) {
+        if (loggedIn) { syncProfile(); syncQuiz(); }
+      });
     } catch (e) {}
   }
 
@@ -247,8 +323,8 @@
      quizFeed 는 /my 가 바로 쓰도록 저장분 + 레거시 최근결과를 합쳐준다. */
   var mydata = {
     VERSION: VERSION,
-    // 자료는 아직 로컬 전용, 프로필만 서버 미러다.
-    mode: function () { return uid() ? 'local+cloud-profile' : 'local'; },
+    // 프로필·퀴즈 기록은 서버 미러, 문제지·모양은 아직 로컬 전용이다.
+    mode: function () { return uid() ? 'local+cloud' : 'local'; },
 
     // meta.url 이 있으면 openUrl 로 승격한다(/my 의 '열기' 버튼 조건).
     //   문제지는 URL 하나가 곧 문제지 사양(유형·난이도·seed)이라 같은 URL = 같은 문제지다.
@@ -260,8 +336,23 @@
         return items;
       });
     },
-    add:    function (item) { return pickBackend().add(item); },
-    remove: function (id)   { return pickBackend().remove(id); },
+    /* 로컬 적립 후, 퀴즈 결과면 서버에도 자동 미러한다(로그인 상태일 때만).
+       ⚠ 서버 실패를 기다리지 않는다 — 로컬 저장이 곧 성공이고, 밀린 건은 다음 syncQuiz() 가 올린다. */
+    add:    function (item) {
+      return pickBackend().add(item).then(function (it) {
+        if (it.kind === 'quiz' && it.meta && it.meta.attemptId) pushQuiz(it);
+        return it;
+      });
+    },
+    remove: function (id)   {
+      var c = db(), me = uid();
+      // 로컬 삭제가 먼저다. 서버 행은 attempt_id 로 찾는다(id = 'quiz_<attemptId>').
+      if (c && me && id && id.indexOf('quiz_') === 0) {
+        try { c.from('quiz_results').delete().eq('user_id', me)
+                .eq('attempt_id', id.slice(5)).then(function () {}, function () {}); } catch (e) {}
+      }
+      return pickBackend().remove(id);
+    },
     clear:  function (kind) { return pickBackend().clear(kind); },
 
     count: function (kind) {
@@ -318,6 +409,8 @@
     },
     /* 서버 프로필 → 로컬 캐시. 페이지가 그리기 전에 부르면 최신 닉네임이 반영된다. */
     syncProfile: syncProfile,
+    /* 퀴즈 기록 양방향 동기화. {ok, pulled, pushed} 를 돌려준다(quiz/run 의 '결과 저장하기'가 씀). */
+    syncQuiz: syncQuiz,
 
     /* /my '삭제' — quiz/run 이 남긴 마지막 결과(레거시)를 이 기기에서만 숨긴다. */
     dismissLatestQuiz: function (ts) {

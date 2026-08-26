@@ -337,7 +337,14 @@
         return {type,levels,n,seed,dim,restart,view,sub,stage,q};
       }
       const PRM=loadParams();
-      const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[],state:[]};
+      // 시도 식별자(멱등키) — quiz_results.attempt_id. 서버 컬럼이 uuid 라 형식을 맞춘다.
+      //   같은 시도를 여러 번 저장해도 unique(user_id,attempt_id) 가 한 행으로 접는다.
+      function newAttemptId(){
+        try{ if(window.crypto&&crypto.randomUUID) return crypto.randomUUID(); }catch(e){}
+        return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g,function(c){
+          const r=Math.random()*16|0; return (c==="x"?r:(r&0x3|0x8)).toString(16); });
+      }
+      const S={type:PRM.type,seed:PRM.seed,n:PRM.n,idx:0,probs:[],answered:[],state:[],attemptId:null};
       // 세션 지속(새로고침 이어풀기): 진행 위치·문항별 답·정오·연습장 저장
       // sub 는 뒤에 덧붙인다 — 같은 seed 로 hidden 서브만 바꿔 들어오면 진행상태가 섞이기 때문.
       // (앞에 끼워 넣으면 hidden 이 아닌 기존 세션 키가 전부 바뀌어 이어풀기가 끊긴다.)
@@ -351,7 +358,9 @@
           // 새로고침으로 이어풀기 할 때 이게 없으면 이미 푼 문항의 채점 화면을 복원할 수 없다.
           // (이미 제출해서 본 정보라 저장해도 새로 새는 것은 없다.)
           const state=S.state.map(s=>s?{answered:!!s.answered,ok:!!s.ok,raw:s.raw,key:s.key||null,explain:s.explain||null}:null);
-          localStorage.setItem(SKEY,JSON.stringify({idx:S.idx,state,ts:Date.now()}));
+          // attemptId 를 진도와 함께 보관한다 — 새로고침으로 이어풀어도 **같은 시도**여야
+          // 중복 행이 안 생긴다(§6.4.1). '다시 풀기'는 세션을 지우므로 자동으로 새 시도가 된다.
+          localStorage.setItem(SKEY,JSON.stringify({idx:S.idx,state,attemptId:S.attemptId,ts:Date.now()}));
           try{ if(SCRATCH) localStorage.setItem(SKEY+"_sc",JSON.stringify(SCRATCH.all())); }catch(e){/* 용량 초과 시 연습장만 생략 */}
         }catch(e){}
       }
@@ -1009,10 +1018,14 @@
         const score=S.answered.filter(Boolean).length;
         const dots=S.answered.map((o,i)=>`<span class="dot ${o?'o':'x'}">${i+1}</span>`).join("");
         try{localStorage.setItem("cubenest_quiz_last",JSON.stringify({type:S.type,seed:S.seed,n:S.n,score,ts:Date.now()}));}catch(e){}
-        // /my "퀴즈 기록" 로컬 축적(로컬 우선, 로그인 불필요). mydata가 클라우드 전환 시 자동 동기화.
+        // /my "퀴즈 기록" 적립 — 로컬 우선(로그인 불필요), 로그인 상태면 mydata 가 서버에도 미러한다.
+        //   id 를 attemptId 로 고정한다: 예전엔 id 를 안 넘겨 같은 퀴즈를 끝낼 때마다 사본이 쌓였다.
+        //   meta.attemptId 는 서버 멱등키로 그대로 쓰인다(quiz_results.attempt_id).
         if(window.CubeNest&&CubeNest.mydata) try{ CubeNest.mydata.add({
+          id:"quiz_"+S.attemptId,
           kind:"quiz", title:TYPES[S.type].title, sub:"맞힌 문제 "+score+"/"+S.n,
-          meta:{ type:S.type, seed:S.seed, n:S.n, score:score }
+          meta:{ type:S.type, seed:S.seed, n:S.n, score:score, attemptId:S.attemptId,
+                 stage:PRM.stage||null, sub:PRM.sub||null }
         }); }catch(e){}
         track("quiz_run_complete",{type:S.type,n:S.n,score,seed:S.seed});
         resultEl.className="result show";
@@ -1042,6 +1055,7 @@
         resultEl.className="result"; resultEl.innerHTML="";
         qcard.style.display=""; document.getElementById("topbar").style.display="";
         S.idx=0; S.answered=[]; S.state=[];
+        S.attemptId=newAttemptId();   // '다시 풀기'는 새 시도다 — 결과가 덮이지 않고 누적된다(§6.4.1)
         try{ localStorage.removeItem(SKEY); localStorage.removeItem(SKEY+"_sc"); }catch(e){}
         updateProgress();
         renderProblem();
@@ -1172,14 +1186,29 @@
         // 퀴즈는 seed URL + localStorage 세션으로 복원되고, 문제지 화면의 '← 퀴즈로'가 그 URL 로 돌아간다.
         location.href="../../worksheets/?from=quiz";
       }
-      // 결과 저장 = 로그인 필요(마스터 6.3 RLS / 6 Supabase OAuth). 로컬엔 이미 저장됨.
+      // 결과는 showResult() 에서 **이미** 로컬에 적립되고, 로그인 상태면 mydata 가 서버에도 미러한다.
+      //   그래서 이 버튼은 "저장 실행"이 아니라 (1) 비로그인 → 로그인 유도,
+      //   (2) 로그인 → 미러가 실패했을 때의 재시도 + 저장됐음을 눈으로 확인시키는 역할이다.
       function saveResult(){
         const authed=isLoggedIn();
         track("save_result_click",{loggedIn:authed});
-        if(!authed){ AUTH ? AUTH.requireLogin("save_result")
-                          : alert("결과 저장(클라우드)은 로그인이 필요해요.\n(지금 결과는 이 기기에 자동 저장돼 있어요.)"); return; }
-        // 로그인됨 → 클라우드 저장 API는 다음 단계(DB 스키마 + RLS). 지금은 로컬 저장 안내까지.
-        alert("클라우드 저장은 곧 제공돼요.\n\n· 저장 데이터는 RLS로 본인만 접근\n\n지금 결과는 이 기기에 자동 저장돼 있어요.");
+        if(!authed){
+          // 로그인하면 mydata 가 이 기기의 기록을 서버로 승계한다 — 여기서 따로 올릴 것이 없다.
+          AUTH ? AUTH.requireLogin("save_result")
+               : alert("결과 저장(클라우드)은 로그인이 필요해요.\n(지금 결과는 이 기기에 자동 저장돼 있어요.)");
+          return;
+        }
+        const b=document.getElementById("saveBtn"); if(!b) return;
+        const back=b.innerHTML;
+        b.disabled=true; b.innerHTML="저장 중…";
+        const M=window.CubeNest&&CubeNest.mydata;
+        Promise.resolve(M&&M.syncQuiz?M.syncQuiz():null).then(function(r){
+          const ok=!!(r&&r.ok);
+          b.innerHTML = ok ? "✓ 내 자료에 저장됨" : "저장 실패 — 다시 시도";
+          b.disabled = ok;
+          if(!ok) setTimeout(function(){ b.innerHTML=back; b.disabled=false; },2200);
+          track("save_result_done",{ok:ok});
+        });
       }
       // 공유: 같은 seed URL → 같은 퀴즈 재현. Web Share → 클립보드 폴백.
       function shareQuiz(){
@@ -1208,8 +1237,10 @@
           S.state=saved.state.map(s=>s?{answered:!!s.answered,ok:!!s.ok,raw:s.raw,key:s.key||null,explain:s.explain||null}:null);
           S.answered=S.state.map(s=>s?!!s.ok:undefined);
           S.idx=Math.min(Math.max(saved.idx|0,0),S.n-1);
+          if(saved.attemptId) S.attemptId=saved.attemptId;   // 이어풀기 = 같은 시도
           try{ const sc=localStorage.getItem(SKEY+"_sc"); if(sc && SCRATCH) SCRATCH.load(JSON.parse(sc)); }catch(e){}
         }
+        if(!S.attemptId) S.attemptId=newAttemptId();          // 새 시도(첫 진입·restart=1)
         window.addEventListener("beforeunload",saveSession);
         // 헤더: 아래로 스크롤 시 숨김, 위로 스크롤 시 표시
         (function(){ const hdr=document.querySelector(".site-top"); if(!hdr)return; let lastY=window.scrollY||0, tick=false;
