@@ -118,6 +118,11 @@
       .numin input{width:130px;height:48px;border:1.5px solid var(--line);border-radius:12px;font-family:inherit;font-size:20px;font-weight:800;text-align:center;color:var(--ink);background:var(--panel)}
       .numin input:focus{border-color:var(--accent);outline:none}
       .numin .unit{font-size:16px;font-weight:700;color:var(--muted)}
+      /* 숫자 답은 제출 버튼을 입력창과 같은 줄(#actSlot)에 둔다 — 하단에 두면 모바일 키보드가 가린다.
+         margin-left:auto 는 flex 자식인 #actSlot 에 걸어야 오른쪽 끝으로 밀린다(.btn 은 그 안이라 안 먹는다).
+         .btn 은 .actions 용 flex:1 을 여기서만 끄고 입력창(48px)과 높이를 맞춘다. */
+      .numin #actSlot{margin-left:auto;display:flex}
+      .numin .btn{flex:0 0 auto;height:48px;padding:0 20px}
 
       .hmgrid{display:inline-grid;gap:4px;background:var(--panel);padding:8px;border:1px solid var(--line);border-radius:12px}
       .hmcell{width:42px;height:42px;border-radius:8px;display:grid;place-items:center}
@@ -381,6 +386,6 @@
 
     <!-- ⚠ ?v= 를 반드시 올릴 것. 없으면 옛 run.js 가 캐시에 남아 새 서버 응답을 만난다
          (서버가 2D 에서 형상을 빼는 단계적 배포의 전제가 이 한 줄이다). -->
-    <script src="./run.js?v=0.14.0"></script>
+    <script src="./run.js?v=0.15.0"></script>
   </body>
 </html>

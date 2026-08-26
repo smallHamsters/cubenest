@@ -462,7 +462,9 @@
           // 44px = 터치 타깃 최소치(마스터 UI 규약). index.html 의 .mcell 크기와 같은 값이어야 한다.
           ans=`<div class="markgrid" style="grid-template-columns:repeat(${sh.gx},44px)">${mc}</div><div class="hint">안 보이게 숨었을 것 같은 칸을 눌러요(여러 칸 가능).</div>`;
         }else if(form==="num"){
-          ans=`<div class="numin"><input id="ans" type="number" inputmode="numeric" autocomplete="off" placeholder="?"/><span class="unit">${pr.unit||T.unit}</span></div>`;
+          // #actSlot = 제출 버튼 자리(setActions 가 채운다). 하단 #actions 는 연습장 아래라
+          //   모바일 키보드가 올라오면 통째로 가려진다 — 숫자 답만 답 옆에서 끝내게 한다.
+          ans=`<div class="numin"><input id="ans" type="number" inputmode="numeric" enterkeyhint="done" autocomplete="off" placeholder="?"/><span class="unit">${pr.unit||T.unit}</span><span id="actSlot"></span></div>`;
         }else if(form==="hm"){
           let cells="";
           for(let z=0;z<sh.gz;z++)for(let x=0;x<sh.gx;x++){
@@ -534,6 +536,11 @@
         if(form==="draw"){qcard.querySelectorAll(".dcell").forEach(b=>b.onclick=()=>{if(!b.disabled)b.classList.toggle("on");});}
         if((pr.form||T.form)==="bool"){qcard.querySelectorAll(".boolopt").forEach(b=>b.onclick=()=>{if(b.classList.contains("done"))return;PICK=+b.dataset.b;qcard.querySelectorAll(".boolopt").forEach(o=>o.classList.remove("sel"));b.classList.add("sel");});}
         if((pr.form||T.form)==="markCells"){qcard.querySelectorAll(".mcell:not(.empty)").forEach(b=>b.onclick=()=>{if(b.style.pointerEvents!=="none")b.classList.toggle("on");});}
+        // 키보드 확인키로도 제출 — 버튼을 누르러 손을 옮길 필요를 없앤다.
+        //   채점이 끝난 문항엔 #submit 자체가 없어(setActions) 저절로 무시된다.
+        if(form==="num"){ const inp=document.getElementById("ans");
+          if(inp) inp.onkeydown=e=>{ if(e.key!=="Enter")return; e.preventDefault();
+            const sb=document.getElementById("submit"); if(sb&&!sb.disabled) submit(false); }; }
         document.getElementById("feedbackBtn").onclick=openFeedback;
         const st=S.state[S.idx];
         if(st && st.answered){          // 이미 푼 문항: 답 복원 + 채점 상태 재구성(잠금)
@@ -942,7 +949,14 @@
         }
         setActions();
         updateProgress();
-        if(!revisit){ playGrade(ok); playSound(ok); saveSession(); }
+        if(!revisit){ playGrade(ok); playSound(ok); saveSession();
+          // 인라인 제출(숫자)은 화면 위쪽에서 눌린다 — 해설 #fb 는 연습장 아래라 화면 밖이다.
+          //   채점 애니메이션(약 1.45s)이 끝난 뒤 데려간다. 위의 #ans disabled 로 키보드는 이미 닫혔다.
+          //   ⚠ scrollIntoView({behavior:"smooth"}) 는 쓰지 말 것 — 조용히 아무 일도 안 일어나는
+          //     환경이 있다(goTo 가 부드러운 스크롤을 버린 것과 같은 이유). window.scrollTo 로 즉시 이동.
+          if(F==="num") setTimeout(()=>{ const el=document.getElementById("fb");
+            if(el) window.scrollTo(0, window.scrollY + el.getBoundingClientRect().top - 12); },1500);
+        }
       }
       // 문항 이동/제출/결과 버튼 구성(문항 상태에 따라)
       // 팔레트 + 결과보기(한 묶음). 팔레트=가로 스크롤 한 줄, 결과보기=미완료 시 비활성.
@@ -967,11 +981,16 @@
         const answered=!!(S.state[S.idx]&&S.state[S.idx].answered);
         const allDone=unansweredList().length===0;
         const act=document.getElementById("actions"); if(!act)return;
+        const slot=qcard.querySelector("#actSlot");   // 숫자 답 문항에만 있다(renderProblem)
         let h="";
         if(!answered) h+=`<button class="btn" id="submit">제출</button>`;
         else if(!allDone) h+=`<button class="btn" id="nextBtn">다음 →</button>`;   // 안 푼 다음 문항으로
         else h+=`<button class="btn" id="resultBtn2">결과 확인</button>`;             // 모두 풀면 결과 확인
-        act.innerHTML=h; act.hidden=!h;
+        // 제출만 입력창 옆으로 올린다. 다음·결과 확인은 해설(#fb)을 읽고 누르는 흐름이라 하단 유지.
+        //   id 는 그대로라 아래 배선·submit() 의 disabled 조작은 두 위치 모두에서 동작한다.
+        const inline=!!slot && !answered;
+        if(slot) slot.innerHTML = inline ? h : "";
+        act.innerHTML = inline ? "" : h; act.hidden = inline || !h;
         const nb=document.getElementById("nextBtn"); if(nb)nb.onclick=()=>{ const ni=firstUnanswered(S.idx); if(ni>=0)goTo(ni); };
         const sub=document.getElementById("submit"); if(sub)sub.onclick=()=>submit(false);
         const rb2=document.getElementById("resultBtn2"); if(rb2)rb2.onclick=showResult;
