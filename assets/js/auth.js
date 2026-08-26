@@ -15,7 +15,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.1.0';
+  var VERSION = '0.2.0';
 
   /* ── 설정 ────────────────────────────────────────────────────────────────
      SUPABASE_ANON_KEY: Supabase 대시보드 › Settings › API › anon / publishable key
@@ -134,9 +134,41 @@
       readyRes(session);
       notify();
       mountHeader();
+      // 검증은 **ready 를 막지 않는다** — 첫 페인트를 네트워크 왕복만큼 늦추면
+      // 잠금 깜빡임 방지(§6.3.1)가 깨진다. 뒤에서 확인하고 죽었으면 그때 로그아웃한다.
+      validateSession();
     }).catch(function () {
       settled = true; readyRes(null); notify(); mountHeader();
     });
+  }
+
+  /* ── 죽은 세션 정리 ───────────────────────────────────────
+     계정이 서버에서 삭제·차단돼도 access token 이 만료되기 전까지는 로컬 세션이
+     그대로 남는다. getSession() 은 **로컬만 읽으므로** isLoggedIn() 이 계속 true 고,
+     페이지는 로그인된 것처럼 그려지는데 모든 서버 호출만 조용히 실패한다
+     (260827 실제 발생: getUser() → 403 "User from sub claim in JWT does not exist").
+     그래서 복원 직후 서버에 한 번 물어 확인한다.
+
+     ⚠ **네트워크 실패로는 절대 로그아웃하지 않는다.** 오프라인에서 세션을 잃으면
+       "로컬 우선" 설계가 통째로 무너진다. 서버가 **401/403 으로 명시적으로 부정**할
+       때만 정리한다 — 타임아웃·5xx·오프라인은 AuthRetryableFetchError 라 status 가
+       없거나 5xx 이므로 여기서 걸러진다. */
+  function isDeadSession(err) {
+    if (!err) return false;
+    if (err.code === 'user_not_found' || err.code === 'session_not_found') return true;
+    return err.status === 401 || err.status === 403;
+  }
+  function validateSession() {
+    if (!client || !session) return;
+    client.auth.getUser().then(function (r) {
+      if (!isDeadSession(r && r.error)) return;      // 정상이거나 일시적 실패 → 그대로 둔다
+      console.warn('[CubeNest.auth] 서버에 없는 계정의 세션 — 로그아웃합니다.');
+      trk('session_invalidated', { reason: (r.error && r.error.code) || r.error.status });
+      // signOut 이 SIGNED_OUT 을 쏘면 onAuthStateChange 가 session=null 로 만들고 notify 한다.
+      // 서버 세션이 이미 없어 signOut 자체가 실패할 수 있으니, 로컬만 지우는 scope 로 부른다.
+      try { client.auth.signOut({ scope: 'local' }).catch(function () {}); } catch (e) {}
+      session = null; notify(); renderModal(); mountHeader();
+    }).catch(function () {});   // 예외(오프라인 등)는 무시 — 세션 유지
   }
 
   function providerOf(s) {
