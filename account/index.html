@@ -182,7 +182,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.1.0"></script>
-<script src="../assets/js/mydata.js?v=0.1.0"></script>
+<script src="../assets/js/mydata.js?v=0.2.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script>
 /* F1 계측 — 동의 후 gtag 가 있을 때만(오리진 공유 consent.js 정본) */
@@ -287,7 +287,7 @@ var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
                 '<input id="nickInput" type="text" maxlength="20" autocomplete="off" placeholder="'+esc(A.userLabel())+'" value="'+esc(curNick)+'" aria-label="표시 이름">'+
                 '<button id="nickSave" type="button">저장</button>'+
               '</div>'+
-              '<p class="nhint" id="nickHint">‘내 자료’ 페이지에 <b>○○님의 자료</b>로 표시돼요. 이 기기에만 저장돼요.</p>'+
+              '<p class="nhint" id="nickHint">‘내 자료’ 페이지에 <b>○○님의 자료</b>로 표시돼요. 계정에 저장돼 다른 기기에서도 따라와요.</p>'+
             '</div>')+
           sec('이용권', '<div id="planSlot"><div class="ah-empty">불러오는 중…</div></div>')+
           sec('결제 내역', '<div id="paySlot"><div class="ah-empty">불러오는 중…</div></div>')+
@@ -303,18 +303,19 @@ var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
 
     document.getElementById('acctOut').onclick = function(){ A.signOut(); };
 
-    /* 닉네임 저장(로컬) — /my 제목에 반영 */
+    /* 닉네임 저장 — 로컬 즉시 + 서버(profiles) best-effort 미러. /my 제목에 반영. */
     var ni=document.getElementById('nickInput'), ns=document.getElementById('nickSave'), nh=document.getElementById('nickHint');
     if(ns){
       ns.onclick=function(){
         var v=(ni.value||'').trim();
-        Promise.resolve(M ? M.setNickname(v) : v).then(function(){
+        Promise.resolve(M ? M.setNickname(v) : { value:v, synced:false }).then(function(r){
           nh.className='nhint ok';
-          /* 닉네임은 localStorage 전용(mydata.setNickname) — 기기가 바뀌면 초기화된다.
-             프로필 동기화가 붙기 전까지 그 사실을 숨기지 않는다. */
+          /* mydata.setNickname 은 {value, synced} 를 준다. 서버 미러가 실패해도 로컬엔
+             저장된 것이라 "저장 실패"가 아니다 — 어디까지 저장됐는지만 정직하게 말한다. */
+          var synced = !!(r && r.synced);
           nh.textContent = (v ? ('저장했어요 · ‘'+v+'님의 자료’로 표시돼요.') : '저장했어요 · 계정 이름으로 표시돼요.')
-            + ' 이 기기에만 저장돼요.';
-          track('nickname_set',{});
+            + (synced ? '' : ' (지금은 이 기기에만 저장했어요 — 연결되면 계정에 반영돼요.)');
+          track('nickname_set',{ synced:synced });
         });
       };
       ni.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); ns.click(); } });

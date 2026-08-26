@@ -171,7 +171,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.1.0"></script>
-<script src="../assets/js/mydata.js?v=0.1.0"></script>
+<script src="../assets/js/mydata.js?v=0.2.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script>
 /* F1 계측 — 동의 후 gtag 가 있을 때만(오리진 공유 consent.js 정본) */
@@ -292,7 +292,7 @@ var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
       '</div>' +
       '<div class="my-note">'+
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>'+
-        '<span>지금은 자료가 <b>이 기기</b>에 저장돼요. 계정 클라우드 보관(어느 기기에서나 열기)은 곧 제공됩니다.</span>'+
+        '<span><b>표시 이름</b>은 계정에 저장돼 다른 기기에서도 따라와요. 퀴즈 기록·문제지는 아직 <b>이 기기</b>에 저장돼요 — 계정 보관은 곧 제공됩니다.</span>'+
       '</div>' +
       '<div id="mySections"><div class="my-skel"><i></i><i></i></div></div>';
 
@@ -314,8 +314,9 @@ var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
   function renderGate(){
     var deviceHtml = '';
     if(M && M.hasDeviceData()){
-      /* 클라우드 동기화 전이라 "다른 기기에서도"는 아직 사실이 아니다(pickBackend=로컬).
-         지금 참인 것만 약속한다 — 동기화가 붙으면 이 문구를 확장한다. */
+      /* 자료(퀴즈·문제지)는 아직 이 기기 로컬이다 — 서버에 붙은 것은 프로필뿐.
+         지금 참인 것만 약속한다. quiz_results 가 붙으면 이 문구를 확장한다.
+         ※ 로그인하면 이 기기의 비로그인 자료를 **처음 로그인한 계정 하나만** 승계한다(mydata.adopt). */
       deviceHtml =
         '<div class="device">이 기기에 저장된 학습 기록이 있어요. '+
         '<b>로그인하면</b> 여기서 바로 이어서 볼 수 있어요.</div>';
@@ -341,10 +342,20 @@ var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
     track('my_gate_view', { loggedIn:false });
   }
 
+  /* 서버 프로필(닉네임)은 첫 페인트보다 늦게 올 수 있다.
+     값이 **실제로 달라졌을 때만** 다시 그린다 — 무조건 재렌더하면 목록이 한 번 깜빡인다. */
+  function syncNickThenRepaint(){
+    if(!M || !M.syncProfile) return;
+    var before = M.getNickname();
+    M.syncProfile().then(function(){
+      if(A.isLoggedIn() && M.getNickname() !== before) renderLibrary();
+    });
+  }
+
   function render(){
     if(!A){ root.innerHTML = '<div class="my-gate"><h1>로그인 준비 중</h1><p>인증 모듈을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p></div>'; return; }
     if(!A.settled){ /* 세션 복원 전 — 잠금 깜빡임 방지(§6.3.1): 스켈레톤 유지 */ return; }
-    if(A.isLoggedIn()) renderLibrary();
+    if(A.isLoggedIn()){ renderLibrary(); syncNickThenRepaint(); }
     else renderGate();
   }
 

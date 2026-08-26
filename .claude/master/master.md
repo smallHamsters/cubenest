@@ -377,6 +377,7 @@ diff -u assets/js/cubenest-<m>.js supabase/functions/_shared/cubenest-<m>.js
 - 테이블당 **4정책(select/insert/update/delete), `to authenticated` 명시.** insert/update는 **`with check`** 필수.
 - `auth.uid()`는 **`(select auth.uid())`로 감싸** initplan 캐싱(Supabase 권장).
 - **`entitlements`는 사용자에게 `select`만.** insert/update/delete 정책을 주지 않는다(정책 0개=차단) — 사용자 self-grant 방지. **쓰기는 결제 Edge Function(service_role) 전용**(§6.5·§6.7).
+- **`profiles`도 delete 정책을 주지 않는다 (구현 시 확정, 260827).** 4정책 규약의 유일한 예외다: 프로필 행 삭제는 곧 계정 메타 유실인데 **되살릴 트리거가 없고**(트리거는 `auth.users` insert 에만 걸린다), 탈퇴는 `auth.users` 삭제 → FK cascade 가 처리하므로 사용자용 delete 경로가 불필요하다. insert 정책은 **트리거 실패 시 클라이언트 자가치유(upsert)** 를 위해 남긴다.
 
 ### 6.5 결제 · 수익화
 - **단계적 접근:** 베타 **전면 무료**(수요·피드백 검증) → 정식화 시 **기간 이용권(단건결제, 예: 30일권)부터**(결정). 자동갱신·정기결제 심사·cron·재시도 로직을 회피해 "학부모가 실제로 돈을 내는가"만 먼저 검증 → 수요 확인 후 **월 자동결제(빌링)로 확장**(그 단계에서 Supabase Pro).
@@ -443,7 +444,8 @@ diff -u assets/js/cubenest-<m>.js supabase/functions/_shared/cubenest-<m>.js
 
 ### 7.2 다음 — 수익화 검증 경로 (미착수)
 
-- **P2 저장 (DB + RLS).** §6.4.1의 스키마·RLS 규약은 **완비돼 있으나 한 줄도 구현되지 않았다.** `profiles`(트리거 자동생성)·`my_items`·`quiz_results`(`attempt_id` 멱등)·`entitlements`(select 전용) 첫 마이그레이션 + `mydata.js` 클라우드 어댑터. **결제의 선행 조건** — 이용권 상태를 담을 곳이 아직 없다.
+- **P2 저장 (DB + RLS) — 착수(2026-08-27).** §6.4.1의 규약 중 **`profiles` 가 실제로 구현됐다**(`supabase_profiles_schema_260826.sql`: 테이블 + `auth.users` insert 트리거 자동생성 + 백필 + RLS). 이것이 **리포의 첫 RLS 정책**이며 이후 테이블이 복사하는 전례다. `mydata.js` 는 백엔드 스왑 대신 **로컬 우선 + 서버 미러**(동기 반환 시그니처 보존)로 붙였고, 저장소 키를 **계정별로 분리**해 공용 기기 노출을 막았다.
+  - **남은 것:** `my_items`·`quiz_results`(`attempt_id` 멱등)·`entitlements`(select 전용). **결제의 선행 조건** — 이용권 상태를 담을 곳이 아직 없다.
 - **P3 결제 (기간 이용권 단건결제, §6.5).** 토스 결제 Edge Function(service_role) + `entitlements` 쓰기 + worksheets·정답지 게이트를 로그인 → **이용권**으로 승격.
 
 > **⚠ 전략 판단 (2026-08-20 제기 · 마스터 오너 결정 대기).** 최근 사이클의 진척은 전부 **콘텐츠·보안·UI**였고 **수익화 검증 경로(P2→P3)는 여전히 0**이다. §6.5가 "먼저 검증한다"고 못 박은 질문 — **"학부모가 실제로 돈을 내는가"** — 의 시계가 아직 시작되지 않았다. 무료 콘텐츠 폭을 넓힐수록 전환 검증은 뒤로 밀린다.

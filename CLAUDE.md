@@ -31,7 +31,7 @@
 전역 `window.CubeNest`. viewer는 core에 의존 → **core 먼저 로드.** 변경은 단일 지점 + 전 모듈 재테스트.
 - `cubenest-core.js` — 계산 코어(§4 실행형). `cubenest-viewer.js` — 3D 뷰어·펼쳐보기.
 - `cubenest-iso.js` — 겨냥도 SVG 렌더러. **서버 복본(`_shared/`)이 은닉 유형 제시물을 그린다** — 그리는 순서(뒤→앞)가 곧 가림이라 정렬을 바꾸면 숨은 나무가 드러난다.
-- `auth.js` — **공용 인증(`CubeNest.auth`·`isLoggedIn` 단일 진실)**. `mydata.js` — **공용 데이터 계층(로컬 우선, `/my` 오너·account 소비)**. `consent.js` — GA4·동의.
+- `auth.js` — **공용 인증(`CubeNest.auth`·`isLoggedIn` 단일 진실)**. `mydata.js` — **공용 데이터 계층(로컬 우선, `/my` 오너·account 소비)**. **저장소 키는 계정별로 나뉜다**(`cubenest_my_v1__<uid>`) — 공용 기기에서 계정을 바꿔도 앞 사람 자료가 안 보인다. 이 기기의 비로그인 자료는 **처음 로그인한 계정 하나만** 승계하고(`cubenest_my_adopted`) 원본은 남긴다. **`CubeNest.auth` 를 참조하는 유일한 모듈**이다. `consent.js` — GA4·동의.
 - **생성기 `gen`·설정 `gen-config`는 서버 전용**(Edge Function, 클라 미배포 — 아래 보안).
 - **클라↔서버 복본 규약(마스터 §5.2):** 같은 모듈이 `assets/js/`와 `_shared/`에 두 벌이면 **정본은 클라**, 복본은 **원문 그대로 + ESM export 꼬리 2줄**만 다르다. 커밋 전 `diff -u assets/js/X.js supabase/functions/_shared/X.js` → **export 블록 외 차이가 나오면 드리프트**. **클라가 `<script src>`로 로드하지 않는 모듈은 복본 금지(서버 단일본)** — 죽은 사본은 증상 없이 갈라진다(`minmax`·`manip`이 실제로 갈라져 260821 클라 사본 삭제 = 서버 단일본). 서버 전용 신규 계산 모듈은 처음부터 `_shared/`에만(`cubenest-hidden.js`). **현재 두 벌인 모듈 = `core`·`iso` 둘뿐**(둘 다 diff 일치 확인).
 
@@ -40,7 +40,9 @@
 - **`CubeNest.auth`가 로그인 단일 진실.** 새 인증·mock 만들지 말 것.
 - **게이트:** 무로그인 = home·guide·playground(편집·관찰)·quiz(랜딩·플레이). 로그인 = calc 30분 이후·quiz 결과 저장·worksheets·`/account`·`/my`.
   - calc: 첫 상호작용 후 **30분 무료** → 이후 잠금·로그인 유도(치팅 방지+가입 유도). 세션 복원 전엔 잠그지 않음.
-- **저장(진행 중):** 로컬 우선(`mydata.js`) → 로그인 시 Supabase. **RLS가 실제 방어선**("본인 것만"). 진도는 로컬 전용, **완료 결과만** 저장. `entitlements`는 사용자 select만(쓰기=결제 서버). `/account`=계정 허브(구현, 이용권·결제는 서버 이음새만)·`/my`=내 자료(로컬 우선 구현).
+- **저장:** 로컬 우선(`mydata.js`) + **서버 미러**. 백엔드를 통째로 갈아끼우지 않는다 — `getNickname()` 처럼 **동기 반환**을 `/my`·`/account` 가 동기로 소비하므로, 서버는 읽어서 **로컬 캐시를 채우는** 방향으로만 붙인다(시그니처 바꾸지 말 것). **RLS가 실제 방어선**("본인 것만"). 진도·연습장은 로컬 전용, **완료 결과만** 저장. `entitlements`는 사용자 select만(쓰기=결제 서버). `/account`=계정 허브·`/my`=내 자료.
+  - **구현됨 = `profiles`뿐**(260827). 닉네임이 계정에 귀속돼 기기를 넘어 따라온다. `quiz_results`·`my_items`·`entitlements`는 아직 SQL이 없다 — 퀴즈 기록·문제지는 여전히 기기 로컬이다.
+  - **RLS 전례(`supabase_profiles_schema_260826.sql`)를 이후 테이블이 복사한다:** 소유자 컬럼은 언제나 `user_id`, 정책마다 `to authenticated` 명시, `auth.uid()` 는 **`(select auth.uid())`** 로 감싸고(initplan 캐싱), insert/update 에 `with check` 필수. **`profiles` 만 delete 정책을 주지 않는다** — 행 삭제 = 계정 메타 유실인데 되살릴 트리거가 없고, 탈퇴는 FK cascade 가 처리한다.
 
 ## 보안 · 지적재산 (정적 웹은 클라 코드 은닉 불가 → 서버화 + 법적 보호)
 - **핵심 자산은 서버(Edge Function):** `gen`·`gen-config`(전체 문제 공간·정답 규칙)는 클라에서 삭제됨. 클라는 `api-client.js`로 `/generate`·`/grade` 호출. **`/grade`는 gsig(HMAC)로 위·변조 방지**, rate limit(익명 쿠키+IP). 무료 익명 플레이라 `verify_jwt=false`.
@@ -61,6 +63,8 @@
 - 렌더링: 직교 카메라, 큐브 InstancedMesh 2그룹.
 - 언어 한국어(브랜드: ko→큐브네스트 / else CubeNest). 모바일 가로 우선(44px+, hover 미사용). 계측 `track()`→GA4, 동의 후만.
 - **DB 스키마는 마이그레이션 파일(`supabase/migrations/`)로 관리**, 적용은 대시보드 SQL Editor. 저장을 Edge 경유로 바꾸지 말 것(RLS로 충분).
+  - **스키마는 아래 배포 순서의 예외 — 서버(DB)가 먼저다.** 클라를 먼저 내보내면 없는 테이블을 조회해 미러가 전부 조용히 실패한다("오류가 아니라 동기화가 안 되는 것처럼"). Edge Function 은 반대(클라 먼저)다.
+  - 파일명은 기존 전례(`supabase_<주제>_schema_<YYMMDD>.sql`)를 따른다. CLI 타임스탬프 형식(`20260826…`)을 섞으면 `supabase db push` 가 기존 파일을 미적용으로 보고 순서가 꼬인다. 전체를 `if not exists`/`or replace`/`drop … if exists` 로 써 **재실행 안전**하게 한다.
 - **`verify_jwt`(`supabase/config.toml`)는 함수별로 다르다 — 일괄 규칙이 아니다.** `generate`·`grade`·`config`만 **`false`**(무료 익명 플레이·UI 메타. `true`로 바꾸면 무로그인 플레이가 깨진다). **`worksheet`는 이미 `true`이고 그게 맞다** — 정답이 함께 내려가는 유일한 경로라 게이트웨이가 JWT를 검증하고, `api-client.worksheet`가 `CubeNest.auth` 토큰을 붙여 호출한다. **여기를 `false`로 "정정"하지 말 것.** 함수 안 `requireUser()`(`_shared/auth.ts`)가 두 번째 방어선으로 한 번 더 막지만 **그건 안전망이지 대체재가 아니다** — 둘 중 하나를 중복이라며 지우지 말 것.
 - **캐시 무효화 `?v=` — 공용 모듈을 고치면 로드하는 모든 HTML의 `?v=`를 함께 올린다.** `<script src="../assets/js/cubenest-core.js?v=0.3.0">`처럼 소비처마다 버전이 박혀 있고, 안 올리면 GitHub Pages가 옛 파일을 계속 준다 — **오류가 아니라 "안 고쳐진 것처럼" 보인다**(아래 배포 순서와 같은 실패 유형).
   - 소비처 찾기: `grep -rn "<모듈>.js?v=" --include=*.html .` (index · playground · quiz · quiz/run · worksheets · my · account · guide 중 해당하는 것 전부)
@@ -75,6 +79,6 @@
 - 수익화(학부모 B2C): 베타 무료 → **기간 이용권 단건결제**부터 → 월 자동결제 확장(관리형·Supabase Pro).
 
 ## 현재/다음
-- **완료:** 상태 공유(F2·F3)·계측/동의(F1)·서버 생성/채점(gen 서버화)·OAuth 로그인·**유형 19종**(리매핑 + 안보이는나무 A-a~f + G군 + H군)·정답 은닉·worksheets(문제지·정답지 인쇄·QR)·**난이도 개편(연령 스테이지 S0~S4 + 개수 밴드, gen-config 구조 교체)**·세션 내 중복 회피(gen v0.5.0).
-- **다음:** **DB+RLS 저장(quiz 결과·`/my`)** → 결제(이용권). ⚠ 여기까지 진척이 전부 콘텐츠·보안·UI였고 **수익화 검증 경로는 아직 0** — 마스터 §7.2 참조.
+- **완료:** 상태 공유(F2·F3)·계측/동의(F1)·서버 생성/채점(gen 서버화)·OAuth 로그인·**유형 19종**(리매핑 + 안보이는나무 A-a~f + G군 + H군)·정답 은닉·worksheets(문제지·정답지 인쇄·QR)·**난이도 개편(연령 스테이지 S0~S4 + 개수 밴드, gen-config 구조 교체)**·세션 내 중복 회피(gen v0.5.0)·**유저 기반 DB 착수(`profiles` + 리포 첫 RLS 정책, 닉네임 계정 귀속, 계정별 로컬 분리)**.
+- **다음:** **`quiz_results` 저장(퀴즈 완료 결과 + `attempt_id` 멱등)** → `my_items`(문제지·모양) → 결제(이용권). ⚠ 여기까지 진척이 전부 콘텐츠·보안·UI였고 **수익화 검증 경로는 아직 0** — 마스터 §7.2 참조.
 - 새 기능은 F1~F5·`CubeNest.auth`·`CubeNest.mydata`·서버 gen을 **재사용**한다.
