@@ -56,11 +56,16 @@
 - 법적: 저작권 표시·독점 라이선스·이용약관·저작권 등록·**CubeNest 상표 출원**(변리사 확인).
 
 ## 기술 · 규약
-- **단일 HTML/페이지 + Three.js, 빌드 없음, 정적 호스팅**(GitHub Pages, `/cubenest/` 하위경로). 백엔드 = **Supabase**(Auth·Postgres+RLS·Edge Functions). 로컬 확인: `python -m http.server 5500` (**5500 고정** — Edge Function CORS 허용 오리진. 기본 8000이면 `/generate`·`/grade`가 막힌다).
+- **단일 HTML/페이지 + Three.js, 빌드 없음, 정적 호스팅**(GitHub Pages, `/cubenest/` 하위경로). 백엔드 = **Supabase**(Auth·Postgres+RLS·Edge Functions). 로컬 확인: `py -m http.server 5500` (**5500 고정** — Edge Function CORS 허용 오리진. 기본 8000이면 `/generate`·`/grade`가 막힌다. **`python`이 아니라 `py`** — 개발 머신의 `python`은 WindowsApps 스텁이라 exit 9009로 죽는다).
 - **배포 = `<모듈>/index.html`**(랜딩=루트). 공용 자산 `assets/{css,img,js}`. 상대경로(하위 `../`, 2층 `../../`). 서버 = `supabase/`(functions·migrations·config).
 - 렌더링: 직교 카메라, 큐브 InstancedMesh 2그룹.
 - 언어 한국어(브랜드: ko→큐브네스트 / else CubeNest). 모바일 가로 우선(44px+, hover 미사용). 계측 `track()`→GA4, 동의 후만.
-- **DB 스키마는 마이그레이션 파일(`supabase/migrations/`)로 관리**, 적용은 대시보드 SQL Editor. `verify_jwt=true` 전환·저장 Edge 경유 금지(RLS로 충분, 익명 플레이 깨짐).
+- **DB 스키마는 마이그레이션 파일(`supabase/migrations/`)로 관리**, 적용은 대시보드 SQL Editor. 저장을 Edge 경유로 바꾸지 말 것(RLS로 충분).
+- **`verify_jwt`(`supabase/config.toml`)는 함수별로 다르다 — 일괄 규칙이 아니다.** `generate`·`grade`·`config`만 **`false`**(무료 익명 플레이·UI 메타. `true`로 바꾸면 무로그인 플레이가 깨진다). **`worksheet`는 이미 `true`이고 그게 맞다** — 정답이 함께 내려가는 유일한 경로라 게이트웨이가 JWT를 검증하고, `api-client.worksheet`가 `CubeNest.auth` 토큰을 붙여 호출한다. **여기를 `false`로 "정정"하지 말 것.** 함수 안 `requireUser()`(`_shared/auth.ts`)가 두 번째 방어선으로 한 번 더 막지만 **그건 안전망이지 대체재가 아니다** — 둘 중 하나를 중복이라며 지우지 말 것.
+- **캐시 무효화 `?v=` — 공용 모듈을 고치면 로드하는 모든 HTML의 `?v=`를 함께 올린다.** `<script src="../assets/js/cubenest-core.js?v=0.3.0">`처럼 소비처마다 버전이 박혀 있고, 안 올리면 GitHub Pages가 옛 파일을 계속 준다 — **오류가 아니라 "안 고쳐진 것처럼" 보인다**(아래 배포 순서와 같은 실패 유형).
+  - 소비처 찾기: `grep -rn "<모듈>.js?v=" --include=*.html .` (index · playground · quiz · quiz/run · worksheets · my · account · guide 중 해당하는 것 전부)
+  - **통일할 땐 기존 값 중 하나가 아니라 새 값으로 올린다.** 옛 값을 캐시한 브라우저가 그 값 그대로 옛 파일을 계속 쓰기 때문이다. (실제 사례: `api-client.js` 한 파일이 `?v=1` 2곳·`?v=0.2.0` 1곳으로 갈라져 있었다 → 260826 `0.3.0`으로 통일.)
+  - `consent.js`와 `vendor/qrcode-generator.js`는 `?v=` 미고정(거의 안 바뀜) — 고치게 되면 그때 붙인다.
 - **배포는 두 갈래이고 순서가 있다 — 클라 먼저, 서버 나중.** 정적 사이트 = `git push` → GitHub Pages(origin/main). 서버 = `supabase functions deploy config generate grade worksheet`. 둘은 따로 나가므로 **한쪽만 배포하면 조용히 어긋난다** — 오류가 아니라 "안 바뀐 것처럼" 보인다.
   - 클라는 `/config`(열린 학년·유형·등급)를 **정본**으로 삼는다. 서버를 먼저 배포하면 옛 클라가 **없어진 학년을 계속 팔고**(칩은 남는데 유형이 0개), 그 학년으로 시작한 퀴즈는 `normStage()`가 기본값으로 떨어뜨려 **다른 학년 문제가 조용히 나온다**(260821 중1~2 제거 때 실제로 발생).
   - 확인: `curl .../functions/v1/config` 의 `version` == `cubenest-gen-config.js` 의 `VERSION`, 그리고 라이브 HTML에 그 커밋의 표식이 있는지.
