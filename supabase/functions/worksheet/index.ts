@@ -1,9 +1,12 @@
 // CubeNest Edge Function — POST /functions/v1/worksheet
 // 문제지용: 문제 + **정답**을 함께 준다. /generate 와 달리 정답이 들어가므로 로그인 필수.
 //   마스터 §6.7 "유료·고가치(워크시트 정답지·대량 문항)는 로그인·이용권 후 서버 생성".
-//   config.toml 에서 verify_jwt=true → Supabase 게이트웨이가 JWT 를 먼저 검증한다
-//   (generate·grade 는 무료 익명 플레이라 false 를 유지 — 여기만 다르다).
+//   방어선은 둘이고, 둘 다 필요하다 — 하나를 중복이라며 지우지 말 것.
+//     ① config.toml 의 verify_jwt=true → 게이트웨이가 JWT 를 먼저 검증(더 싸고 더 이르다).
+//     ② 이 파일의 requireUser() → 게이트웨이 설정이 뒤집혀도 answerKey 가 익명에게 안 나간다.
+//   (generate·grade 는 무료 익명 플레이라 verify_jwt=false 를 유지 — 여기만 다르다.)
 import { preflight, json } from "../_shared/cors.ts";
+import { requireUser } from "../_shared/auth.ts";
 import { buildProbs, answerKeyFor, questionFor } from "../_shared/gen-adapter.ts";
 import { checkRate } from "../_shared/rate.ts";
 
@@ -12,6 +15,10 @@ const MAX_N = 30;
 Deno.serve(async (req: Request) => {
   const pf = preflight(req); if (pf) return pf;
   if (req.method !== "POST") return json(req, { error: "method" }, 405);
+
+  // 인증 먼저 — 미인증 요청이 body 파싱·buildProbs·rate 버킷까지 가지 않게 한다.
+  const user = await requireUser(req);
+  if (!user) return json(req, { error: "login" }, 401);
 
   let body: any;
   try { body = await req.json(); } catch { return json(req, { error: "bad json" }, 400); }
