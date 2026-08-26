@@ -1172,7 +1172,10 @@
         const wsUrl="../worksheets/?t="+encodeURIComponent(S.type+(PRM.sub?":"+PRM.sub:"")+":"+S.n)
                    +"&lv="+(PRM.levels||[]).map(l=>LVC[l]).filter(Boolean).sort().join("")
                    +"&seed="+encodeURIComponent(S.seed);
+        // id 를 안 넘기면 '문제지 만들기'를 누를 때마다 /my 에 사본이 쌓인다.
+        //   worksheets 와 **같은 규칙**(mydata.urlId)으로 URL 에서 결정적으로 뽑는다 = 서버 멱등키.
         if(window.CubeNest&&CubeNest.mydata) try{ CubeNest.mydata.add({
+          id:CubeNest.mydata.urlId("ws", wsUrl),
           kind:"worksheet", title:TYPES[S.type].title+" 문제지 "+S.n+"문항",
           sub:"정답지 포함", meta:{ type:S.type, seed:S.seed, n:S.n, url:wsUrl }
         }); }catch(e){}

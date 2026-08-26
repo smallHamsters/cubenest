@@ -446,7 +446,8 @@ diff -u assets/js/cubenest-<m>.js supabase/functions/_shared/cubenest-<m>.js
 
 - **P2 저장 (DB + RLS) — 진행 중(2026-08-27).** §6.4.1의 규약 중 **`profiles`·`quiz_results` 가 실제로 구현됐다**(`supabase_profiles_schema_260826.sql`: 테이블 + `auth.users` insert 트리거 자동생성 + 백필 + RLS). 이것이 **리포의 첫 RLS 정책**이며 이후 테이블이 복사하는 전례다. `mydata.js` 는 백엔드 스왑 대신 **로컬 우선 + 서버 미러**(동기 반환 시그니처 보존)로 붙였고, 저장소 키를 **계정별로 분리**해 공용 기기 노출을 막았다.
   - `quiz_results`(`supabase_quizresults_schema_260827.sql`): append-only + `unique(user_id,attempt_id)`. **`attempt_id` 는 `run.js` 가 세션 시작 때 발급**하고 진도와 함께 보관한다(이어풀기=같은 시도, 다시풀기=새 시도). `mydata.syncQuiz()` 가 pull+push 양방향이라 **로그인 직후 승계가 자동으로 끝난다**.
-  - **남은 것:** `my_items`·`entitlements`(select 전용). **결제의 선행 조건** — 이용권 상태를 담을 곳이 아직 없다.
+  - `my_items`(`supabase_myitems_schema_260827.sql`): 문제지·모양. `unique(user_id,item_id)` 이고 **upsert 가 덮어쓰기**다(산출물은 누적 대상이 아니다). `item_id` 는 URL 에서 결정적으로 뽑으며 규칙의 단일 출처는 **`mydata.urlId()`** — `worksheets`·`quiz/run` 이 각자 해시를 만들던 것을 260827 에 통일했다(quiz 쪽은 id 를 안 넘겨 누를 때마다 사본이 쌓였다). `kind` CHECK 가 `'quiz'` 를 막아 `quiz_results` 와 섞이는 것을 DB 에서 차단한다.
+  - **남은 것:** `entitlements`(select 전용). **결제의 선행 조건** — 이용권 상태를 담을 곳이 아직 없다.
 - **P3 결제 (기간 이용권 단건결제, §6.5).** 토스 결제 Edge Function(service_role) + `entitlements` 쓰기 + worksheets·정답지 게이트를 로그인 → **이용권**으로 승격.
 
 > **⚠ 전략 판단 (2026-08-20 제기 · 마스터 오너 결정 대기).** 최근 사이클의 진척은 전부 **콘텐츠·보안·UI**였고 **수익화 검증 경로(P2→P3)는 여전히 0**이다. §6.5가 "먼저 검증한다"고 못 박은 질문 — **"학부모가 실제로 돈을 내는가"** — 의 시계가 아직 시작되지 않았다. 무료 콘텐츠 폭을 넓힐수록 전환 검증은 뒤로 밀린다.

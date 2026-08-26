@@ -21,7 +21,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.3.0';
+  var VERSION = '0.4.0';
 
   var STORE_BASE = 'cubenest_my_v1';   // 개인 라이브러리(정본). 로그인 시 '__<uid>' 가 붙는다
   var NICK_BASE  = 'cubenest_nick';    // 표시 이름(닉네임). 로그인 시 '__<uid>' 가 붙는다
@@ -92,6 +92,16 @@
   }
   function newId(kind) {
     return kind + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 7);
+  }
+  /* URL 에서 **결정적으로** id 를 뽑는다 — 재현 가능한 산출물(문제지)의 멱등키다(§6.4).
+     같은 URL = 같은 산출물이므로 /my '열기'·새로고침으로 다시 저장돼도 사본이 안 쌓인다.
+     ⚠ 규칙의 단일 출처가 여기다. worksheets 와 quiz/run 이 각자 해시를 만들면 같은 문제지가
+       두 항목이 된다(실제로 그랬다 — quiz 쪽은 id 를 아예 안 넘겨 완료할 때마다 쌓였다).
+     ⚠ 해시(djb2)를 바꾸면 이미 저장된 항목의 id 가 전부 달라져 사본이 생긴다. 건드리지 말 것. */
+  function urlId(prefix, url) {
+    var h = 5381, u = String(url == null ? '' : url);
+    for (var i = 0; i < u.length; i++) h = ((h * 33) ^ u.charCodeAt(i)) >>> 0;
+    return prefix + '_' + h.toString(36);
   }
 
   var localBackend = {
@@ -252,15 +262,85 @@
       .catch(function () { return { ok: false, reason: 'network' }; });
   }
 
+  /* ── 내 자료(서버 미러) ──────────────────────────────────
+     my_items = 문제지·모양. 퀴즈 결과는 여기 오지 않는다(quiz_results 가 따로 있고,
+     멱등키·수명이 다르다 — 결과는 누적, 산출물은 같은 URL 이면 덮어쓰기).
+     ⚠ url 은 `/my` 기준 **상대경로**('../worksheets/?…')로 저장한다. 절대 URL 로 바꾸면
+       호스팅 하위경로(/cubenest/)가 바뀔 때 저장된 항목이 전부 깨진다. */
+  var ITEM_KINDS = { worksheet: 1, shape: 1 };
+  function itemRow(it, id) {
+    if (!ITEM_KINDS[it.kind] || !it.id) return null;
+    var m = it.meta || {};
+    return {
+      user_id: id, item_id: it.id, kind: it.kind,
+      title: it.title || null, sub: it.sub || null,
+      type: m.type || null, seed: m.seed || null,
+      n: (+m.n > 0 ? +m.n : null), url: m.url || null
+    };
+  }
+  function rowToItem(r) {
+    return {
+      id: r.item_id, kind: r.kind,
+      title: r.title || '제목 없음', sub: r.sub || '',
+      ts: r.created_at ? Date.parse(r.created_at) : Date.now(),
+      meta: { type: r.type || undefined, seed: r.seed || undefined,
+              n: r.n || undefined, url: r.url || undefined }
+    };
+  }
+  /* 한 건 올리기(best-effort). 실패해도 로컬 저장은 성공으로 남긴다.
+     ignoreDuplicates 를 쓰지 않는다 — 같은 URL 로 다시 저장하면 제목·문항수가 갱신돼야 한다. */
+  function pushItem(it) {
+    var id = uid(), c = db();
+    if (!id || !c) return Promise.resolve(false);
+    var row = itemRow(it, id);
+    if (!row) return Promise.resolve(false);
+    return c.from('my_items').upsert(row, { onConflict: 'user_id,item_id' })
+      .then(function (r) { return !(r && r.error); })
+      .catch(function () { return false; });
+  }
+
+  /* 양방향 동기화 — quiz 쪽 syncQuiz() 와 같은 모양이다. */
+  function syncItems() {
+    var id = uid(), c = db();
+    if (!id || !c) return Promise.resolve({ ok: false, reason: 'offline' });
+    adopt(id);
+    return c.from('my_items')
+      .select('item_id,kind,title,sub,type,seed,n,url,created_at')
+      .order('created_at', { ascending: false })
+      .limit(MAX_ITEMS)
+      .then(function (r) {
+        if (!r || r.error) throw new Error('pull');
+        var store = readStore(), have = {};
+        store.items.forEach(function (it) { have[it.id] = true; });
+        var seen = {};
+        (r.data || []).forEach(function (row) {
+          seen[row.item_id] = true;
+          if (!have[row.item_id]) store.items.push(rowToItem(row));
+        });
+        store.items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+        if (store.items.length > MAX_ITEMS) store.items.length = MAX_ITEMS;
+        writeStore(store);
+        var todo = store.items.filter(function (it) {
+          return ITEM_KINDS[it.kind] && !seen[it.id];
+        });
+        if (!todo.length) return { ok: true, pulled: (r.data || []).length, pushed: 0 };
+        return Promise.all(todo.map(pushItem)).then(function (res) {
+          var okN = res.filter(Boolean).length;
+          return { ok: okN === todo.length, pulled: (r.data || []).length, pushed: okN };
+        });
+      })
+      .catch(function () { return { ok: false, reason: 'network' }; });
+  }
+
   /* auth 배선 — 세션 복원과 계정 전환마다 프로필을 다시 읽는다.
      onAuthChange 는 등록 즉시 1회 동기 호출되므로(auth.js) ready 와 겹쳐 두 번 돌 수 있다 — 멱등이라 무해. */
   function wireAuth() {
     var A = auth();
     if (!A) return;
     try {
-      if (A.ready && A.ready.then) A.ready.then(function () { syncProfile(); syncQuiz(); });
+      if (A.ready && A.ready.then) A.ready.then(function () { syncProfile(); syncQuiz(); syncItems(); });
       if (A.onAuthChange) A.onAuthChange(function (loggedIn) {
-        if (loggedIn) { syncProfile(); syncQuiz(); }
+        if (loggedIn) { syncProfile(); syncQuiz(); syncItems(); }
       });
     } catch (e) {}
   }
@@ -341,6 +421,7 @@
     add:    function (item) {
       return pickBackend().add(item).then(function (it) {
         if (it.kind === 'quiz' && it.meta && it.meta.attemptId) pushQuiz(it);
+        else if (ITEM_KINDS[it.kind]) pushItem(it);
         return it;
       });
     },
@@ -350,6 +431,9 @@
       if (c && me && id && id.indexOf('quiz_') === 0) {
         try { c.from('quiz_results').delete().eq('user_id', me)
                 .eq('attempt_id', id.slice(5)).then(function () {}, function () {}); } catch (e) {}
+      } else if (c && me && id) {
+        try { c.from('my_items').delete().eq('user_id', me)
+                .eq('item_id', id).then(function () {}, function () {}); } catch (e) {}
       }
       return pickBackend().remove(id);
     },
@@ -411,6 +495,10 @@
     syncProfile: syncProfile,
     /* 퀴즈 기록 양방향 동기화. {ok, pulled, pushed} 를 돌려준다(quiz/run 의 '결과 저장하기'가 씀). */
     syncQuiz: syncQuiz,
+    /* 내 자료(문제지·모양) 양방향 동기화. */
+    syncItems: syncItems,
+    /* URL → 결정적 id. 문제지를 적립하는 쪽(worksheets·quiz/run)이 **반드시 이걸 쓴다**. */
+    urlId: urlId,
 
     /* /my '삭제' — quiz/run 이 남긴 마지막 결과(레거시)를 이 기기에서만 숨긴다. */
     dismissLatestQuiz: function (ts) {

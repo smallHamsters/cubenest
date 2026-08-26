@@ -171,7 +171,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.2.0"></script>
-<script src="../assets/js/mydata.js?v=0.3.0"></script>
+<script src="../assets/js/mydata.js?v=0.4.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script>
 /* F1 계측 — 동의 후 gtag 가 있을 때만(오리진 공유 consent.js 정본) */
@@ -292,7 +292,7 @@ var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
       '</div>' +
       '<div class="my-note">'+
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>'+
-        '<span><b>퀴즈 기록</b>과 표시 이름은 계정에 저장돼 <b>어느 기기에서나</b> 열려요. 문제지·모양은 아직 이 기기에 저장돼요 — 계정 보관은 곧 제공됩니다.</span>'+
+        '<span>퀴즈 기록·문제지·표시 이름이 모두 <b>계정에 저장</b>돼 어느 기기에서나 열려요. 문제지는 주소만 남기므로, 여는 순간 같은 문제가 다시 만들어져요.</span>'+
       '</div>' +
       '<div id="mySections"><div class="my-skel"><i></i><i></i></div></div>';
 
@@ -314,9 +314,9 @@ var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
   function renderGate(){
     var deviceHtml = '';
     if(M && M.hasDeviceData()){
-      /* 퀴즈 기록은 이제 서버(quiz_results)에 미러된다 — 로그인하면 이 기기 기록이 올라가고
-         다른 기기 기록도 내려온다(mydata.syncQuiz). 문제지·모양은 아직 이 기기 로컬이다.
-         ※ 이 기기의 비로그인 자료는 **처음 로그인한 계정 하나만** 승계한다(mydata.adopt). */
+      /* 퀴즈 기록(quiz_results)·문제지·모양(my_items)이 모두 서버에 미러된다 — 로그인하면
+         이 기기 기록이 올라가고 다른 기기 기록도 내려온다(mydata.syncQuiz·syncItems).
+         ※ 이 기기의 비로그인 자료는 처음 로그인한 계정 하나만 승계한다(mydata.adopt). */
       deviceHtml =
         '<div class="device">이 기기에 저장된 학습 기록이 있어요. '+
         '<b>로그인하면</b> 여기서 바로 이어서 볼 수 있어요.</div>';

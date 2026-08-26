@@ -44,10 +44,12 @@
 - **게이트:** 무로그인 = home·guide·playground(편집·관찰)·quiz(랜딩·플레이). 로그인 = calc 30분 이후·quiz 결과 저장·worksheets·`/account`·`/my`.
   - calc: 첫 상호작용 후 **30분 무료** → 이후 잠금·로그인 유도(치팅 방지+가입 유도). 세션 복원 전엔 잠그지 않음.
 - **저장:** 로컬 우선(`mydata.js`) + **서버 미러**. 백엔드를 통째로 갈아끼우지 않는다 — `getNickname()` 처럼 **동기 반환**을 `/my`·`/account` 가 동기로 소비하므로, 서버는 읽어서 **로컬 캐시를 채우는** 방향으로만 붙인다(시그니처 바꾸지 말 것). **RLS가 실제 방어선**("본인 것만"). 진도·연습장은 로컬 전용, **완료 결과만** 저장. `entitlements`는 사용자 select만(쓰기=결제 서버). `/account`=계정 허브·`/my`=내 자료.
-  - **구현됨 = `profiles`·`quiz_results`**(260827). 닉네임과 **퀴즈 완료 결과**가 계정에 귀속돼 기기를 넘어 따라온다. `my_items`·`entitlements`는 아직 SQL이 없다 — 문제지·모양은 여전히 기기 로컬이다.
+  - **구현됨 = `profiles`·`quiz_results`·`my_items`**(260827). 닉네임·**퀴즈 완료 결과**·**문제지**가 계정에 귀속돼 기기를 넘어 따라온다. `entitlements`만 남았다.
+  - **`my_items` vs `quiz_results` — 멱등키도 수명도 다르다.** 결과는 **누적**(`attempt_id`, `ignoreDuplicates`)이고, 산출물은 같은 URL이면 **덮어쓰기**(`item_id`, upsert). 그래서 한 테이블에 합치지 않는다. `my_items.kind` CHECK가 `'quiz'`를 막아 섞이는 것을 DB에서 차단한다.
   - **퀴즈 결과는 완료 즉시 자동 미러**한다(로그인 상태일 때). 버튼을 눌러야만 올리는 방식이 아니다 — append-only + `attempt_id` 멱등이라 충돌이 원천적으로 없기 때문이다. `attempt_id`는 **`run.js`가 세션 시작 때 발급**해 진도와 함께 보관한다: 이어풀기는 같은 시도, **'다시 풀기'는 새 시도**(누적). 이 id 가 `/my` 항목 id(`quiz_<attemptId>`)이기도 해서, 같은 퀴즈를 여러 번 끝내도 사본이 안 쌓인다.
-  - `mydata.syncQuiz()`가 **양방향**이다: pull(다른 기기 기록) + push(이 기기·비로그인 시절 기록). 로그인 직후 한 번 돌면 승계가 끝나므로 **pending intent 를 따로 두지 않는다**.
-  - **RLS 전례(`supabase_profiles_schema_260826.sql` → `supabase_quizresults_schema_260827.sql`)를 이후 테이블이 복사한다:** 소유자 컬럼은 언제나 `user_id`, 정책마다 `to authenticated` 명시, `auth.uid()` 는 **`(select auth.uid())`** 로 감싸고(initplan 캐싱), insert/update 에 `with check` 필수. **`profiles` 만 delete 정책을 주지 않는다** — 행 삭제 = 계정 메타 유실인데 되살릴 트리거가 없고, 탈퇴는 FK cascade 가 처리한다. **`quiz_results`는 4정책 전부 준다**(`/my`의 '삭제'가 실제 기능이고, 결과는 지워도 되살릴 필요가 없다).
+  - `mydata.syncQuiz()`·`syncItems()`가 **양방향**이다: pull(다른 기기 기록) + push(이 기기·비로그인 시절 기록). 로그인 직후 한 번 돌면 승계가 끝나므로 **pending intent 를 따로 두지 않는다**.
+  - **문제지 항목 id 는 `mydata.urlId(prefix, url)` 이 단일 출처다.** URL 에서 결정적으로 뽑으므로 다시 열어도 사본이 안 쌓이고, 그 id 가 곧 서버 멱등키(`my_items.item_id`)다. **적립하는 쪽(`worksheets`·`quiz/run`)이 각자 해시를 만들면 같은 문제지가 두 항목이 된다** — 실제로 그랬다(quiz 쪽은 id 를 아예 안 넘겨 누를 때마다 쌓였다, 260827 수정). 해시(djb2)를 바꾸면 저장된 항목 id 가 전부 달라지니 건드리지 말 것.
+  - **RLS 전례(`supabase_profiles_schema_260826.sql` → `supabase_quizresults_schema_260827.sql`)를 이후 테이블이 복사한다:** 소유자 컬럼은 언제나 `user_id`, 정책마다 `to authenticated` 명시, `auth.uid()` 는 **`(select auth.uid())`** 로 감싸고(initplan 캐싱), insert/update 에 `with check` 필수. **`profiles` 만 delete 정책을 주지 않는다** — 행 삭제 = 계정 메타 유실인데 되살릴 트리거가 없고, 탈퇴는 FK cascade 가 처리한다. **`quiz_results`·`my_items`는 4정책 전부 준다**(`/my`의 '삭제'가 실제 기능이고, 지워도 되살릴 필요가 없다).
 
 ## 보안 · 지적재산 (정적 웹은 클라 코드 은닉 불가 → 서버화 + 법적 보호)
 - **핵심 자산은 서버(Edge Function):** `gen`·`gen-config`(전체 문제 공간·정답 규칙)는 클라에서 삭제됨. 클라는 `api-client.js`로 `/generate`·`/grade` 호출. **`/grade`는 gsig(HMAC)로 위·변조 방지**, rate limit(익명 쿠키+IP). 무료 익명 플레이라 `verify_jwt=false`.
@@ -84,6 +86,6 @@
 - 수익화(학부모 B2C): 베타 무료 → **기간 이용권 단건결제**부터 → 월 자동결제 확장(관리형·Supabase Pro).
 
 ## 현재/다음
-- **완료:** 상태 공유(F2·F3)·계측/동의(F1)·서버 생성/채점(gen 서버화)·OAuth 로그인·**유형 19종**(리매핑 + 안보이는나무 A-a~f + G군 + H군)·정답 은닉·worksheets(문제지·정답지 인쇄·QR)·**난이도 개편(연령 스테이지 S0~S4 + 개수 밴드, gen-config 구조 교체)**·세션 내 중복 회피(gen v0.5.0)·**DB+RLS 저장(`profiles`+`quiz_results`, 닉네임·퀴즈 기록 계정 귀속, `attempt_id` 멱등, 계정별 로컬 분리)**.
-- **다음:** **`my_items`(문제지·모양 저장)** → 결제(이용권). ⚠ 여기까지 진척이 전부 콘텐츠·보안·UI였고 **수익화 검증 경로는 아직 0** — 마스터 §7.2 참조.
+- **완료:** 상태 공유(F2·F3)·계측/동의(F1)·서버 생성/채점(gen 서버화)·OAuth 로그인·**유형 19종**(리매핑 + 안보이는나무 A-a~f + G군 + H군)·정답 은닉·worksheets(문제지·정답지 인쇄·QR)·**난이도 개편(연령 스테이지 S0~S4 + 개수 밴드, gen-config 구조 교체)**·세션 내 중복 회피(gen v0.5.0)·**DB+RLS 저장(`profiles`+`quiz_results`+`my_items`, 닉네임·퀴즈 기록·문제지 계정 귀속, 멱등키 `attempt_id`/`item_id`, 계정별 로컬 분리, 죽은 세션 자동 로그아웃)**.
+- **다음:** **결제(이용권 `entitlements`)** — 저장 계층은 끝났다. ⚠ 여기까지 진척이 전부 콘텐츠·보안·UI였고 **수익화 검증 경로는 아직 0** — 마스터 §7.2 참조.
 - 새 기능은 F1~F5·`CubeNest.auth`·`CubeNest.mydata`·서버 gen을 **재사용**한다.

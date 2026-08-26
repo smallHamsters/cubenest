@@ -212,7 +212,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.2.0"></script>
-<script src="../assets/js/mydata.js?v=0.3.0"></script>
+<script src="../assets/js/mydata.js?v=0.4.0"></script>
 <script src="../assets/js/cubenest-iso.js?v=0.1.0"></script>
 <script src="../assets/js/cubenest-figures.js?v=0.3.0"></script>
 <script src="../assets/js/vendor/qrcode-generator.js"></script>
@@ -296,11 +296,7 @@
   //   ⚠ 베이스가 둘이다 — 주소창은 './?'(현재 폴더), /my 의 '열기'는 '../worksheets/?'(/my 기준).
   //     같은 쿼리를 쓰되 접두사만 다르게 만든다.
   // URL → 짧고 안정된 키(문제지 신원). 보안용이 아니라 목록 중복 제거용이다.
-  function urlKey(u){
-    var h=5381; u=String(u);
-    for(var i=0;i<u.length;i++) h=((h*33) ^ u.charCodeAt(i)) >>> 0;
-    return h.toString(36);
-  }
+  // (문제지 항목 id 는 mydata.urlId 로 옮겼다 — 두 곳이 각자 해시를 만들면 같은 문제지가 두 항목이 된다.)
   function mkQuery(list, seed){
     var p=new URLSearchParams();
     list.forEach(function(m){ p.append("t", m.v+":"+m.n); });
@@ -571,7 +567,8 @@
     //   id 는 URL 에서 결정적으로 뽑는다 — 같은 URL = 같은 문제지이므로, /my '열기'·새로고침으로
     //   다시 열려도 mydata.add 가 **덮어쓰기**가 되어 목록에 사본이 쌓이지 않는다.
     if(m.source==="worksheets" && m.url && window.CubeNest && window.CubeNest.mydata){
-      try{ window.CubeNest.mydata.add({ id:"ws_"+urlKey(m.url), kind:"worksheet",
+      // id 규칙의 단일 출처는 mydata.urlId 다(quiz/run 도 같은 걸 쓴다). 같은 djb2 라 기존 항목 id 가 유지된다.
+      try{ window.CubeNest.mydata.add({ id:window.CubeNest.mydata.urlId("ws", m.url), kind:"worksheet",
         title:(m.title||"쌓기나무")+" 문제지 "+ps.length+"문항", sub:"정답지 포함",
         meta:{ type:m.type, seed:m.seed, n:ps.length, url:m.url } }); }catch(e){}
     }
