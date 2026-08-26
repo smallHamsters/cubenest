@@ -9,8 +9,10 @@
  *   · **계정 경계:** 공용 기기에서 계정을 바꿔도 앞 사람 자료가 보이면 안 된다.
  *     저장소 키에 uid 를 붙여 계정별로 나눈다(storeKey·nickKey). 비로그인은 접미
  *     없는 기존 키를 그대로 써서 이미 쌓인 자료가 사라지지 않는다.
- *   · 그래서 모든 공개 메서드는 Promise 를 돌려준다(로컬은 즉시 resolve).
- *     클라우드로 바뀌어도 호출부가 안 바뀌게 하기 위함이다.
+ *   · list/add/remove/clear/sync* 는 Promise 를 돌려준다(로컬은 즉시 resolve).
+ *     ⚠ 다만 getNickname·latestQuiz·resumableCount·hasDeviceData·typeLabel·mode 는
+ *       **동기 반환**이고 /my·/account 가 그렇게 소비한다. 이 6개를 Promise 로 바꾸면
+ *       두 페이지가 깨진다 — 서버 값은 sync* 가 로컬 캐시에 미리 채워 넣는 방식으로 붙인다.
  *   · quiz·worksheets 는 앞으로 결과를 남길 때 CubeNest.mydata.add(...) 를
  *     부른다(쓰기 계약은 §쓰기 API 참고). 지금은 quiz 가 남기는 레거시 키
  *     (cubenest_quiz_last)를 읽어 최근 결과 1건을 함께 보여준다.
@@ -21,7 +23,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.4.0';
+  var VERSION = '0.5.0';
 
   var STORE_BASE = 'cubenest_my_v1';   // 개인 라이브러리(정본). 로그인 시 '__<uid>' 가 붙는다
   var NICK_BASE  = 'cubenest_nick';    // 표시 이름(닉네임). 로그인 시 '__<uid>' 가 붙는다
@@ -145,8 +147,8 @@
     }
   };
 
-  /* 문제지·모양(my_items)의 클라우드 저장은 다음 마일스톤이다.
-     읽기 정본은 언제나 로컬이고 서버는 미러라, 백엔드는 계속 로컬 하나다. */
+  /* 읽기 정본은 언제나 로컬이고 서버(profiles·quiz_results·my_items)는 미러다.
+     그래서 백엔드를 갈아끼우지 않는다 — 로컬 하나뿐이고, 서버는 옆에서 채워 넣는다. */
   function pickBackend() { return localBackend; }
 
   /* ── 프로필(서버 미러) ───────────────────────────────────
@@ -203,7 +205,7 @@
       stage: m.stage || null, sub: m.sub || null
     };
   }
-  function rowToItem(r) {
+  function quizRowToItem(r) {
     return {
       id: 'quiz_' + r.attempt_id, kind: 'quiz',
       title: r.title || QUIZ_TYPE_LABEL[r.type] || r.type,
@@ -244,15 +246,16 @@
         var seen = {};
         (r.data || []).forEach(function (row) {
           seen[row.attempt_id] = true;
-          if (!have['quiz_' + row.attempt_id]) store.items.push(rowToItem(row));
+          if (!have['quiz_' + row.attempt_id]) store.items.push(quizRowToItem(row));
         });
         store.items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-        if (store.items.length > MAX_ITEMS) store.items.length = MAX_ITEMS;
-        writeStore(store);
-        // push — 서버에 없는 로컬 퀴즈 기록(비로그인 시절 것 포함).
+        // push 대상은 **자르기 전에** 뽑는다 — 뒤에 뽑으면 아직 서버에 없는 오래된 항목이
+        // MAX_ITEMS 밖으로 밀려 조용히 사라진다(로컬에서도 지워지고 서버에도 안 올라감).
         var todo = store.items.filter(function (it) {
           return it.kind === 'quiz' && it.meta && it.meta.attemptId && !seen[it.meta.attemptId];
         });
+        if (store.items.length > MAX_ITEMS) store.items.length = MAX_ITEMS;
+        writeStore(store);
         if (!todo.length) return { ok: true, pulled: (r.data || []).length, pushed: 0 };
         return Promise.all(todo.map(pushQuiz)).then(function (res) {
           var okN = res.filter(Boolean).length;
@@ -278,7 +281,7 @@
       n: (+m.n > 0 ? +m.n : null), url: m.url || null
     };
   }
-  function rowToItem(r) {
+  function itemRowToItem(r) {
     return {
       id: r.item_id, kind: r.kind,
       title: r.title || '제목 없음', sub: r.sub || '',
@@ -315,14 +318,15 @@
         var seen = {};
         (r.data || []).forEach(function (row) {
           seen[row.item_id] = true;
-          if (!have[row.item_id]) store.items.push(rowToItem(row));
+          if (!have[row.item_id]) store.items.push(itemRowToItem(row));
         });
         store.items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-        if (store.items.length > MAX_ITEMS) store.items.length = MAX_ITEMS;
-        writeStore(store);
+        // (syncQuiz 와 같은 이유로) push 대상은 자르기 전에 뽑는다.
         var todo = store.items.filter(function (it) {
           return ITEM_KINDS[it.kind] && !seen[it.id];
         });
+        if (store.items.length > MAX_ITEMS) store.items.length = MAX_ITEMS;
+        writeStore(store);
         if (!todo.length) return { ok: true, pulled: (r.data || []).length, pushed: 0 };
         return Promise.all(todo.map(pushItem)).then(function (res) {
           var okN = res.filter(Boolean).length;
@@ -332,16 +336,38 @@
       .catch(function () { return { ok: false, reason: 'network' }; });
   }
 
-  /* auth 배선 — 세션 복원과 계정 전환마다 프로필을 다시 읽는다.
-     onAuthChange 는 등록 즉시 1회 동기 호출되므로(auth.js) ready 와 겹쳐 두 번 돌 수 있다 — 멱등이라 무해. */
+  /* 세 동기화를 **순차로** 돌린다.
+     ⚠ syncQuiz 와 syncItems 는 둘 다 readStore → 수정 → writeStore 다. 동시에 띄우면
+       뒤 쓰기가 앞 쓰기를 통째로 덮어 한쪽 결과가 사라진다(같은 localStorage 키 경쟁).
+     같은 호출이 겹치면 하나로 합친다 — 페이지와 wireAuth 가 동시에 부르기 때문이다. */
+  var allInflight = null;
+  function syncAll() {
+    if (allInflight) return allInflight;
+    var acc = {};
+    var p = Promise.resolve()
+      .then(function () { return syncProfile(); })
+      .then(function () { return syncQuiz(); })
+      .then(function (q) { acc.quiz = q; return syncItems(); })
+      .then(function (i) {
+        acc.items = i;
+        // 하나라도 실패하면 ok:false — 호출부(quiz/run '결과 저장하기')가 재시도를 안내한다.
+        return { ok: !!(acc.quiz && acc.quiz.ok && i && i.ok), quiz: acc.quiz, items: i };
+      })
+      .catch(function () { return { ok: false, reason: 'network' }; });
+    allInflight = p;
+    p.then(function () { if (allInflight === p) allInflight = null; });
+    return p;
+  }
+
+  /* auth 배선 — 세션 복원과 계정 전환마다 서버를 다시 읽는다.
+     onAuthChange 는 등록 즉시 1회 동기 호출되므로(auth.js) ready 와 겹쳐 두 번 돌 수 있다 —
+     syncAll 이 합쳐 주므로 무해하다. */
   function wireAuth() {
     var A = auth();
     if (!A) return;
     try {
-      if (A.ready && A.ready.then) A.ready.then(function () { syncProfile(); syncQuiz(); syncItems(); });
-      if (A.onAuthChange) A.onAuthChange(function (loggedIn) {
-        if (loggedIn) { syncProfile(); syncQuiz(); syncItems(); }
-      });
+      if (A.ready && A.ready.then) A.ready.then(function () { syncAll(); });
+      if (A.onAuthChange) A.onAuthChange(function (loggedIn) { if (loggedIn) syncAll(); });
     } catch (e) {}
   }
 
@@ -497,6 +523,9 @@
     syncQuiz: syncQuiz,
     /* 내 자료(문제지·모양) 양방향 동기화. */
     syncItems: syncItems,
+    /* 프로필·퀴즈·자료를 **순차로** 동기화한다. 페이지는 이걸 부르고, 끝나면 다시 그린다.
+       (개별 sync* 를 동시에 부르면 로컬 저장소 쓰기가 서로를 덮는다.) */
+    sync: syncAll,
     /* URL → 결정적 id. 문제지를 적립하는 쪽(worksheets·quiz/run)이 **반드시 이걸 쓴다**. */
     urlId: urlId,
 

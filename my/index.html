@@ -171,7 +171,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.2.0"></script>
-<script src="../assets/js/mydata.js?v=0.4.0"></script>
+<script src="../assets/js/mydata.js?v=0.5.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script>
 /* F1 계측 — 동의 후 gtag 가 있을 때만(오리진 공유 consent.js 정본) */
@@ -342,20 +342,31 @@ var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
     track('my_gate_view', { loggedIn:false });
   }
 
-  /* 서버 프로필(닉네임)은 첫 페인트보다 늦게 올 수 있다.
-     값이 **실제로 달라졌을 때만** 다시 그린다 — 무조건 재렌더하면 목록이 한 번 깜빡인다. */
-  function syncNickThenRepaint(){
-    if(!M || !M.syncProfile) return;
-    var before = M.getNickname();
-    M.syncProfile().then(function(){
-      if(A.isLoggedIn() && M.getNickname() !== before) renderLibrary();
+  /* 서버에서 내려오는 것(닉네임·다른 기기에서 만든 퀴즈 기록·문제지)은 첫 페인트보다 늦게 온다.
+     이 페이지가 "어느 기기에서나 열려요"라고 약속하므로, 도착하면 반드시 화면에 반영돼야 한다
+     — 안 그러면 새로고침해야 보인다.
+     달라진 게 **실제로 있을 때만** 다시 그린다: 무조건 재렌더하면 목록이 한 번 깜빡인다.
+     ⚠ 개별 sync* 를 각자 부르지 말 것 — 동시에 돌면 로컬 저장소 쓰기가 서로를 덮는다(mydata.sync 가 순차 처리). */
+  function libSignature(){
+    return Promise.all([M.quizFeed(), M.list('worksheet'), M.list('shape')]).then(function(a){
+      return M.getNickname() + '|' + a.map(function(list){
+        return list.map(function(it){ return it.id; }).join(',');
+      }).join('|');
     });
+  }
+  function syncThenRepaint(){
+    if(!M || !M.sync) return;
+    libSignature().then(function(before){
+      return M.sync().then(libSignature).then(function(after){
+        if(A.isLoggedIn() && after !== before) renderLibrary();
+      });
+    }).catch(function(){});
   }
 
   function render(){
     if(!A){ root.innerHTML = '<div class="my-gate"><h1>로그인 준비 중</h1><p>인증 모듈을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p></div>'; return; }
     if(!A.settled){ /* 세션 복원 전 — 잠금 깜빡임 방지(§6.3.1): 스켈레톤 유지 */ return; }
-    if(A.isLoggedIn()){ renderLibrary(); syncNickThenRepaint(); }
+    if(A.isLoggedIn()){ renderLibrary(); syncThenRepaint(); }
     else renderGate();
   }
 

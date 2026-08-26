@@ -48,6 +48,8 @@
   - **`my_items` vs `quiz_results` — 멱등키도 수명도 다르다.** 결과는 **누적**(`attempt_id`, `ignoreDuplicates`)이고, 산출물은 같은 URL이면 **덮어쓰기**(`item_id`, upsert). 그래서 한 테이블에 합치지 않는다. `my_items.kind` CHECK가 `'quiz'`를 막아 섞이는 것을 DB에서 차단한다.
   - **퀴즈 결과는 완료 즉시 자동 미러**한다(로그인 상태일 때). 버튼을 눌러야만 올리는 방식이 아니다 — append-only + `attempt_id` 멱등이라 충돌이 원천적으로 없기 때문이다. `attempt_id`는 **`run.js`가 세션 시작 때 발급**해 진도와 함께 보관한다: 이어풀기는 같은 시도, **'다시 풀기'는 새 시도**(누적). 이 id 가 `/my` 항목 id(`quiz_<attemptId>`)이기도 해서, 같은 퀴즈를 여러 번 끝내도 사본이 안 쌓인다.
   - `mydata.syncQuiz()`·`syncItems()`가 **양방향**이다: pull(다른 기기 기록) + push(이 기기·비로그인 시절 기록). 로그인 직후 한 번 돌면 승계가 끝나므로 **pending intent 를 따로 두지 않는다**.
+  - ⚠ **개별 `sync*` 를 직접 부르지 말고 `mydata.sync()` 를 쓴다.** 둘 다 `readStore → 수정 → writeStore` 라 동시에 띄우면 뒤 쓰기가 앞 쓰기를 통째로 덮는다(같은 localStorage 키 경쟁). `sync()` 가 순차 실행 + 중복 호출 합치기를 한다.
+  - **서버에서 내려온 것은 첫 페인트보다 늦게 온다.** `/my` 는 `sync()` 뒤에 목록 서명(닉네임+id 목록)이 바뀌었을 때만 다시 그린다 — 안 하면 다른 기기 자료가 새로고침해야 보이고, 무조건 재렌더하면 목록이 깜빡인다.
   - **문제지 항목 id 는 `mydata.urlId(prefix, url)` 이 단일 출처다.** URL 에서 결정적으로 뽑으므로 다시 열어도 사본이 안 쌓이고, 그 id 가 곧 서버 멱등키(`my_items.item_id`)다. **적립하는 쪽(`worksheets`·`quiz/run`)이 각자 해시를 만들면 같은 문제지가 두 항목이 된다** — 실제로 그랬다(quiz 쪽은 id 를 아예 안 넘겨 누를 때마다 쌓였다, 260827 수정). 해시(djb2)를 바꾸면 저장된 항목 id 가 전부 달라지니 건드리지 말 것.
   - **RLS 전례(`supabase_profiles_schema_260826.sql` → `supabase_quizresults_schema_260827.sql`)를 이후 테이블이 복사한다:** 소유자 컬럼은 언제나 `user_id`, 정책마다 `to authenticated` 명시, `auth.uid()` 는 **`(select auth.uid())`** 로 감싸고(initplan 캐싱), insert/update 에 `with check` 필수. **`profiles` 만 delete 정책을 주지 않는다** — 행 삭제 = 계정 메타 유실인데 되살릴 트리거가 없고, 탈퇴는 FK cascade 가 처리한다. **`quiz_results`·`my_items`는 4정책 전부 준다**(`/my`의 '삭제'가 실제 기능이고, 지워도 되살릴 필요가 없다).
 

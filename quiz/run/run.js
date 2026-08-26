@@ -1205,7 +1205,8 @@
         const back=b.innerHTML;
         b.disabled=true; b.innerHTML="저장 중…";
         const M=window.CubeNest&&CubeNest.mydata;
-        Promise.resolve(M&&M.syncQuiz?M.syncQuiz():null).then(function(r){
+        // ⚠ M.syncQuiz 를 단독으로 부르지 말 것 — 페이지 로드 동기화와 겹치면 로컬 저장소 쓰기가 서로를 덮는다.
+        Promise.resolve(M&&M.sync?M.sync():null).then(function(r){
           const ok=!!(r&&r.ok);
           b.innerHTML = ok ? "✓ 내 자료에 저장됨" : "저장 실패 — 다시 시도";
           b.disabled = ok;
