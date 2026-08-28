@@ -23,7 +23,8 @@
 <link rel="stylesheet" href="../assets/css/tokens.css">
 <link rel="stylesheet" href="../assets/css/nav.css">
 <link rel="stylesheet" href="../assets/css/consent.css">
-<link rel="stylesheet" href="../assets/css/auth.css">
+<link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0">
+<link rel="stylesheet" href="../assets/css/foot.css?v=0.1.0">
 <style>
   body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);
        -webkit-font-smoothing:antialiased;}
@@ -119,13 +120,7 @@
   @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
   @media (prefers-reduced-motion:reduce){ .my-skel i{animation:none;} }
 
-  /* ── 푸터(문의 = CS, 마스터 §6.6) ────────────────────── */
-  .site-foot{max-width:1180px;margin:8px auto 0;padding:22px clamp(16px,4vw,40px) 30px;
-             border-top:1px solid var(--line);text-align:center;
-             font-size:12px;color:var(--muted-2);line-height:1.7;}
-  .site-foot a{color:var(--muted);text-decoration:none;font-weight:600;}
-  @media (hover:hover){ .site-foot a:hover{color:var(--accent-ink);} }
-  .site-foot .dot{margin:0 7px;opacity:.5;}
+  /* ── 푸터(문의 = CS, 마스터 §6.6) — 스타일 정본은 assets/css/foot.css 로 승격됨 ── */
 </style>
 </head>
 <body>
@@ -157,8 +152,9 @@
 </main>
 
 <footer class="site-foot">
-  <div>궁금한 점이나 문제가 있나요? <a href="#" id="csLink" target="_blank" rel="noopener">문의하기</a></div>
-  <div style="margin-top:6px;">© <span id="year"></span> CubeNest<span class="dot">·</span>쌓기나무 3D 학습</div>
+  <div>궁금한 점이나 문제가 있나요? <a href="#" id="csLink" target="_blank" rel="noopener">문의하기</a><span class="dot">·</span><a href="#" id="csMail">이메일</a></div>
+  <div class="row legal"><a href="../terms/">이용약관</a><span class="dot">·</span><a href="../privacy/">개인정보처리방침</a></div>
+  <div class="row">© <span id="year"></span> 넥스트빗<span class="dot">·</span>CubeNest 쌓기나무 3D 학습</div>
 </footer>
 
 <div class="consent" id="consent" hidden>
@@ -170,16 +166,13 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/js/auth.js?v=0.2.0"></script>
+<script src="../assets/js/auth.js?v=0.3.0"></script>
 <script src="../assets/js/mydata.js?v=0.5.0"></script>
 <script src="../assets/js/consent.js"></script>
+<script src="../assets/js/foot.js?v=0.4.0"></script>
 <script>
 /* F1 계측 — 동의 후 gtag 가 있을 때만(오리진 공유 consent.js 정본) */
 function track(name, params){ try{ if(window.gtag) window.gtag('event', name, params||{}); }catch(e){} }
-
-/* CS 창구 — 마스터 §6.6: 전 페이지 푸터 문의 → 구글폼(초기).
-   ⚠ 실제 구글폼 URL 로 교체해야 함(계정/자료 두 페이지 공통 상수). */
-var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
 
 (function(){
   /* 브랜드 언어 전환(브랜드_디자인 §2) */
@@ -187,9 +180,6 @@ var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
   var brand = ko ? '큐브네스트' : 'CubeNest';
   document.querySelectorAll('[data-brand]').forEach(function(el){ el.textContent = brand; });
   document.title = brand + ' · 내 자료';
-
-  var y = document.getElementById('year'); if(y) y.textContent = new Date().getFullYear();
-  var cs = document.getElementById('csLink'); if(cs) cs.href = CS_FORM_URL;
 
   var A = (window.CubeNest && window.CubeNest.auth) || null;
   var M = (window.CubeNest && window.CubeNest.mydata) || null;

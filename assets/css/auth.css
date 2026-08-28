@@ -44,6 +44,8 @@
 .cn-auth-d{margin:0 0 18px; font-size:13.5px; line-height:1.6; color:var(--muted);}
 .cn-auth-prov{font-size:12.5px; color:var(--muted-2);}
 .cn-auth-fine{margin:14px 0 0; font-size:11.5px; line-height:1.55; color:var(--muted-2);}
+.cn-auth-fine a{color:var(--muted); text-decoration:underline; text-underline-offset:2px;}
+@media (hover:hover){ .cn-auth-fine a:hover{color:var(--accent-ink);} }
 
 .cn-auth-btn{
   display:flex; align-items:center; justify-content:center; gap:8px;

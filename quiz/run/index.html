@@ -37,7 +37,8 @@
     <link rel="stylesheet" href="../../assets/css/tokens.css" />
     <link rel="stylesheet" href="../../assets/css/nav.css" />
     <link rel="stylesheet" href="../../assets/css/consent.css" />
-    <link rel="stylesheet" href="../../assets/css/auth.css" />
+    <link rel="stylesheet" href="../../assets/css/auth.css?v=0.1.0" />
+    <link rel="stylesheet" href="../../assets/css/foot.css?v=0.1.0" />
     <style>
       *{box-sizing:border-box}
       [hidden]{display:none!important}
@@ -371,6 +372,13 @@
       <p class="footnote">모든 문제는 CubeNest가 자체 제작·보유한 자산입니다.</p>
     </main>
 
+    <!-- 공용 푸터 — 스타일은 assets/css/foot.css 단일 출처, 마크업은 인라인(nav.css 와 같은 규약) -->
+    <footer class="site-foot">
+      <div>도움이 필요하세요? <a href="#" id="csLink" target="_blank" rel="noopener">문의하기</a><span class="dot">·</span><a href="#" id="csMail">이메일</a></div>
+      <div class="row legal"><a href="../../terms/">이용약관</a><span class="dot">·</span><a href="../../privacy/">개인정보처리방침</a></div>
+      <div class="row">© <span id="year"></span> 넥스트빗<span class="dot">·</span>CubeNest 쌓기나무 3D 학습</div>
+    </footer>
+
     <div class="consent" id="consent" hidden>
       <div class="consent-msg">CubeNest는 서비스 개선을 위해 <b>Google Analytics로 익명 사용 통계</b>(쿠키 포함)를 수집해요. 동의하시면 방문·사용 데이터가 수집되고, 거부하시면 수집하지 않습니다.</div>
       <div class="consent-btns">
@@ -379,9 +387,10 @@
       </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../../assets/js/auth.js?v=0.2.0"></script>
+    <script src="../../assets/js/auth.js?v=0.3.0"></script>
     <script src="../../assets/js/mydata.js?v=0.5.0"></script>
     <script src="../../assets/js/consent.js"></script>
+    <script src="../../assets/js/foot.js?v=0.4.0"></script>
 
 
     <!-- ⚠ ?v= 를 반드시 올릴 것. 없으면 옛 run.js 가 캐시에 남아 새 서버 응답을 만난다

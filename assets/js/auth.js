@@ -15,7 +15,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.2.0';
+  var VERSION = '0.3.0';
 
   /* ── 설정 ────────────────────────────────────────────────────────────────
      SUPABASE_ANON_KEY: Supabase 대시보드 › Settings › API › anon / publishable key
@@ -25,6 +25,21 @@
   /* ──────────────────────────────────────────────────────────────────────── */
 
   var MOCK_KEY = 'cubenest_mock_login';   // 구버전 모의 로그인 잔재 — 아래에서 제거만 한다
+
+  /* 법적 문서(/terms/ · /privacy/)의 사이트 루트.
+     모달은 assets/js 에서 만들어지므로 페이지 상대경로를 쓸 수 없다. 이 파일의
+     src(<base>/assets/js/auth.js)에서 <base> 를 되돌려 뽑는다 — GitHub Pages
+     하위경로(/cubenest/)와 로컬 5500 루트 양쪽에서 같은 코드로 맞는다. */
+  var LEGAL_BASE = (function () {
+    try {
+      var s = document.currentScript && document.currentScript.src;
+      if (s) {
+        var u = new URL(s, global.location.href);
+        return u.pathname.replace(/assets\/js\/[^/]*$/, '');
+      }
+    } catch (e) {}
+    return '/';
+  })();
 
   /* GA4(F1) — track() 은 공용 모듈이 아니라 페이지마다 복제돼 있고, 일부 페이지엔
      아예 없다. consent.js 와 같은 방식으로 덕타이핑 호출하고 gtag 로 폴백한다. */
@@ -275,7 +290,9 @@
         '<h2 class="cn-auth-t" id="cnAuthTitle">로그인</h2>' +
         '<p class="cn-auth-d">비밀번호 없이 카카오·구글 계정으로 시작해요.<br>계정은 <b>보호자·선생님용</b>이고, 학생은 로그인 없이 사용할 수 있어요.</p>' +
         providerButtonsHtml() +
-        '<p class="cn-auth-fine">로그인하면 계산 과정을 시간 제한 없이 보고, 퀴즈 결과를 저장할 수 있어요.</p>';
+        '<p class="cn-auth-fine">로그인하면 계산 과정을 시간 제한 없이 보고, 퀴즈 결과를 저장할 수 있어요.<br>' +
+        '계속하면 <a href="' + LEGAL_BASE + 'terms/" target="_blank" rel="noopener">이용약관</a>과 ' +
+        '<a href="' + LEGAL_BASE + 'privacy/" target="_blank" rel="noopener">개인정보처리방침</a>에 동의하는 것으로 봅니다.</p>';
     }
   }
 

@@ -23,7 +23,8 @@
 <link rel="stylesheet" href="../assets/css/tokens.css">
 <link rel="stylesheet" href="../assets/css/nav.css">
 <link rel="stylesheet" href="../assets/css/consent.css">
-<link rel="stylesheet" href="../assets/css/auth.css">
+<link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0">
+<link rel="stylesheet" href="../assets/css/foot.css?v=0.1.0">
 <style>
   body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);
        -webkit-font-smoothing:antialiased;}
@@ -130,13 +131,7 @@
   @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
   @media (prefers-reduced-motion:reduce){ .ah-skel i{animation:none;} }
 
-  /* 푸터(문의 = CS, §6.6) */
-  .site-foot{max-width:1180px;margin:6px auto 0;padding:22px clamp(16px,4vw,40px) 30px;
-             border-top:1px solid var(--line);text-align:center;
-             font-size:12px;color:var(--muted-2);line-height:1.7;}
-  .site-foot a{color:var(--muted);text-decoration:none;font-weight:600;}
-  @media (hover:hover){ .site-foot a:hover{color:var(--accent-ink);} }
-  .site-foot .dot{margin:0 7px;opacity:.5;}
+  /* 푸터(문의 = CS, §6.6) — 스타일 정본은 assets/css/foot.css 로 승격됨 */
 </style>
 </head>
 <body>
@@ -168,8 +163,9 @@
 </main>
 
 <footer class="site-foot">
-  <div>도움이 필요하세요? <a href="#" id="csLink" target="_blank" rel="noopener">문의하기</a></div>
-  <div style="margin-top:6px;">© <span id="year"></span> CubeNest<span class="dot">·</span>쌓기나무 3D 학습</div>
+  <div>도움이 필요하세요? <a href="#" id="csLink" target="_blank" rel="noopener">문의하기</a><span class="dot">·</span><a href="#" id="csMail">이메일</a></div>
+  <div class="row legal"><a href="../terms/">이용약관</a><span class="dot">·</span><a href="../privacy/">개인정보처리방침</a></div>
+  <div class="row">© <span id="year"></span> 넥스트빗<span class="dot">·</span>CubeNest 쌓기나무 3D 학습</div>
 </footer>
 
 <div class="consent" id="consent" hidden>
@@ -181,25 +177,23 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/js/auth.js?v=0.2.0"></script>
+<script src="../assets/js/auth.js?v=0.3.0"></script>
 <script src="../assets/js/mydata.js?v=0.5.0"></script>
 <script src="../assets/js/consent.js"></script>
+<script src="../assets/js/foot.js?v=0.4.0"></script>
 <script>
 /* F1 계측 — 동의 후 gtag 가 있을 때만(오리진 공유 consent.js 정본) */
 function track(name, params){ try{ if(window.gtag) window.gtag('event', name, params||{}); }catch(e){} }
 
-/* CS 창구 — 마스터 §6.6: 전 페이지 푸터 문의 → 구글폼(초기).
-   ⚠ 실제 구글폼 URL 로 교체해야 함(계정/자료 두 페이지 공통 상수). */
-var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
+/* CS 창구(§6.6) — 상수도 #year·#csLink 배선도 assets/js/foot.js 단일 출처다.
+   예전엔 이 파일과 my/index.html 에 각각 복붙돼 있었다. */
+var CS_FORM_URL = (window.CubeNest && window.CubeNest.CS_FORM_URL) || '#';
 
 (function(){
   var ko = (navigator.language||'').toLowerCase().startsWith('ko');
   var brand = ko ? '큐브네스트' : 'CubeNest';
   document.querySelectorAll('[data-brand]').forEach(function(el){ el.textContent = brand; });
   document.title = brand + ' · 계정';
-
-  var y = document.getElementById('year'); if(y) y.textContent = new Date().getFullYear();
-  var cs = document.getElementById('csLink'); if(cs) cs.href = CS_FORM_URL;
 
   var A = (window.CubeNest && window.CubeNest.auth) || null;
   var M = (window.CubeNest && window.CubeNest.mydata) || null;
@@ -298,7 +292,10 @@ var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
         '<div class="ah-links">'+
           linkRow('my','../my/','내 자료','퀴즈 기록·문제지·모양','<span class="cnt" id="myCnt" hidden></span>')+
         '</div>'+
-        '<div class="ah-help">막히거나 이상한 점이 있으면 <a href="'+esc(CS_FORM_URL)+'" target="_blank" rel="noopener">문의하기</a>로 알려주세요. 보통 하루 안에 답해요.</div>'+
+        /* 외부 폼이면 새 탭, mailto 면 같은 탭(빈 탭이 남는 브라우저가 있다) — foot.js 와 같은 규칙 */
+        '<div class="ah-help">막히거나 이상한 점이 있으면 <a href="'+esc(CS_FORM_URL)+'"'
+          +(CS_FORM_URL.indexOf('mailto:')===0?'':' target="_blank" rel="noopener"')
+          +'>문의하기</a>로 알려주세요.</div>'+
       '</div>';
 
     document.getElementById('acctOut').onclick = function(){ A.signOut(); };
@@ -361,6 +358,10 @@ var CS_FORM_URL = 'https://forms.gle/REPLACE-WITH-CS-FORM';
         '계정은 <b>보호자·선생님용</b>이고, 학생은 로그인 없이 사용할 수 있어요.</p>'+
         A.providerButtonsHtml()+
         '<div class="acct-note">로그인하면 계산 과정을 시간 제한 없이 보고, 퀴즈 첨삭을 쓰고, <b>내 자료·이용권·쿠폰</b>을 관리할 수 있어요.</div>'+
+        /* 고지형 동의 — 이 카드는 auth.js 모달 위임을 안 쓰고 아래 자체 onclick 으로
+           signIn 을 부른다. 모달 쪽(.cn-auth-fine)만 고치면 여기가 새므로 둘 다 둔다. */
+        '<p class="cn-auth-fine">계속하면 <a href="../terms/" target="_blank" rel="noopener">이용약관</a>과 '+
+        '<a href="../privacy/" target="_blank" rel="noopener">개인정보처리방침</a>에 동의하는 것으로 봅니다.</p>'+
       '</div></div>';
     root.querySelectorAll('[data-provider]').forEach(function(b){
       b.onclick = function(){

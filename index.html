@@ -29,7 +29,7 @@
 <link rel="stylesheet" href="assets/css/tokens.css">
 <link rel="stylesheet" href="assets/css/nav.css">
 <link rel="stylesheet" href="assets/css/consent.css">
-<link rel="stylesheet" href="assets/css/auth.css">
+<link rel="stylesheet" href="assets/css/auth.css?v=0.1.0">
 <!-- 히어로 3D 뷰어용 (playground 정본과 동일 버전) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
@@ -246,6 +246,10 @@
     padding-top:22px;font-size:12px;color:#7a879b;}
   .foot-bottom .privacy{display:inline-flex;align-items:center;gap:6px;}
   .foot-bottom .privacy svg{width:14px;height:14px;color:#9aa6ba;}
+  .foot-legal a{color:#8894a8;text-decoration:none;}
+  .foot-legal a:hover{color:#fff;}
+  .fdot{margin:0 6px;opacity:.5;}
+  .foot-biz{padding-top:10px;font-size:11px;color:#66738a;}
 
   /* ---------- reveal on scroll ---------- */
   .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.3,1);}
@@ -534,17 +538,27 @@
           <h4>정보</h4>
           <a href="#how">배우는 원리</a>
           <a href="#for">활용 방법</a>
-          <a id="footFeedback" href="https://forms.gle/hnEmkt5k1PoANYGr6" target="_blank" rel="noopener">의견 보내기</a>
+          <!-- 문의 창구 — 전 페이지 공통 CS 폼. href 는 assets/js/foot.js 가 채운다(값의 정본).
+               예전엔 playground 오류 제보 폼을 가리켰는데, 그건 playground 화면의 '의견' 버튼과
+               CS 폼 설명문 링크로 여전히 닿는다. 한 푸터에 비슷한 창구를 둘 두지 않는다. -->
+          <a id="csLink" href="#" target="_blank" rel="noopener">문의하기</a>
         </div>
       </nav>
     </div>
     <div class="foot-bottom">
-      <span>© <span id="yr">2026</span> CubeNest</span>
+      <span>© <span id="yr">2026</span> 넥스트빗</span>
+      <!-- 법적 링크 — 상시 접근은 되되 강조하지 않는다(하단 바에만, foot-col 에는 넣지 않음) -->
+      <span class="foot-legal"><a href="terms/">이용약관</a><span class="fdot">·</span><a href="privacy/">개인정보처리방침</a></span>
       <span class="privacy">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 4 6v5c0 4.5 3.2 7.9 8 9 4.8-1.1 8-4.5 8-9V6l-8-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
         학생은 로그인 없이 사용해요
       </span>
     </div>
+    <!-- 사업자 정보 — terms · privacy 문서 하단과 같은 값이다. 바꾸면 셋 다.
+         전자상거래법 §10 은 초기화면 표시를 요구한다. 여기엔 요약만 두고 상세(주소·전화·
+         전자우편·호스팅제공자)는 아래 이용약관 링크로 잇는다 — 링크 경유도 허용된다.
+         신고번호는 통신판매업 신고증 기준(원본은 리포에 두지 않는다 — 공개 저장소다). -->
+    <div class="foot-biz">상호 넥스트빗<span class="fdot">·</span>대표 황인영<span class="fdot">·</span>사업자등록번호 365-26-01978<span class="fdot">·</span>통신판매업 신고 제2026-인천연수구-0124호</div>
   </div>
 </footer>
 
@@ -558,8 +572,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="assets/js/auth.js?v=0.2.0"></script>
+<script src="assets/js/auth.js?v=0.3.0"></script>
 <script src="assets/js/consent.js"></script>
+<script src="assets/js/foot.js?v=0.4.0"></script>
 <script>
 /* ============================================================
    CubeNest — landing (루트 /)
@@ -570,7 +585,7 @@
 /* 도구 경로 — 프로젝트 페이지 하위경로(/cubenest/) 함정 회피를 위해 반드시 '상대경로'.
    루트 절대경로('/playground/')는 smallhamsters.github.io/playground/로 새어 깨지므로 금지. */
 const PLAYGROUND_URL  = 'playground/';
-const FEEDBACK_URL    = 'https://forms.gle/hnEmkt5k1PoANYGr6';
+/* 문의 창구는 assets/js/foot.js 가 #csLink 에 채운다 — 여기에 URL 을 두지 않는다(정본 분산 방지). */
 /* 도구 경로를 실제 버튼들에 반영 */
 ['heroCta','finalCta','footPlay'].forEach(id=>{
   const a=document.getElementById(id); if(a) a.setAttribute('href', PLAYGROUND_URL);

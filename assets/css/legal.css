@@ -1,0 +1,95 @@
+/* CubeNest — 법적 문서(이용약관 · 개인정보처리방침) 본문 타이포.
+   소비: /terms/ · /privacy/ 두 페이지 전용. tokens.css 변수 위에서 동작한다. */
+
+.legal-main{
+  max-width:72ch; margin:0 auto;
+  padding:clamp(24px,4vw,44px) 18px 8px;
+  box-sizing:border-box;
+}
+
+/* ---------- 문서 머리 ---------- */
+.legal-head{margin:0 0 22px;}
+.legal-head h1{
+  margin:0 0 10px; font-size:clamp(21px,3.4vw,27px); font-weight:800;
+  letter-spacing:-.025em; line-height:1.25; color:var(--ink);
+}
+.legal-meta{
+  display:flex; flex-wrap:wrap; gap:4px 14px;
+  font-size:12px; color:var(--muted-2);
+}
+.legal-meta b{font-weight:700; color:var(--muted);}
+
+/* ---------- 목차 ---------- */
+.legal-toc{
+  margin:22px 0 6px; padding:16px 18px;
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
+}
+.legal-toc h2{
+  margin:0 0 10px; padding:0; border:0;
+  font-size:12px; font-weight:800; letter-spacing:.04em; color:var(--muted-2);
+}
+.legal-toc ol{margin:0; padding:0 0 0 1.15em; columns:2; column-gap:24px;}
+.legal-toc li{margin:0 0 5px; font-size:12.5px; break-inside:avoid;}
+.legal-toc a{color:var(--muted); text-decoration:none;}
+@media (hover:hover){ .legal-toc a:hover{color:var(--accent-ink); text-decoration:underline;} }
+@media (max-width:560px){ .legal-toc ol{columns:1;} }
+
+/* ---------- 조항 ---------- */
+.legal-body{margin-top:10px;}
+.legal-body section{padding:22px 0 4px; border-top:1px solid var(--line-2);}
+.legal-body section:first-of-type{border-top:0;}
+
+/* 장(章) 머리 — 표준약관의 제1장~제5장 구분 */
+.legal-chap{
+  margin:34px 0 0; padding-top:24px; border-top:2px solid var(--line);
+  font-size:12px; font-weight:800; letter-spacing:.06em; color:var(--accent-ink);
+}
+.legal-chap:first-child{margin-top:0; padding-top:0; border-top:0;}
+.legal-chap + section{border-top:0;}
+
+/* 항은 ①②③ — 표준약관 표기를 그대로 따른다. 미지원 브라우저는 decimal 로 떨어진다. */
+@counter-style cn-hang{
+  system:fixed 1; suffix:" ";
+  symbols:"①" "②" "③" "④" "⑤" "⑥" "⑦" "⑧" "⑨" "⑩" "⑪" "⑫";
+}
+.legal-body > section > ol{list-style:cn-hang; padding-left:1.7em;}
+.legal-body > section > ol > li > ol{list-style:decimal;}
+.legal-body h2{
+  margin:0 0 12px; font-size:15.5px; font-weight:800;
+  letter-spacing:-.015em; color:var(--ink); scroll-margin-top:76px;
+}
+.legal-body p{margin:0 0 12px; font-size:14.5px; line-height:1.85; color:var(--ink);}
+.legal-body ol,.legal-body ul{margin:0 0 12px; padding-left:1.5em;}
+.legal-body li{margin:0 0 8px; font-size:14.5px; line-height:1.8; color:var(--ink);}
+.legal-body li > ul,.legal-body li > ol{margin:8px 0 0;}
+.legal-body ul ul{list-style:'– '; padding-left:1.1em;}
+.legal-body b,.legal-body strong{font-weight:700;}
+.legal-body a{color:var(--accent); font-weight:600;}
+.legal-body .note{
+  margin:0 0 12px; padding:12px 14px;
+  background:var(--panel-2); border-left:3px solid var(--line);
+  border-radius:0 10px 10px 0;
+  font-size:13px; line-height:1.75; color:var(--muted);
+}
+
+/* ---------- 표 (수집 항목 · 위탁 · 개정 이력) ---------- */
+.legal-table{width:100%; overflow-x:auto; margin:0 0 14px; -webkit-overflow-scrolling:touch;}
+.legal-table table{border-collapse:collapse; width:100%; min-width:min(100%,460px); font-size:13px;}
+.legal-table th,.legal-table td{
+  padding:9px 11px; border:1px solid var(--line);
+  text-align:left; vertical-align:top; line-height:1.65;
+}
+.legal-table th{background:var(--panel-2); font-weight:700; color:var(--muted); white-space:nowrap;}
+.legal-table td{color:var(--ink);}
+
+/* ---------- 사업자 정보 · 부칙 ---------- */
+.legal-biz{
+  margin:26px 0 0; padding:16px 18px;
+  background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
+  font-size:12.5px; line-height:1.85; color:var(--muted);
+}
+.legal-biz h2{margin:0 0 8px; font-size:12px; font-weight:800; letter-spacing:.04em; color:var(--muted-2);}
+.legal-biz b{color:var(--ink); font-weight:700;}
+.legal-addendum{margin:18px 0 0; font-size:13px; line-height:1.8; color:var(--muted);}
+.legal-top{margin:18px 0 0; font-size:12.5px;}
+.legal-top a{color:var(--muted); text-decoration:none; font-weight:600;}

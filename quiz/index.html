@@ -19,7 +19,8 @@
 <link rel="stylesheet" href="../assets/css/tokens.css" />
 <!-- 공용 헤더 — 스타일은 nav.css 단일 출처, 마크업은 아래 인라인(마스터 §8.1). -->
 <link rel="stylesheet" href="../assets/css/nav.css" />
-<link rel="stylesheet" href="../assets/css/auth.css" />
+<link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0" />
+<link rel="stylesheet" href="../assets/css/foot.css?v=0.1.0" />
 <style>
   /* 나무색·방향색 — tokens.css 에 없는 이 페이지 고유 변수(글리프 SVG 가 쓴다) */
   .glyph,.brand{ --w-top:#e6c9a0; --w-left:#d8a76e; --w-right:#c8965a; --w-shadow:rgba(160,110,50,.28); }
@@ -310,10 +311,18 @@
     </div>
   </div>
 
+<!-- 공용 푸터 — 스타일은 assets/css/foot.css 단일 출처, 마크업은 인라인(nav.css 와 같은 규약) -->
+<footer class="site-foot">
+  <div>도움이 필요하세요? <a href="#" id="csLink" target="_blank" rel="noopener">문의하기</a><span class="dot">·</span><a href="#" id="csMail">이메일</a></div>
+  <div class="row legal"><a href="../terms/">이용약관</a><span class="dot">·</span><a href="../privacy/">개인정보처리방침</a></div>
+  <div class="row">© <span id="year"></span> 넥스트빗<span class="dot">·</span>CubeNest 쌓기나무 3D 학습</div>
+</footer>
+
 <!-- 공용 인증 — 헤더 계정 아이콘의 로그인 상태 표시만 담당한다.
      퀴즈 랜딩·플레이는 무로그인이 원칙이라(마스터 §6.3) 여기서 게이트를 걸지 않는다. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/js/auth.js?v=0.2.0"></script>
+<script src="../assets/js/auth.js?v=0.3.0"></script>
+<script src="../assets/js/foot.js?v=0.4.0"></script>
 <!-- 예시 미리보기용 렌더러 — quiz/run·worksheets 와 **같은 그림**을 쓴다(재발명 금지, 마스터 §5.1). -->
 <script src="../assets/js/cubenest-iso.js?v=0.1.0"></script>
 <script src="../assets/js/cubenest-figures.js?v=0.3.0"></script>
