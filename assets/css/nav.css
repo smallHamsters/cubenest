@@ -21,7 +21,9 @@ header.site-top{padding:0;}
 /* 브랜드와 액션이 같은 몫(1fr)을 가져가므로 가운데 .site-nav 가 뷰포트 정중앙에 온다.
    메뉴 글자 수가 페이지마다 달라도 계정 아이콘 위치가 흔들리지 않는다. */
 .site-brand{display:flex;align-items:center;gap:10px;flex:1 1 0;color:inherit;text-decoration:none;}
-.site-brand .glyph{width:30px;height:30px;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(160,110,50,.28));}
+/* 그림자는 잉크 계열(tokens.css --shadow 와 같은 베이스). 예전엔 나무색 rgba(160,110,50,…) 이었는데,
+   마크가 파랑·초록·분홍으로 바뀌면서 갈색 후광이 그대로 드러났다. */
+.site-brand .glyph{width:30px;height:30px;flex:0 0 auto;filter:drop-shadow(0 2px 4px rgba(24,34,51,.18));}
 .site-brand .t b{font-size:16px;font-weight:800;letter-spacing:-.02em;display:block;line-height:1.05;}
 .site-brand .t span{font-size:10.5px;color:var(--muted);font-weight:600;}
 .site-nav{display:flex;flex:1 1 auto;justify-content:center;gap:6px;flex-wrap:wrap;}

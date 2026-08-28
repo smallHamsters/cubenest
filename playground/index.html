@@ -8,21 +8,27 @@
 <meta name="description" content="쌓기나무(단위 정육면체)를 3D로 쌓고 돌려보며 개수·부피·겉넓이를 배우는 학습 도구. 만든 모양을 링크로 공유하면 똑같이 열려요.">
 <meta name="theme-color" content="#e9eef4">
 <link rel="canonical" href="https://smallhamsters.github.io/cubenest/playground/">
-<!-- ▼ 링크 미리보기(Open Graph). 배포 위치: 이 페이지 = /cubenest/playground/ · OG 이미지 = /cubenest/assets/img/cubenest-og.png (1200×630) -->
+<!-- 아이콘 — 서브패스 배포(/cubenest/)에선 루트 자동 탐색이 통하지 않아 전부 명시한다.
+     .ico 를 먼저, SVG 를 뒤에: Safari 는 SVG 파비콘을 지원하지 않아 .ico 로 폴백한다. -->
+<link rel="icon" href="../assets/img/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/svg+xml" href="../assets/img/brand-glyph.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/img/apple-touch-icon.png">
+<link rel="manifest" href="../site.webmanifest">
+<!-- ▼ 링크 미리보기(Open Graph). 배포 위치: 이 페이지 = /cubenest/playground/ · OG 이미지 = /cubenest/assets/img/cubenest-og-v2.png (1200×630) -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CubeNest">
 <meta property="og:title" content="큐브네스트 · 쌓기나무 3D 학습">
 <meta property="og:description" content="쌓기나무를 3D로 쌓고 돌려보며 개수·부피·겉넓이를 배워요. 만든 모양을 링크로 공유하면 똑같이 열립니다.">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:url" content="https://smallhamsters.github.io/cubenest/playground/">
-<meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
+<meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og-v2.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="CubeNest — 쌓기나무 3D 학습">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="큐브네스트 · 쌓기나무 3D 학습">
 <meta name="twitter:description" content="쌓기나무를 3D로 쌓고 돌려보며 개수·부피·겉넓이를 배워요.">
-<meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
+<meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og-v2.png">
 
 <!-- ▼ 교육용 구조화 데이터(JSON-LD). index.html의 WebApplication 노드와 같은 @id를 공유. -->
 <script type="application/ld+json">
@@ -32,7 +38,7 @@
   "@id": "https://smallhamsters.github.io/cubenest/playground/#webapp",
   "name": "CubeNest 쌓기나무 3D 학습",
   "url": "https://smallhamsters.github.io/cubenest/playground/",
-  "image": "https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png",
+  "image": "https://smallhamsters.github.io/cubenest/assets/img/cubenest-og-v2.png",
   "applicationCategory": "EducationalApplication",
   "operatingSystem": "Web browser",
   "inLanguage": "ko-KR",
@@ -1474,12 +1480,27 @@ function applyState(st, hi){
 
 // F3: 현재 모양을 가운데 정렬해 PNG로 캡처 (UI inset 오프셋 없이)
 // 워터마크: 브랜드 큐브 글리프 + 이름 (우하단, 밝은 후광으로 가독성 확보)
+// 마크 경로 — assets/img/brand-glyph.svg 의 d 속성을 **문자열 그대로** 옮긴 것.
+// ⚠ 좌표를 다시 유도하지 말 것: 라운딩은 '변의 20%'가 아니라 일률 3.01 유닛이라
+//   (2:1 다이메트릭에서 수직 변이 대각 변보다 1.073배 길다) 재계산하면 배포 SVG 와 어긋난다.
+//   글리프를 바꾸면 이 세 줄도 같이 바꾼다 — 여기가 캡처 PNG 워터마크의 유일한 출처다.
+const MARK_PATHS = [
+  ['#3f8fd0','M13.31,2.55 Q16,1.2 18.69,2.55 L26.76,6.58 Q29.45,7.93 26.76,9.27 L18.69,13.31 Q16,14.65 13.31,13.31 L5.24,9.27 Q2.55,7.93 5.24,6.58 Z'],
+  ['#4fae72','M2.55,21.06 Q2.55,24.07 5.24,25.42 L13.31,29.45 Q16,30.8 16,27.79 L16,17.66 Q16,14.65 13.31,13.31 L5.24,9.27 Q2.55,7.93 2.55,10.94 Z'],
+  ['#d0546f','M29.45,21.06 Q29.45,24.07 26.76,25.42 L18.69,29.45 Q16,30.8 16,27.79 L16,17.66 Q16,14.65 18.69,13.31 L26.76,9.27 Q29.45,7.93 29.45,10.94 Z'],
+].map(([fill,d])=>[fill,new Path2D(d)]);
+
+// 오프스크린에 알파 1.0 으로 그린 뒤 **한 번만** 합성한다.
+// 세 면을 반투명 상태로 각각 채우면 공유 변의 안티에일리어싱이 이중 합성돼 이음매가 보인다.
+let _glyphC=null, _glyphPx=0;
 function drawGlyph(ctx, ox, oy, gs){
-  const p=(mx,my)=>[ox+mx/32*gs, oy+my/32*gs];
-  const face=(pts,fill)=>{ ctx.beginPath(); pts.forEach((pt,i)=>{const q=p(pt[0],pt[1]); i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1]);}); ctx.closePath(); ctx.fillStyle=fill; ctx.fill(); };
-  face([[16,3],[28,9],[16,15],[4,9]], '#e6b980');
-  face([[4,9],[16,15],[16,29],[4,23]], '#c8965a');
-  face([[28,9],[16,15],[16,29],[28,23]], '#d8a76e');
+  const px=Math.max(1, Math.round(gs*2));               // 2배로 그려 축소 — 가장자리 계단 방지
+  if(!_glyphC || _glyphPx!==px){
+    _glyphC=document.createElement('canvas'); _glyphC.width=_glyphC.height=px; _glyphPx=px;
+    const g=_glyphC.getContext('2d'); g.scale(px/32, px/32);
+    for(const [fill,path] of MARK_PATHS){ g.fillStyle=fill; g.fill(path); }
+  }
+  ctx.drawImage(_glyphC, ox, oy, gs, gs);
 }
 function drawWatermark(ctx,w,h){
   const s=Math.max(13, Math.round(h*0.038));

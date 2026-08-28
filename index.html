@@ -8,26 +8,32 @@
 <meta name="description" content="쌓기나무(단위 정육면체)를 3D로 쌓고 돌려 보며 개수·부피·겉넓이를 배우는 학습 도구. 유아부터 초등 6학년 '공간과 입체'까지 다섯 단계, 자동채점 퀴즈 19종과 인쇄용 문제지까지. 설치 없이 브라우저에서 바로, 학생은 로그인 없이.">
 <meta name="theme-color" content="#e9eef4">
 <link rel="canonical" href="https://smallhamsters.github.io/cubenest/">
+<!-- 아이콘 — 서브패스 배포(/cubenest/)에선 루트 자동 탐색이 통하지 않아 전부 명시한다.
+     .ico 를 먼저, SVG 를 뒤에: Safari 는 SVG 파비콘을 지원하지 않아 .ico 로 폴백한다. -->
+<link rel="icon" href="assets/img/favicon.ico" sizes="32x32">
+<link rel="icon" type="image/svg+xml" href="assets/img/brand-glyph.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/img/apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
 
-<!-- ▼ 링크 미리보기(Open Graph) · 마스터 브랜드 카드 재사용(마스터 2.1·7장). 공용 OG 이미지: assets/img/cubenest-og.png(1200×630, 절대 URL 공유). canonical·og:url은 이 페이지 자기 URL(/cubenest/). -->
+<!-- ▼ 링크 미리보기(Open Graph) · 마스터 브랜드 카드 재사용(마스터 2.1·7장). 공용 OG 이미지: assets/img/cubenest-og-v2.png(1200×630, 절대 URL 공유). canonical·og:url은 이 페이지 자기 URL(/cubenest/). -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CubeNest">
 <meta property="og:title" content="큐브네스트 · 쌓기나무 3D 학습 — 개수·부피·겉넓이">
 <meta property="og:description" content="쌓기나무를 3D로 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 배워요. 유아부터 초6까지 다섯 단계, 자동채점 퀴즈와 인쇄용 문제지까지.">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:url" content="https://smallhamsters.github.io/cubenest/">
-<meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
+<meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og-v2.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="CubeNest — 쌓기나무 3D 학습">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="큐브네스트 · 쌓기나무 3D 학습 — 개수·부피·겉넓이">
 <meta name="twitter:description" content="쌓기나무를 3D로 쌓고 돌려 보며 개수·부피·겉넓이를 배워요. 유아부터 초6까지, 퀴즈와 문제지까지.">
-<meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
+<meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og-v2.png">
 
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <link rel="stylesheet" href="assets/css/tokens.css">
-<link rel="stylesheet" href="assets/css/nav.css">
+<link rel="stylesheet" href="assets/css/nav.css?v=0.1.0">
 <link rel="stylesheet" href="assets/css/consent.css">
 <link rel="stylesheet" href="assets/css/auth.css?v=0.1.0">
 <!-- 히어로 3D 뷰어용 (playground 정본과 동일 버전) -->
@@ -53,7 +59,7 @@
       "isPartOf": { "@id": "https://smallhamsters.github.io/cubenest/#website" },
       "name": "CubeNest 쌓기나무 3D 학습",
       "url": "https://smallhamsters.github.io/cubenest/playground/",
-      "image": "https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png",
+      "image": "https://smallhamsters.github.io/cubenest/assets/img/cubenest-og-v2.png",
       "applicationCategory": "EducationalApplication",
       "operatingSystem": "Web browser",
       "inLanguage": "ko-KR",
@@ -282,6 +288,11 @@
   footer.foot{background:#1c2432;color:#c3ccdb;padding:clamp(40px,6vw,60px) 0 34px;}
   .foot-top{display:flex;justify-content:space-between;gap:28px;flex-wrap:wrap;align-items:flex-start;
     padding-bottom:26px;border-bottom:1px solid rgba(255,255,255,.1);}
+  /* ⚠ 이 두 줄이 없으면 푸터 글리프가 253px 로 그려진다 — SVG 에 width/height 가 없어
+     대체요소 기본 규칙상 300px 로 잡히고 img{max-width:100%} 에만 걸리기 때문.
+     .brand 는 이 파일에 다른 규칙이 없어 display:flex 도 여기서 준다(인라인 gap 이 무효였다). */
+  .foot-brand .brand{display:flex;align-items:center;}
+  .foot-brand .glyph{width:30px;height:30px;flex:0 0 auto;}
   .foot-brand .t b{color:#fff;font-size:16px;font-weight:800;letter-spacing:-.02em;display:block;}
   .foot-brand .t span{font-size:11.5px;color:#8894a8;}
   .foot-brand p{margin:12px 0 0;font-size:12.5px;color:#8894a8;max-width:34ch;line-height:1.6;}
@@ -742,7 +753,8 @@
     <div class="foot-top">
       <div class="foot-brand">
         <div class="brand" style="gap:9px">
-          <img class="glyph" src="assets/img/brand-glyph.svg" alt="" role="presentation">
+          <!-- 다크 푸터(#1c2432) 전용 — 방향색을 한 단계 밝게 올린 변형 -->
+          <img class="glyph" src="assets/img/brand-glyph-dark.svg" alt="" role="presentation">
           <span class="t"><b id="brandNameFoot">CubeNest</b><span>쌓기나무 3D 학습</span></span>
         </div>
         <p>쌓기나무를 3D로 쌓고 관찰하며 개수·부피·겉넓이를 배우는 웹 학습 도구.</p>

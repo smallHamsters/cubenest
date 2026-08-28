@@ -6,24 +6,30 @@
 <title>쌓기나무 퀴즈 · CubeNest</title>
 <meta name="description" content="쌓기나무 퀴즈를 교육과정·난이도·차원(2D/3D)·문제유형으로 골라 풀어요. 교과·사고력·경시까지." />
 <link rel="canonical" href="https://smallhamsters.github.io/cubenest/quiz/" />
+<!-- 아이콘 — 서브패스 배포(/cubenest/)에선 루트 자동 탐색이 통하지 않아 전부 명시한다.
+     .ico 를 먼저, SVG 를 뒤에: Safari 는 SVG 파비콘을 지원하지 않아 .ico 로 폴백한다. -->
+<link rel="icon" href="../assets/img/favicon.ico" sizes="32x32" />
+<link rel="icon" type="image/svg+xml" href="../assets/img/brand-glyph.svg" />
+<link rel="apple-touch-icon" sizes="180x180" href="../assets/img/apple-touch-icon.png" />
+<link rel="manifest" href="../site.webmanifest" />
 <meta property="og:type" content="website" />
 <meta property="og:title" content="쌓기나무 퀴즈 · CubeNest" />
 <meta property="og:description" content="교육과정·난이도·차원·유형으로 골라 푸는 쌓기나무 퀴즈." />
 <meta property="og:url" content="https://smallhamsters.github.io/cubenest/quiz/" />
 <meta property="og:locale" content="ko_KR" />
-<meta property="og:image" content="https://smallhamsters.github.io/cubenest/public/cubenest-og.png" />
+<meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og-v2.png" />
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="theme-color" content="#3f3fbf" />
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <link rel="stylesheet" href="../assets/css/tokens.css" />
 <!-- 공용 헤더 — 스타일은 nav.css 단일 출처, 마크업은 아래 인라인(마스터 §8.1). -->
-<link rel="stylesheet" href="../assets/css/nav.css" />
+<link rel="stylesheet" href="../assets/css/nav.css?v=0.1.0" />
 <link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0" />
 <link rel="stylesheet" href="../assets/css/foot.css?v=0.1.0" />
 <style>
   /* 나무색·방향색 — tokens.css 에 없는 이 페이지 고유 변수(글리프 SVG 가 쓴다) */
-  .glyph,.brand{ --w-top:#e6c9a0; --w-left:#d8a76e; --w-right:#c8965a; --w-shadow:rgba(160,110,50,.28); }
+  .glyph{ --w-top:#e6c9a0; --w-left:#d8a76e; --w-right:#c8965a; }
   .glyph{ --d-top:#3f8fd0; --d-front:var(--add); --d-side:var(--del); }
 
   *{box-sizing:border-box}

@@ -94,7 +94,21 @@
 
 ## 기술 · 규약
 - **단일 HTML/페이지 + Three.js, 빌드 없음, 정적 호스팅**(GitHub Pages, `/cubenest/` 하위경로). 백엔드 = **Supabase**(Auth·Postgres+RLS·Edge Functions). 로컬 확인: `py -m http.server 5500` (**5500 고정** — Edge Function CORS 허용 오리진. 기본 8000이면 `/generate`·`/grade`가 막힌다. **`python`이 아니라 `py`** — 개발 머신의 `python`은 WindowsApps 스텁이라 exit 9009로 죽는다).
-- **배포 = `<모듈>/index.html`**(랜딩=루트). 공용 자산 `assets/{css,img,js}`. 상대경로(하위 `../`, 2층 `../../`). 서버 = `supabase/`(functions·migrations·config).
+- **배포 = `<모듈>/index.html`**(랜딩=루트). 공용 자산 `assets/{css,img,js,og}`. 상대경로(하위 `../`, 2층 `../../`). 서버 = `supabase/`(functions·migrations·config).
+- **브랜드 마크 = 라운드 등축 정육면체. 세 면이 곧 위·앞·옆이고 색도 방향색 그대로다**(위 `#3f8fd0` · 앞 `#4fae72` · 옆 `#d0546f`). 로고가 새 색을 들여온 게 아니라 제품이 이미 19곳에서 쓰던 의미색을 승격시킨 것 — **UI 액센트 `--accent:#3f3fbf` 는 그대로다.** 로고 3색으로 버튼·링크를 칠하지 말 것(방향의 뜻이 흐려진다).
+  - **정본은 `assets/img/brand-glyph.svg` 하나이고 13곳이 이 URL 을 공유한다.** 파일명을 바꾸지 말 것 — 덮어쓰기 한 번이 3가지 깊이를 동시에 바꾸고 롤백도 `git checkout` 한 줄이다. 이름을 바꾸면 13곳 편집 창이 생겨 그사이 페이지마다 다른 로고가 뜬다.
+  - **⚠ 같은 그림이 코드로 복제된 곳이 둘 있다. 마크를 고치면 셋 다 고친다.**
+    ① `playground/index.html` 의 `MARK_PATHS` — 캡처 PNG 워터마크. SVG 의 `d` 문자열을 **그대로** 옮겨야 한다(라운딩이 '변의 20%'가 아니라 일률 3.01 유닛이라 재유도하면 어긋난다). **외부 SVG 를 `Image` 로 그리지 말 것** — `captureImage()` 가 동기이고 `a.click()` 다운로드 핸들러 안에서 불려, 비동기로 바꾸면 Safari 에서 사용자 활성화가 소실돼 다운로드가 막힌다.
+    ② `404.html` 의 `data:image/svg+xml` 파비콘 — 이 페이지는 어떤 깊이에서도 떠서 상대경로가 깨지고 절대경로는 로컬 5500 에서 깨진다. 하단 경로 보정 스크립트도 파비콘엔 못 쓴다(브라우저가 파싱 초기에 가져간다). **`#` 을 `%23` 으로 인코딩할 것** — 안 하면 프래그먼트로 잘려 색이 전부 사라진다.
+  - 랜딩 다크 푸터(`#1c2432`)만 `brand-glyph-dark.svg`(방향색을 한 단계 밝게)를 쓴다. **푸터 글리프에는 `.foot-brand .glyph{width:30px;height:30px}` 가 반드시 있어야 한다** — SVG 에 width/height 가 없어 이 규칙이 빠지면 대체요소 기본 규칙상 300px 로 잡혀 **실제로 253px 로 그려진 적이 있다**(260828 수정).
+  - **제품 안 큐브의 나무색은 로고가 아니다** — `cubenest-iso.js:74·80`(+`_shared/` 사본), `viewer`·`playground` 의 3D 재질, 랜딩 삽화, 404 아트, 퀴즈 마스코트, `quiz/index.html` 의 `--w-*`(유형 카드 아이콘 15종이 소비한다 — 지우면 아이콘이 검게 된다). 학습 대상의 색이므로 로고 교체와 함께 바꾸지 않는다.
+- **파비콘은 11개 페이지 전부에 명시 링크가 있어야 한다.** GitHub Pages 하위경로(`/cubenest/`) 배포라 브라우저·iOS 의 루트 자동 탐색(`/favicon.ico`·`/apple-touch-icon.png`)이 **도메인 루트로 가버려 통하지 않는다.** `.ico` 를 먼저, SVG 를 뒤에 건다(Safari 는 SVG 파비콘 미지원 → `.ico` 폴백). 삽입점은 `canonical` 바로 뒤.
+  - 자산: `assets/img/` 의 `favicon.ico`(16·32·48) · `apple-touch-icon.png`(180) · `icon-192.png` · `icon-512.png` · `icon-512-maskable.png`, 그리고 루트 `site.webmanifest`.
+  - PNG 3종은 **흰 배경 + 여백**(iOS 가 투명을 검게 합성한다), `.ico` 는 투명·꽉 채움(16px 에서 여백을 주면 뭉갠다). maskable 은 512 캔버스에 박스 **416px**(마크 외접반경이 15.68/16 이라 안전영역 80% 안에 들어오려면 ≤418).
+  - **매니페스트에 `theme_color` 를 넣지 말 것** — `theme-color` 가 이미 9곳 `#e9eef4` vs `quiz`·`404` `#3f3fbf` 로 갈려 있어 세 번째 출처를 만들면 표류가 확정된다. `display:"browser"` 를 명시해 설치 프롬프트 자격을 일부러 미달로 둔다.
+  - 매니페스트 **안의** 상대경로는 매니페스트 URL 기준으로 풀리므로 깊이 분기가 필요 없다. 깊이별로 다른 건 각 페이지의 `href` 뿐이다.
+- **OG 카드(`assets/img/cubenest-og-v2.png`)를 고칠 땐 파일명을 바꾼다.** `og:image` 를 읽는 건 브라우저가 아니라 소셜 크롤러이고, 페이스북·카카오톡은 HTTP 캐시 헤더와 무관하게 무기한 캐시한다. 같은 이름으로 덮어쓰면 새 카드가 노출되지 않는다. 참조가 **20곳**이고 그중 둘(`index.html`·`playground/index.html`)은 **JSON-LD `"image"`** 라 놓치기 쉽다.
+  - 재생성 템플릿 = `assets/og/og-card.html`(헤드리스 Chrome 으로 1200×630 스크린샷). 오른쪽 삽화는 손으로 그리지 않고 `cubenest-iso.js` 를 호출한다.
 - 렌더링: 직교 카메라, 큐브 InstancedMesh 2그룹.
 - 언어 한국어(브랜드: ko→큐브네스트 / else CubeNest). 모바일 가로 우선(44px+, hover 미사용). 계측 `track()`→GA4, 동의 후만.
 - **DB 스키마는 마이그레이션 파일(`supabase/migrations/`)로 관리**, 적용은 대시보드 SQL Editor. 저장을 Edge 경유로 바꾸지 말 것(RLS로 충분).
@@ -105,6 +119,8 @@
   - 소비처 찾기: `grep -rn "<모듈>.js?v=" --include=*.html .` (index · playground · quiz · quiz/run · worksheets · my · account · guide 중 해당하는 것 전부)
   - **통일할 땐 기존 값 중 하나가 아니라 새 값으로 올린다.** 옛 값을 캐시한 브라우저가 그 값 그대로 옛 파일을 계속 쓰기 때문이다. (실제 사례: `api-client.js` 한 파일이 `?v=1` 2곳·`?v=0.2.0` 1곳으로 갈라져 있었다 → 260826 `0.3.0`으로 통일.)
   - `consent.js`와 `vendor/qrcode-generator.js`는 `?v=` 미고정(거의 안 바뀜) — 고치게 되면 그때 붙인다.
+  - **`nav.css` 는 260828 에 `?v=0.1.0` 으로 고정했다**(9곳). 로고 교체로 글리프 그림자를 바꿨는데, 캐시된 옛 `nav.css` 가 새 마크 아래에 갈색 후광을 그리는 게 로컬에서 실제로 재현됐다. **남은 무버전 CSS 는 `tokens.css`·`consent.css` 둘뿐** — 고치게 되면 그때 붙인다.
+  - **이미지는 `?v=` 를 쓰지 않는다.** GitHub Pages 가 정적 자산에 `max-age=600` + ETag 를 주므로 최대 10분 뒤 조건부 재검증으로 자동 치유되고, 미관 문제라 정합성 오류가 나지 않는다. `?v=` 가 필요한 쪽은 **서버와 어긋나면 오작동하는 JS 모듈**이다.
 - **배포는 두 갈래이고 순서가 있다 — 클라 먼저, 서버 나중.** 정적 사이트 = `git push` → GitHub Pages(origin/main). 서버 = `supabase functions deploy config generate grade worksheet`. 둘은 따로 나가므로 **한쪽만 배포하면 조용히 어긋난다** — 오류가 아니라 "안 바뀐 것처럼" 보인다.
   - 클라는 `/config`(열린 학년·유형·등급)를 **정본**으로 삼는다. 서버를 먼저 배포하면 옛 클라가 **없어진 학년을 계속 팔고**(칩은 남는데 유형이 0개), 그 학년으로 시작한 퀴즈는 `normStage()`가 기본값으로 떨어뜨려 **다른 학년 문제가 조용히 나온다**(260821 중1~2 제거 때 실제로 발생).
   - 확인: `curl .../functions/v1/config` 의 `version` == `cubenest-gen-config.js` 의 `VERSION`, 그리고 라이브 HTML에 그 커밋의 표식이 있는지.
