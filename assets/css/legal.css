@@ -3,7 +3,7 @@
 
 .legal-main{
   max-width:72ch; margin:0 auto;
-  padding:clamp(24px,4vw,44px) 18px 8px;
+  padding:clamp(24px,4vw,44px) var(--gutter) 8px;
   box-sizing:border-box;
 }
 

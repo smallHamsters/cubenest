@@ -5,8 +5,12 @@
    (랜딩 index.html 은 자체 다크 푸터 .foot 을 쓴다. playground · 404 는 푸터 없음) */
 
 .site-foot{
-  max-width:1180px; margin:8px auto 0;
-  padding:22px clamp(16px,4vw,40px) 30px;
+  /* box-sizing 을 명시한다 — guide·my·account·worksheets·privacy·terms 에는
+     전역 border-box 리셋이 없어, 같은 max-width 가 헤더(border-box)와 다른 뜻이 된다
+     (1080 + 좌우 22 = 1124 로 부풀어 헤더보다 22px 바깥에서 시작했다). */
+  box-sizing:border-box;
+  max-width:var(--wrap); margin:8px auto 0;
+  padding:22px var(--gutter) 30px;
   border-top:1px solid var(--line);
   text-align:center;
   font-size:12px; color:var(--muted-2); line-height:1.7;

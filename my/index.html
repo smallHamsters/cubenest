@@ -26,17 +26,17 @@
 <meta name="twitter:card" content="summary_large_image">
 
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-<link rel="stylesheet" href="../assets/css/tokens.css">
-<link rel="stylesheet" href="../assets/css/nav.css?v=0.2.0">
+<link rel="stylesheet" href="../assets/css/tokens.css?v=0.1.0">
+<link rel="stylesheet" href="../assets/css/nav.css?v=0.3.0">
 <link rel="stylesheet" href="../assets/css/consent.css">
 <link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0">
-<link rel="stylesheet" href="../assets/css/foot.css?v=0.1.0">
+<link rel="stylesheet" href="../assets/css/foot.css?v=0.3.0">
 <style>
   body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);
        -webkit-font-smoothing:antialiased;}
 
-  .my-main{max-width:1180px;margin:0 auto;
-           padding:clamp(16px,3vw,26px) clamp(16px,4vw,40px) calc(56px + env(safe-area-inset-bottom));}
+  .my-main{box-sizing:border-box;max-width:var(--wrap);margin:0 auto;
+           padding:clamp(16px,3vw,26px) var(--gutter) calc(56px + env(safe-area-inset-bottom));}
 
   /* ── 히어로: 나무 큐브 둥지 시그니처 ─────────────────── */
   .my-hero{display:flex;align-items:center;gap:14px;margin:6px 2px 20px;}

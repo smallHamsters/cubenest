@@ -16,7 +16,7 @@ header.site-top.hide{transform:translateY(-100%);}
 header.site-top{padding:0;}
 /* box-sizing 을 명시한다 — guide·worksheets·account 에는 전역 border-box 리셋이 없어
    min-height 가 content-box 로 계산되면서 페이지마다 헤더 높이가 8px씩 달라졌다. */
-.site-topin{box-sizing:border-box;max-width:1080px;margin:0 auto;padding:0 22px;
+.site-topin{box-sizing:border-box;max-width:var(--wrap);margin:0 auto;padding:0 var(--gutter);
   display:flex;align-items:center;gap:16px;min-height:64px;}
 /* 브랜드와 액션이 같은 몫(1fr)을 가져가므로 가운데 .site-nav 가 뷰포트 정중앙에 온다.
    메뉴 글자 수가 페이지마다 달라도 계정 아이콘 위치가 흔들리지 않는다. */
@@ -58,7 +58,7 @@ a#authNav svg{width:24px;height:24px;}
      [글리프] [메뉴 6종 — 가로 스크롤] [계정]
      메뉴 링크를 숨기지 않는다 — 이 사이트엔 햄버거가 없어 숨기면 내비게이션이 사라진다.
      '내 자료'도 텍스트 그대로 스크롤 안에 남는다(아이콘 축약 없음). */
-  .site-topin{display:flex;align-items:center;gap:8px;padding:6px 12px;min-height:52px;}
+  .site-topin{display:flex;align-items:center;gap:8px;padding:6px var(--gutter);min-height:52px;}
   .site-brand{flex:0 0 auto;}
   .site-brand .t{display:none;}          /* 워드마크 숨김 — 글리프만 남긴다 */
   /* 메뉴 6종 — 남는 폭을 모두 차지하고, 넘치면 가로 스크롤(줄바꿈 금지) */

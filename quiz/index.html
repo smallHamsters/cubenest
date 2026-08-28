@@ -22,11 +22,11 @@
 <meta name="theme-color" content="#3f3fbf" />
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-<link rel="stylesheet" href="../assets/css/tokens.css" />
+<link rel="stylesheet" href="../assets/css/tokens.css?v=0.1.0" />
 <!-- 공용 헤더 — 스타일은 nav.css 단일 출처, 마크업은 아래 인라인(마스터 §8.1). -->
-<link rel="stylesheet" href="../assets/css/nav.css?v=0.2.0" />
+<link rel="stylesheet" href="../assets/css/nav.css?v=0.3.0" />
 <link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0" />
-<link rel="stylesheet" href="../assets/css/foot.css?v=0.1.0" />
+<link rel="stylesheet" href="../assets/css/foot.css?v=0.3.0" />
 <style>
   /* 나무색·방향색 — tokens.css 에 없는 이 페이지 고유 변수(글리프 SVG 가 쓴다) */
   .glyph{ --w-top:#e6c9a0; --w-left:#d8a76e; --w-right:#c8965a; }
@@ -39,13 +39,13 @@
 
   /* 헤더는 공용 nav.css 가 전담한다 — 이 페이지 전용 .topbar 는 폐기(v0.11.2). */
 
-  .hero{padding:clamp(20px,3.6vw,34px) clamp(16px,4vw,40px) 4px;max-width:1180px;margin:0 auto}
+  .hero{padding:clamp(20px,3.6vw,34px) var(--gutter) 4px;max-width:var(--wrap);margin:0 auto}
   .hero-inner{border-left:3px solid var(--accent);padding-left:18px}
   .eyebrow{font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--accent)}
   .hero h1{font-size:clamp(24px,4.2vw,36px);line-height:1.12;letter-spacing:-.02em;margin:.28em 0 .18em;font-weight:800}
   .hero p{margin:0;color:var(--muted);max-width:52ch;font-size:clamp(14px,1.6vw,16px)}
 
-  .page{max-width:1180px;margin:0 auto;padding:16px clamp(16px,4vw,40px) 56px}
+  .page{max-width:var(--wrap);margin:0 auto;padding:16px var(--gutter) 56px}
 
   /* ── 필터 두 줄 ──
      [찾기] 를 바꾸면 아래 목록이 바뀌고, [풀기] 는 목록을 안 바꾸고 시작할 때 적용된다.
@@ -117,7 +117,7 @@
   .empty b{display:block;color:var(--ink);margin-bottom:6px;font-size:15px}
   :focus-visible{outline:2.5px solid var(--accent);outline-offset:2px;border-radius:6px}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-  .footnote{max-width:1180px;margin:0 auto;padding:0 clamp(16px,4vw,40px) 40px;color:var(--muted-2);font-size:12px;line-height:1.7}
+  .footnote{max-width:var(--wrap);margin:0 auto;padding:0 var(--gutter) 40px;color:var(--muted-2);font-size:12px;line-height:1.7}
 
   /* hover 는 마우스에서만 — 터치에서 탭하면 hover 잔상이 '눌린 것처럼' 남는다(nav.css 와 같은 가드). */
   @media (hover:hover) and (pointer:fine){

@@ -32,8 +32,8 @@
 <meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og-v2.png">
 
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-<link rel="stylesheet" href="assets/css/tokens.css">
-<link rel="stylesheet" href="assets/css/nav.css?v=0.2.0">
+<link rel="stylesheet" href="assets/css/tokens.css?v=0.1.0">
+<link rel="stylesheet" href="assets/css/nav.css?v=0.3.0">
 <link rel="stylesheet" href="assets/css/consent.css">
 <link rel="stylesheet" href="assets/css/auth.css?v=0.1.0">
 <!-- 히어로 3D 뷰어용 (playground 정본과 동일 버전) -->
@@ -94,7 +94,7 @@
     padding:11px 18px;border-radius:0 0 12px 0;font-weight:800;font-size:14px;box-shadow:var(--shadow);}
   .skip:focus{left:0;}
 
-  .wrap{max-width:1080px;margin:0 auto;padding:0 22px;}
+  .wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gutter);}
   .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;color:var(--accent);
     text-transform:uppercase;margin:0 0 12px;display:inline-flex;align-items:center;gap:8px;}
   .eyebrow::before{content:"";width:18px;height:2px;background:var(--accent);border-radius:2px;opacity:.7;}
@@ -278,7 +278,7 @@
     background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);
     background-size:38px 38px;
     -webkit-mask-image:radial-gradient(circle at 50% 30%,#000,transparent 72%);mask-image:radial-gradient(circle at 50% 30%,#000,transparent 72%);}
-  .final .wrap{position:relative;padding:clamp(56px,9vw,96px) 22px;}
+  .final .wrap{position:relative;padding:clamp(56px,9vw,96px) var(--gutter);}
   .final h2{font-size:clamp(26px,4.6vw,40px);font-weight:800;letter-spacing:-.03em;margin:0 0 14px;line-height:1.16;}
   .final p{font-size:clamp(14.5px,2.2vw,17px);color:#d6d6f5;margin:0 auto 30px;max-width:44ch;line-height:1.7;}
   .btn-onaccent{background:#fff;color:var(--accent-ink);box-shadow:0 10px 30px rgba(0,0,0,.24);}
