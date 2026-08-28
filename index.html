@@ -98,7 +98,7 @@
 
   /* ---------- top bar ---------- */
   /* header.site-top / .site-topin / .site-brand / .site-nav / .site-actions 는
-     assets/css/nav.css 공용 정의. 헤더 "바로 해보기" CTA는 제거했다 —
+     assets/css/nav.css 공용 정의. 헤더의 별도 CTA 버튼은 제거했다 —
      바로 아래 히어로에 같은 CTA가 있고, 모바일에서 메뉴 폭을 잡아먹었다. */
 
   /* ---------- hero ---------- */
@@ -240,22 +240,6 @@
   .qfoot .more{font-size:13.5px;color:var(--muted);}
   .qfoot .more b{color:var(--ink);font-weight:800;}
 
-  /* ---------- 위·앞·옆 explainer ---------- */
-  .explain{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(28px,5vw,54px);align-items:center;}
-  .views{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);
-    padding:26px;box-shadow:var(--shadow-sm);}
-  .views-row{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
-  .vcell{text-align:center;}
-  .vcell .cap{font-size:12px;font-weight:800;color:var(--accent-ink);margin-bottom:8px;letter-spacing:.02em;}
-  .vgrid{background:var(--panel);border-radius:12px;padding:8px;box-shadow:var(--shadow-sm);}
-  .explain .txt h2{margin-top:0;}
-  .vlist{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:12px;}
-  .vlist li{display:flex;gap:12px;align-items:flex-start;font-size:14.5px;color:var(--ink);}
-  .vlist li b{font-weight:800;}
-  .vlist li .n{flex:0 0 auto;width:24px;height:24px;border-radius:8px;background:var(--accent-soft);
-    color:var(--accent);font-weight:800;font-size:12px;display:grid;place-items:center;margin-top:1px;}
-  .vlist li span{color:var(--muted);}
-
   /* ---------- 대상별 ---------- */
   .aud{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
   .acard{border-radius:var(--r-lg);padding:30px 28px;position:relative;overflow:hidden;}
@@ -316,15 +300,16 @@
 
   /* ---------- responsive ---------- */
   @media (max-width:860px){
-    /* ⚠ 히어로 순서 — 카피가 먼저다. 예전엔 340px 정사각 뷰어가 h1 위에 와서
-       작은 폰에서 헤드라인과 주 CTA 가 접히는 선 아래로 밀렸다. 되돌리지 말 것.
-       (.viewer-card 는 touch-action:none 이라 카드 위 세로 스와이프로는 스크롤도 안 된다) */
-    .hero-grid{grid-template-columns:1fr;gap:22px;padding-top:34px;}
-    .hero-copy{max-width:none;order:0;}
-    .hero-visual{order:1;min-height:auto;justify-content:center;}
+    /* 히어로 순서 — 모바일에선 3D 뷰어가 먼저 온다(사용자 결정 260828).
+       알고 받아들인 트레이드오프 두 가지:
+        · 340px 정사각 카드가 앞서므로 h1·주 CTA 가 첫 화면 밖으로 밀릴 수 있다.
+        · .viewer-card 는 touch-action:none 이라 카드 위 세로 스와이프로는 페이지가
+          안 내려간다. touch-action:pan-y 로 완화할 수 있으나 상하 회전을 잃어 두었다. */
+    .hero-grid{grid-template-columns:1fr;gap:14px;padding-top:34px;}
+    .hero-copy{max-width:none;order:1;}
+    .hero-visual{order:0;min-height:auto;margin-bottom:6px;justify-content:center;}
     .viewer-card{width:min(340px,88%);}
     .fgrid,.fgrid.f4{grid-template-columns:1fr 1fr;}
-    .explain{grid-template-columns:1fr;}
     .aud{grid-template-columns:1fr;}
     .zrow{grid-template-columns:1fr;gap:20px;}
     .zrow:nth-child(even) .zvis{order:0;}
@@ -387,7 +372,7 @@
       <div class="hero-btns">
         <a class="btn btn-primary" id="heroCta" href="playground/">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
-          바로 해보기
+          직접 쌓아보기
         </a>
         <!-- 보조 CTA — 앵커(#features)가 아니라 실제 기능으로 보낸다.
              마스터가 랜딩에 부여한 임무가 '기능 바로가기'인데 예전엔 본문 진입점이 0개였다. -->
@@ -443,7 +428,7 @@
           </svg>
         </div>
         <div class="ztxt">
-          <span class="ztag">쌓기나무 도구</span>
+          <span class="ztag">쌓기나무 만들기</span>
           <h3>손끝으로 돌려 보며 세어 봅니다</h3>
           <p>블록을 놓고 지우면서 어느 방향에서든 살펴봐요. 뒤에 숨은 나무까지 직접 눈으로 확인할 수 있습니다.</p>
           <ul class="zlist">
@@ -453,7 +438,7 @@
           </ul>
           <a class="sec-cta" href="playground/">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
-            도구 열기
+            쌓아보기
           </a>
         </div>
       </div>
@@ -530,62 +515,6 @@
       </div>
     </div>
 
-  </div>
-</section>
-
-<!-- ===================== 위·앞·옆 EXPLAINER ===================== -->
-<section class="band" id="how">
-  <div class="wrap explain">
-    <div class="views reveal">
-      <div class="views-row">
-        <div class="vcell">
-          <div class="cap">위</div>
-          <!-- top view: 3x3, filled where h>=1 -->
-          <svg class="vgrid" width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="위에서 본 모양">
-            <g fill="none" stroke="#e5eaf1" stroke-width="1.5"><rect x="4" y="4" width="24" height="24"/><rect x="30" y="4" width="24" height="24"/><rect x="56" y="4" width="24" height="24"/><rect x="4" y="30" width="24" height="24"/><rect x="30" y="30" width="24" height="24"/><rect x="56" y="30" width="24" height="24"/><rect x="4" y="56" width="24" height="24"/><rect x="30" y="56" width="24" height="24"/><rect x="56" y="56" width="24" height="24"/></g>
-            <g fill="#e6b980" stroke="#c8965a" stroke-width="1.2">
-              <rect x="4" y="4" width="24" height="24" rx="2"/><rect x="30" y="4" width="24" height="24" rx="2"/><rect x="56" y="4" width="24" height="24" rx="2"/>
-              <rect x="30" y="30" width="24" height="24" rx="2"/><rect x="56" y="30" width="24" height="24" rx="2"/>
-              <rect x="56" y="56" width="24" height="24" rx="2"/>
-            </g>
-          </svg>
-        </div>
-        <div class="vcell">
-          <div class="cap">앞</div>
-          <!-- front: cols x0..2 heights 3,2,1 -->
-          <svg class="vgrid" width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="앞에서 본 모양">
-            <g fill="none" stroke="#e5eaf1" stroke-width="1.5"><rect x="4" y="4" width="24" height="24"/><rect x="30" y="4" width="24" height="24"/><rect x="56" y="4" width="24" height="24"/><rect x="4" y="30" width="24" height="24"/><rect x="30" y="30" width="24" height="24"/><rect x="56" y="30" width="24" height="24"/><rect x="4" y="56" width="24" height="24"/><rect x="30" y="56" width="24" height="24"/><rect x="56" y="56" width="24" height="24"/></g>
-            <g fill="#d8a76e" stroke="#b9834a" stroke-width="1.2">
-              <rect x="4" y="4" width="24" height="24" rx="2"/><rect x="4" y="30" width="24" height="24" rx="2"/><rect x="4" y="56" width="24" height="24" rx="2"/>
-              <rect x="30" y="30" width="24" height="24" rx="2"/><rect x="30" y="56" width="24" height="24" rx="2"/>
-              <rect x="56" y="56" width="24" height="24" rx="2"/>
-            </g>
-          </svg>
-        </div>
-        <div class="vcell">
-          <div class="cap">옆</div>
-          <!-- side: cols z0..2 heights 3,2,1 -->
-          <svg class="vgrid" width="84" height="84" viewBox="0 0 84 84" role="img" aria-label="옆에서 본 모양">
-            <g fill="none" stroke="#e5eaf1" stroke-width="1.5"><rect x="4" y="4" width="24" height="24"/><rect x="30" y="4" width="24" height="24"/><rect x="56" y="4" width="24" height="24"/><rect x="4" y="30" width="24" height="24"/><rect x="30" y="30" width="24" height="24"/><rect x="56" y="30" width="24" height="24"/><rect x="4" y="56" width="24" height="24"/><rect x="30" y="56" width="24" height="24"/><rect x="56" y="56" width="24" height="24"/></g>
-            <g fill="#c8965a" stroke="#b9834a" stroke-width="1.2">
-              <rect x="4" y="4" width="24" height="24" rx="2"/><rect x="4" y="30" width="24" height="24" rx="2"/><rect x="4" y="56" width="24" height="24" rx="2"/>
-              <rect x="30" y="30" width="24" height="24" rx="2"/><rect x="30" y="56" width="24" height="24" rx="2"/>
-              <rect x="56" y="56" width="24" height="24" rx="2"/>
-            </g>
-          </svg>
-        </div>
-      </div>
-    </div>
-    <div class="txt reveal">
-      <span class="eyebrow">배우는 원리</span>
-      <h2 class="sec">한 입체를 세 방향에서 읽습니다</h2>
-      <p class="lead">위·앞·옆에서 본 모양을 나란히 놓으면, 눈에 보이지 않는 뒤쪽 나무의 개수까지 따져 볼 수 있어요. 교과서가 쓰는 '위에서 본 모양 + 높이' 방식 그대로예요.</p>
-      <ul class="vlist">
-        <li><span class="n">위</span><span><b>위에서 본 모양</b>은 각 칸이 몇 층인지 알려줘요. 여기에 층수를 적으면 개수가 하나로 정해집니다.</span></li>
-        <li><span class="n">앞</span><span><b>앞·옆에서 본 모양</b>만 있으면 높이를 알 수 없어, 개수가 <b>최소부터 최대까지</b> 여러 가지가 돼요.</span></li>
-        <li><span class="n">셈</span><span>그래서 "보이지 않는 쌓기나무"를 찾는 활동이 나옵니다. 도구가 그 범위를 바로 계산해 줘요.</span></li>
-      </ul>
-    </div>
   </div>
 </section>
 
@@ -759,7 +688,7 @@
     <p>설치도 필요 없어요. 학생은 로그인 없이 브라우저에서 열어 첫 번째 나무를 놓아 보면 됩니다.</p>
     <a class="btn btn-onaccent" id="finalCta" href="playground/">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
-      쌓기나무 도구 열기
+      지금 쌓아보기
     </a>
   </div>
 </section>
@@ -780,13 +709,12 @@
       <nav class="foot-links" aria-label="바닥글">
         <div class="foot-col">
           <h4>학습 도구</h4>
-          <a id="footPlay" href="playground/">쌓기나무 도구</a>
+          <a id="footPlay" href="playground/">쌓기나무 만들기</a>
           <a href="quiz/">자동채점 퀴즈</a>
           <a href="worksheets/">문제지 만들기</a>
         </div>
         <div class="foot-col">
           <h4>정보</h4>
-          <a href="#how">배우는 원리</a>
           <a href="#coverage">학습 범위</a>
           <a href="#types">문제 유형</a>
           <!-- 문의 창구 — 전 페이지 공통 CS 폼. href 는 assets/js/foot.js 가 채운다(값의 정본).
