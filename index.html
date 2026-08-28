@@ -151,7 +151,10 @@
     display:inline-flex;align-items:center;gap:6px;pointer-events:none;
     background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:999px;
     padding:6px 12px;font-size:11.5px;font-weight:700;color:var(--muted);box-shadow:var(--shadow-sm);
-    transition:opacity .4s;}
+    transition:opacity .4s;
+    /* ⚠ left:50% 라 절대배치 상자의 가용 폭이 카드의 '오른쪽 절반'뿐이다. nowrap 이 없으면
+       좁은 카드(320px 기기)에서 "끌어서 돌려보/기" 로 갈라진다. */
+    white-space:nowrap;}
   .viewer-hint svg{width:14px;height:14px;color:var(--accent);}
   .viewer-hint.hide{opacity:0;}
   /* 스탯 패널 — playground .stats/.stat-head와 같은 UI(하나의 둥근 패널 + 칸 구분선), 위치만 캔버스 하단 중앙 */
@@ -162,7 +165,9 @@
   .viewer-stats .vs + .vs::before{content:"";position:absolute;left:0;top:22%;bottom:22%;width:1px;background:var(--line);}
   .viewer-stats .vs .k{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.02em;}
   .viewer-stats .vs .v{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.02em;line-height:1.15;
-    margin-top:1px;font-variant-numeric:tabular-nums;}
+    margin-top:1px;font-variant-numeric:tabular-nums;
+    /* 좁은 카드(모바일 200px)에서 단위(개·cm³)가 아랫줄로 떨어지는 것을 막는다 */
+    white-space:nowrap;}
   .viewer-stats .vs .v .u{font-size:10px;color:var(--muted);font-weight:600;margin-left:1px;}
 
   /* ---------- section shell ---------- */
@@ -300,21 +305,57 @@
 
   /* ---------- responsive ---------- */
   @media (max-width:860px){
-    /* 히어로 순서 — 모바일에선 3D 뷰어가 먼저 온다(사용자 결정 260828).
-       알고 받아들인 트레이드오프 두 가지:
-        · 340px 정사각 카드가 앞서므로 h1·주 CTA 가 첫 화면 밖으로 밀릴 수 있다.
-        · .viewer-card 는 touch-action:none 이라 카드 위 세로 스와이프로는 페이지가
-          안 내려간다. touch-action:pan-y 로 완화할 수 있으나 상하 회전을 잃어 두었다. */
-    .hero-grid{grid-template-columns:1fr;gap:14px;padding-top:34px;}
-    .hero-copy{max-width:none;order:1;}
-    .hero-visual{order:0;min-height:auto;margin-bottom:6px;justify-content:center;}
-    .viewer-card{width:min(340px,88%);}
+    /* ── 히어로 모바일 세로 배치 (사용자 지정 260828) ──────────────────────
+       header → h1 → 3D 카드 → 태그 → 설명 → 버튼 → 노트
+
+       ⚠ .hero-copy / .hero-visual 에 display:contents 를 쓰는 이유:
+         order 는 **형제끼리만** 통한다. 위 순서는 두 래퍼의 자식을 서로 끼워 넣는
+         것이라(h1 은 .hero-copy 에서, 카드는 .hero-visual 에서) 래퍼가 살아 있으면
+         만들 수 없다. 두 래퍼는 레이아웃용 빈 div 라 없애도 의미 손실이 없다.
+         "정리"한다고 display:contents 를 지우면 순서가 통째로 무너진다.
+
+       ⚠ 여백은 gap 이 아니라 항목별 margin 으로 잡는다. 기존 margin 값들은
+         옛 순서 기준이라 순서가 바뀐 지금 gap 과 겹치면 이중 여백이 난다.
+
+       옮기는 단위가 #heroCanvas 가 아니라 .viewer-card 인 이유: 카드가
+       .viewer-hint 와 .viewer-stats 의 position:absolute 기준 상자다. */
+    /* ⚠ align-items 를 stretch 로 되돌린다. 데스크톱 그리드의 align-items:center 가
+       그대로 남으면 세로 flex 에서 '가로 가운데 + 내용 폭' 이 되어 버튼줄이 컨테이너를
+       못 채우고 가운데 뭉친다(320px 에서 280 자리에 211). 가운데로 둘 항목은
+       아래에서 align-self 로 따로 지정한다. */
+    .hero-grid{display:flex;flex-direction:column;align-items:stretch;gap:0;
+      padding-top:12px;padding-bottom:clamp(32px,6vw,60px);}
+    .hero-copy,.hero-visual{display:contents;}
+
+    .hero-h     {order:1;margin:0 0 14px;text-align:center;}
+    /* 카드는 원래 크기(340px·폭 92%) 그대로 둔다. 화면 높이로 줄이면 3D 가 작아져
+       히어로가 죽는다 — 세로가 짧은 기기만 아래 별도 블록에서 완만하게 깎는다. */
+    .viewer-card{order:2;align-self:center;width:min(340px,92%);margin:0 0 18px;}
+    /* CTA 를 카드 바로 아래에 붙인다(사용자 지정 260828). 태그·설명보다 앞이라
+       카드가 커져도 두 버튼이 첫 화면에 남는다 — 예전엔 설명 뒤라 카드를 깎아야만 했다. */
+    .hero-btns  {order:3;}
+    .hero-tag   {order:4;align-self:flex-start;margin:20px 0 0;}
+    .hero-sub   {order:5;max-width:none;margin:12px 0 0;line-height:1.6;}
+    .hero-note  {order:6;margin:14px 0 0;}
     .fgrid,.fgrid.f4{grid-template-columns:1fr 1fr;}
     .aud{grid-template-columns:1fr;}
     .zrow{grid-template-columns:1fr;gap:20px;}
     .zrow:nth-child(even) .zvis{order:0;}
     .steps{grid-template-columns:repeat(2,1fr);}
     .qgrid{grid-template-columns:repeat(2,1fr);}
+  }
+  /* 세로가 짧은 기기(구형 소형폰·가로 모드) — 카드와 글자를 한 단계만 낮춘다.
+     ⚠ 카드에 230px 바닥을 둔다. 그 아래로 내려가면 카드 안의 스탯 3칸(개수·부피·겉넓이)이
+       넘쳐 잘리고 3D 모델이 가려진다(136px 에서 실측 확인). 여기를 더 조이지 말 것 —
+       히어로가 깨지는 편이 스크롤 한 번보다 나쁘다.
+     svh 는 주소창이 보이는 상태의 높이라 '첫 화면' 계산에 정확하다. 미지원 브라우저를 위해
+     vh 판을 먼저 두고 svh 판으로 덮는다(min() 안의 미지원 단위는 선언 전체를 무효화하므로
+     한 줄에 섞으면 안 된다). */
+  @media (max-width:860px) and (max-height:610px){
+    .viewer-card{width:min(340px,92%,max(230px,40vh));}
+    .viewer-card{width:min(340px,92%,max(230px,40svh));}
+    h1.hero-h{font-size:26px;}
+    .hero-sub{font-size:14px;}
   }
   @media (max-width:520px){
     .fgrid,.fgrid.f4{grid-template-columns:1fr;}
