@@ -308,7 +308,7 @@
       <div class="site-topin">
         <a class="site-brand" href="../../" aria-label="큐브네스트 홈">
           <img class="glyph" src="../../assets/img/brand-glyph.svg" alt="" role="presentation" />
-          <span class="t"><b>CubeNest</b><span>쌓기나무 3D 학습</span></span>
+          <span class="t"><b data-brand>CubeNest</b><span>쌓기나무 3D 학습</span></span>
         </a>
         <nav class="site-nav" aria-label="주요 메뉴">
           <a href="../../">홈</a>
@@ -402,5 +402,15 @@
     <!-- ⚠ ?v= 를 반드시 올릴 것. 없으면 옛 run.js 가 캐시에 남아 새 서버 응답을 만난다
          (서버가 2D 에서 형상을 빼는 단계적 배포의 전제가 이 한 줄이다). -->
     <script src="./run.js?v=0.18.0"></script>
+    <script>
+    // 헤더 워드마크 언어 전환 — 정본은 account/index.html.
+    // ⚠ 헤더 마크업을 옮길 때 이 스크립트도 같이 옮긴다. 훅(data-brand)만 복사하고
+    //   스크립트를 빠뜨리면 오류 없이 한국어 사용자에게 "CubeNest" 가 그대로 남는다(260829 수정).
+    (function(){
+      var brand = (navigator.language||'').toLowerCase().startsWith('ko') ? '큐브네스트' : 'CubeNest';
+      document.querySelectorAll('[data-brand]').forEach(function(el){ el.textContent = brand; });
+    })();
+    </script>
+
   </body>
 </html>
