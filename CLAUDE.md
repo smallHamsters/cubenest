@@ -95,6 +95,18 @@
 ## 기술 · 규약
 - **단일 HTML/페이지 + Three.js, 빌드 없음, 정적 호스팅**(GitHub Pages, `/cubenest/` 하위경로). 백엔드 = **Supabase**(Auth·Postgres+RLS·Edge Functions). 로컬 확인: `py -m http.server 5500` (**5500 고정** — Edge Function CORS 허용 오리진. 기본 8000이면 `/generate`·`/grade`가 막힌다. **`python`이 아니라 `py`** — 개발 머신의 `python`은 WindowsApps 스텁이라 exit 9009로 죽는다).
 - **배포 = `<모듈>/index.html`**(랜딩=루트). 공용 자산 `assets/{css,img,js,og}`. 상대경로(하위 `../`, 2층 `../../`). 서버 = `supabase/`(functions·migrations·config).
+- **레이아웃 폭·거터는 `tokens.css` 의 `--wrap`(1080px)·`--gutter`(22px, ≤640px 에서 16px)가 단일 출처다.**
+  헤더 `.site-topin` 과 줄을 맞춰야 하는 **바깥 셸**에만 쓴다. `--gutter` 가 미디어쿼리까지 담당하므로
+  소비처는 `var(--gutter)` 만 쓰고 브레이크포인트를 복제하지 않는다.
+  - **⚠ 셸 컨테이너에는 `box-sizing:border-box` 를 반드시 명시한다.** `guide`·`my`·`account`·`worksheets`·
+    `privacy`·`terms` 에는 전역 `border-box` 리셋이 없어서, 같은 `max-width:1080px` 이 헤더(border-box, 총 1080)와
+    본문(content-box, 1080+좌우 44 = **1124**)에서 다른 뜻이 된다 — 폭을 맞춰도 22px 어긋난다.
+    **눈으로는 안 보이고 rect 실측으로만 잡힌다**(260829 에 실제로 이렇게 찾았다). 전역 리셋을 새로 넣지 말 것 —
+    그 6페이지의 다른 레이아웃이 같이 흔들린다. 셸에만 명시한다.
+  - **안쪽 '읽기 폭'은 이 토큰을 쓰지 않는다** — 약관·방침 `72ch`(행폭) · 퀴즈 풀기 `720px`(문제 열) ·
+    문제지 `920px` · 계정 카드열 `860px` 은 드리프트가 아니라 의도된 값이다. 1080 으로 늘리면 가독성이 나빠진다.
+  - 제외: `playground`(전체화면 캔버스 + 절대배치 오버레이, 셸 자체가 없음) · `404`(자립형 중앙 카드) ·
+    `worksheets` 의 `@media print`(`@page{margin:12mm 12mm 14mm}` 가 A4 여백을 전담한다).
 - **브랜드 마크 = 라운드 등축 정육면체. 세 면이 곧 위·앞·옆이고 색도 방향색 그대로다**(위 `#3f8fd0` · 앞 `#4fae72` · 옆 `#d0546f`). 로고가 새 색을 들여온 게 아니라 제품이 이미 19곳에서 쓰던 의미색을 승격시킨 것 — **UI 액센트 `--accent:#3f3fbf` 는 그대로다.** 로고 3색으로 버튼·링크를 칠하지 말 것(방향의 뜻이 흐려진다).
   - **정본은 `assets/img/brand-glyph.svg` 하나이고 13곳이 이 URL 을 공유한다.** 파일명을 바꾸지 말 것 — 덮어쓰기 한 번이 3가지 깊이를 동시에 바꾸고 롤백도 `git checkout` 한 줄이다. 이름을 바꾸면 13곳 편집 창이 생겨 그사이 페이지마다 다른 로고가 뜬다.
   - **⚠ 같은 그림이 코드로 복제된 곳이 둘 있다. 마크를 고치면 셋 다 고친다.**
