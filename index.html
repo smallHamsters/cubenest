@@ -5,7 +5,7 @@
 <!-- viewport: 일반 스크롤 페이지라 pinch-zoom 허용(확대/축소 제한 없음). playground는 터치 드래그 3D 앱이라 별도로 확대 방지 설정을 둠. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>큐브네스트 · 쌓기나무 3D 학습 — 개수·부피·겉넓이</title>
-<meta name="description" content="쌓기나무(단위 정육면체)를 3D로 돌려 보며 개수·부피·겉넓이를 배우는 학습 도구. 사고력 수학부터 초등 6학년 '공간과 입체' 교과까지 한 번에. 설치 없이 브라우저에서 바로, 만든 모양은 링크로 그대로 공유돼요.">
+<meta name="description" content="쌓기나무(단위 정육면체)를 3D로 쌓고 돌려 보며 개수·부피·겉넓이를 배우는 학습 도구. 유아부터 초등 6학년 '공간과 입체'까지 다섯 단계, 자동채점 퀴즈 19종과 인쇄용 문제지까지. 설치 없이 브라우저에서 바로, 학생은 로그인 없이.">
 <meta name="theme-color" content="#e9eef4">
 <link rel="canonical" href="https://smallhamsters.github.io/cubenest/">
 
@@ -13,7 +13,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="CubeNest">
 <meta property="og:title" content="큐브네스트 · 쌓기나무 3D 학습 — 개수·부피·겉넓이">
-<meta property="og:description" content="쌓기나무를 3D로 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 배워요. 만든 모양은 링크 하나로 그대로 공유됩니다.">
+<meta property="og:description" content="쌓기나무를 3D로 쌓고 위·앞·옆에서 관찰하며 개수·부피·겉넓이를 배워요. 유아부터 초6까지 다섯 단계, 자동채점 퀴즈와 인쇄용 문제지까지.">
 <meta property="og:locale" content="ko_KR">
 <meta property="og:url" content="https://smallhamsters.github.io/cubenest/">
 <meta property="og:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
@@ -22,7 +22,7 @@
 <meta property="og:image:alt" content="CubeNest — 쌓기나무 3D 학습">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="큐브네스트 · 쌓기나무 3D 학습 — 개수·부피·겉넓이">
-<meta name="twitter:description" content="쌓기나무를 3D로 쌓고 돌려 보며 개수·부피·겉넓이를 배워요.">
+<meta name="twitter:description" content="쌓기나무를 3D로 쌓고 돌려 보며 개수·부피·겉넓이를 배워요. 유아부터 초6까지, 퀴즈와 문제지까지.">
 <meta name="twitter:image" content="https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png">
 
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
@@ -49,6 +49,8 @@
     },
     {
       "@type": "WebApplication",
+      "@id": "https://smallhamsters.github.io/cubenest/#app",
+      "isPartOf": { "@id": "https://smallhamsters.github.io/cubenest/#website" },
       "name": "CubeNest 쌓기나무 3D 학습",
       "url": "https://smallhamsters.github.io/cubenest/playground/",
       "image": "https://smallhamsters.github.io/cubenest/assets/img/cubenest-og.png",
@@ -59,8 +61,8 @@
       "isAccessibleForFree": true,
       "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" },
       "learningResourceType": "3D 인터랙티브 학습 도구",
-      "educationalLevel": "초등학교 6학년",
-      "teaches": ["쌓기나무 개수 세기", "위·앞·옆 투상", "겉넓이 구하기", "부피 구하기", "공간과 입체"],
+      "educationalLevel": ["유아", "초등학교 1~2학년", "초등학교 3~4학년", "초등학교 5학년", "초등학교 6학년"],
+      "teaches": ["쌓기나무 개수 세기", "위·앞·옆 투상", "겉넓이 구하기", "부피 구하기", "공간과 입체", "보이지 않는 쌓기나무 찾기", "쌓기나무 최대·최소 개수", "공간 감각"],
       "audience": [
         { "@type": "EducationalAudience", "educationalRole": "student" },
         { "@type": "EducationalAudience", "educationalRole": "teacher" },
@@ -81,6 +83,10 @@
   img,svg{display:block;max-width:100%;}
   ::selection{background:var(--accent-soft);}
   :focus-visible{outline:2.5px solid var(--accent);outline-offset:3px;border-radius:6px;}
+  /* 건너뛰기 링크 — 키보드/스크린리더가 헤더 메뉴 6개를 매번 지나치지 않도록 */
+  .skip{position:absolute;left:-9999px;top:0;z-index:200;background:var(--panel);color:var(--accent-ink);
+    padding:11px 18px;border-radius:0 0 12px 0;font-weight:800;font-size:14px;box-shadow:var(--shadow);}
+  .skip:focus{left:0;}
 
   .wrap{max-width:1080px;margin:0 auto;padding:0 22px;}
   .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;color:var(--accent);
@@ -114,11 +120,15 @@
   .hero-btns{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
   .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;
     height:52px;padding:0 26px;border-radius:14px;font-weight:800;font-size:16px;
+    white-space:nowrap;
     transition:transform .12s,box-shadow .2s,background .2s;cursor:pointer;border:none;font-family:inherit;}
+  /* ⚠ 아이콘 크기는 .btn 전체에 건다. 예전엔 .btn-primary 에만 있어서
+     .btn-onaccent(Final CTA) 의 SVG 가 width/height 속성 없이 기본 크기(61px)로 부풀었고,
+     52px 버튼 안의 글자를 밖으로 밀어냈다. 변형별로 나눠 쓰지 말 것. */
+  .btn svg{width:19px;height:19px;flex:0 0 auto;}
   .btn-primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(63,63,191,.32);}
   .btn-primary:hover{background:var(--accent-ink);box-shadow:0 9px 26px rgba(63,63,191,.4);transform:translateY(-1px);}
   .btn-primary:active{transform:translateY(0);}
-  .btn-primary svg{width:19px;height:19px;}
   .btn-ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow-sm);}
   .btn-ghost:hover{border-color:#d3dbe6;background:var(--panel-2);}
   .hero-note{margin:18px 0 0;font-size:12.5px;color:var(--muted-2);display:flex;align-items:center;gap:7px;}
@@ -160,8 +170,9 @@
   section.band.white{background:var(--panel);}
   .sec-head{max-width:60ch;margin-bottom:clamp(30px,5vw,48px);}
 
-  /* ---------- features ---------- */
+  /* ---------- 카드 그리드 (안심 섹션에서 사용) ---------- */
   .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .fgrid.f4{grid-template-columns:repeat(4,1fr);}
   .fcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
     padding:24px 22px 22px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
     transition:transform .18s,box-shadow .2s,border-color .2s;}
@@ -173,8 +184,61 @@
   .fcard.w .ico{background:#fbf1e3;color:#b9834a;}
   .fcard h3{font-size:17px;font-weight:800;letter-spacing:-.02em;margin:0 0 7px;}
   .fcard p{font-size:13.5px;color:var(--muted);margin:0;line-height:1.6;}
-  .fcard .soon{position:absolute;top:16px;right:16px;font-size:10px;font-weight:800;letter-spacing:.03em;
-    color:var(--muted);background:var(--line-2);border-radius:999px;padding:4px 9px;}
+
+  /* ---------- 섹션 보조 CTA (본문에서 기능으로 보내는 진입점) ---------- */
+  .sec-cta{display:inline-flex;align-items:center;gap:7px;height:46px;padding:0 19px;border-radius:12px;
+    background:var(--panel);border:1px solid var(--line);color:var(--accent-ink);
+    font-weight:800;font-size:14.5px;box-shadow:var(--shadow-sm);
+    transition:background .15s,border-color .15s,transform .12s;}
+  .sec-cta:hover{background:var(--accent-soft);border-color:transparent;transform:translateY(-1px);}
+  .sec-cta svg{width:16px;height:16px;flex:0 0 auto;}
+  .band.white .sec-cta{background:var(--bg);}
+  .band.white .sec-cta:hover{background:var(--accent-soft);}
+
+  /* ---------- 좌우 교차 블록 (지금 할 수 있는 것) ----------
+     카드 그리드가 세 섹션 연속으로 이어지던 단조로움을 끊는 장치. */
+  .zig{display:grid;gap:clamp(34px,6vw,66px);}
+  .zrow{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,5vw,54px);align-items:center;}
+  .zrow:nth-child(even) .zvis{order:2;}
+  .zvis{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);
+    padding:clamp(20px,3vw,30px);box-shadow:var(--shadow-sm);
+    display:grid;place-items:center;min-height:200px;}
+  .band .zvis{background:var(--panel);}
+  .ztag{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.04em;
+    color:var(--accent-ink);background:var(--accent-soft);border-radius:999px;padding:5px 11px;margin-bottom:13px;}
+  .ztxt h3{font-size:clamp(19px,2.7vw,25px);font-weight:800;letter-spacing:-.026em;margin:0 0 10px;line-height:1.25;}
+  .ztxt > p{font-size:14.5px;color:var(--muted);line-height:1.72;margin:0 0 15px;}
+  .zlist{list-style:none;padding:0;margin:0 0 19px;display:grid;gap:8px;}
+  .zlist li{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--muted);line-height:1.6;}
+  .zlist li svg{width:15px;height:15px;flex:0 0 auto;margin-top:3px;color:var(--accent);}
+  .zlist li b{color:var(--ink);font-weight:700;}
+
+  /* ---------- 학년 다섯 단계 ---------- */
+  .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+  .step{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:19px 16px 17px;box-shadow:var(--shadow-sm);}
+  .band.white .step{background:var(--bg);}
+  .step.is-core{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft),var(--shadow-sm);}
+  .band.white .step.is-core{background:var(--panel);}
+  .step .lv{display:block;font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--accent);margin-bottom:9px;}
+  .step h3{font-size:15.5px;font-weight:800;letter-spacing:-.02em;margin:0 0 3px;}
+  .step .age{font-size:11.5px;color:var(--muted-2);margin:0 0 11px;}
+  .step p{font-size:12.5px;color:var(--muted);line-height:1.62;margin:0;}
+  .step .core{position:absolute;top:-10px;right:12px;font-size:10px;font-weight:800;letter-spacing:.02em;
+    color:#fff;background:var(--accent);border-radius:999px;padding:3px 10px;}
+  .steps-note{margin:20px 0 0;font-size:12.5px;color:var(--muted-2);line-height:1.75;max-width:70ch;}
+  .steps-note b{color:var(--muted);font-weight:700;}
+
+  /* ---------- 문제 유형 칩 ---------- */
+  .qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+  .qchip{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+    padding:15px 17px;box-shadow:var(--shadow-sm);}
+  .band.white .qchip{background:var(--bg);}
+  .qchip b{display:block;font-size:14.5px;font-weight:800;letter-spacing:-.015em;margin-bottom:4px;}
+  .qchip span{font-size:12.5px;color:var(--muted);line-height:1.55;}
+  .qfoot{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:20px;}
+  .qfoot .more{font-size:13.5px;color:var(--muted);}
+  .qfoot .more b{color:var(--ink);font-weight:800;}
 
   /* ---------- 위·앞·옆 explainer ---------- */
   .explain{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(28px,5vw,54px);align-items:center;}
@@ -192,15 +256,6 @@
     color:var(--accent);font-weight:800;font-size:12px;display:grid;place-items:center;margin-top:1px;}
   .vlist li span{color:var(--muted);}
 
-  /* ---------- SEO 콘텐츠 ---------- */
-  .seo-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(22px,4vw,40px) clamp(30px,5vw,56px);}
-  .seo-item h3{font-size:19px;font-weight:800;letter-spacing:-.02em;margin:0 0 10px;
-    display:flex;align-items:center;gap:9px;}
-  .seo-item h3 .cube{width:20px;height:20px;flex:0 0 auto;}
-  .seo-item p{font-size:14.5px;color:var(--muted);line-height:1.75;margin:0;}
-  .seo-item p + p{margin-top:10px;}
-  .seo-item strong{color:var(--ink);font-weight:700;}
-
   /* ---------- 대상별 ---------- */
   .aud{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
   .acard{border-radius:var(--r-lg);padding:30px 28px;position:relative;overflow:hidden;}
@@ -217,6 +272,9 @@
   .acard li svg{width:17px;height:17px;flex:0 0 auto;margin-top:1px;}
   .acard.teacher li svg{color:var(--accent);}
   .acard.parent li svg{color:var(--add);}
+  .acard .sec-cta{margin-top:18px;background:rgba(255,255,255,.82);border-color:transparent;}
+  .acard .sec-cta:hover{background:#fff;}
+  .acard.parent .sec-cta{color:#0b7a45;}
 
   /* ---------- final CTA ---------- */
   .final{background:linear-gradient(160deg,#2f2f9e 0%,#3f3fbf 60%,#4a45c8 100%);color:#fff;
@@ -240,13 +298,14 @@
   .foot-brand p{margin:12px 0 0;font-size:12.5px;color:#8894a8;max-width:34ch;line-height:1.6;}
   .foot-links{display:flex;gap:40px;flex-wrap:wrap;}
   .foot-col h4{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#71809b;margin:0 0 12px;font-weight:800;}
-  .foot-col a{display:block;font-size:13.5px;color:#c3ccdb;padding:4px 0;transition:color .15s;}
+  /* 터치 타깃 — 패딩으로 44px 에 맞춘다(예전 4px 은 약 30px 높이였다) */
+  .foot-col a{display:block;font-size:13.5px;color:#c3ccdb;padding:11px 0;transition:color .15s;}
   .foot-col a:hover{color:#fff;}
   .foot-bottom{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;
     padding-top:22px;font-size:12px;color:#7a879b;}
   .foot-bottom .privacy{display:inline-flex;align-items:center;gap:6px;}
   .foot-bottom .privacy svg{width:14px;height:14px;color:#9aa6ba;}
-  .foot-legal a{color:#8894a8;text-decoration:none;}
+  .foot-legal a{color:#8894a8;text-decoration:none;display:inline-block;padding:11px 2px;}
   .foot-legal a:hover{color:#fff;}
   .fdot{margin:0 6px;opacity:.5;}
   .foot-biz{padding-top:10px;font-size:11px;color:#66738a;}
@@ -257,18 +316,27 @@
 
   /* ---------- responsive ---------- */
   @media (max-width:860px){
-    .hero-grid{grid-template-columns:1fr;gap:14px;padding-top:34px;}
-    .hero-copy{max-width:none;order:1;}
-    .hero-visual{order:0;min-height:auto;margin-bottom:6px;justify-content:center;}
+    /* ⚠ 히어로 순서 — 카피가 먼저다. 예전엔 340px 정사각 뷰어가 h1 위에 와서
+       작은 폰에서 헤드라인과 주 CTA 가 접히는 선 아래로 밀렸다. 되돌리지 말 것.
+       (.viewer-card 는 touch-action:none 이라 카드 위 세로 스와이프로는 스크롤도 안 된다) */
+    .hero-grid{grid-template-columns:1fr;gap:22px;padding-top:34px;}
+    .hero-copy{max-width:none;order:0;}
+    .hero-visual{order:1;min-height:auto;justify-content:center;}
     .viewer-card{width:min(340px,88%);}
-    .fgrid{grid-template-columns:1fr 1fr;}
+    .fgrid,.fgrid.f4{grid-template-columns:1fr 1fr;}
     .explain{grid-template-columns:1fr;}
-    .seo-grid{grid-template-columns:1fr;}
     .aud{grid-template-columns:1fr;}
+    .zrow{grid-template-columns:1fr;gap:20px;}
+    .zrow:nth-child(even) .zvis{order:0;}
+    .steps{grid-template-columns:repeat(2,1fr);}
+    .qgrid{grid-template-columns:repeat(2,1fr);}
   }
   @media (max-width:520px){
-    .fgrid{grid-template-columns:1fr;}
-    .brand .t span{display:none;}
+    .fgrid,.fgrid.f4{grid-template-columns:1fr;}
+    .steps{grid-template-columns:1fr;}
+    .qgrid{grid-template-columns:1fr;}
+    /* 푸터 브랜드 부제 — 헤더는 nav.css 의 640px 규칙이 따로 처리한다 */
+    .foot-brand .t span{display:none;}
     .hero-btns{gap:10px;}
     .btn{flex:1 1 auto;}
   }
@@ -280,6 +348,8 @@
 </style>
 </head>
 <body>
+
+<a class="skip" href="#main">본문으로 건너뛰기</a>
 
 <!-- ===================== TOP BAR ===================== -->
 <header class="site-top" id="topbar">
@@ -302,22 +372,26 @@
   </div>
 </header>
 
+<main id="main">
+
 <!-- ===================== HERO ===================== -->
 <section class="hero">
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <span class="hero-tag">
         <img class="dot" src="assets/img/brand-glyph.svg" alt="" role="presentation">
-        사고력 수학부터 교과까지
+        유아부터 초등 6학년까지
       </span>
       <h1 class="hero-h">쌓고 돌려 보며 익히는 <span class="hl">쌓기나무</span></h1>
-      <p class="hero-sub">쌓기나무를 화면에서 직접 쌓고 돌려 보세요. 위·앞·옆 어디에서 봐도 개수·부피·겉넓이가 곧바로 계산됩니다. 만든 모양은 링크 하나로 그대로 공유되고, 설치나 준비물도 필요 없어요.</p>
+      <p class="hero-sub">화면에서 직접 쌓고 돌려 보세요. 어느 방향에서 봐도 개수·부피·겉넓이가 곧바로 계산됩니다. 학년에 맞춘 <b>퀴즈 19종</b>과 인쇄용 <b>문제지</b>까지, 설치나 준비물 없이 브라우저 하나로.</p>
       <div class="hero-btns">
         <a class="btn btn-primary" id="heroCta" href="playground/">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
           바로 해보기
         </a>
-        <a class="btn btn-ghost" href="#features">기능 살펴보기</a>
+        <!-- 보조 CTA — 앵커(#features)가 아니라 실제 기능으로 보낸다.
+             마스터가 랜딩에 부여한 임무가 '기능 바로가기'인데 예전엔 본문 진입점이 0개였다. -->
+        <a class="btn btn-ghost" href="quiz/">퀴즈 풀어보기</a>
       </div>
       <p class="hero-note">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -327,7 +401,7 @@
 
     <div class="hero-visual">
       <div class="viewer-card">
-        <canvas id="heroCanvas" aria-label="쌓기나무로 만든 입체를 끌어서 돌려볼 수 있는 3D 화면"></canvas>
+        <canvas id="heroCanvas" role="img" aria-label="쌓기나무로 만든 입체를 끌어서 돌려볼 수 있는 3D 화면"></canvas>
         <span class="viewer-hint" id="viewerHint">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3m13.5-6.5-2 2m-9 9 2-2m0-9-2-2m11 11-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
           끌어서 돌려보기
@@ -348,43 +422,114 @@
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="eyebrow">할 수 있는 것</span>
-      <h2 class="sec">쌓고, 돌려 보고, 계산까지 한 화면에서</h2>
-      <p class="lead">교과서 속 쌓기나무 활동을 그대로 화면으로 옮겼어요. 직접 만들며 관찰하고, 관찰하며 개수를 확인하는 과정을 한자리에서 익힙니다.</p>
+      <h2 class="sec">만들고, 풀고, 인쇄까지</h2>
+      <p class="lead">직접 쌓아 보는 도구, 학년에 맞춰 자동 채점되는 퀴즈, 종이로 뽑는 문제지 — 세 가지가 같은 쌓기나무 위에서 이어집니다.</p>
     </div>
-    <div class="fgrid">
-      <article class="fcard reveal">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.5 21 7v10l-9 4.5L3 17V7Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M3 7l9 4.5m0 0L21 7m-9 4.5V21.5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
-        <h3>자유롭게 돌려 보기</h3>
-        <p>손끝으로 돌리고 확대하며 어느 방향에서든 살펴봐요. 뒤에 숨은 나무까지 직접 눈으로 확인할 수 있어요.</p>
-      </article>
-      <article class="fcard reveal">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.4" stroke="currentColor" stroke-width="1.7"/><rect x="13" y="3" width="8" height="8" rx="1.4" stroke="currentColor" stroke-width="1.7"/><rect x="8" y="13" width="8" height="8" rx="1.4" stroke="currentColor" stroke-width="1.7"/></svg></div>
-        <h3>위·앞·옆에서 보기</h3>
-        <p>위·앞·옆에서 본 모양을 각각 확인하며, 입체를 평면 그림으로 읽는 눈을 길러요.</p>
-      </article>
-      <article class="fcard g reveal">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><rect x="4" y="3" width="16" height="18" rx="2" stroke="currentColor" stroke-width="1.7"/><path d="M8 8h8M8 12h8M8 16h5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-        <h3>개수·부피·겉넓이 자동</h3>
-        <p>모양을 바꿀 때마다 개수·부피·겉넓이가 곧바로 다시 계산돼요. <strong>계산 과정</strong>까지 펼쳐 보여줘 왜 그렇게 되는지 이해할 수 있어요.</p>
-      </article>
-      <article class="fcard reveal">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5.5" r="2.6" stroke="currentColor" stroke-width="1.8"/><circle cx="6" cy="12" r="2.6" stroke="currentColor" stroke-width="1.8"/><circle cx="18" cy="18.5" r="2.6" stroke="currentColor" stroke-width="1.8"/><path d="M8.3 10.7 15.7 6.8M8.3 13.3 15.7 17.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
-        <h3>만든 모양 링크 공유</h3>
-        <p>링크 하나만 보내면 똑같은 모양이 상대 화면에 그대로 열려요. 과제로 내주거나 친구에게 문제로 보내기 좋아요.</p>
-      </article>
-      <article class="fcard w reveal">
-        <span class="soon">곧 제공</span>
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-        <h3>문제지 만들기</h3>
-        <p>학년과 문항 수를 골라 문제지와 정답지를 PDF로 만들어요. 수업·숙제용으로 바로 출력할 수 있게 준비하고 있어요.</p>
-      </article>
-      <article class="fcard w reveal">
-        <span class="soon">곧 제공</span>
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M9 11.5 11 14l4.5-5" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="4" width="17" height="16" rx="2.4" stroke="currentColor" stroke-width="1.7"/></svg></div>
-        <h3>자동채점 퀴즈</h3>
-        <p>개수·최소·최대·모양 만들기를 그 자리에서 채점해요. 정답이 여럿인 문제도 정확히 가려내도록 준비하고 있어요.</p>
-      </article>
+
+    <div class="zig">
+      <!-- ① 도구 -->
+      <div class="zrow reveal">
+        <div class="zvis">
+          <svg width="200" height="150" viewBox="0 0 200 150" role="img" aria-label="쌓기나무를 여러 방향에서 돌려 보는 모습">
+            <g fill="#e6b980" stroke="#b9834a" stroke-width="1.6" stroke-linejoin="round">
+              <path d="M100 26 128 42 100 58 72 42Z"/><path d="M72 42v28l28 16V58Z" fill="#d8a76e"/><path d="M128 42v28l-28 16V58Z" fill="#c8965a"/>
+              <path d="M64 74 92 90 64 106 36 90Z"/><path d="M36 90v20l28 16v-20Z" fill="#d8a76e"/><path d="M92 90v20l-28 16v-20Z" fill="#c8965a"/>
+              <path d="M136 74 164 90 136 106 108 90Z"/><path d="M108 90v20l28 16v-20Z" fill="#d8a76e"/><path d="M164 90v20l-28 16v-20Z" fill="#c8965a"/>
+            </g>
+            <g stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".55">
+              <path d="M28 60a52 52 0 0 1 26-22"/><path d="M50 32l6 8-10 2Z" fill="var(--accent)" stroke="none"/>
+              <path d="M172 60a52 52 0 0 0-26-22"/><path d="M150 32l-6 8 10 2Z" fill="var(--accent)" stroke="none"/>
+            </g>
+          </svg>
+        </div>
+        <div class="ztxt">
+          <span class="ztag">쌓기나무 도구</span>
+          <h3>손끝으로 돌려 보며 세어 봅니다</h3>
+          <p>블록을 놓고 지우면서 어느 방향에서든 살펴봐요. 뒤에 숨은 나무까지 직접 눈으로 확인할 수 있습니다.</p>
+          <ul class="zlist">
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>위·앞·옆에서 본 모양을 각각 확인</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>개수·부피·겉넓이가 바뀔 때마다 다시 계산, <b>계산 과정</b>까지 펼쳐서</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>만든 모양은 <b>링크 하나</b>로 그대로 전달</span></li>
+          </ul>
+          <a class="sec-cta" href="playground/">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
+            도구 열기
+          </a>
+        </div>
+      </div>
+
+      <!-- ② 퀴즈 -->
+      <div class="zrow reveal">
+        <div class="zvis">
+          <svg width="210" height="150" viewBox="0 0 210 150" role="img" aria-label="문제를 풀고 자동으로 채점되는 모습">
+            <rect x="18" y="16" width="174" height="118" rx="12" fill="var(--panel)" stroke="var(--line)" stroke-width="1.6"/>
+            <rect x="34" y="34" width="72" height="9" rx="4.5" fill="var(--line-2)"/>
+            <g fill="#e6b980" stroke="#b9834a" stroke-width="1.3">
+              <rect x="34" y="54" width="22" height="22" rx="3"/><rect x="58" y="54" width="22" height="22" rx="3"/>
+              <rect x="34" y="78" width="22" height="22" rx="3"/>
+            </g>
+            <rect x="94" y="54" width="82" height="10" rx="5" fill="var(--line-2)"/>
+            <rect x="94" y="70" width="58" height="10" rx="5" fill="var(--line-2)"/>
+            <rect x="94" y="90" width="82" height="26" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
+            <path d="M108 103l6 6 12-13" stroke="var(--add)" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+            <text x="132" y="108" font-family="Pretendard, sans-serif" font-size="12" font-weight="800" fill="var(--accent-ink)">정답</text>
+          </svg>
+        </div>
+        <div class="ztxt">
+          <span class="ztag">자동채점 퀴즈</span>
+          <h3>학년에 맞는 문제가 매번 새로 나옵니다</h3>
+          <p>문제를 미리 만들어 두지 않아요. 풀 때마다 서버가 새로 만들기 때문에, 같은 학년·같은 난이도라도 매번 다른 문제를 만납니다.</p>
+          <ul class="zlist">
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>문항 유형 <b>19종</b> · 학년과 난이도를 골라서</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>화면에 바로 쓰는 <b>연습장</b>, 틀린 문제는 3D 해설로</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>새로고침해도 <b>풀던 자리에서</b> 이어서</span></li>
+          </ul>
+          <a class="sec-cta" href="quiz/">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 11.5 11 14l4.5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="4" width="17" height="16" rx="2.4" stroke="currentColor" stroke-width="1.7"/></svg>
+            퀴즈 풀어보기
+          </a>
+        </div>
+      </div>
+
+      <!-- ③ 문제지 -->
+      <div class="zrow reveal">
+        <div class="zvis">
+          <svg width="200" height="150" viewBox="0 0 200 150" role="img" aria-label="문제지를 인쇄하고 QR로 3D 화면에 연결하는 모습">
+            <rect x="26" y="12" width="104" height="126" rx="8" fill="var(--panel)" stroke="var(--line)" stroke-width="1.6"/>
+            <rect x="40" y="28" width="52" height="8" rx="4" fill="var(--line-2)"/>
+            <g fill="#e6b980" stroke="#b9834a" stroke-width="1.2">
+              <rect x="40" y="48" width="17" height="17" rx="2.5"/><rect x="59" y="48" width="17" height="17" rx="2.5"/><rect x="40" y="67" width="17" height="17" rx="2.5"/>
+            </g>
+            <rect x="40" y="96" width="76" height="7" rx="3.5" fill="var(--line-2)"/>
+            <rect x="40" y="108" width="60" height="7" rx="3.5" fill="var(--line-2)"/>
+            <g transform="translate(140,74)">
+              <rect x="0" y="0" width="46" height="46" rx="7" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.7"/>
+              <g fill="var(--accent-ink)">
+                <rect x="7" y="7" width="12" height="12" rx="2"/><rect x="27" y="7" width="12" height="12" rx="2"/><rect x="7" y="27" width="12" height="12" rx="2"/>
+                <rect x="28" y="28" width="5" height="5"/><rect x="35" y="28" width="4" height="4"/><rect x="28" y="35" width="4" height="4"/><rect x="34" y="34" width="5" height="5"/>
+              </g>
+            </g>
+            <path d="M132 60c14-10 28-6 32 8" stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".6"/>
+            <path d="M160 62l4 8 6-6Z" fill="var(--accent)" opacity=".6"/>
+          </svg>
+        </div>
+        <div class="ztxt">
+          <span class="ztag">문제지 만들기</span>
+          <h3>종이로 뽑고, 헷갈리면 QR로 돌려 봅니다</h3>
+          <p>유형과 문항 수를 골라 문제지와 정답지를 만들어 인쇄해요. 같은 주소를 다시 열면 같은 문제지가 그대로 나옵니다.</p>
+          <ul class="zlist">
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>문제지 + <b>정답지</b> 인쇄 · PDF 저장</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>종이에서 답이 하나로 안 정해지는 문항에만 <b>QR</b>을 붙여 3D로 연결</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>퀴즈를 끝까지 푼 뒤 <b>푼 문제 그대로</b> 문제지로</span></li>
+          </ul>
+          <a class="sec-cta" href="worksheets/">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            문제지 만들기
+          </a>
+        </div>
+      </div>
     </div>
+
   </div>
 </section>
 
@@ -444,30 +589,88 @@
   </div>
 </section>
 
-<!-- ===================== 학습 범위 (사고력수학~교과) ===================== -->
+<!-- ===================== 학년 다섯 단계 =====================
+     ⚠ 카피 제약(.claude/quiz/cubenest_난이도_재설계_260818_v0_1.md §7):
+       · 초3~4(S2)를 "교과 보충"으로 팔지 말 것 — 그 학년 교과엔 입체도형이 거의 없다.
+         공간감각 훈련이자 초5~6 선행의 입구다.
+       · 겨냥도는 초5에서 처음 배운다 — S0~S2 를 겨냥도로 설명하면 미학습 표현이다.
+       · 유아·초1~2 의 근거는 교과가 아니라 사고력 교재 시장이다. 그렇게 정직하게 쓴다.
+     스테이지 정의의 정본은 supabase/functions/_shared/cubenest-gen-config.js 다. -->
 <section class="band white" id="coverage">
   <div class="wrap">
     <div class="sec-head reveal">
       <span class="eyebrow">학습 범위</span>
-      <h2 class="sec">사고력 수학부터 학교 교과까지, 한 도구로</h2>
-      <p class="lead">쌓기나무 하나로 창의·사고력 문제부터 교과서 '공간과 입체'까지 이어서 익혀요. 학원·가정·학교 어디서든 같은 화면으로, 아이 수준에 맞춰 자연스럽게 넓혀 갑니다.</p>
+      <h2 class="sec">유아부터 초등 6학년까지, 다섯 단계</h2>
+      <p class="lead">아이 나이에 맞는 단계를 고르면 그 단계에 맞는 유형과 크기로만 문제가 나옵니다. 단계끼리 조금씩 겹쳐 두어 학년이 바뀔 때 갑자기 어려워지지 않아요.</p>
     </div>
-    <div class="fgrid">
-      <article class="fcard reveal">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8.9.9 1.5l.2 1.1h4.8l.2-1.1c.1-.6.4-1.1.9-1.5A6 6 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M9.5 20.5h5M10 18h4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-        <h3>사고력·창의 수학</h3>
-        <p>규칙 없이 자유롭게 쌓고 돌려 보며 공간 감각과 추론력을 키워요. 영재·경시의 '보이지 않는 나무 찾기'까지 이어집니다.</p>
+    <div class="steps">
+      <article class="step reveal">
+        <span class="lv">STEP 1</span>
+        <h3>유아</h3>
+        <p class="age">만 5~7세</p>
+        <p>몇 개인지 세기, 위에서 보면 어떤 모양인지 고르기 — 사고력 도형 교재가 내는 딱 두 가지.</p>
       </article>
-      <article class="fcard reveal">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H11v15H5.5A1.5 1.5 0 0 0 4 20.5V5.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H13v15h5.5A1.5 1.5 0 0 1 20 20.5V5.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
-        <h3>교과 연계 · 공간과 입체</h3>
-        <p>위·앞·옆 보기와 개수·부피·겉넓이 구하기 등 초등 6학년 교과서의 핵심 활동을 그대로 담았어요. 수업 진도에 맞춰 바로 활용할 수 있어요.</p>
+      <article class="step reveal">
+        <span class="lv">STEP 2</span>
+        <h3>초 1~2</h3>
+        <p class="age">만 7~8세</p>
+        <p>같은 두 가지를 조금 더 크게. 위에 이어 앞에서 본 모양까지 넓힙니다.</p>
       </article>
-      <article class="fcard g reveal">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3 3 7.5 12 12l9-4.5L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M3 12l9 4.5L21 12M3 16.5 12 21l9-4.5" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/></svg></div>
-        <h3>심화 · 응용</h3>
-        <p>최소·최대 개수나 보이지 않는 숨은 나무처럼 한 단계 깊은 문제까지 다뤄요. 같은 도구 안에서 자연스럽게 확장됩니다.</p>
+      <article class="step reveal">
+        <span class="lv">STEP 3</span>
+        <h3>초 3~4</h3>
+        <p class="age">만 8~9세</p>
+        <p>교과에 입체도형이 거의 없는 구간이에요. 공간감각을 쌓아 두는 시기이자 초5~6으로 가는 입구입니다.</p>
       </article>
+      <article class="step reveal">
+        <span class="lv">STEP 4</span>
+        <h3>초 5</h3>
+        <p class="age">만 10세</p>
+        <p>겨냥도를 처음 배우는 학년. 그림을 읽는 연습부터 시작해 초6을 준비합니다.</p>
+      </article>
+      <article class="step is-core reveal">
+        <span class="core">교과 핵심</span>
+        <span class="lv">STEP 5</span>
+        <h3>초 6</h3>
+        <p class="age">만 11세 · 기본 단계</p>
+        <p>6-1 부피·겉넓이, 6-2 공간과 입체. 안 보이는 나무와 최대·최소까지 전 유형이 열립니다.</p>
+      </article>
+    </div>
+    <p class="steps-note reveal">
+      <b>유아·초1~2는 교과 과정이 아닙니다.</b> 그 나이대 쌓기나무는 사고력 '도형' 교재에 나오는데, 시중 교재를 실제로 재어 보니 개수 2~8개·2층·바닥 2×2~3×3이 거의 전부였어요. 그 크기에 맞췄습니다.
+      <b>초3~4도 교과 보충이 아니라</b> 공간감각과 선행을 위한 구간입니다.
+    </p>
+  </div>
+</section>
+
+<!-- ===================== 어떤 문제를 푸나 =====================
+     ⚠ 아래 유형 이름·설명은 quiz/index.html 의 TYPES 배열에서 그대로 가져왔다.
+        화면에 이미 노출 중인 문구다 — 여기서 새로 쓰지 말고 그쪽을 정본으로 볼 것.
+        유형이 늘거나 문구가 바뀌면 이 섹션과 아래 "그 밖에 N종" 숫자도 같이 고친다. -->
+<section class="band" id="types">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">어떤 문제를 푸나</span>
+      <h2 class="sec">세기부터 안 보이는 나무까지, 19종</h2>
+      <p class="lead">한 가지를 반복하지 않아요. 같은 쌓기나무를 두고 세고, 그리고, 뒤집고, 숨은 것을 찾습니다.</p>
+    </div>
+    <div class="qgrid">
+      <div class="qchip reveal"><b>개수 세기</b><span>쌓은 나무가 몇 개인지 세요.</span></div>
+      <div class="qchip reveal"><b>부피 구하기</b><span>한 모서리 길이로 부피를 구해요.</span></div>
+      <div class="qchip reveal"><b>겉넓이 구하기</b><span>바닥까지 포함해 겉넓이를 구해요.</span></div>
+      <div class="qchip reveal"><b>위·앞·옆 모양 고르기</b><span>맞는 앞/옆에서 본 모양을 골라요.</span></div>
+      <div class="qchip reveal"><b>위에서 본 수 쓰기</b><span>겨냥도를 보고 위 모양 각 칸에 수를 써요.</span></div>
+      <div class="qchip reveal"><b>위·앞·옆 그리기</b><span>세 방향에서 본 모양을 칸으로 칠해요.</span></div>
+      <div class="qchip reveal"><b>숨은 나무 칸 찾기</b><span>위에서 본 모양에서 나무가 숨은 칸을 모두 찾아요.</span></div>
+      <div class="qchip reveal"><b>삼면도 최대·최소</b><span>위·앞·옆 세 방향만 보고 가능한 개수의 범위를 찾아요.</span></div>
+      <div class="qchip reveal"><b>정육면체 완성</b><span>가장 작은 정육면체를 만들려면 몇 개가 더 필요한지 구해요.</span></div>
+    </div>
+    <div class="qfoot reveal">
+      <span class="more">그 밖에 <b>10종</b>이 더 있어요 — 층별 개수 세기, 더 쌓거나 빼낸 뒤 그리기, 색칠한 정육면체 등.</span>
+      <a class="sec-cta" href="quiz/">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        유형 전체 보기
+      </a>
     </div>
   </div>
 </section>
@@ -485,20 +688,65 @@
         <h3>화면 하나로 함께 관찰</h3>
         <p>모양을 만들어 큰 화면에 띄우고, 위·앞·옆을 함께 돌려 보며 설명해요. 만든 문제는 링크로 학생에게 그대로 배포할 수 있습니다.</p>
         <ul>
-          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>설치 없이 브라우저로 바로 시연</li>
-          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>계산 과정 펼쳐 원리까지 설명</li>
-          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>모양 링크로 과제·문제 배포</li>
+          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>설치 없이 브라우저로 바로 시연</li>
+          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>계산 과정 펼쳐 원리까지 설명</li>
+          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>모양 링크로 과제·문제 배포</li>
         </ul>
+        <a class="sec-cta" href="worksheets/">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          문제지 만들기
+        </a>
       </article>
       <article class="acard parent reveal">
         <span class="tag">학부모용 · 집에서 학습</span>
         <h3>아이와 함께, 준비물 없이</h3>
         <p>태블릿이나 휴대폰만 있으면 돼요. 아이가 직접 쌓고 돌려 보며 스스로 개수를 세어 보고, 답이 맞는지 바로 확인합니다.</p>
         <ul>
-          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>학생은 로그인·회원가입 없이 사용</li>
-          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>손으로 돌려 보며 공간 감각 연습</li>
-          <li><svg viewBox="0 0 24 24" fill="none"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>정답·계산을 그 자리에서 확인</li>
+          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>학생은 로그인·회원가입 없이 사용</li>
+          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>손으로 돌려 보며 공간 감각 연습</li>
+          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>정답·계산을 그 자리에서 확인</li>
         </ul>
+        <a class="sec-cta" href="quiz/">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 11.5 11 14l4.5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="4" width="17" height="16" rx="2.4" stroke="currentColor" stroke-width="1.7"/></svg>
+          퀴즈 풀어보기
+        </a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 안심 요소 =====================
+     ⚠ 과장 금지 두 곳 (CLAUDE.md):
+       · 정답 은닉은 2D 모드에서 성립하고 3D 모드 5종은 은닉 불가다(의도된 수용).
+         "모든 정답을 숨긴다"고 쓰지 말 것 — 아래는 "채점은 서버가 한다"로만 말한다.
+       · "베타 기간 무료"는 /account 화면 문구·약관 제19조와 셋이 일관해야 한다.
+         한쪽만 고치지 말 것. -->
+<section class="band white" id="trust">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <span class="eyebrow">안심하고 쓰도록</span>
+      <h2 class="sec">아이가 쓰는 도구라서, 이렇게 만들었어요</h2>
+    </div>
+    <div class="fgrid f4">
+      <article class="fcard g reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 4 6v5c0 4.5 3.2 7.9 8 9 4.8-1.1 8-4.5 8-9V6l-8-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+        <h3>아이는 로그인하지 않아요</h3>
+        <p>퀴즈도 도구도 가입 없이 바로 씁니다. 계정은 기록을 보관하려는 어른만 만들어요.</p>
+      </article>
+      <article class="fcard reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2.2" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
+        <h3>채점은 서버가 합니다</h3>
+        <p>퀴즈 문제는 서버가 그때그때 만들고 채점해요. 정답과 해설은 답을 제출한 뒤에 옵니다.</p>
+      </article>
+      <article class="fcard w reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <h3>30분 뒤 자동 계산이 잠겨요</h3>
+        <p>계산이 계속 나오면 아이가 스스로 세어 보지 않게 됩니다. 먼저 세어 보고 그다음 확인하도록, 편집·관찰은 그대로 두고 계산만 잠급니다.</p>
+      </article>
+      <article class="fcard reveal">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-7-4.3-7-9.5A4.5 4.5 0 0 1 12 8a4.5 4.5 0 0 1 7 3.5C19 16.7 12 21 12 21Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
+        <h3>베타 기간 무료</h3>
+        <p>지금은 모든 기능을 무료로 씁니다. 유료로 바뀌는 기능이 생기면 미리 알려드려요.</p>
       </article>
     </div>
   </div>
@@ -516,6 +764,8 @@
   </div>
 </section>
 
+</main>
+
 <!-- ===================== FOOTER ===================== -->
 <footer class="foot">
   <div class="wrap">
@@ -531,13 +781,14 @@
         <div class="foot-col">
           <h4>학습 도구</h4>
           <a id="footPlay" href="playground/">쌓기나무 도구</a>
-          <a href="#features">기능 소개</a>
-          <a href="#coverage">학습 범위</a>
+          <a href="quiz/">자동채점 퀴즈</a>
+          <a href="worksheets/">문제지 만들기</a>
         </div>
         <div class="foot-col">
           <h4>정보</h4>
           <a href="#how">배우는 원리</a>
-          <a href="#for">활용 방법</a>
+          <a href="#coverage">학습 범위</a>
+          <a href="#types">문제 유형</a>
           <!-- 문의 창구 — 전 페이지 공통 CS 폼. href 는 assets/js/foot.js 가 채운다(값의 정본).
                예전엔 playground 오류 제보 폼을 가리켰는데, 그건 playground 화면의 '의견' 버튼과
                CS 폼 설명문 링크로 여전히 닿는다. 한 푸터에 비슷한 창구를 둘 두지 않는다. -->
