@@ -19,7 +19,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.3.0';
+  var VERSION = '0.4.0';
   var SER_VER = 1; // 직렬화 버전 바이트 (playground와 동일 — ?m= 링크 호환)
 
   // ---------- 유틸: 셀 정규화 ----------
@@ -96,6 +96,56 @@
         }
       }
       return { gx: gx, gy: gy, gz: gz, edge: edge, cells: cells };
+    } catch (e) { return null; }
+  }
+
+  // ============= 4.1b 선택(강조) 마스크 (?h=) =============
+  // 포맷: 채운 칸을 정규 순서(index = x*gy*gz + y*gz + z 오름차순)로 세우고,
+  //       그 '순서 위의' 비트마스크 ceil(개수/8)B, LSB-first, URL-safe base64.
+  // ※ ?m= 와 분리했다 — 모양 바이트·SER_VER 를 건드리지 않아 옛 공유 링크가 전부 유효하고,
+  //   캐시된 구버전 클라이언트가 새 링크를 열어도 모양은 정상으로 나온다.
+  // ※ 전체 격자(최대 1000비트=125B)가 아니라 채운 칸 수만큼만 쓴다 — '강조 ⊆ 채운 칸'이
+  //   불변식이기 때문(playground clampHighlight). 나무 20개면 3B → base64 4자.
+  // ⚠ 인코더·디코더 양쪽 다 cellOrder 로 정렬할 것. playground 의 cells 는 '편집 순서',
+  //   deserialize 가 만든 cells 는 'index 순서'라 정렬을 빠뜨리면 예외 없이 다른 칸이 칠해진다.
+
+  // 채운 칸의 정규 순서 배열 — 마스크 비트 위치의 단일 출처.
+  function cellOrder(shape) {
+    var sh = normalize(shape), gy = sh.gy, gz = sh.gz, arr = [];
+    sh.cells.forEach(function (k) {
+      var c = parse(k);
+      arr.push({ k: k, i: c.x * (gy * gz) + c.y * gz + c.z });
+    });
+    arr.sort(function (a, b) { return a.i - b.i; });
+    return arr.map(function (e) { return e.k; });
+  }
+
+  // marks(Set|Array) → base64url. shape.cells 밖의 키는 무시(불변식 강제).
+  // 표시할 게 없으면 '' — 호출부가 &h= 자체를 생략하게 해 링크를 짧게 유지한다.
+  function serializeMarks(shape, marks) {
+    var order = cellOrder(shape), set = toCellSet(marks);
+    if (!order.length || !set.size) return '';
+    var mask = new Uint8Array(Math.ceil(order.length / 8)), any = false;
+    for (var i = 0; i < order.length; i++) {
+      if (set.has(order[i])) { mask[i >> 3] |= (1 << (i & 7)); any = true; }
+    }
+    return any ? b64urlEnc(mask) : '';
+  }
+
+  // base64url → Set<"x,y,z">(항상 shape.cells 의 부분집합). 무효하면 null, 예외는 안 던진다.
+  // ⚠ deserialize 보다 엄격하게 검사한다 — ?h= 엔 버전 바이트도 헤더도 없어 길이가 유일한
+  //   교차검증 수단이다. 여기서 관대하게 굴면 잘린 마스크가 '부분적으로 맞는 색'으로 통과한다.
+  function deserializeMarks(shape, str) {
+    try {
+      if (!str) return new Set();                            // 없음 = 표시 없음(정상)
+      if (!/^[A-Za-z0-9_-]+={0,2}$/.test(str)) return null;  // 손상 → atob 전에 거부
+      var a = b64urlDec(str), order = cellOrder(shape);
+      if (a.length !== Math.ceil(order.length / 8)) return null;   // 다른 모양의 마스크·잘린 URL
+      var out = new Set();
+      for (var i = 0; i < order.length; i++) {
+        if ((a[i >> 3] >> (i & 7)) & 1) out.add(order[i]);
+      }
+      return out;
     } catch (e) { return null; }
   }
 
@@ -361,6 +411,8 @@
     normalize: normalize, toCellSet: toCellSet, key: K,
     // 4.1
     serialize: serialize, deserialize: deserialize,
+    // 4.1b (선택 마스크 ?h= — 비트 index 수식을 소비처에 복제하지 말 것)
+    cellOrder: cellOrder, serializeMarks: serializeMarks, deserializeMarks: deserializeMarks,
     // 4.2
     count: count, volume: volume, touchingPairs: touchingPairs,
     revealed: revealed, exposedFaces: exposedFaces, surfaceArea: surfaceArea, stats: stats,

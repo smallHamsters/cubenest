@@ -658,7 +658,7 @@ function load3D(){
     el.src=src; el.async=false; el.onload=ok; el.onerror=()=>no(new Error(src)); document.head.appendChild(el);});
   P3D=Promise.resolve()
     .then(()=>window.THREE?null:one('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'))
-    .then(()=>(window.CubeNest&&CubeNest.core)?null:one('../assets/js/cubenest-core.js?v=0.3.0'))
+    .then(()=>(window.CubeNest&&CubeNest.core)?null:one('../assets/js/cubenest-core.js?v=0.4.0'))
     .then(()=>(window.CubeNest&&CubeNest.viewer)?null:one('../assets/js/cubenest-viewer.js?v=0.2.3'));
   return P3D;
 }

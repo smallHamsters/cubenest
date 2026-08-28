@@ -55,7 +55,7 @@
 <link rel="stylesheet" href="../assets/css/consent.css">
 <link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="../assets/js/cubenest-core.js?v=0.3.0"></script>   <!-- 공용 계산 코어(마스터 §5.1) -->
+<script src="../assets/js/cubenest-core.js?v=0.4.0"></script>   <!-- 공용 계산 코어(마스터 §5.1) -->
 <script src="../assets/js/cubenest-viewer.js?v=0.2.3"></script>   <!-- 공용 3D 뷰어·펼쳐보기(마스터 §5.1, core 의존) -->
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -1450,22 +1450,22 @@ scrim.addEventListener('click',closeSheet);
    ============================================================ */
 function track(name, params){ try{ if(window.gtag) window.gtag('event', name, params||{}); }catch(e){} }  // GA4_ID 설정 시 자동 전송
 
-// F2: 모델 상태 ↔ URL-safe 문자열 (버전1 + 격자·모서리 헤더 + 채운 칸 비트마스크)
-function b64urlEnc(u8){ let s=''; for(let i=0;i<u8.length;i++) s+=String.fromCharCode(u8[i]);
-  return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
-function b64urlDec(str){ str=str.replace(/-/g,'+').replace(/_/g,'/'); const s=atob(str);
-  const u8=new Uint8Array(s.length); for(let i=0;i<s.length;i++) u8[i]=s.charCodeAt(i); return u8; }
-function cellIdx(x,y,z){ return x*(state.gy*state.gz) + y*state.gz + z; }
-function serializeState(){   // 공용 코어 위임(§5.1) — ?m= 바이트 동일
-  return CubeNest.core.serialize({gx:state.gx,gy:state.gy,gz:state.gz,edge:state.edge,cells});
-}
-function deserializeState(str){ return CubeNest.core.deserialize(str); }   // 공용 코어 위임(§5.1)
-function applyState(st){
+// F2: 모델 상태 ↔ URL-safe 문자열. 인코딩은 전부 공용 코어 소관이다(§5.1) —
+//     비트 index 수식을 여기 복제하면 core 와 조용히 갈라진다(옛 b64url* 사본은 그래서 삭제했다).
+function shapeArg(){ return {gx:state.gx,gy:state.gy,gz:state.gz,edge:state.edge,cells}; }
+function serializeState(){ return CubeNest.core.serialize(shapeArg()); }              // ?m= (모양)
+function deserializeState(str){ return CubeNest.core.deserialize(str); }
+function serializeHighlight(){ return CubeNest.core.serializeMarks(shapeArg(), highlight); }   // &h= (선택)
+function applyState(st, hi){
   state.gx=st.gx; state.gy=st.gy; state.gz=st.gz;
   cells.clear(); st.cells.forEach(k=>cells.add(k));
   undoStack.length=0; redoStack.length=0;
   layerSel='all';
-  highlight.clear();   // 새 모양 = 새 선택. 좌표가 겹쳐도 옛 선택이 옮겨붙지 않게.
+  // 선택(강조): cells 를 채운 '뒤'에 넣어야 아래 rebuildCubes 의 clampHighlight 가 지우지 않는다
+  // (restore() 와 같은 순서 제약). hi 가 없으면 예전대로 비운다 — 새 모양 = 새 선택,
+  // 좌표가 겹쳐도 옛 선택이 옮겨붙지 않게.
+  highlight.clear();
+  if(hi) hi.forEach(k=>{ if(cells.has(k)) highlight.add(k); });
   setEdge(st.edge);
   updateTarget(); buildFloor(); rebuildCubes();
   syncAxesUI(); refreshLayers(); renderStats(); updateTopCounts(); updateHistBtns();
@@ -1517,7 +1517,11 @@ function captureImage(){
   return url;
 }
 
-function shareUrl(){ return location.origin + location.pathname + '?m=' + serializeState(); }
+// 선택(강조)이 있을 때만 &h= 를 덧붙인다 — 없으면 예전과 똑같이 짧은 ?m= 링크다.
+function shareUrl(){
+  const h=serializeHighlight();
+  return location.origin + location.pathname + '?m=' + serializeState() + (h ? '&h=' + h : '');
+}
 let _shareImg='';
 function openShareSheet(){
   closeSheet();
@@ -1834,8 +1838,17 @@ function init(){
   updateTopCounts();
   updateHistBtns();
   resize();
-  const _m=new URLSearchParams(location.search).get('m');   // 공유 링크로 열렸으면 그 모양으로 대체
-  if(_m){ const st=deserializeState(_m); if(st){ applyState(st); track('open_shared'); } }
+  const _q=new URLSearchParams(location.search);
+  const _m=_q.get('m');   // 공유 링크로 열렸으면 그 모양으로 대체
+  if(_m){ const st=deserializeState(_m);
+    if(st){
+      // 선택 마스크는 '복원될 모양(st)' 기준으로 읽는다 — 이 시점의 cells 는 아직 seed() 결과다.
+      // dm 가드: 새 HTML + 옛 캐시 core 가 섞이면 함수가 없어 init() 전체가 죽고 빈 화면이 된다.
+      const dm=window.CubeNest&&CubeNest.core&&CubeNest.core.deserializeMarks;
+      const _h=_q.get('h');
+      const hi=(dm&&_h)?dm(st,_h):null;   // 무효·손상이면 null → 선택만 버리고 모양은 정상 로드
+      applyState(st, hi); track('open_shared', {hi: hi?hi.size:0});
+    } }
   requestAnimationFrame(animate);
 }
 init();
