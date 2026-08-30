@@ -17,13 +17,18 @@
  *     · k = 0..3 (90° 단위 회전)
  *     · hiSet = Set<"x,y,z">|null. 주면 그 칸은 빨강으로, 나머지는 흐리게(해설용 강조).
  *
- * ※ 그리는 순서가 곧 은닉이다: 셀을 (x+z) 오름차순 = 뒤→앞으로 칠하므로(painter's algorithm)
- *   앞대각이 더 높은 열은 자연히 가려진다. 이 정렬을 바꾸면 숨은 나무가 드러난다.
+ * ※ 은닉은 **정렬 + 오클루전 컬링** 둘이다(260831).
+ *   · 정렬: 셀을 (x+z) 오름차순 = 뒤→앞으로 칠한다(painter's algorithm). 겹치는 면의
+ *     앞뒤 관계를 정하므로 여전히 필요하다 — 이 정렬을 바꾸면 그림이 깨진다.
+ *   · 컬링: 가려지는 큐브·면은 **폴리곤을 아예 만들지 않는다.** 정렬만 있던 시절엔
+ *     안 보이는 나무의 폴리곤이 페이로드에 그대로 남아, <polygon 개수와 좌표 역산으로
+ *     형상이 통째로 복원됐다(실측). 서버가 sh 대신 이 SVG 만 내려보내는 유형(A-a/b/f·2D)의
+ *     은닉이 거기서 무너졌다. 이제 페이로드가 화면과 같다.
  */
 (function (global) {
   'use strict';
 
-  var VERSION = '0.1.0';
+  var VERSION = '0.2.0';
 
   function rot(p, k, gx, gz) {
     var x = p.x, y = p.y, z = p.z;
@@ -62,9 +67,37 @@
     // 큐브 — 공통 stroke 속성은 <g> 로 올리고, 기본값과 같은 속성은 아예 쓰지 않는다.
     //   그리는 결과는 동일하고(SVG 속성 상속) 문자열만 40% 가까이 줄어든다.
     //   서버가 이 SVG 를 문항마다 내려보내므로 페이로드에 그대로 반영된다.
+    /* 오클루전 컬링(260831) — 화면에 안 보이는 것은 **폴리곤을 만들지 않는다.**
+       종전엔 정렬(뒤→앞)로 덮어 그리기만 해서 가려진 나무의 폴리곤이 페이로드에 남았다.
+       서버가 '안 보이는 나무'(A-a/b/f)와 2D 모드에서 sh 대신 이 SVG 만 내려보내는데,
+       그 SVG 에서 <polygon 개수로 나무 수가 나오고((P-1)/3), PT() 가 결정적이라
+       좌표를 역산해 **형상 전체가 복원됐다**(라이브 6문항 6개 전부 복원, 260831).
+       = 화면상의 은닉이지 페이로드상의 은닉이 아니었다. 이제 둘이 같아진다.
+       ⚠ 정렬은 그대로 필요하다 — 겹치는 면의 앞뒤 관계는 여전히 순서가 정한다. */
+    var FS = new Set();          // 회전 뒤 좌표 기준(cells 는 이미 rot 적용됨)
+    for (var q = 0; q < cells.length; q++) FS.add(cells[q].x + ',' + cells[q].y + ',' + cells[q].z);
+    /* ⚠ hiSet 이 있으면 컬링하지 않는다. 해설의 강조/ghost 렌더는 **가려진 나무를 빨강으로
+         보여주는 것이 목적**이라 컬링하면 기능 자체가 사라진다. 제출 후라 은닉할 이유도 없다. */
+    var cull = !hiSet;
     var poly = '';
     for (var n = 0; n < cells.length; n++) {
       var x = cells[n].x, y = cells[n].y, z = cells[n].z;
+      /* ① 큐브 통째 생략 — 앞대각 위 칸이 차 있으면 화면에서 완전히 사라진다.
+           근거: 투영이 X=a(x-z), Y=b(x+z)-c*y (a=20,b=10,c=24) 라 (x+1,y+1,z+1) 은
+           **X 가 완전히 같고 Y 만 4px 위**로 그려져 뒤 큐브를 덮되 바닥 4px 를 남기고,
+           그 4px 를 (x+1,y,z+1)(ΔY=+20)이 덮는다. 두 칸을 **모두** 확인하므로
+           중력이 없는 모양(minmax 후보·조작 전후)에도 안전하다.
+           같은 규칙을 cubenest-hidden.js 가 이미 쓴다("(x+1,y+1,z+1) 이 차 있으면 안 보임").
+           ⚠ 이 생략은 viewBox 를 바꾸지 않는다 — 가리는 큐브가 위아래로 더 넓게 걸치므로
+             경계상자가 줄지 않는다. 아래 ②는 P() 를 그대로 불러 경계를 유지한다. */
+      if (cull && FS.has((x + 1) + ',' + (y + 1) + ',' + (z + 1))
+               && FS.has((x + 1) + ',' + y + ',' + (z + 1))) continue;
+      // ② 면 단위 — 맞닿은 면은 이웃이 정확히 덮는다(그림은 그대로, 문자열만 준다)
+      var sT = cull && FS.has(x + ',' + (y + 1) + ',' + z);         // 위
+      var sF = cull && FS.has(x + ',' + y + ',' + (z + 1));         // 앞
+      var sR = cull && FS.has((x + 1) + ',' + y + ',' + z);         // 옆
+      // ⚠ P() 는 경계상자(minX..maxY)를 갱신하는 부수효과가 있다. 면을 건너뛰더라도
+      //   **세 문자열은 반드시 계산해** viewBox 가 종전과 같게 유지한다.
       var top = P(x, y + 1, z) + ' ' + P(x + 1, y + 1, z) + ' ' + P(x + 1, y + 1, z + 1) + ' ' + P(x, y + 1, z + 1);
       var left = P(x, y, z + 1) + ' ' + P(x + 1, y, z + 1) + ' ' + P(x + 1, y + 1, z + 1) + ' ' + P(x, y + 1, z + 1);
       var right = P(x + 1, y, z) + ' ' + P(x + 1, y, z + 1) + ' ' + P(x + 1, y + 1, z + 1) + ' ' + P(x + 1, y + 1, z);
@@ -73,9 +106,9 @@
       var st = hi ? ' stroke="#7c1f2c"' : '';
       var base = paint || { L: '#d8a76e', R: '#c8965a', T: '#e6c9a0' };
       var cL = hi ? '#d84a5e' : base.L, cR = hi ? '#b83346' : base.R, cT = hi ? '#ef7f8e' : base.T;
-      poly += '<polygon points="' + left + '" fill="' + cL + '"' + op + st + '/>'
-            + '<polygon points="' + right + '" fill="' + cR + '"' + op + st + '/>'
-            + '<polygon points="' + top + '" fill="' + cT + '"' + op + st + '/>';
+      if (!sF) poly += '<polygon points="' + left + '" fill="' + cL + '"' + op + st + '/>';
+      if (!sR) poly += '<polygon points="' + right + '" fill="' + cR + '"' + op + st + '/>';
+      if (!sT) poly += '<polygon points="' + top + '" fill="' + cT + '"' + op + st + '/>';
     }
     poly = '<g stroke="#9c6b30" stroke-width="1" stroke-linejoin="round">' + poly + '</g>';
 
