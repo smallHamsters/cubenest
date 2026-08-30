@@ -382,9 +382,12 @@ export function questionFor(pr: Sh, idx: number, seed: string, type: string, req
     //   maxH 는 답안 격자의 행 수(H-a/H-b 의 isoMark 가 이미 같은 이유로 싣는 값)다.
     q.given = { gx: sh.gx, gz: sh.gz, maxH: sh.maxH, kind: "isoTop",
                 iso: iso.renderIso({ gx: sh.gx, gz: sh.gz, cells: sh.cells }, 0), top: topSil(sh) };
-    // [과도기 260821] 캐시에 남은 옛 클라(given.iso 를 모른다)를 위해 형상도 함께 보낸다.
-    //   이 줄이 있는 동안 2D 은닉은 아직 성립하지 않는다. 클라 배포가 퍼진 뒤 삭제할 것.
-    q.sh = sh;
+    // ⚠ 여기서 q.sh 를 보내지 않는 것이 2D 은닉의 전부다. 되돌리지 말 것 —
+    //   260821~260830 동안 옛 클라 호환용으로 함께 보내던 줄이 있었고, 그 기간엔
+    //   2D 은닉이 성립하지 않았다(facesDraw·2D facesMc 는 정답이 sh 만의 함수라
+    //   문항과 정답을 같이 배송한 셈이었다). 260830 삭제.
+    //   클라는 이미 given.iso 로 그린다: run.js(givenShape→_partial) ·
+    //   worksheets(FIG.renderGiven 이 given 분기 우선) · quiz 미리보기(is3D=false).
   }
   // ⚠ 모서리 길이. 발문에는 안 들어 있고 오직 이 값으로만 학생에게 전달된다.
   //   ① 2D 는 형상이 없어 클라가 sh.edge 를 못 읽는다(givenShape 는 edge:1 하드코딩) —
