@@ -82,6 +82,7 @@ Deno.serve(async (req: Request) => {
     });
     return json(req, { seed, count: problems.length, problems });
   } catch (e) {
-    return json(req, { error: "worksheet 생성 실패", detail: String((e as Error).message) }, 500);
+    console.error("[worksheet] 생성 실패:", e);
+    return json(req, { error: "worksheet 생성 실패" }, 500);
   }
 });

@@ -50,6 +50,9 @@ Deno.serve(async (req: Request) => {
     }));
     return json(req, { seed, version: { gen: "1.0.0", config: "1.0.0" }, count: problems.length, problems });
   } catch (e) {
-    return json(req, { error: "generate 실패", detail: String((e as Error).message) }, 500);
+    // 내부 예외 메시지를 응답에 싣지 않는다 — GSIG_SECRET 미설정 같은 환경변수명·내부 구조가
+    //   그대로 나갔다. 진단은 함수 로그로 옮긴다(클라는 error 라벨만 받아 분기한다).
+    console.error("[generate] 실패:", e);
+    return json(req, { error: "generate 실패" }, 500);
   }
 });

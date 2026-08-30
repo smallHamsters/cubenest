@@ -13,11 +13,28 @@ export const LIMITS = {
 // 실패 시 정책: true=fail-open(허용, 서비스 우선) / false=fail-closed(차단)
 const FAIL_OPEN = true;
 
-export function identify(req: Request): { anon: string | null; ip: string } {
+/* 클라 IP — **측정으로 확정한 것이지 관례가 아니다.**
+   260830 에 `/config?diag=hdr` 임시 probe 로 이 배포 구성(Supabase + Cloudflare)을 직접 쟀다:
+     · `cf-connecting-ip` 를 클라가 보내면 **Cloudflare 가 요청 자체를 거부**한다(error 1000) → 위조 불가.
+     · 클라가 보낸 `x-forwarded-for` 는 **통째로 버려진다** — 위조값 3개를 넣어도 체인 길이는 3 그대로였고
+       우리 값은 체인에 없었다. 즉 **이 구성에선 XFF 왼쪽도 공격자 통제가 아니다.**
+     · `x-real-ip` 는 아예 도착하지 않는다.
+     · `cf-connecting-ip` == `xff[0]` (체인 길이 3, cf 는 index 0).
+
+   ⚠ **"XFF 는 오른쪽을 써라"는 일반론을 여기에 적용하지 말 것.** 체인 길이가 3이라 오른쪽은
+     **프록시 IP** 이고, 그러면 전 사용자가 버킷 하나를 공유해 다 함께 120/분에 걸린다(장애).
+     보안 문헌이나 코드 리뷰가 그렇게 지적하더라도, 위 측정이 이 구성의 답이다.
+
+   ⚠ 이 전제는 **Cloudflare 앞단**에 의존한다. 커스텀 도메인을 붙이거나 호스팅이 바뀌면
+     같은 probe 로 **다시 재고** 이 함수를 갱신할 것.
+
+   신뢰할 출처가 없으면 `null` 을 돌려준다 — 공격자가 정할 수 있는 값으로 버킷을 만드는 것은
+   제한이 되지 않으면서 `rate_counter` 만 오염시켜 아무것도 안 하느니만 못하다. */
+export function identify(req: Request): { anon: string | null; ip: string | null } {
   const anon = req.headers.get("X-Anon-Id");
-  const ip = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim()
-    || req.headers.get("cf-connecting-ip") || "0.0.0.0";
-  return { anon: anon && anon.length <= 64 ? anon : null, ip };
+  const cf = (req.headers.get("cf-connecting-ip") || "").trim();
+  const xff0 = (req.headers.get("x-forwarded-for") || "").split(",")[0].trim();
+  return { anon: anon && anon.length <= 64 ? anon : null, ip: cf || xff0 || null };
 }
 
 export type RateResult = { ok: boolean; retryAfter?: number; reason?: string };
@@ -50,8 +67,15 @@ export async function checkRate(
     checks.push({ bucket: `c:${kind}:m:${anon}:${wm}`, limit: L.cookie.perMin, ttl: 60,   reason: "cookie-min" });
     checks.push({ bucket: `c:${kind}:h:${anon}:${wh}`, limit: L.cookie.perHour, ttl: 3600, reason: "cookie-hour" });
   }
-  checks.push({ bucket: `i:${kind}:m:${ip}:${wm}`, limit: L.ip.perMin, ttl: 60,   reason: "ip-min" });
-  checks.push({ bucket: `i:${kind}:h:${ip}:${wh}`, limit: L.ip.perHour, ttl: 3600, reason: "ip-hour" });
+  /* IP 버킷은 **신뢰할 IP 가 있을 때만.** 이게 X-Anon-Id 를 돌려 가며 쓰는 익명 남용의
+     실질적 상한이다(쿠키 버킷을 우회해도 여기서 120/분에 걸린다). */
+  if (ip) {
+    checks.push({ bucket: `i:${kind}:m:${ip}:${wm}`, limit: L.ip.perMin, ttl: 60,   reason: "ip-min" });
+    checks.push({ bucket: `i:${kind}:h:${ip}:${wh}`, limit: L.ip.perHour, ttl: 3600, reason: "ip-hour" });
+  } else {
+    // 배포 구성이 바뀌어 신뢰 헤더가 사라진 신호다 — identify() 주석의 probe 로 다시 잴 것.
+    console.warn("[rate] 신뢰할 IP 헤더 없음 — IP 버킷 생략");
+  }
 
   const url = Deno.env.get("SUPABASE_URL"), key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!url || !key) return { ok: FAIL_OPEN, reason: "no-db" };

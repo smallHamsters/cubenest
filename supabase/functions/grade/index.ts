@@ -36,7 +36,8 @@ Deno.serve(async (req: Request) => {
     const probs = buildProbs({ type: theme, levels, seed, n, edu, sub: params.sub ?? null, stage });
     pr = probs[idx];
   } catch (e) {
-    return json(req, { error: "재생성 실패", detail: String((e as Error).message) }, 500);
+    console.error("[grade] 재생성 실패:", e);
+    return json(req, { error: "재생성 실패" }, 500);
   }
   if (!pr) return json(req, { error: "index 범위 밖" }, 400);
 
@@ -46,6 +47,7 @@ Deno.serve(async (req: Request) => {
     const explain = explainFor(pr, theme);
     return json(req, { correct, answerKey: key, explain });
   } catch (e) {
-    return json(req, { error: "grade 실패", detail: String((e as Error).message) }, 500);
+    console.error("[grade] 실패:", e);
+    return json(req, { error: "grade 실패" }, 500);
   }
 });
