@@ -1,4 +1,19 @@
 User-agent: *
 Allow: /
 
+# ── 색인에서 빼는 것 ────────────────────────────────────────────────
+# ⚠ 지금 이 파일은 크롤러가 읽지 않는다. robots.txt 는 오리진 루트에서만 유효한데
+#   이 사이트는 프로젝트 하위경로(/cubenest/)라 크롤러가 보는 주소는
+#   https://smallhamsters.github.io/robots.txt 이고, 그 주소는 404 다(260829 실측).
+#   커스텀 도메인을 붙이거나 smallHamsters.github.io 루트 리포가 생기면 그때 실제로 적용된다.
+#   그때 경로에서 /cubenest/ 접두사를 빼야 한다는 점도 같이 기억할 것.
+#
+# .claude/ — 지금은 배포에도 안 올라간다(.nojekyll 이 없어 Jekyll 이 dot 폴더를 제외, 실측 404).
+#   다만 .nojekyll 을 추가하는 순간 통째로 공개되므로 규칙을 미리 둔다.
+# CLAUDE.md — 이쪽은 지금 실제로 200 으로 열려 있다. 내부 명세라 색인 대상이 아니다.
+# assets/og/ — 공유 카드 생성용 템플릿. 아무 데서도 링크하지 않는 반쪽짜리 페이지다.
+Disallow: /cubenest/.claude/
+Disallow: /cubenest/CLAUDE.md
+Disallow: /cubenest/assets/og/
+
 Sitemap: https://smallhamsters.github.io/cubenest/sitemap.xml
