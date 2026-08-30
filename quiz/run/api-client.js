@@ -27,21 +27,34 @@
     } catch (e) { return "anon-nostore"; }
   }
 
+  /* 응답이 오지도 않고 끊기지도 않는 상태(모바일 전환·프록시 지연)를 끊어 준다.
+     타임아웃이 없으면 호출부의 실패 처리가 아무리 좋아도 화면이 몇 분간 매달린다.
+     ⚠ abort 는 **network 로 정규화**한다 — 새 플래그를 만들면 run.js·quiz/index.html 의
+       기존 3분기가 전부 "그 외"로 떨어져 안내가 나빠진다. */
+  var TIMEOUT_MS = { generate: 20000, grade: 12000 };
+
   async function call(path, body, extraHeaders) {
     if (USE_MOCK && NS._mockApi && NS._mockApi[path]) return NS._mockApi[path](body);
     var res;
     var headers = { "Content-Type": "application/json", "X-Anon-Id": anonId() };
     if (extraHeaders) for (var h in extraHeaders) headers[h] = extraHeaders[h];
+    var ac = (typeof AbortController === "function") ? new AbortController() : null;
+    var t = ac ? setTimeout(function () { ac.abort(); }, TIMEOUT_MS[path] || 20000) : null;
     try {
       res = await fetch(BASE + "/" + path, {
         method: "POST",
         headers: headers,
         body: JSON.stringify(body),
+        signal: ac ? ac.signal : undefined,
       });
     } catch (netErr) {
       // 네트워크 실패 → mock 있으면 폴백
       if (NS._mockApi && NS._mockApi[path]) return NS._mockApi[path](body);
-      var e0 = new Error("network"); e0.network = true; throw e0;
+      var e0 = new Error("network"); e0.network = true;
+      e0.timeout = !!(netErr && netErr.name === "AbortError");   // 진단용(화면 분기는 안 함)
+      throw e0;
+    } finally {
+      if (t) clearTimeout(t);
     }
     if (res.status === 429) {
       var ra = parseInt(res.headers.get("Retry-After") || "60", 10);

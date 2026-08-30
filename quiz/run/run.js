@@ -48,7 +48,14 @@
           ".cubi-msg{font-family:var(--font);font-weight:900;font-size:clamp(30px,7vw,46px);line-height:1;color:var(--accent,#3b4bd8);"+
           "text-shadow:0 2px 0 #fff,0 -2px 0 #fff,2px 0 0 #fff,-2px 0 0 #fff,0 3px 10px rgba(24,34,51,.18);"+
           "animation:cubi-word .5s cubic-bezier(.34,1.6,.64,1) both}"+
-          "@keyframes cubi-word{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}";
+          "@keyframes cubi-word{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}"+
+          /* 실패 문구는 안내문이라 작고 읽기 쉬운 크기로 — 'Ready~' 의 46px 은 문장에 안 맞는다. */
+          ".cubi-fail{font-size:clamp(17px,4.2vw,22px);line-height:1.5;max-width:min(88vw,420px);text-align:center;color:#243044}"+
+          ".cubi-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:center}"+
+          ".cubi-acts button{font:inherit;font-weight:800;font-size:16px;min-height:44px;padding:0 20px;border:0;border-radius:12px;"+
+          "background:var(--accent,#3b4bd8);color:#fff;cursor:pointer}"+
+          ".cubi-acts a{font:inherit;font-weight:700;font-size:15px;min-height:44px;display:inline-flex;align-items:center;"+
+          "padding:0 12px;color:#4a5568}";
           document.head.appendChild(st); }
         const BUDDY="<svg class='cubi-buddy' viewBox='45 110 130 92' xmlns='http://www.w3.org/2000/svg'><g>"+
           "<path d='M70 130 L110 118 L150 130 L110 142z' fill='#f0d9b4' stroke='#c8965a' stroke-width='2.5' stroke-linejoin='round'/>"+
@@ -67,7 +74,21 @@
         function show(kind){ ensure(); el.querySelector('.cubi-msg').textContent=(kind==='generate'?'Ready~':''); el.classList.add('on'); }
         function showDelayed(kind,ms){ clearTimeout(timer); timer=setTimeout(function(){ show(kind); }, ms||250); }
         function hide(){ clearTimeout(timer); if(el)el.classList.remove('on'); }
-        return {show,showDelayed,hide};
+        /* 실패 표시. show() 와 같은 오버레이를 쓰되 캐릭터를 지우고 문구+버튼을 넣는다.
+           ⚠ 오버레이는 inset:0 · pointer-events:auto 라 헤더 '나가기'까지 덮는다. 여기서
+           빠져나갈 길(다시 시도 · 퀴즈 목록)을 오버레이 **안에** 반드시 주어야 한다 —
+           예전엔 이 경로가 없어 'Ready~' 가 무한히 떠 있고 아무것도 누를 수 없었다. */
+        function fail(msg,onRetry){
+          ensure(); clearTimeout(timer);
+          el.innerHTML="<div class='cubi-msg cubi-fail'></div>"+
+            "<div class='cubi-acts'><button type='button' id='cubiRetry'>다시 시도</button>"+
+            "<a href='../'>퀴즈 목록으로</a></div>";
+          el.querySelector('.cubi-fail').textContent=msg;
+          const rb=el.querySelector('#cubiRetry');
+          if(rb)rb.onclick=function(){ el.innerHTML=BUDDY+"<div class='cubi-msg'></div>"; onRetry&&onRetry(); };
+          el.classList.add('on');
+        }
+        return {show,showDelayed,hide,fail};
       })();
       const VIEWER=(window.CubeNest&&window.CubeNest.viewer)||null;
       const GEN=(window.CubeNest&&window.CubeNest.gen)||null;
@@ -352,6 +373,16 @@
       const SKEY="cubenest_quiz_sess_"+[PRM.seed,PRM.type,PRM.n,(PRM.levels||[]).join(""),PRM.edu||"",PRM.dim||""].join("_")+(PRM.sub?"_"+PRM.sub:"")+(PRM.stage?"_"+PRM.stage:"");
       // /my "다시풀기"(restart=1): 저장 세션·연습장 제거 후 처음부터.
       if(PRM.restart){ try{ localStorage.removeItem(SKEY); localStorage.removeItem(SKEY+"_sc"); }catch(e){} }
+      /* restart 는 1회용 지시다 — 주소에 남으면 **새로고침할 때마다** 진행이 지워진다.
+         (탭 복원·모바일 백그라운드 복귀도 새로고침이다. 실제로 7문제 풀고 0/10 으로 돌아갔다.)
+         ⚠ 아래 seed 보정(:1256) 안에 넣으면 안 된다 — 그 블록은 seed 가 **없을 때만** 도는데
+           /my 링크는 seed 를 항상 포함해서 통째로 스킵된다. 그래서 여기서 독립적으로 지운다. */
+      function dropParam(k){
+        try{ const u=new URL(location); if(!u.searchParams.has(k))return;
+          u.searchParams.delete(k); history.replaceState(null,"",u.toString());
+        }catch(e){}
+      }
+      if(PRM.restart) dropParam("restart");
       function saveSession(){
         try{
           // key·explain 도 함께 저장한다 — 이제 색칠·해설의 출처가 서버 응답이라,
@@ -766,15 +797,21 @@
           if(raw===null){ needAnswer(F); return; }
           const note=qcard.querySelector(".ansnote"); if(note)note.remove();
           const sb0=document.getElementById("submit"); if(sb0)sb0.disabled=true;
+          // 버튼만 비활성화하면 느린 채점에서 "눌렀는데 아무 일도 안 일어남"으로 보인다.
+          //   지연 표시라 빠른 채점(대부분)에서는 뜨지 않는다.
+          Loader.showDelayed('grade',250);
           let res;
           try{
             res=await CubeNest.api.grade({id:pr.id, gsig:pr.gsig, answer:answerObj(pr,raw), params:GRADE_PARAMS()});
           }catch(e){
             // 실패해도 문항을 소진하지 않는다 — 답을 그대로 두고 다시 제출할 수 있다.
+            Loader.hide();
             if(sb0)sb0.disabled=false;
+            console.warn("[quiz] grade 실패",{rate:!!(e&&e.rate),network:!!(e&&e.network),status:e&&e.status,err:e});
             needAnswer(e&&e.rate?"rate":(e&&e.network?"network":"server"));
             return;
           }
+          Loader.hide();
           S.state[S.idx]={answered:true,raw:raw,ok:!!res.correct,key:res.answerKey||null,explain:res.explain||null};
         }
         const st=S.state[S.idx]||{}, key=st.key||{}, ok=!!st.ok;
@@ -1233,7 +1270,23 @@
         // gen-config는 서버 소유(정적 json 폐지). 클라는 INLINE_CONFIG 폴백만 유지(서버가 config 무시).
         if(window.CubeNest&&CubeNest.api&&CubeNest.api.__setConfig)CubeNest.api.__setConfig(GEN_CONFIG);
         Loader.show('generate');
-        await buildSession();
+        // 로컬 폴백 채점이 없으므로 /generate 실패 = 퀴즈 불가다. 여기가 유일한 안전망이다 —
+        //   예전엔 try/catch 가 없어 reject 되면 Loader.hide() 에 도달하지 못하고 오버레이가
+        //   'Ready~' 인 채로 화면 전체(헤더 '나가기' 포함)를 영구히 덮었다.
+        try{
+          await buildSession();
+        }catch(e){
+          // 화면에는 원인을 설명하지 않는다 — 어느 경우든 사용자가 할 수 있는 건 '다시 시도' 하나다.
+          //   진단은 콘솔에만 남긴다.
+          console.warn("[quiz] generate 실패",{rate:!!(e&&e.rate),network:!!(e&&e.network),
+            status:e&&e.status,serverError:e&&e.serverError,detail:e&&e.detail,err:e});
+          Loader.fail(
+            e&&e.rate    ? "요청이 조금 많았어요. 잠시 뒤 다시 눌러 주세요."
+            : e&&e.network ? "인터넷 연결을 확인해 주세요."
+            :                "문제를 불러오지 못했어요. 다시 시도해 주세요.",
+            init);
+          return;
+        }
         initScratch();
         // 이어풀기: 저장된 진행(위치·답·정오)·연습장 복원
         const saved=loadSession();
@@ -1253,7 +1306,22 @@
         track("quiz_run_start",{type:S.type,n:S.n,seed:S.seed});
         Loader.hide();   // 로드 완료 → 즉시 퀴즈 표시
         // /my "결과보기"(view=result): 복원된 채점 상태로 결과 화면. 없으면 세션 복원(마지막 위치)으로 폴백.
-        if(PRM.view==="result" && saved && Array.isArray(saved.state) && saved.state.some(x=>x&&x.answered)){ showResult(); return; }
+        if(PRM.view==="result"){
+          if(saved && Array.isArray(saved.state) && saved.state.some(x=>x&&x.answered)){
+            showResult();
+            dropParam("view");   // 이번 로드에서 이미 그렸다. 남겨두면 이후 새로고침이 재개를 가로챈다.
+            return;
+          }
+          /* 결과를 보러 왔는데 이 기기에 풀이가 없다. 예전엔 조용히 renderProblem() 으로 흘러가
+             **결과 대신 1번 문항의 새 퀴즈**가 열렸다(설명 없음). 세션 키(SKEY)가 lv·dim 까지
+             포함하는데 /my 링크가 그걸 못 실어서 자주 일어난다 — 다른 기기에서 푼 기록은 원래 없다. */
+          dropParam("view");
+          Loader.fail("이 기록의 풀이 내용을 이 기기에서 찾지 못했어요.", function(){
+            Loader.hide(); renderProblem();
+          });
+          const rb=document.getElementById("cubiRetry"); if(rb)rb.textContent="처음부터 풀기";
+          return;
+        }
         // 문제지 QR(?q=n)로 들어오면 그 문항부터 연다 — 종이에서 3D 가 필요한 문항을 눌러 온 경우다.
         //   세션은 그대로 복원되므로 앞뒤 문항으로도 이동할 수 있다.
         if(PRM.q>=0 && PRM.q<S.probs.length) S.idx=PRM.q;

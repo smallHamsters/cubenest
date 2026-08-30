@@ -23,7 +23,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.5.0';
+  var VERSION = '0.6.0';
 
   var STORE_BASE = 'cubenest_my_v1';   // 개인 라이브러리(정본). 로그인 시 '__<uid>' 가 붙는다
   var NICK_BASE  = 'cubenest_nick';    // 표시 이름(닉네임). 로그인 시 '__<uid>' 가 붙는다
@@ -475,9 +475,17 @@
         // 저장된 퀴즈도 seed 로 같은 문제를 다시 열 수 있게 openUrl 을 채운다.
         items.forEach(function (it) {
           if (!it.openUrl && it.meta && it.meta.seed && it.meta.type) {
+            /* ⚠ run.js 의 세션 키(SKEY)는 seed·type·n 외에 lv·dim·sub·stage 까지 포함한다.
+               여기서 빠뜨린 값이 있으면 키가 어긋나 '결과보기'가 결과를 못 찾고 **새 퀴즈**를
+               열어 버린다. stage·sub 는 meta 에 있으므로 반드시 싣는다(있을 때만 — SKEY 도
+               조건부 접미라 대칭이 맞는다).
+               lv·dim 은 meta 에도 quiz_results 에도 없어 지금은 실을 수 없다. 그래서 키가
+               어긋나는 경우가 남고, run.js 가 그때 안내 카드를 띄운다(조용한 새 퀴즈 금지). */
             it.openUrl = '../quiz/run/?type=' + encodeURIComponent(it.meta.type) +
                          '&seed=' + encodeURIComponent(it.meta.seed) +
-                         '&n=' + (Math.max(1, +it.meta.n || 0) || 10);
+                         '&n=' + (Math.max(1, +it.meta.n || 0) || 10) +
+                         (it.meta.stage ? '&stage=' + encodeURIComponent(it.meta.stage) : '') +
+                         (it.meta.sub   ? '&sub='   + encodeURIComponent(it.meta.sub)   : '');
           }
         });
         var last = latestQuiz();
