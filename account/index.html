@@ -184,7 +184,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.4.0"></script>
-<script src="../assets/js/mydata.js?v=0.6.0"></script>
+<script src="../assets/js/mydata.js?v=0.7.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
 <script>
@@ -322,6 +322,26 @@ var CS_FORM_URL = (window.CubeNest && window.CubeNest.CS_FORM_URL) || '#';
         });
       };
       ni.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); ns.click(); } });
+
+      /* ⚠ getNickname() 은 **동기**라 렌더 시점의 로컬 캐시만 본다. 새 기기에선 그게 비어
+         있고, 서버 값을 채우는 syncProfile 은 네트워크 왕복이라 한참 뒤에 끝난다. 그래서
+         예전엔 빈 칸이 그려졌고, 그대로 '저장'을 누르면 setNickname('') → profiles.nickname=null
+         로 **서버 닉네임이 지워졌다.** (빈 값 저장 자체는 정상 기능이라 차단이 아니라,
+         누르기 전에 진짜 값을 보여주는 것이 옳은 수정이다.)
+         /my 의 syncThenRepaint() 와 같은 발상 — 다만 여기선 입력칸 하나만 손댄다.
+         ⚠ 개별 sync* 를 부르지 말 것(동시에 돌면 로컬 저장소 쓰기가 서로를 덮는다). */
+      ns.disabled = true;                       // sync 가 끝나기 전엔 저장 못 하게
+      var rendered = ni.value;                  // 렌더 시점 값 — 사용자가 손댔는지 판별용
+      Promise.resolve(M && M.sync ? M.sync() : null).catch(function(){}).then(function(){
+        var el = document.getElementById('nickInput');
+        if (el === ni) {                        // 그 사이 재렌더되지 않았을 때만
+          if (el.value === rendered) {          // 사용자가 손대지 않았을 때만 덮는다
+            var fresh = (M && M.getNickname && M.getNickname()) || '';
+            if (fresh !== rendered) el.value = fresh;
+          }
+          ns.disabled = false;
+        }
+      });
     }
 
     loadEntitlement().then(function(ent){ var s=document.getElementById('planSlot'); if(s) s.innerHTML=planBody(ent); }).catch(function(){});

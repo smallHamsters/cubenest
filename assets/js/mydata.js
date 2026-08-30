@@ -23,7 +23,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.6.0';
+  var VERSION = '0.7.0';
 
   var STORE_BASE = 'cubenest_my_v1';   // 개인 라이브러리(정본). 로그인 시 '__<uid>' 가 붙는다
   var NICK_BASE  = 'cubenest_nick';    // 표시 이름(닉네임). 로그인 시 '__<uid>' 가 붙는다
@@ -129,21 +129,31 @@
       if (i >= 0) o.items[i] = it; else o.items.push(it);
       // 용량 보호: 최신순 상위 MAX_ITEMS 만 유지
       o.items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-      if (o.items.length > MAX_ITEMS) o.items.length = MAX_ITEMS;
-      writeStore(o);
+      if (o.items.length > MAX_ITEMS) {
+        // ⚠ syncQuiz 는 "push 대상을 자르기 전에 뽑는다"로 이 함정을 피하는데 여기엔 그 보호가
+        //   없다. 제대로 고치려면 항목별 '미전송' 상태를 들고 다녀야 하고, 그건 readStore→
+        //   writeStore 를 한 벌 더 만들어 지금 막은 것과 같은 경쟁을 새로 만든다. 우선 드러내만 둔다.
+        var dropped = o.items.slice(MAX_ITEMS).map(function (x) { return x.id; });
+        o.items.length = MAX_ITEMS;
+        try { console.warn('[CubeNest.mydata] 용량 한도(' + MAX_ITEMS + ')로 ' + dropped.length +
+          '건을 잘랐습니다. 서버 미전송분이 섞여 있으면 유실됩니다:', dropped); } catch (e) {}
+      }
+      // 쓰기 실패(quota·프라이빗 모드)를 삼키지 않는다 — 호출부가 promise 를 동기 try 로만
+      //   감싸고 있어 reject 로 바꾸면 unhandled rejection 이 된다. 플래그로 알린다.
+      it._stored = writeStore(o);
+      if (!it._stored) { try { console.warn('[CubeNest.mydata] 로컬 저장 실패 — 항목이 남지 않습니다:', it.id); } catch (e) {} }
       return Promise.resolve(it);
     },
     remove: function (id) {
       var o = readStore(), n = o.items.length;
       o.items = o.items.filter(function (x) { return x.id !== id; });
-      writeStore(o);
-      return Promise.resolve(o.items.length < n);
+      var ok = writeStore(o);
+      return Promise.resolve(ok && o.items.length < n);
     },
     clear: function (kind) {
       var o = readStore();
       o.items = kind ? o.items.filter(function (x) { return x.kind !== kind; }) : [];
-      writeStore(o);
-      return Promise.resolve();
+      return Promise.resolve(writeStore(o));
     }
   };
 
@@ -240,6 +250,12 @@
       .limit(MAX_ITEMS)
       .then(function (r) {
         if (!r || r.error) throw new Error('pull');
+        // ⚠ 응답이 오는 사이에 계정이 바뀌었으면 **버린다.** readStore/writeStore 는
+        //   storeKey() → uid() 를 **지금** 다시 계산하므로, 로그아웃 뒤에 쓰면 계정 A 가
+        //   서버에서 받아온 기록이 접미 없는 익명 키에 저장돼 다음 사람에게 보인다.
+        //   (로그아웃 버튼·auth.js 의 죽은 세션 자동 정리가 이 창을 연다.)
+        //   아래 readStore→writeStore 는 전부 동기라 여기 한 번의 검사로 충분하다.
+        if (uid() !== id) return { ok: false, reason: 'account-changed' };
         var store = readStore(), have = {};
         store.items.forEach(function (it) { have[it.id] = true; });
         // pull — 로컬에 없는 서버 행만 넣는다(로컬을 덮어쓰지 않는다).
@@ -255,7 +271,9 @@
           return it.kind === 'quiz' && it.meta && it.meta.attemptId && !seen[it.meta.attemptId];
         });
         if (store.items.length > MAX_ITEMS) store.items.length = MAX_ITEMS;
-        writeStore(store);
+        // 로컬 쓰기가 실패했으면(quota·프라이빗 모드) **push 하지 않는다** — 하면
+        //   로컬엔 없고 서버엔 있는 상태로 갈린다. sync 의 ok:false 를 기존 UI 가 받는다.
+        if (!writeStore(store)) return { ok: false, reason: "storage" };
         if (!todo.length) return { ok: true, pulled: (r.data || []).length, pushed: 0 };
         return Promise.all(todo.map(pushQuiz)).then(function (res) {
           var okN = res.filter(Boolean).length;
@@ -313,6 +331,7 @@
       .limit(MAX_ITEMS)
       .then(function (r) {
         if (!r || r.error) throw new Error('pull');
+        if (uid() !== id) return { ok: false, reason: 'account-changed' };   // syncQuiz 와 같은 이유
         var store = readStore(), have = {};
         store.items.forEach(function (it) { have[it.id] = true; });
         var seen = {};
@@ -326,7 +345,9 @@
           return ITEM_KINDS[it.kind] && !seen[it.id];
         });
         if (store.items.length > MAX_ITEMS) store.items.length = MAX_ITEMS;
-        writeStore(store);
+        // 로컬 쓰기가 실패했으면(quota·프라이빗 모드) **push 하지 않는다** — 하면
+        //   로컬엔 없고 서버엔 있는 상태로 갈린다. sync 의 ok:false 를 기존 UI 가 받는다.
+        if (!writeStore(store)) return { ok: false, reason: "storage" };
         if (!todo.length) return { ok: true, pulled: (r.data || []).length, pushed: 0 };
         return Promise.all(todo.map(pushItem)).then(function (res) {
           var okN = res.filter(Boolean).length;
@@ -340,9 +361,16 @@
      ⚠ syncQuiz 와 syncItems 는 둘 다 readStore → 수정 → writeStore 다. 동시에 띄우면
        뒤 쓰기가 앞 쓰기를 통째로 덮어 한쪽 결과가 사라진다(같은 localStorage 키 경쟁).
      같은 호출이 겹치면 하나로 합친다 — 페이지와 wireAuth 가 동시에 부르기 때문이다. */
-  var allInflight = null;
+  /* ⚠ 합치기는 **계정별로** 해야 한다(syncProfile 의 inflightUid 와 같은 이유).
+     로그아웃 상태에서 시작된 syncAll 은 각 sync 가 {ok:false,reason:'offline'} 으로
+     즉시 끝나는 빈 promise 인데, 키가 없으면 그 사이 로그인해서 들어온 호출이 그걸
+     그대로 돌려받는다 — 동기화가 통째로 스킵되고(다른 기기 자료가 안 보임)
+     quiz/run 의 '결과 저장하기'가 저장은 됐는데 "저장 실패"로 뜬다. */
+  var allInflight = null, allInflightUid = '';
   function syncAll() {
-    if (allInflight) return allInflight;
+    var me = uid() || '';
+    if (allInflight && allInflightUid === me) return allInflight;
+    allInflightUid = me;
     var acc = {};
     var p = Promise.resolve()
       .then(function () { return syncProfile(); })
