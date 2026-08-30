@@ -172,7 +172,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/js/auth.js?v=0.4.0"></script>
+<script src="../assets/js/auth.js?v=0.5.0"></script>
 <script src="../assets/js/mydata.js?v=0.7.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
@@ -303,7 +303,7 @@ function track(name, params){ try{ if(window.gtag) window.gtag('event', name, pa
       Promise.resolve(p).then(function(){ paint(host); });
     });
     paint(host);
-    track('my_view', { loggedIn:true });
+    trackView('my_view', { loggedIn:true });
   }
 
   /* ── 비로그인: 로그인 게이트(§6.3 my=로그인 필요) ────── */
@@ -335,7 +335,7 @@ function track(name, params){ try{ if(window.gtag) window.gtag('event', name, pa
         else A.signInWithApple('my');
       };
     });
-    track('my_gate_view', { loggedIn:false });
+    trackView('my_gate_view', { loggedIn:false });
   }
 
   /* 서버에서 내려오는 것(닉네임·다른 기기에서 만든 퀴즈 기록·문제지)은 첫 페인트보다 늦게 온다.
@@ -357,6 +357,18 @@ function track(name, params){ try{ if(window.gtag) window.gtag('event', name, pa
         if(A.isLoggedIn() && after !== before) renderLibrary();
       });
     }).catch(function(){});
+  }
+
+  /* 뷰 계측은 **상태가 바뀔 때 한 번만** 센다 — 렌더 횟수를 세면 안 된다.
+     render() 는 페이지 로드 1회에 2~3번 돈다: auth 의 notify(세션 복원)와 A.ready 가
+     각각 부르고, supabase 의 SIGNED_IN/INITIAL_SESSION 이 settled **뒤에** 도착하면
+     한 번 더 온다(경쟁 조건이라 2회일 때도 3회일 때도 있다 — 260831 GA4 에서 발견).
+     그대로 두면 방문 수가 2~3배로 부풀어 이걸 분모로 쓰는 전환율이 전부 틀어진다. */
+  var viewTracked = '';
+  function trackView(name, params){
+    if (viewTracked === name) return;      // 로그인/로그아웃으로 화면이 바뀌면 그때 다시 센다
+    viewTracked = name;
+    track(name, params);
   }
 
   function render(){

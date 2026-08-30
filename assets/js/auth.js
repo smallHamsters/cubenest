@@ -15,7 +15,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.4.0';
+  var VERSION = '0.5.0';
 
   /* ── 설정 ────────────────────────────────────────────────────────────────
      SUPABASE_ANON_KEY: Supabase 대시보드 › Settings › API › anon / publishable key
@@ -48,6 +48,28 @@
       if (typeof track === 'function') track(name, params || {});
       else if (global.gtag) global.gtag('event', name, params || {});
     } catch (e) {}
+  }
+
+  /* 로그인 성공 계측의 중복 방지 (260831).
+     ⚠ **supabase-js 는 저장소에서 세션을 복원할 때도 `SIGNED_IN` 을 쏜다**(세션이 없을 땐
+       `INITIAL_SESSION` 만 온다 — 측정으로 확인). 그런데 아래 `session` 은 페이지 로드마다
+       null 로 시작하므로 `evt==='SIGNED_IN' && !was` 만으로는 **새 로그인과 단순 새로고침을
+       구분하지 못한다.** 실제로 로그인 상태로 페이지를 이동만 해도 login_success 가 매번
+       나갔고, GA4 에서 로그인 전환이 사실상 페이지뷰가 돼 있었다.
+     그래서 **사용자가 실제로 로그인을 시작했을 때만** 성공을 센다 — signIn() 이 표를 끊고
+     SIGNED_IN 이 그 표를 회수한다. OAuth 는 같은 탭 전체 리다이렉트라 sessionStorage 가
+     왕복을 건너 살아남는다(localStorage 를 쓰면 다른 탭까지 새 것으로 오인한다).
+     시작해 놓고 이탈한 표는 TTL 로 만료시킨다 — 안 그러면 며칠 뒤 새로고침이 로그인이 된다. */
+  var LOGIN_TICKET = 'cubenest_login_pending', LOGIN_TTL = 10 * 60 * 1000;
+  function loginTicketPut() {
+    try { sessionStorage.setItem(LOGIN_TICKET, String(Date.now())); } catch (e) {}
+  }
+  function loginTicketTake() {
+    try {
+      var t = Number(sessionStorage.getItem(LOGIN_TICKET));
+      sessionStorage.removeItem(LOGIN_TICKET);
+      return Number.isFinite(t) && t > 0 && (Date.now() - t) < LOGIN_TTL;
+    } catch (e) { return false; }   // 저장소가 막힌 브라우저 → 세지 않는다(과다 집계보다 낫다)
   }
 
   /* ── 상태 ─────────────────────────────────────────────── */
@@ -134,7 +156,9 @@
       var was = !!session;
       session = s || null;
       if (evt === 'SIGNED_IN' && !was) {
-        trk('login_success', { provider: providerOf(s) });
+        // 표가 있을 때만 = 이 탭에서 사용자가 실제로 로그인을 시작했을 때만 센다.
+        // 저장소 복원으로 온 SIGNED_IN 은 표가 없으므로 조용히 지나간다(위 주석 참조).
+        if (loginTicketTake()) trk('login_success', { provider: providerOf(s) });
         cleanUrl();
       }
       if (settled) notify();
@@ -195,6 +219,7 @@
   function signIn(provider, ctx) {
     if (!client) { alert('로그인 설정이 아직 완료되지 않았어요. 잠시 후 다시 시도해 주세요.'); return; }
     trk('login_start', { provider: provider, ctx: ctx || '' });
+    loginTicketPut();                       // 이 표를 SIGNED_IN 이 회수해야 login_success 가 나간다
     return client.auth.signInWithOAuth({
       provider: provider,
       options: { redirectTo: returnUrl() }

@@ -183,7 +183,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../assets/js/auth.js?v=0.4.0"></script>
+<script src="../assets/js/auth.js?v=0.5.0"></script>
 <script src="../assets/js/mydata.js?v=0.7.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
@@ -269,6 +269,18 @@ var CS_FORM_URL = (window.CubeNest && window.CubeNest.CS_FORM_URL) || '#';
   }
 
   /* ── 로그인 상태: 계정 허브 ─────────────────────────── */
+  /* 뷰 계측은 **상태가 바뀔 때 한 번만** 센다 — 렌더 횟수를 세면 안 된다.
+     render() 는 페이지 로드 1회에 2~3번 돈다: auth 의 notify(세션 복원)와 A.ready 가
+     각각 부르고, supabase 의 SIGNED_IN/INITIAL_SESSION 이 settled **뒤에** 도착하면
+     한 번 더 온다(경쟁 조건이라 2회일 때도 3회일 때도 있다 — 260831 GA4 에서 발견).
+     그대로 두면 방문 수가 2~3배로 부풀어 이걸 분모로 쓰는 전환율이 전부 틀어진다. */
+  var viewTracked = '';
+  function trackView(name, params){
+    if (viewTracked === name) return;      // 로그인/로그아웃으로 화면이 바뀌면 그때 다시 센다
+    viewTracked = name;
+    track(name, params);
+  }
+
   function renderHub(){
     var label = A.userLabel();
     var curNick = (M && M.getNickname && M.getNickname()) || '';
@@ -372,7 +384,7 @@ var CS_FORM_URL = (window.CubeNest && window.CubeNest.CS_FORM_URL) || '#';
         if(el && total>0){ el.textContent=total+'개'; el.hidden=false; }
       }).catch(function(){});
     }
-    track('account_view', { loggedIn:true });
+    trackView('account_view', { loggedIn:true });
   }
 
   /* ── 비로그인: 로그인 카드 ──────────────────────────── */
@@ -397,7 +409,7 @@ var CS_FORM_URL = (window.CubeNest && window.CubeNest.CS_FORM_URL) || '#';
         else A.signInWithApple('account');
       };
     });
-    track('account_login_view', { loggedIn:false });
+    trackView('account_login_view', { loggedIn:false });
   }
 
   function render(){
