@@ -15,7 +15,7 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.3.0';
+  var VERSION = '0.4.0';
 
   /* ── 설정 ────────────────────────────────────────────────────────────────
      SUPABASE_ANON_KEY: Supabase 대시보드 › Settings › API › anon / publishable key
@@ -204,12 +204,24 @@
     });
   }
 
+  /* ⚠ supabase-js v2 의 signOut() 은 **던지지 않고 {error} 를 돌려준다.** 네트워크가 끊겨
+     있으면 라이브러리가 **로컬 세션을 지우기 전에** error 로 빠져나온다 — 그때 error 를
+     무시하면 UI 만 로그아웃 상태가 되고 새로고침하면 다시 로그인 상태가 된다.
+     주 사용자가 교사·학부모(공용 기기)라 앞 사람 계정이 살아남는 형태가 된다.
+     그래서 실패하면 로컬만 지우는 scope 로 한 번 더 부른다 — 위 validateSession(:184)이
+     이미 쓰는 처방이다. scope:'local' 은 네트워크를 타지 않아 사실상 항상 성공한다. */
   function signOut() {
     if (!client) return Promise.resolve();
     trk('logout', { provider: providerOf(session) });
-    return client.auth.signOut().then(function () {
-      session = null; notify(); renderModal(); mountHeader();
-    });
+    function localOnly() {
+      try { return client.auth.signOut({ scope: 'local' }).catch(function () {}); }
+      catch (e) { return Promise.resolve(); }
+    }
+    return client.auth.signOut()
+      .then(function (r) { return (r && r.error) ? localOnly() : null; }, localOnly)
+      .then(function () {
+        session = null; notify(); renderModal(); mountHeader();
+      });
   }
 
   /* ── 로그인 모달 ──────────────────────────────────────── */
