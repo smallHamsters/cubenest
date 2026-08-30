@@ -35,7 +35,9 @@ Deno.serve(async (req: Request) => {
 
   try {
     const probs = buildProbs({ type: theme, levels, seed, n, edu, sub: body.sub ?? null, stage });
-    const ph = paramsHash({ theme, levels, n, edu, stage });
+    // ⚠ sub 는 **buildProbs 에 넘기는 값과 같은 표현식**이어야 한다(위 :37).
+    //   양쪽 정규화가 조금이라도 다르면 정상 요청이 grade 에서 403 난다.
+    const ph = paramsHash({ theme, levels, n, edu, stage, sub: body.sub ?? null });
     const problems = await Promise.all(probs.map(async (pr: any, i: number) => {
       const id = seed + "#" + i;
       return {

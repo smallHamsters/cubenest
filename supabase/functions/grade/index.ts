@@ -3,13 +3,11 @@
 import { preflight, json } from "../_shared/cors.ts";
 import { paramsHash, verify } from "../_shared/gsig.ts";
 import { buildProbs, answerKeyFor, checkAnswer, explainFor } from "../_shared/gen-adapter.ts";
+import { checkRate } from "../_shared/rate.ts";
 
 Deno.serve(async (req: Request) => {
   const pf = preflight(req); if (pf) return pf;
   if (req.method !== "POST") return json(req, { error: "method" }, 405);
-
-  // rate limit: grade는 gsig(위·변조 방지)로 보호되고 유효 gsig는 rate 걸린 generate에서만 나오므로,
-  // DB 왕복(지연)을 피하려 grade에서는 rate 검사 생략. (남용 징후 시 재활성.)
 
   let body: any;
   try { body = await req.json(); } catch { return json(req, { error: "bad json" }, 400); }
@@ -24,8 +22,27 @@ Deno.serve(async (req: Request) => {
   const edu = params.edu ?? null;
   const stage = params.stage ?? null;               // /generate 와 같은 값이어야 재생성이 일치한다
 
+  /* rate limit — 260831 활성화. 종전엔 "유효 gsig 는 rate 걸린 /generate 에서만 나온다"는
+     전제로 생략했는데(DB 왕복 지연 회피), **그 전제가 깨져 있었다** — X-Anon-Id 는 클라가
+     만드는 헤더라 매 요청 랜덤화하면 generate 의 쿠키 버킷을 빠져나간다.
+     게다가 이 함수는 answer:null 이어도 answerKey 와 explain(형상 전체)을 무조건 주는
+     **정답 오라클**이라, 한 번 받은 gsig 30개로 무제한 열람이 가능했다.
+     ⚠ 위치: 400 검증 **뒤**, verify() **앞**.
+       앞에 두면 형식이 틀린 요청까지 버킷을 만들어 rate_counter 를 오염시킨다(260830 청소와 상충).
+       뒤에 두면 gsig 위조 시도가 무제한이 된다. 그 사이가 맞다.
+     지연: 제출마다 DB 왕복 1회가 는다. FAIL_OPEN=true 라 DB 장애 시엔 통과시켜 채점이 막히지 않고,
+       클라는 250ms 지연 로더(run.js Loader.showDelayed('grade',250))를 이미 갖고 있다. */
+  let rl: { ok: boolean; retryAfter?: number; reason?: string };
+  try { rl = await checkRate(req, "grade"); } catch { rl = { ok: true }; }
+  if (!rl.ok) {
+    const r = json(req, { error: "rate", reason: rl.reason }, 429);
+    r.headers.set("Retry-After", String(rl.retryAfter ?? 60));
+    return r;
+  }
+
   // 위·변조 검증: id + paramsHash 서명 일치?
-  const ph = paramsHash({ theme, levels, n, edu, stage });
+  //   ⚠ sub 는 **아래 buildProbs 에 넘기는 값과 같은 표현식**이어야 한다(:36 부근).
+  const ph = paramsHash({ theme, levels, n, edu, stage, sub: params.sub ?? null });
   if (!(await verify(id, ph, gsig))) return json(req, { error: "gsig 불일치" }, 403);
 
   const [seed, idxStr] = String(id).split("#");

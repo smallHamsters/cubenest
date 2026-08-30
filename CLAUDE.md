@@ -89,7 +89,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 보안 · 지적재산 (정적 웹은 클라 코드 은닉 불가 → 서버화 + 법적 보호)
 - **핵심 자산은 서버(Edge Function):** `gen`·`gen-config`(전체 문제 공간·정답 규칙)는 클라에서 삭제됨. 클라는 **`quiz/run/api-client.js`**(`assets/js/` 아니다)로 `/generate`·`/grade` 호출. **`/grade`는 gsig(HMAC)로 위·변조 방지.** 무료 익명 플레이라 `verify_jwt=false`.
-  - ⚠ **rate limit 은 `/generate`·`/worksheet` 에만 있다. `/grade` 에는 없다**(`grade/index.ts:11-12` — 지연 회피가 이유, "유효 gsig 는 rate 걸린 generate 에서만 나온다"는 전제). 그 전제는 아래 우회 때문에 깨져 있다.
+  - **rate limit 은 `/generate`·`/grade`·`/worksheet` 셋 다에 있다**(260831 에 `/grade` 활성화). 종전엔 `/grade` 만 빠져 있었고 사유가 "유효 gsig 는 rate 걸린 generate 에서만 나온다"였는데, **그 전제가 `X-Anon-Id` 우회로 깨져 있었다.** `LIMITS.grade` 는 `rate.ts` 에 이미 있었고 호출부만 없었다.
+    - ⚠ **호출 위치는 400 검증 뒤·`verify()` 앞이다.** 앞에 두면 형식이 틀린 요청까지 버킷을 만들어 `rate_counter` 를 오염시키고, 뒤에 두면 gsig 위조 시도가 무제한이 된다.
+    - 제출마다 DB 왕복 1회가 는다(`FAIL_OPEN=true` 라 DB 장애 시엔 통과 — 채점이 막히지 않는다).
   - **`worksheet` 의 버킷 키는 `user.id` 다**(260830). `checkRate(req, kind, subject)` 의 3번째 인자에 requireUser 가 검증한 id 를 넘기면 `X-Anon-Id` 를 **무시하고** `u:` 네임스페이스로 잡는다. ⚠ `c:`(쿠키)와 **반드시 분리**해야 한다 — 같이 쓰면 `X-Anon-Id: <피해자 uid>` 로 남의 문제지 한도를 대신 태울 수 있다. 또 subject 가 있으면 anon 버킷을 **추가하지 않는다**(둘 다 쓰면 헤더를 돌려 가며 새 버킷을 얻어 결국 우회다).
   - **IP 는 위조 불가하다 — 관례가 아니라 측정으로 확정했다**(260830, `/config?diag=hdr` 임시 probe). 이 구성(Supabase + Cloudflare)에서: `cf-connecting-ip` 를 클라가 보내면 **CF 가 요청 자체를 거부**하고(error 1000), 클라가 보낸 `x-forwarded-for` 는 **통째로 버려지며**(위조 3개를 넣어도 체인 길이 3 그대로, 우리 값 없음), `x-real-ip` 는 도착하지 않는다. `cf-connecting-ip` == `xff[0]` (체인 길이 3, cf 가 index 0). `identify()` 는 `cf-connecting-ip` → `xff[0]` → `null` 순이다.
     - ⚠ **"XFF 는 오른쪽을 써라"는 일반론을 적용하지 말 것.** 체인이 3칸이라 오른쪽은 **프록시 IP** 이고, 그러면 전 사용자가 버킷 하나를 공유해 다 함께 120/분에 걸린다(장애). 코드 리뷰나 보안 문헌이 그렇게 지적해도 위 측정이 이 구성의 답이다. 근거는 `rate.ts` 의 `identify()` 주석에 있다.
@@ -99,10 +101,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **`rate_counter` 청소는 260830 에 붙였다** — `check_rate` 가 호출의 약 1%에서 만료 행을 배치로 지운다(`supabase_ratecleanup_schema_260830.sql`). **루프보다 먼저** 지운다: 한도 초과 시 루프가 early return 하므로 뒤에 두면 정작 남용 중일 때 건너뛴다. pg_cron 이 켜져 있으면 매시 청소도 함께 걸린다(없으면 조용히 건너뜀 — 트래픽이 끊긴 뒤를 위한 보험). `check_rate` 실행 권한도 `service_role` 로 좁혔다.
     - ⚠ **청소는 증식을 치울 뿐 우회를 막지 않는다.** `worksheet` 은 위 신원 버킷으로 닫혔지만, `/generate` 의 XFF·`FAIL_OPEN` 은 그대로다.
     - **개정은 새 파일로 했고(`…ratecleanup…260830.sql`), 옛 `…rate_schema_260815.sql` 상단에 '단독 재실행 금지' 경고를 남겼다.** 같은 함수를 두 파일이 `create or replace` 하므로 **반드시 날짜 순으로** 실행해야 한다 — 옛 파일만 다시 Run 하면 청소가 조용히 사라진다. 그 함정은 문서가 아니라 **그 파일 첫 줄**에 적혀 있어야 한다.
+- **gsig 지문(`paramsHash`)은 `buildProbs` 의 모든 입력을 덮는다** — `seed` 는 서명 대상인 `id`(`seed#i`)에, 나머지(`type·levels·n·edu·sub·stage`)는 지문에. **`buildProbs` 에 인자를 추가하면 `paramsHash` 에도 반드시 함께 넣을 것.**
+  - 260831 에 `sub` 가 실제로 빠져 있었다 — 같은 `id`·`gsig` 로 `sub` 만 `A-c`→`A-f` 로 바꿔 보내면 서명이 통과하고 **서버가 다른 문제로 채점**했다(라이브 실측: 정답 8→2, 나무 8개→9개). 지문 밖 인자는 **조용한 오채점**이고, 안에 있으면 403 으로 즉시 드러난다.
+  - 새 필드는 **있을 때만 덧붙인다**(`stage` 가 세운 전례). 무조건 붙이면 기존 gsig 가 전부 어긋나 진행 중이던 세션이 403 을 맞는다. `sub` 엔 `sub=` 마커를 붙여 stage-only 지문과 구조가 겹치지 않게 했고, 그 덕에 **서브 없는 6유형의 지문은 바이트 단위로 그대로**다.
+  - ⚠ `/generate` 와 `/grade` 가 `paramsHash` 에 넘기는 `sub` 표현식은 **`buildProbs` 에 넘기는 것과 정확히 같아야 한다.** 한쪽만 정규화하면 정상 요청이 403 난다.
 - **anon key만 클라이언트**(공개 OK). **`service_role` key는 절대 클라·리포 금지**(서버 전용).
 - 클라 유지(보호 가치 낮음): core·viewer·auth·consent·iso(겨냥도 렌더).
 - **정답 은닉 — 범위는 `/generate` 응답 스키마까지다.** `/generate` 응답에 **정답을 담지 않는다**(예전엔 facesMc 정답 번호·minmax rc·A-f kinds가 그대로 나갔다). 채점·색칠·해설의 단일 출처는 **`/grade` 응답의 `answerKey`·`explain`**. 로컬 폴백 채점 없음 → 실패 시 재시도(어차피 `/generate` 없이는 시작도 못 한다).
-  - ⚠ **API 표면 전체의 은닉이 아니다**(260830 확인, 미수정). `/grade` 는 `answer:null` 이어도 `answerKey` 와 `explain`(**형상 전체 포함**)을 **무조건** 준다(`grade/index.ts:47`). 인증도 횟수 제한도 없다. `/generate` 1회로 받은 `gsig` 30개면 전 유형의 정답·형상을 긁을 수 있고, gsig 에 만료도 없다. **gsig 는 위조를 막지 열람을 막지 않는다.**
+  - ⚠ **API 표면 전체의 은닉이 아니다**(260830 확인, 미수정). `/grade` 는 `answer:null` 이어도 `answerKey` 와 `explain`(**형상 전체 포함**)을 **무조건** 준다(`grade/index.ts`). 인증이 없고 gsig 에 만료도 없다 — **gsig 는 위조를 막지 열람을 막지 않는다.** 260831 에 rate limit 을 걸어 **긁는 속도에 상한(쿠키 60/분·IP 120/분)** 은 생겼지만 오라클 자체는 열려 있다. 닫으려면 `/quiz` 랜딩의 '정답 보기' 미리보기(`quiz/index.html`)가 이 동작에 의존하므로 **그 기능의 제품 결정이 선행**돼야 한다.
   - 이 동작에 `/quiz` 랜딩의 '정답 보기' 미리보기(`quiz/index.html:766-779`)가 의존한다 — 닫으려면 그 기능의 제품 결정이 선행된다.
   - **minmax·hidden**은 모양(`sh`) 대신 **제시물만** 보낸다. 겨냥도가 제시물인 A-a/b/f는 서버가 `cubenest-iso`로 SVG를 그려 내려보낸다.
   - **[한계] 3D 모드에 한해 5종(count·volume·surface·heightmap·facesMc)은 은닉 불가** — 돌려서 가려진 나무를 확인하는 것이 풀이 과정이라 형상이 클라에 있어야 한다. 의도된 수용.
