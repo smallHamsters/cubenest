@@ -80,7 +80,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 보안 · 지적재산 (정적 웹은 클라 코드 은닉 불가 → 서버화 + 법적 보호)
 - **핵심 자산은 서버(Edge Function):** `gen`·`gen-config`(전체 문제 공간·정답 규칙)는 클라에서 삭제됨. 클라는 **`quiz/run/api-client.js`**(`assets/js/` 아니다)로 `/generate`·`/grade` 호출. **`/grade`는 gsig(HMAC)로 위·변조 방지.** 무료 익명 플레이라 `verify_jwt=false`.
   - ⚠ **rate limit 은 `/generate`·`/worksheet` 에만 있다. `/grade` 에는 없다**(`grade/index.ts:11-12` — 지연 회피가 이유, "유효 gsig 는 rate 걸린 generate 에서만 나온다"는 전제). 그 전제는 아래 우회 때문에 깨져 있다.
-  - ⚠ **그 rate limit 자체가 우회 가능하다**(260830 확인, 미수정): `X-Anon-Id`(`rate.ts:17`)는 **클라가 만드는 값**이고(`api-client.js:18-28`), `X-Forwarded-For`(`:18`)는 **가장 왼쪽**(=공격자가 써 넣은 값)을 쓰며, `FAIL_OPEN = true`(`:14`)에 호출부가 한 겹 더 연다(`generate/index.ts:29`). 매 요청 랜덤화하면 한도가 사실상 없다. 청소 cron 도 꺼져 있어(`supabase_rate_schema_260815.sql:48-52`) `rate_counter` 가 무한 증식한다.
+  - ⚠ **그 rate limit 자체가 우회 가능하다**(260830 확인, 미수정): `X-Anon-Id`(`rate.ts:17`)는 **클라가 만드는 값**이고(`api-client.js:18-28`), `X-Forwarded-For`(`:18`)는 **가장 왼쪽**(=공격자가 써 넣은 값)을 쓰며, `FAIL_OPEN = true`(`:14`)에 호출부가 한 겹 더 연다(`generate/index.ts:29`). 매 요청 랜덤화하면 한도가 사실상 없다.
+  - **`rate_counter` 청소는 260830 에 붙였다** — `check_rate` 가 호출의 약 1%에서 만료 행을 배치로 지운다(`supabase_ratecleanup_schema_260830.sql`). **루프보다 먼저** 지운다: 한도 초과 시 루프가 early return 하므로 뒤에 두면 정작 남용 중일 때 건너뛴다. pg_cron 이 켜져 있으면 매시 청소도 함께 걸린다(없으면 조용히 건너뜀 — 트래픽이 끊긴 뒤를 위한 보험). `check_rate` 실행 권한도 `service_role` 로 좁혔다.
+    - ⚠ **청소는 증식을 치울 뿐 우회를 막지 않는다.** 버킷 키를 클라가 정하지 못하게 하는 것(위 3종)은 여전히 남은 일이다. 특히 `worksheet` 은 위조 불가한 `user.id` 를 쥐고도 클라 헤더를 버킷 키로 쓴다.
+    - **개정은 새 파일로 했고(`…ratecleanup…260830.sql`), 옛 `…rate_schema_260815.sql` 상단에 '단독 재실행 금지' 경고를 남겼다.** 같은 함수를 두 파일이 `create or replace` 하므로 **반드시 날짜 순으로** 실행해야 한다 — 옛 파일만 다시 Run 하면 청소가 조용히 사라진다. 그 함정은 문서가 아니라 **그 파일 첫 줄**에 적혀 있어야 한다.
 - **anon key만 클라이언트**(공개 OK). **`service_role` key는 절대 클라·리포 금지**(서버 전용).
 - 클라 유지(보호 가치 낮음): core·viewer·auth·consent·iso(겨냥도 렌더).
 - **정답 은닉 — 범위는 `/generate` 응답 스키마까지다.** `/generate` 응답에 **정답을 담지 않는다**(예전엔 facesMc 정답 번호·minmax rc·A-f kinds가 그대로 나갔다). 채점·색칠·해설의 단일 출처는 **`/grade` 응답의 `answerKey`·`explain`**. 로컬 폴백 채점 없음 → 실패 시 재시도(어차피 `/generate` 없이는 시작도 못 한다).

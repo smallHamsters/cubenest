@@ -1,4 +1,10 @@
 -- CubeNest rate limit — Postgres 카운터 + 원자적 검사 RPC
+--
+-- ⚠⚠ 이 파일은 **단독으로 재실행하지 말 것.** 260830 부터 `check_rate` 의 정본은
+--     supabase_ratecleanup_schema_260830.sql 이다(만료 행 청소 + 실행권한 조이기 포함).
+--     아래 3)의 함수 정의는 **낡았다** — 이 파일만 다시 Run 하면 청소가 조용히 사라진다.
+--     다시 적용해야 하면 반드시 **날짜 순으로 둘 다** 실행한다(260815 → 260830).
+--
 -- 적용법(둘 중 하나):
 --   (A) Supabase 대시보드 → SQL Editor 에 이 파일 전체를 붙여넣고 Run.
 --   (B) supabase/migrations/ 에 이 파일을 두고  supabase db push
