@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="../assets/css/nav.css?v=0.3.0" />
 <link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0" />
 <link rel="stylesheet" href="../assets/css/foot.css?v=0.3.0" />
+<link rel="stylesheet" href="../assets/css/consent.css">
 <style>
   /* 나무색·방향색 — tokens.css 에 없는 이 페이지 고유 변수(글리프 SVG 가 쓴다) */
   .glyph{ --w-top:#e6c9a0; --w-left:#d8a76e; --w-right:#c8965a; }
@@ -326,8 +327,18 @@
 
 <!-- 공용 인증 — 헤더 계정 아이콘의 로그인 상태 표시만 담당한다.
      퀴즈 랜딩·플레이는 무로그인이 원칙이라(마스터 §6.3) 여기서 게이트를 걸지 않는다. -->
+<!-- ===================== CONSENT BANNER ===================== -->
+<div class="consent" id="consent" hidden>
+  <div class="consent-msg">CubeNest는 서비스 개선을 위해 <b>Google Analytics로 익명 사용 통계</b>(쿠키 포함)를 수집해요. 동의하시면 방문·사용 데이터가 수집되고, 거부하시면 수집하지 않습니다.</div>
+  <div class="consent-btns">
+    <button id="consentDeny" type="button">거부</button>
+    <button id="consentAccept" type="button">동의</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.4.0"></script>
+<script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
 <!-- 예시 미리보기용 렌더러 — quiz/run·worksheets 와 **같은 그림**을 쓴다(재발명 금지, 마스터 §5.1). -->
 <script src="../assets/js/cubenest-iso.js?v=0.1.0"></script>
@@ -337,8 +348,12 @@
 if((navigator.language||'').toLowerCase().startsWith('ko')) document.querySelector('[data-brand]').textContent='큐브네스트';
 
 /* F1 계측 — 동의 후 로드된 gtag 가 있을 때만(quiz/run 과 같은 가드).
-   ⚠ 이 페이지는 consent.js 를 싣지 않아 gtag 가 없다. 그래도 **정의는 있어야 한다** —
-     없으면 호출한 함수가 ReferenceError 로 통째로 죽는다(예시 미리보기가 이걸로 안 열렸다). */
+   ⚠ **정의를 지우지 말 것.** 없으면 호출한 함수가 ReferenceError 로 통째로 죽는다
+     (예시 미리보기가 실제로 이걸로 안 열렸다). 그래서 consent.js 에 의존시키지 않고
+     페이지마다 이 한 줄을 복제한다 — consent.js 로드 실패가 페이지를 죽이면 안 된다.
+   ⚠ 260830 이전엔 이 페이지에 consent.js 가 없어 gtag 가 영영 없었고,
+     quiz_preview_* 두 이벤트가 100% 버려졌다. 이제 싣는다 — 3종 세트(css·배너·js)를
+     함께 유지할 것. check-drift.py 8번이 이 짝을 강제한다. */
 function track(name,params){ try{ if(window.gtag) window.gtag('event',name,params||{}); }catch(e){} }
 
 const LEVELS=['하','중','상','최상'];

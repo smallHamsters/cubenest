@@ -35,6 +35,7 @@
 <link rel="stylesheet" href="../assets/css/nav.css?v=0.3.0">
 <link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0">
 <link rel="stylesheet" href="../assets/css/foot.css?v=0.3.0">
+<link rel="stylesheet" href="../assets/css/consent.css">
 <link rel="stylesheet" href="../assets/css/legal.css?v=0.3.0">
 <style>
   body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);}
@@ -626,8 +627,18 @@
   <div class="row">© <span id="year"></span> 넥스트빗<span class="dot">·</span>CubeNest 쌓기나무 3D 학습</div>
 </footer>
 
+<!-- ===================== CONSENT BANNER ===================== -->
+<div class="consent" id="consent" hidden>
+  <div class="consent-msg">CubeNest는 서비스 개선을 위해 <b>Google Analytics로 익명 사용 통계</b>(쿠키 포함)를 수집해요. 동의하시면 방문·사용 데이터가 수집되고, 거부하시면 수집하지 않습니다.</div>
+  <div class="consent-btns">
+    <button id="consentDeny" type="button">거부</button>
+    <button id="consentAccept" type="button">동의</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.4.0"></script>
+<script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
 <script>
 (function(){

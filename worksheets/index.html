@@ -34,6 +34,7 @@
 <link rel="stylesheet" href="../assets/css/nav.css?v=0.3.0">
 <link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0">
 <link rel="stylesheet" href="../assets/css/foot.css?v=0.3.0">
+<link rel="stylesheet" href="../assets/css/consent.css">
 <style>
   body{margin:0;font-family:var(--font);color:var(--ink);background:var(--bg);}
   .page{box-sizing:border-box;max-width:920px;margin:0 auto;padding:20px var(--gutter) 64px;}
@@ -225,8 +226,18 @@
   <div class="row">© <span id="year"></span> 넥스트빗<span class="dot">·</span>CubeNest 쌓기나무 3D 학습</div>
 </footer>
 
+<!-- ===================== CONSENT BANNER ===================== -->
+<div class="consent" id="consent" hidden>
+  <div class="consent-msg">CubeNest는 서비스 개선을 위해 <b>Google Analytics로 익명 사용 통계</b>(쿠키 포함)를 수집해요. 동의하시면 방문·사용 데이터가 수집되고, 거부하시면 수집하지 않습니다.</div>
+  <div class="consent-btns">
+    <button id="consentDeny" type="button">거부</button>
+    <button id="consentAccept" type="button">동의</button>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.4.0"></script>
+<script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
 <script src="../assets/js/mydata.js?v=0.7.0"></script>
 <script src="../assets/js/cubenest-iso.js?v=0.1.0"></script>
@@ -235,6 +246,10 @@
 <script src="../assets/js/cubenest-qr.js?v=0.2.0"></script>
 <script src="../quiz/run/api-client.js?v=0.4.0"></script>
 <script>
+/* F1 계측 — 동의 후 gtag 가 있을 때만. ⚠ 아래 IIFE **밖**에 둔다(전역이어야 한다) —
+   auth.js 의 trk() 와 consent.js 의 consent_granted 가 전역 `track` 을 덕타이핑으로 찾는다. */
+function track(name,params){ try{ if(window.gtag) window.gtag('event',name,params||{}); }catch(e){} }
+
 (function(){
   "use strict";
   // quiz 가 localStorage 로 넘긴 payload 를 읽는다.
@@ -390,6 +405,9 @@
   async function makeNew(seed){
     var btn=document.getElementById("mkGo");
     showErr("");
+    // ⚠ 계측을 게이트 **앞**에 둔다 — 로그인 요구에 막혀 이탈한 비율을 알려면
+    //   성공한 생성이 아니라 '만들려고 한 시도'를 세야 한다(유료화 판단의 분모).
+    track("worksheet_make_click", { n: mk.n, mix: mk.mix.length>0, stage: mk.stage||"" });
     if(!mk.levels.length){ showErr("난이도를 하나 이상 골라 주세요."); return; }
     if(!isLoggedIn()){ showErr("문제지 만들기는 로그인이 필요해요."); AUTH&&AUTH.requireLogin("worksheet_make"); return; }
     var api=window.CubeNest&&window.CubeNest.api;
@@ -406,11 +424,14 @@
                     : { mix:list.map(function(m){ var a=m.v.split(":"); return {theme:a[0], sub:a[1]||undefined, n:m.n}; }),
                         levels:mk.levels, seed:seed||undefined, stage:st };
       var r=await api.worksheet(req);
+      track("worksheet_make_done", { n: r.count||0, mix: list.length>1, stage: mk.stage||"" });
       var qs=mkQuery(list, r.seed);
       history.replaceState(null,"","./?"+qs);                 // 새로고침·공유 재현용
       render(toPayload(r, label, "../worksheets/?"+qs));      // /my '열기' 는 /my 기준 상대경로
       window.scrollTo(0,0);
     }catch(e){
+      track("worksheet_make_fail", { reason: e&&e.rate ? "rate" : e&&e.network ? "network"
+                                           : (e&&e.status===401) ? "401" : "server" });
       showErr(e&&e.rate ? "요청이 조금 많았어요. 잠시 뒤에 다시 시도해 주세요."
          : e&&e.network ? "인터넷 연결을 확인해 주세요."
          : e&&e.status===401 ? "로그인이 만료됐어요. 다시 로그인해 주세요."
@@ -573,6 +594,7 @@
     }
     btn.onclick=function(){
       if(!isLoggedIn()){ AUTH?AUTH.requireLogin("worksheet_print"):alert("로그인이 필요해요."); return; }
+      track("worksheet_print", {});
       window.print();
     };
     syncGate();

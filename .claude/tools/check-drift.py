@@ -192,8 +192,35 @@ def check_boxsizing():
         note(f'셸 box-sizing 명시 {len(SHELLS)}곳 정상')
 
 
+# ── 8. GA4 동의 3종 세트가 한 벌로 있는가 ────────────────────────────────────
+#     GA4 로더는 assets/js/consent.js **하나뿐**이다(리포 전체에서 googletagmanager 문자열이
+#     그 파일에만 있다). 이 파일을 안 실으면 window.gtag 가 아예 없고, 각 페이지의 track() 은
+#     `if(window.gtag)` 가드라 **오류 없이 조용히 버려진다** — 260830 에 quiz/index.html 이
+#     정확히 그 상태였고 quiz_preview_* 두 이벤트가 100% 유실됐다(배포 내내 아무 증상 없음).
+#     세 조각(css·배너 마크업·스크립트)은 헤더·푸터와 같은 규약이라 각 HTML 에 인라인이고,
+#     그래서 한둘만 복사하는 실수가 난다. 전부 있거나 전부 없어야 한다.
+CONSENT_PAGES = [p for p in SHARED if p != '404.html'] + ['playground/index.html']
+def check_consent():
+    bad = []
+    for p in CONSENT_PAGES:
+        src = read(p)
+        has_css = 'assets/css/consent.css' in src
+        has_js  = 'assets/js/consent.js' in re.sub(r'<!--.*?-->', '', src, flags=re.S)
+        has_ui  = 'id="consent"' in src and 'id="consentAccept"' in src and 'id="consentDeny"' in src
+        if len({has_css, has_js, has_ui}) > 1:
+            bad.append(f'{p}: css={"O" if has_css else "X"} 배너={"O" if has_ui else "X"} js={"O" if has_js else "X"}')
+        # track() 을 부르면서 로더가 없으면 그 이벤트는 전부 버려진다.
+        if not has_js and re.search(r'(?<![\w.])track\s*\(', src):
+            bad.append(f'{p}: track() 을 호출하는데 consent.js 가 없다 — 이벤트가 조용히 버려진다')
+    if bad:
+        fail('계측', 'GA4 동의 3종 세트(css·배너·consent.js)가 어긋났다 — 이벤트가 오류 없이 사라진다:')
+        for b in bad: fail('계측', '    ' + b)
+    else:
+        note(f'GA4 동의 3종 세트 {len(CONSENT_PAGES)}페이지 정상')
+
+
 for fn in (check_menu, check_brand, check_versions, check_icons,
-           check_glyph_paths, check_og, check_boxsizing):
+           check_glyph_paths, check_og, check_boxsizing, check_consent):
     try:
         fn()
     except Exception as e:                       # 검사 자체가 죽어도 나머지는 돌린다

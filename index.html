@@ -397,14 +397,14 @@
     </a>
     <nav class="site-nav" aria-label="주요 메뉴">
       <a href="./" aria-current="page">홈</a>
-      <a href="guide/">가이드</a>
-      <a href="playground/">플레이그라운드</a>
-      <a href="quiz/">퀴즈</a>
-      <a href="worksheets/">문제지 생성</a>
-      <a href="my/" id="myNav">내 자료</a>
+      <a data-cta="nav" href="guide/">가이드</a>
+      <a data-cta="nav" href="playground/">플레이그라운드</a>
+      <a data-cta="nav" href="quiz/">퀴즈</a>
+      <a data-cta="nav" href="worksheets/">문제지 생성</a>
+      <a data-cta="nav" href="my/" id="myNav">내 자료</a>
     </nav>
     <div class="site-actions">
-      <a href="account/" id="authNav" aria-label="로그인" title="로그인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg></a>
+      <a data-cta="nav" href="account/" id="authNav" aria-label="로그인" title="로그인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg></a>
     </div>
   </div>
 </header>
@@ -422,13 +422,13 @@
       <h1 class="hero-h">쌓고 돌려 보며 익히는 <span class="hl">쌓기나무</span></h1>
       <p class="hero-sub">화면에서 직접 쌓고 돌려 보세요. 어느 방향에서 봐도 개수·부피·겉넓이가 곧바로 계산됩니다. 학년에 맞춘 <b>퀴즈 19종</b>과 인쇄용 <b>문제지</b>까지, 설치나 준비물 없이 브라우저 하나로.</p>
       <div class="hero-btns">
-        <a class="btn btn-primary" id="heroCta" href="playground/">
+        <a data-cta="hero" class="btn btn-primary" id="heroCta" href="playground/">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
           직접 쌓아보기
         </a>
         <!-- 보조 CTA — 앵커(#features)가 아니라 실제 기능으로 보낸다.
              마스터가 랜딩에 부여한 임무가 '기능 바로가기'인데 예전엔 본문 진입점이 0개였다. -->
-        <a class="btn btn-ghost" href="quiz/">퀴즈 풀어보기</a>
+        <a data-cta="hero2" class="btn btn-ghost" href="quiz/">퀴즈 풀어보기</a>
       </div>
       <p class="hero-note">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -488,7 +488,7 @@
             <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>개수·부피·겉넓이가 바뀔 때마다 다시 계산, <b>계산 과정</b>까지 펼쳐서</span></li>
             <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>만든 모양은 <b>링크 하나</b>로 그대로 전달</span></li>
           </ul>
-          <a class="sec-cta" href="playground/">
+          <a data-cta="sec-play" class="sec-cta" href="playground/">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
             쌓아보기
           </a>
@@ -521,7 +521,7 @@
             <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>화면에 바로 쓰는 <b>연습장</b>, 틀린 문제는 3D 해설로</span></li>
             <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>새로고침해도 <b>풀던 자리에서</b> 이어서</span></li>
           </ul>
-          <a class="sec-cta" href="quiz/">
+          <a data-cta="sec-quiz" class="sec-cta" href="quiz/">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 11.5 11 14l4.5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="4" width="17" height="16" rx="2.4" stroke="currentColor" stroke-width="1.7"/></svg>
             퀴즈 풀어보기
           </a>
@@ -559,7 +559,7 @@
             <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>종이에서 답이 하나로 안 정해지는 문항에만 <b>QR</b>을 붙여 3D로 연결</span></li>
             <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>퀴즈를 끝까지 푼 뒤 <b>푼 문제 그대로</b> 문제지로</span></li>
           </ul>
-          <a class="sec-cta" href="worksheets/">
+          <a data-cta="sec-sheet" class="sec-cta" href="worksheets/">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
             문제지 만들기
           </a>
@@ -648,7 +648,7 @@
     </div>
     <div class="qfoot reveal">
       <span class="more">그 밖에 <b>10종</b>이 더 있어요 — 층별 개수 세기, 더 쌓거나 빼낸 뒤 그리기, 색칠한 정육면체 등.</span>
-      <a class="sec-cta" href="quiz/">
+      <a data-cta="types" class="sec-cta" href="quiz/">
         <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         유형 전체 보기
       </a>
@@ -673,7 +673,7 @@
           <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>계산 과정 펼쳐 원리까지 설명</li>
           <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>모양 링크로 과제·문제 배포</li>
         </ul>
-        <a class="sec-cta" href="worksheets/">
+        <a data-cta="teacher" class="sec-cta" href="worksheets/">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
           문제지 만들기
         </a>
@@ -687,7 +687,7 @@
           <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>손으로 돌려 보며 공간 감각 연습</li>
           <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>정답·계산을 그 자리에서 확인</li>
         </ul>
-        <a class="sec-cta" href="quiz/">
+        <a data-cta="parent" class="sec-cta" href="quiz/">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 11.5 11 14l4.5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="4" width="17" height="16" rx="2.4" stroke="currentColor" stroke-width="1.7"/></svg>
           퀴즈 풀어보기
         </a>
@@ -738,7 +738,7 @@
   <div class="wrap">
     <h2>지금 바로 쌓아 보세요</h2>
     <p>설치도 필요 없어요. 학생은 로그인 없이 브라우저에서 열어 첫 번째 나무를 놓아 보면 됩니다.</p>
-    <a class="btn btn-onaccent" id="finalCta" href="playground/">
+    <a data-cta="final" class="btn btn-onaccent" id="finalCta" href="playground/">
       <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
       지금 쌓아보기
     </a>
@@ -762,9 +762,9 @@
       <nav class="foot-links" aria-label="바닥글">
         <div class="foot-col">
           <h4>학습 도구</h4>
-          <a id="footPlay" href="playground/">쌓기나무 만들기</a>
-          <a href="quiz/">자동채점 퀴즈</a>
-          <a href="worksheets/">문제지 만들기</a>
+          <a data-cta="footer" id="footPlay" href="playground/">쌓기나무 만들기</a>
+          <a data-cta="footer" href="quiz/">자동채점 퀴즈</a>
+          <a data-cta="footer" href="worksheets/">문제지 만들기</a>
         </div>
         <div class="foot-col">
           <h4>정보</h4>
@@ -813,6 +813,12 @@
    · playground와 같은 브랜드 언어 전환 · 동의(cubenest_consent) 키 공유
    ============================================================ */
 
+/* F1 계측 — 동의 후 로드된 gtag 가 있을 때만. 페이지마다 복제하는 한 줄이고,
+   consent.js 에 의존시키지 않는다(정본 규약은 quiz/index.html 주석).
+   ⚠ 이 정의가 없던 동안 랜딩은 GA4 기본 page_view 만 남겼고, consent.js 의
+     consent_granted 도 발화하지 않았다(그쪽이 전역 track 을 덕타이핑으로 찾는다). */
+function track(name,params){ try{ if(window.gtag) window.gtag('event',name,params||{}); }catch(e){} }
+
 /* ===== 배포 설정 (마스터 2.1·7장) ===== */
 /* 도구 경로 — 프로젝트 페이지 하위경로(/cubenest/) 함정 회피를 위해 반드시 '상대경로'.
    루트 절대경로('/playground/')는 smallhamsters.github.io/playground/로 새어 깨지므로 금지. */
@@ -821,6 +827,25 @@ const PLAYGROUND_URL  = 'playground/';
 /* 도구 경로를 실제 버튼들에 반영 */
 ['heroCta','finalCta','footPlay'].forEach(id=>{
   const a=document.getElementById(id); if(a) a.setAttribute('href', PLAYGROUND_URL);
+});
+
+/* ===== 전환 계측 — CTA 클릭 위임 리스너 1개 =====
+   랜딩은 전환의 입구인데 예전엔 링크·버튼에 붙은 리스너가 **하나도 없었다**(전부 스크롤·캔버스용).
+   어느 CTA 가 사람을 움직이는지 몰라 결제 설계의 근거가 없었다.
+   · 링크마다 핸들러를 붙이지 않는다 — CTA 가 18개고 그중 셋(heroCta·finalCta·footPlay)은
+     위에서 href 를 JS 가 다시 쓴다. 위임 + data-cta 면 DOM 이 바뀌어도 안 깨진다.
+   · 계측 대상은 **HTML 의 data-cta 속성이 정한다** — 여기서 선택자로 추측하지 않는다.
+   ⚠ 클릭 직후 이동하므로 유실 가능성이 있다. gtag.js 가 sendBeacon 을 쓰므로 대개 살아남는다.
+     preventDefault + setTimeout 으로 이동을 늦추지 말 것 — 계측 때문에 사용자가 기다리게 된다. */
+function destOf(href){
+  var h=String(href||'');
+  var m=h.match(/^(playground|quiz|worksheets|guide|my|account)\//);
+  return m ? m[1] : (h==='./' ? 'home' : 'other');
+}
+document.addEventListener('click', function(e){
+  var a = e.target && e.target.closest && e.target.closest('a[data-cta]');
+  if(!a) return;
+  track('cta_click', { at: a.getAttribute('data-cta'), to: destOf(a.getAttribute('href')) });
 });
 
 /* 브라우저 언어에 따라 브랜드 표기 전환: 한국어 → 큐브네스트 / 그 외 → CubeNest */

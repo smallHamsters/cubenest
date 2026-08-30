@@ -16,7 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 명령 (빌드 없음 — 아래가 전부다)
 - **로컬 서버:** `py -m http.server 5500` (리포 루트. **5500 고정**·**`py`** 인 이유는 「기술·규약」)
-- **드리프트 검사:** `py .claude/tools/check-drift.py` — 헤더 메뉴 9페이지 · 브랜드 지역화 훅 · `?v=` 통일 · 파비콘 11페이지 · 글리프 상대경로 · `og:image` 단일 대상 · 셸 `box-sizing` 7항목. exit 0/1 이라 CI 에 걸 수 있다. **이 리포의 유일한 자동 검사이고 테스트 프레임워크는 없다** — 나머지는 브라우저 수동 확인이다. 검사 항목은 전부 260828~29 에 실제로 난 사고에서 왔다.
+- **드리프트 검사:** `py .claude/tools/check-drift.py` — 헤더 메뉴 9페이지 · 브랜드 지역화 훅 · `?v=` 통일 · 파비콘 11페이지 · 글리프 상대경로 · `og:image` 단일 대상 · 셸 `box-sizing` · **GA4 동의 3종 세트 10페이지** 8항목. exit 0/1 이라 CI 에 걸 수 있다. **이 리포의 유일한 자동 검사이고 테스트 프레임워크는 없다** — 나머지는 브라우저 수동 확인이다. 검사 항목은 전부 260828~30 에 실제로 난 사고에서 왔다.
 - **클라↔서버 복본 확인:** `diff -u assets/js/<m>.js supabase/functions/_shared/<m>.js` — 두 벌인 건 `core`·`iso` 둘뿐이고 ESM export 꼬리 2줄 외 차이가 나오면 드리프트다. **위 드리프트 검사는 이걸 안 본다** — 따로 돌린다.
 - **`?v=` 소비처 찾기:** `grep -rn "<모듈>.js?v=" --include=*.html .`
 - **배포:** 클라 `git push` → GitHub Pages / 서버 `supabase functions deploy config generate grade worksheet`. **순서는 클라 먼저, 단 DB 스키마만 서버 먼저** — 이유는 「기술·규약」.
@@ -157,6 +157,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 데이터·수익화
 - **login-free-first:** 무료 도구는 클라만으로 완결. 로그인은 저장·유료의 선택 강화층.
 - 수익화(학부모 B2C): 베타 무료 → **기간 이용권 단건결제**부터 → 월 자동결제 확장(관리형·Supabase Pro).
+- **계측(F1) — GA4 로더는 `assets/js/consent.js` 하나뿐이다.** 리포 전체에서 `googletagmanager` 문자열이 그 파일에만 있다. 페이지가 gtag 스니펫을 따로 넣는 구조가 **아니다**.
+  - **3종 세트를 한 벌로 넣는다**(헤더·푸터와 같은 규약 — 스타일만 공유, 마크업은 각 HTML 인라인): `consent.css` 링크 · `#consent` 배너 마크업 · `consent.js` 스크립트(`auth.js` **뒤**). 배너 문구는 `index.html` 의 블록을 **복사**하고 새로 쓰지 않는다.
+  - **하나만 빠지면 `window.gtag` 가 없고, `track()` 은 `if(window.gtag)` 가드라 이벤트가 오류 없이 조용히 버려진다.** 260830 이전에 `quiz`·`worksheets`·`guide`·`terms`·`privacy` 5페이지가 그 상태였다 — `quiz_preview_*` 100% 유실, worksheets 는 `login_prompt`·`login_success` 등 auth 계측 6종까지 통째로 유실(=**유료화 대상 기능의 사용량이 0으로 보였다**). **`check-drift.py` 8번이 이 짝을 강제한다.**
+  - **`track()` 한 줄은 페이지마다 복제한다 — 공용 모듈로 올리지 말 것.** 의도된 크래시 가드다(정의가 없으면 호출한 함수가 ReferenceError 로 통째로 죽는다 — `/quiz` 미리보기가 실제로 이걸로 안 열렸다). `consent.js` 에 의존시키면 그 파일 로드 실패가 페이지를 죽인다. **`auth.js` 의 `trk()` 와 `consent.js` 의 `consent_granted` 는 전역 `track` 을 덕타이핑으로 찾으므로 IIFE 안에 넣지 말 것**(worksheets 가 그 경우다).
+  - **`consent.js` 는 `?v=` 없이 10곳 전부 무버전이다.** `check_versions` 는 "어디선 붙고 어디선 안 붙은" 경우만 잡으므로 지금은 통과한다 — **일부에만 붙이는 순간 FAIL 이다.** 고칠 일이 생기면 10곳 전부 함께 붙인다.
+  - **동의 전 이벤트는 큐잉이 아니라 폐기다.** `dataLayer` 자체가 `loadGA()` 안에서 생기므로 나중에 동의해도 소급 전송이 없다. 거부는 24시간 TTL 로 만료돼 배너가 다시 뜬다(`consent.js:13`).
+  - **`/privacy`·`/terms` 에도 배너가 있어야 한다** — 방침 §6 이 "화면 하단의 동의 배너에서 '거부'"로 옵트아웃을 안내하는데, 정작 그 페이지에 배너가 없으면 안내한 수단이 그 자리에 없다.
+  - **전환 퍼널(260830):** 랜딩 `cta_click{at,to}`(`data-cta` 속성이 대상을 정한다 — 선택자로 추측하지 않는다) → playground `calc_timegate_lock` → `login_prompt{ctx}` → `login_success` → **worksheets `worksheet_make_click`→`_done`/`_fail{reason}`·`worksheet_print`**. `worksheet_make_click` 은 **로그인 게이트 앞**에 있다 — 막혀서 이탈한 비율의 분모라 성공만 세면 안 된다. `_fail` 의 `reason` 은 화면 분기 라벨(`rate`/`network`/`401`/`server`)을 그대로 쓴다.
+  - **`login_prompt` 는 `auth.js` 가 발화한다 — 게이트 쪽에서 같이 쏘지 말 것**(중복 계측).
 
 ## 현재/다음
 - **완료:** 상태 공유(F2·F3)·계측/동의(F1)·서버 생성/채점(gen 서버화)·OAuth 로그인·**유형 19종**(리매핑 + 안보이는나무 A-a~f + G군 + H군)·정답 은닉·worksheets(문제지·정답지 인쇄·QR)·**난이도 개편(연령 스테이지 S0~S4 + 개수 밴드, gen-config 구조 교체)**·세션 내 중복 회피(gen v0.5.0)·**DB+RLS 저장(`profiles`+`quiz_results`+`my_items`, 닉네임·퀴즈 기록·문제지 계정 귀속, 멱등키 `attempt_id`/`item_id`, 계정별 로컬 분리, 죽은 세션 자동 로그아웃)**·**이용약관·개인정보처리방침(`/terms`·`/privacy`, 전 페이지 공통 푸터 + 로그인 고지형 동의)**.
