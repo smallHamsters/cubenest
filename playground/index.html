@@ -61,7 +61,7 @@
 <link rel="stylesheet" href="../assets/css/consent.css">
 <link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="../assets/js/cubenest-core.js?v=0.4.0"></script>   <!-- 공용 계산 코어(마스터 §5.1) -->
+<script src="../assets/js/cubenest-core.js?v=0.5.0"></script>   <!-- 공용 계산 코어(마스터 §5.1) -->
 <script src="../assets/js/cubenest-viewer.js?v=0.2.3"></script>   <!-- 공용 3D 뷰어·펼쳐보기(마스터 §5.1, core 의존) -->
 <style>
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -1270,9 +1270,14 @@ function renderStats(){
   const e=state.edge;
   const vol=N*e*e*e;
   const surf=exposed*e*e;
-  document.getElementById('sCount').textContent=N;
-  document.getElementById('sVol').textContent=vol;
-  document.getElementById('sSurf').textContent=surf;
+  /* 상단 요약(#statHead)의 세 값이 곧 개수·부피·겉넓이 = **정답 그 자체**다.
+     예전엔 아래 calcBody 만 가려서, '정답 가리기'를 눌러도(그리고 30분 게이트가 걸려도)
+     바로 위에 답이 그대로 떠 있었다 — 두 기능이 이름값을 전혀 못 했다.
+     단위(cm³·cm²)는 값이 아니라 남긴다. */
+  const hideVals = calcLocked || answerHidden;
+  document.getElementById('sCount').textContent=hideVals?'?':N;
+  document.getElementById('sVol').textContent=hideVals?'?':vol;
+  document.getElementById('sSurf').textContent=hideVals?'?':surf;
   const cu = e===1?'cm³':'cm³', sq=e===1?'cm²':'cm²';
   document.getElementById('sVolU').textContent=cu;
   document.getElementById('sSurfU').textContent=sq;
@@ -1349,7 +1354,7 @@ function calcHideHtml(){
 function calcLockHtml(){
   return '<div class="calc-gate"><div class="lockic">'+LOCK_SVG+'</div>'
     +'<div class="gt">30분 무료 체험이 끝났어요</div>'
-    +'<div class="gd">편집·관찰·펼쳐보기는 계속 사용할 수 있어요.<br>계산 과정은 로그인을 하면 무료로 계속 볼 수 있어요!</div>'
+    +'<div class="gd">편집·관찰·펼쳐보기는 계속 사용할 수 있어요.<br>계산 결과와 과정은 로그인을 하면 무료로 계속 볼 수 있어요!</div>'
     +'<button class="gate-btn accent" type="button" data-action="login">로그인 · 회원가입</button></div>';
 }
 
@@ -1869,6 +1874,12 @@ function init(){
       const _h=_q.get('h');
       const hi=(dm&&_h)?dm(st,_h):null;   // 무효·손상이면 null → 선택만 버리고 모양은 정상 로드
       applyState(st, hi); track('open_shared', {hi: hi?hi.size:0});
+    }else{
+      /* ?m= 이 깨졌다(대개 메신저에서 링크가 잘림). 260830 이전에는 core 가 잘린 마스크를
+         관대하게 받아 **뒷부분 나무만 사라진 다른 모양**을 조용히 열었다 — 이제는 null 이다.
+         화면에는 기본 모양이 남으므로, 말해 주지 않으면 "링크가 안 먹었다"를 알 수 없다. */
+      toast('공유 링크가 손상돼서 모양을 열지 못했어요. 링크 전체가 복사됐는지 확인해 주세요.');
+      track('open_shared_fail', {});
     } }
   requestAnimationFrame(animate);
 }

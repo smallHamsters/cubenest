@@ -134,6 +134,17 @@
       // 해설 내부 3D 뷰어(최소·최대 모양, 안 보이는 나무 강조) — 문항 전환 시 dispose
       let EXPVIEWS=[];
       function disposeExpViews(){ EXPVIEWS.forEach(v=>{try{v&&v.dispose&&v.dispose();}catch(e){}}); EXPVIEWS=[]; }
+      /* 3D 뷰어 생성은 **던질 수 있다** — has3D(=THREE 로드됨) 를 통과하고도 WebGL 컨텍스트를
+         못 얻는 경우다(GPU 차단·드라이버 블록리스트·저사양·탭당 컨텍스트 한도 초과).
+         ⚠ 예전엔 이 예외가 renderQ()/submit() 을 통째로 중단시켜 **#actions 가 그려지지 않았다** —
+           문제 카드는 보이는데 제출·다음 버튼이 없는 완전 정지였고, submit() 쪽에서는
+           saveSession() 까지 건너뛰어 채점한 답이 새로고침에 사라졌다.
+         그래서 여기서 삼키고 null 을 준다. **대체 표시는 호출부가 정한다.** */
+      function makeViewer(host,opts){
+        if(!host||!VIEWER||!window.THREE) return null;
+        try{ return VIEWER.createViewer(host,opts); }
+        catch(e){ console.warn("[quiz] 3D 뷰어 생성 실패 — 그림으로 대체",e); return null; }
+      }
       // 오목·안 보이는 나무 판정 = 공용 모듈 GEN(isConcave·hiddenCells)
       // 위/앞/옆 라벨: viewer의 라벨 평면이 가로:세로≈1.6이라, 정사각 텍스처면 글자가 납작해짐 → 같은 비율(128×80) 캔버스로 보정.
 
@@ -344,8 +355,14 @@
         const p=new URLSearchParams(location.search);
         let type=p.get("type");if(!TYPES[type])type="count";
         let levels=(p.get("lv")||"1234").split("").map(c=>LVCODE[c]).filter(Boolean);if(!levels.length)levels=["하","중","상","최상"];
-        let n=Math.min(30,Math.max(5,+(p.get("n")||10)));
-        let seed=p.get("seed")||Math.random().toString(36).slice(2,9);
+        /* ⚠ 예전엔 `+(p.get("n")||10)` 이라 ?n=abc 가 **NaN** 으로 통과했다.
+           Math.max/min 은 NaN 을 걸러 주지 않는다(전부 NaN 을 반환한다). 그 NaN 이
+           S.n·SKEY·GRADE_PARAMS 까지 흘러 세션 키가 깨지고 채점 지문이 어긋났다.
+           랜딩(quiz/index.html:827)은 이미 검사하지만 /quiz/run 은 직접 진입도 가능하다. */
+        let n=parseInt(p.get("n"),10); n=Number.isFinite(n)?Math.min(30,Math.max(5,n)):10;
+        // seed 는 서버로 그대로 나가고 localStorage 키가 된다 — 길이만 자른다.
+        //   우리가 만드는 seed 는 7자(mix 는 `seed#i`)라 32자면 넉넉하다.
+        let seed=(p.get("seed")||"").slice(0,32)||Math.random().toString(36).slice(2,9);
         let dim=p.get("dim")||"all"; // 3d=3D 임베드 / 2d=2D 겨냥도 / all=기본(3D)
         let restart=p.get("restart")==="1"; // /my 다시풀기: 저장 세션 제거 후 처음부터
         let view=p.get("view")||"";         // /my 결과보기: view=result → 결과화면
@@ -415,7 +432,11 @@
                       // 채점 실패 — 답은 그대로 두고 다시 제출하면 된다(문항은 소진되지 않았다).
                       network:"인터넷이 끊겨서 채점하지 못했어요. 연결을 확인하고 <b>다시 제출</b>해 주세요.",
                       rate:"잠시 뒤에 다시 제출해 주세요. (요청이 조금 많았어요)",
-                      server:"채점 중 문제가 생겼어요. <b>다시 제출</b>해 주세요." };
+                      server:"채점 중 문제가 생겼어요. <b>다시 제출</b>해 주세요.",
+                      // 403 = gsig 불일치. 이 문항의 지문이 서버와 안 맞는다는 뜻이라
+                      //   **다시 제출해도 영원히 실패한다**(서버 배포로 설정이 바뀐 뒤 옛 세션을
+                      //   이어풀 때 실제로 난다). '다시 제출' 안내를 주면 무한 재시도를 시킨다.
+                      stale:'이 퀴즈는 오래돼서 채점할 수 없어요. <a href="../">퀴즈를 새로 시작</a>해 주세요.' };
       function needAnswer(form){
         const box=qcard.querySelector(".answer"); if(!box)return;
         let el=box.querySelector(".ansnote");
@@ -565,8 +586,18 @@
           <div class="answer">${ans}</div>`;
         if(CURVIEW&&CURVIEW.dispose){CURVIEW.dispose();CURVIEW=null;} if(EXPLODE&&EXPLODE.dispose){EXPLODE.dispose();EXPLODE=null;} disposeExpViews();
         if(has3D && !isViews && !isHidden && !isManip){
-          CURVIEW=VIEWER.createViewer(document.getElementById("v3d"),{THREE:window.THREE,shape:coreShape(sh),showLabels:true});
-          const rb=document.getElementById("reset3d"); if(rb)rb.onclick=()=>{CURVIEW&&CURVIEW.reset();track("quiz_view_reset",{});};
+          CURVIEW=makeViewer(document.getElementById("v3d"),{THREE:window.THREE,shape:coreShape(sh),showLabels:true});
+          const rb=document.getElementById("reset3d");
+          if(CURVIEW){ if(rb)rb.onclick=()=>{CURVIEW&&CURVIEW.reset();track("quiz_view_reset",{});}; }
+          else{
+            // 3D 를 못 그렸다 — 같은 모양의 정적 겨냥도로 갈아 끼운다. 돌릴 수 없으니
+            //   '돌려서 확인' 안내와 정면 버튼은 거짓말이 되므로 함께 치운다.
+            const host=document.getElementById("v3d");
+            if(host) host.outerHTML=`<div id="iso">${renderIso(sh,0)}</div>`;
+            const row=qcard.querySelector(".rotrow2");
+            if(row) row.innerHTML='<div class="rothint">이 기기에서는 3D 를 표시할 수 없어 <b>그림</b>으로 보여줘요</div>';
+            track("quiz_3d_fallback",{type:pr.type});
+          }
         }
         if(SCRATCH) SCRATCH.show(S.idx);
         const fb0=document.getElementById("fb"); fb0.className="fb"; fb0.innerHTML=""; fb0.hidden=false;
@@ -808,7 +839,7 @@
             Loader.hide();
             if(sb0)sb0.disabled=false;
             console.warn("[quiz] grade 실패",{rate:!!(e&&e.rate),network:!!(e&&e.network),status:e&&e.status,err:e});
-            needAnswer(e&&e.rate?"rate":(e&&e.network?"network":"server"));
+            needAnswer(e&&e.rate?"rate":(e&&e.network?"network":(e&&e.status===403?"stale":"server")));
             return;
           }
           Loader.hide();
@@ -972,23 +1003,24 @@
         if(VIEWER && window.THREE){
           if(pr.type==="minmax" && pr._mn){
             const hMin=document.getElementById("expMin"), hMax=document.getElementById("expMax");
-            if(hMin) EXPVIEWS.push(VIEWER.createViewer(hMin,{THREE:window.THREE,shape:pr._mn,showLabels:false}));
-            if(hMax) EXPVIEWS.push(VIEWER.createViewer(hMax,{THREE:window.THREE,shape:pr._mx,showLabels:false}));
+            const vMin=makeViewer(hMin,{THREE:window.THREE,shape:pr._mn,showLabels:false}); if(vMin) EXPVIEWS.push(vMin);
+            const vMax=makeViewer(hMax,{THREE:window.THREE,shape:pr._mx,showLabels:false}); if(vMax) EXPVIEWS.push(vMax);
           }else if(pr.type==="hidden"){
             // 안 보이는 나무 해설은 정적 iso(renderIso+hiddenCellSet)로 표시 → 3D explode 불필요
           }else if(pr.type==="facesDraw"){
             const hD=document.getElementById("expDraw");
-            if(hD) EXPVIEWS.push(VIEWER.createViewer(hD,{THREE:window.THREE,shape:coreShape(sh),showLabels:true}));
+            const vD=makeViewer(hD,{THREE:window.THREE,shape:coreShape(sh),showLabels:true}); if(vD) EXPVIEWS.push(vD);
           }
         }
         if(pr.type==="surface"){
           const segs=document.querySelectorAll(".pseg"), host=document.querySelector("#explodeHost");
-          if(host && window.THREE && VIEWER){
-            if(EXPLODE&&EXPLODE.dispose)EXPLODE.dispose();
-            EXPLODE=VIEWER.createViewer(host,{THREE:window.THREE,shape:coreShape(sh),faceColors:true,showLabels:true});
+          if(EXPLODE&&EXPLODE.dispose)EXPLODE.dispose();
+          EXPLODE=makeViewer(host,{THREE:window.THREE,shape:coreShape(sh),faceColors:true,showLabels:true});
+          if(EXPLODE){
             EXPLODE.setExplode(true);
             segs.forEach(b=>b.onclick=()=>{segs.forEach(s=>s.classList.remove("on"));b.classList.add("on");EXPLODE&&EXPLODE.setExplode6(b.dataset.set==="6");});
           }else{
+            // 3D 펼쳐보기 실패 → 아래 비3D 경로와 같은 처리(정적 투상 전환)로 떨어진다.
             const vw=document.querySelector(".proj-views");
             segs.forEach(b=>b.onclick=()=>{segs.forEach(s=>s.classList.remove("on"));b.classList.add("on");if(vw)vw.dataset.show=b.dataset.set;});
           }

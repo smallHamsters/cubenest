@@ -89,6 +89,12 @@
       var ok = function (v) { return Number.isInteger(v) && v >= 1 && v <= 10; };
       if (![gx, gy, gz, edge].every(ok)) return null;
       var total = gx * gy * gz, mask = a.subarray(5), cells = new Set();
+      /* 마스크 길이 검증 — 링크가 잘리면(메신저 줄바꿈·수동 복사) 여기가 유일한 방어선이다.
+         검증이 없으면 짧은 mask 의 범위 밖 읽기가 undefined → `undefined >> n` = NaN → `& 1` = 0
+         이라, **예외 없이 뒷부분 나무만 사라진 다른 모양**이 열린다(가장 조용한 실패).
+         serialize 는 언제나 정확히 5 + ceil(total/8) 바이트를 낸다 — 옛 링크도 전부 만족한다.
+         ⚠ `?m=` 바이트·SER_VER 은 그대로다. 이건 형식 변경이 아니라 검증 추가다. */
+      if (mask.length !== Math.ceil(total / 8)) return null;
       for (var i = 0; i < total; i++) {
         if ((mask[i >> 3] >> (i & 7)) & 1) {
           var x = Math.floor(i / (gy * gz)), r = i % (gy * gz), y = Math.floor(r / gz), z = r % gz;
