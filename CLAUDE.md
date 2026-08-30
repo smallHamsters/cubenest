@@ -80,9 +80,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 보안 · 지적재산 (정적 웹은 클라 코드 은닉 불가 → 서버화 + 법적 보호)
 - **핵심 자산은 서버(Edge Function):** `gen`·`gen-config`(전체 문제 공간·정답 규칙)는 클라에서 삭제됨. 클라는 **`quiz/run/api-client.js`**(`assets/js/` 아니다)로 `/generate`·`/grade` 호출. **`/grade`는 gsig(HMAC)로 위·변조 방지.** 무료 익명 플레이라 `verify_jwt=false`.
   - ⚠ **rate limit 은 `/generate`·`/worksheet` 에만 있다. `/grade` 에는 없다**(`grade/index.ts:11-12` — 지연 회피가 이유, "유효 gsig 는 rate 걸린 generate 에서만 나온다"는 전제). 그 전제는 아래 우회 때문에 깨져 있다.
-  - ⚠ **그 rate limit 자체가 우회 가능하다**(260830 확인, 미수정): `X-Anon-Id`(`rate.ts:17`)는 **클라가 만드는 값**이고(`api-client.js:18-28`), `X-Forwarded-For`(`:18`)는 **가장 왼쪽**(=공격자가 써 넣은 값)을 쓰며, `FAIL_OPEN = true`(`:14`)에 호출부가 한 겹 더 연다(`generate/index.ts:29`). 매 요청 랜덤화하면 한도가 사실상 없다.
+  - **`worksheet` 의 버킷 키는 `user.id` 다**(260830). `checkRate(req, kind, subject)` 의 3번째 인자에 requireUser 가 검증한 id 를 넘기면 `X-Anon-Id` 를 **무시하고** `u:` 네임스페이스로 잡는다. ⚠ `c:`(쿠키)와 **반드시 분리**해야 한다 — 같이 쓰면 `X-Anon-Id: <피해자 uid>` 로 남의 문제지 한도를 대신 태울 수 있다. 또 subject 가 있으면 anon 버킷을 **추가하지 않는다**(둘 다 쓰면 헤더를 돌려 가며 새 버킷을 얻어 결국 우회다).
+  - ⚠ **`/generate` 의 rate limit 은 아직 우회 가능하다**(미수정): `X-Anon-Id`(`rate.ts:17`)는 **클라가 만드는 값**이고(`api-client.js:18-28`), `X-Forwarded-For`(`:18`)는 **가장 왼쪽**(=공격자가 써 넣은 값)을 쓰며, `FAIL_OPEN = true`(`:14`)에 호출부가 한 겹 더 연다(`generate/index.ts:29`). 매 요청 랜덤화하면 한도가 사실상 없다. 무로그인 경로라 `worksheet` 처럼 신원으로 바꿀 수 없어, 서버 서명 토큰이 필요하다.
   - **`rate_counter` 청소는 260830 에 붙였다** — `check_rate` 가 호출의 약 1%에서 만료 행을 배치로 지운다(`supabase_ratecleanup_schema_260830.sql`). **루프보다 먼저** 지운다: 한도 초과 시 루프가 early return 하므로 뒤에 두면 정작 남용 중일 때 건너뛴다. pg_cron 이 켜져 있으면 매시 청소도 함께 걸린다(없으면 조용히 건너뜀 — 트래픽이 끊긴 뒤를 위한 보험). `check_rate` 실행 권한도 `service_role` 로 좁혔다.
-    - ⚠ **청소는 증식을 치울 뿐 우회를 막지 않는다.** 버킷 키를 클라가 정하지 못하게 하는 것(위 3종)은 여전히 남은 일이다. 특히 `worksheet` 은 위조 불가한 `user.id` 를 쥐고도 클라 헤더를 버킷 키로 쓴다.
+    - ⚠ **청소는 증식을 치울 뿐 우회를 막지 않는다.** `worksheet` 은 위 신원 버킷으로 닫혔지만, `/generate` 의 XFF·`FAIL_OPEN` 은 그대로다.
     - **개정은 새 파일로 했고(`…ratecleanup…260830.sql`), 옛 `…rate_schema_260815.sql` 상단에 '단독 재실행 금지' 경고를 남겼다.** 같은 함수를 두 파일이 `create or replace` 하므로 **반드시 날짜 순으로** 실행해야 한다 — 옛 파일만 다시 Run 하면 청소가 조용히 사라진다. 그 함정은 문서가 아니라 **그 파일 첫 줄**에 적혀 있어야 한다.
 - **anon key만 클라이언트**(공개 OK). **`service_role` key는 절대 클라·리포 금지**(서버 전용).
 - 클라 유지(보호 가치 낮음): core·viewer·auth·consent·iso(겨냥도 렌더).

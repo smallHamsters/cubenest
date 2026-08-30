@@ -37,9 +37,12 @@ Deno.serve(async (req: Request) => {
     return json(req, { error: "mix 항목마다 theme 필요" }, 400);
   }
 
-  // 정답까지 나가는 경로라 대량 수집을 막는다(익명 쿠키 + IP).
+  // 정답까지 나가는 경로라 대량 수집을 막는다 — 버킷 키는 **user.id**(+ IP).
+  //   여긴 이미 requireUser() 를 통과해 위조 불가한 신원을 손에 쥐고 있다. 예전엔 그걸
+  //   두고도 클라가 만드는 X-Anon-Id 를 썼는데, 그 헤더를 매 요청 랜덤화하면 한도가
+  //   사실상 사라진다 — 정답지가 나가는 경로에서 가장 아까운 구멍이었다.
   let rl: { ok: boolean; retryAfter?: number; reason?: string };
-  try { rl = await checkRate(req, "worksheet"); } catch { rl = { ok: true }; }
+  try { rl = await checkRate(req, "worksheet", user.id); } catch { rl = { ok: true }; }
   if (!rl.ok) {
     const r = json(req, { error: "rate", reason: rl.reason }, 429);
     r.headers.set("Retry-After", String(rl.retryAfter ?? 60));

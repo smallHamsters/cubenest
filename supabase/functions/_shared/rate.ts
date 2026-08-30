@@ -22,14 +22,31 @@ export function identify(req: Request): { anon: string | null; ip: string } {
 
 export type RateResult = { ok: boolean; retryAfter?: number; reason?: string };
 
-export async function checkRate(req: Request, kind: keyof typeof LIMITS): Promise<RateResult> {
+/* subject = **위조 불가한 신원**(JWT 로 검증된 user.id). 주면 X-Anon-Id 를 **무시하고**
+   그것으로 버킷을 잡는다 — 클라가 만드는 헤더는 매 요청 랜덤화하면 한도가 사라지지만,
+   user.id 는 게이트웨이+requireUser 가 검증한 값이라 바꿔치기할 수 없다.
+   ⚠ 네임스페이스를 `c:`(쿠키) 가 아니라 `u:` 로 분리한다. 같이 쓰면 공격자가
+     `X-Anon-Id: <피해자 uid>` 로 남의 문제지 한도를 대신 태울 수 있다.
+   ⚠ subject 가 있으면 anon 버킷을 **추가하지 않는다.** 둘 다 쓰면 헤더를 돌려 가며
+     매번 새 버킷을 얻어 결국 우회가 된다.
+   ⚠ 이 검사는 checks 배열의 **맨 앞**에 있어야 한다 — check_rate 는 한도를 넘긴
+     순간 return 하므로, 앞에 둬야 IP 버킷 행이 더 만들어지지 않는다. */
+export async function checkRate(
+  req: Request,
+  kind: keyof typeof LIMITS,
+  subject?: string | null,
+): Promise<RateResult> {
   const { anon, ip } = identify(req);
   const L = LIMITS[kind];
   const now = Date.now();
   const wm = Math.floor(now / 60_000), wh = Math.floor(now / 3_600_000);
 
   const checks: Array<{ bucket: string; limit: number; ttl: number; reason: string }> = [];
-  if (anon) {
+  const subj = subject && subject.length <= 64 ? subject : null;
+  if (subj) {
+    checks.push({ bucket: `u:${kind}:m:${subj}:${wm}`, limit: L.cookie.perMin,  ttl: 60,   reason: "user-min" });
+    checks.push({ bucket: `u:${kind}:h:${subj}:${wh}`, limit: L.cookie.perHour, ttl: 3600, reason: "user-hour" });
+  } else if (anon) {
     checks.push({ bucket: `c:${kind}:m:${anon}:${wm}`, limit: L.cookie.perMin, ttl: 60,   reason: "cookie-min" });
     checks.push({ bucket: `c:${kind}:h:${anon}:${wh}`, limit: L.cookie.perHour, ttl: 3600, reason: "cookie-hour" });
   }
