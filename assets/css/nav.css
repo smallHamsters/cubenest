@@ -73,6 +73,21 @@ a#authNav svg{width:24px;height:24px;}
   a#authNav:hover{background:var(--panel-2);color:var(--ink);}
 }
 
+/* 가려진 메뉴가 있다는 신호 — 마스크로 끝을 흐린다.
+   ⚠ .fade-l/.fade-r 는 assets/js/nav.js 가 **넘칠 때만** 붙인다. 항상 걸면
+      480px 이상(전부 들어오는 폭)에서 마지막 메뉴가 이유 없이 흐려진다.
+   ⚠ 두 변수를 한 그라디언트에 쓴다 — 좌우 규칙을 따로 두면 한쪽이 다른 쪽을 덮어쓴다.
+      클래스가 없을 때 stop 이 0px 이라 아무 것도 안 흐려진다. */
+.site-nav{--mk-l:0px; --mk-r:0px;}
+.site-nav.fade-l{--mk-l:26px;}
+.site-nav.fade-r{--mk-r:26px;}
+.site-nav.fade-l,.site-nav.fade-r{
+  -webkit-mask-image:linear-gradient(to right, transparent 0, #000 var(--mk-l),
+                     #000 calc(100% - var(--mk-r)), transparent 100%);
+          mask-image:linear-gradient(to right, transparent 0, #000 var(--mk-l),
+                     #000 calc(100% - var(--mk-r)), transparent 100%);
+}
+
 @media (max-width:640px){
   /* 모바일: 종전 2행(브랜드 행 + 메뉴 행, ~85px)을 1행(~52px)으로 압축해
      본문(주기능)에 세로 공간을 돌려준다.

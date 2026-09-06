@@ -50,6 +50,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ※ 아래는 **인벤토리가 아니라 함정 목록**이다 — 조심할 게 없는 모듈(`cubenest-figures.js`·`cubenest-qr.js`)은 일부러 빠져 있다. 전체 목록은 `ls assets/js/`.
 - `cubenest-core.js` — 계산 코어(§4 실행형). **`?m=`·`&h=` 코덱의 단일 출처**(`serialize`/`deserialize`/`cellOrder`/`serializeMarks`/`deserializeMarks`) — **비트 index 수식을 소비처에 복제 금지**(playground 에 있던 `b64urlEnc`/`cellIdx` 사본은 260828 삭제). `cubenest-viewer.js` — 3D 뷰어·펼쳐보기.
 - `cubenest-iso.js` — 겨냥도 SVG 렌더러. **서버 복본(`_shared/`)이 은닉 유형 제시물을 그린다** — 그리는 순서(뒤→앞)가 곧 가림이라 정렬을 바꾸면 숨은 나무가 드러난다.
+- **`nav.js` — 공용 헤더 메뉴 거동(260906 신설, 9페이지).** `auth`·`mydata` 를 안 쓰는 순수 DOM 유틸이어야 한다(`foot.js` 와 같은 규약) — `quiz/index.html` 같은 가벼운 페이지도 싣는다.
+  - ⚠ **페이드(`.fade-l`/`.fade-r`)는 넘칠 때만 붙인다.** CSS 만으로 못 하는 이유가 이것이다 — 항상 걸면 **480px 이상(전부 들어오는 폭)에서 마지막 메뉴가 이유 없이 흐려진다.** 마스크는 좌우를 **한 그라디언트**에 두 변수로 넣는다(규칙을 나누면 한쪽이 다른 쪽을 덮어쓴다).
+  - ⚠ **`scrollIntoView` 를 쓰지 말 것** — 조상 스크롤러(=문서)까지 건드려 페이지가 같이 튄다. `scrollLeft` 를 직접 넣으면 이 컨테이너만 움직이고 범위 밖은 브라우저가 클램프한다.
+  - ⚠ **웹폰트가 늦게 오면 글자 폭이 바뀌어 넘침 여부가 달라진다** — `document.fonts.ready` 와 `load` 에서 다시 잰다. 안 하면 폰트 전 값으로 판단한 페이드가 틀린 채 남는다.
+  - 랜딩·`/account`·`/terms`·`/privacy` 는 `.site-nav` 안에 `aria-current` 가 없어 **자동 스크롤이 no-op** 이다(정상).
 - `auth.js` — **공용 인증(`CubeNest.auth`·`isLoggedIn` 단일 진실)**.
 - **`scope.js` — 저장소 스코프·학습자의 단일 진실(`CubeNest.scope`, 260906 신설).** auth 를 참조하는 쪽이고 auth.js 는 이걸 모른다. 로드 순서 `auth.js → scope.js → mydata.js`(6페이지).
   - **키 규약은 덧붙이기(append-only)다** — `key(base)` = `base` / `base__<uid>` / `base__<uid>~<lid>`. 학습자를 안 고른 사용자의 키는 **한 글자도 안 바뀐다**(mydata 의 옛 `scoped()` 와 바이트 동일). 이 성질이 무손실 마이그레이션·롤백 안전의 전부다 — **구분자 `~` 를 바꾸거나 접미어 순서를 뒤집지 말 것.**
@@ -69,7 +74,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - ⚠ **남은 것:** `localBackend.add` 의 `MAX_ITEMS` 잘라내기는 `syncQuiz` 가 지키는 "push 대상을 자르기 전에 뽑는다"를 안 지킨다. 지금은 잘린 id 를 `console.warn` 으로 드러내기만 한다 — 제대로 고치려면 항목별 미전송 상태가 필요하고, 그게 위에서 막은 것과 같은 경쟁을 새로 만든다. **`CubeNest.auth` 를 참조하는 유일한 모듈**이다. `consent.js` — GA4·동의. `foot.js` — **공용 푸터 배선(`#year`·`#csLink`·`#csMail`)과 `CS_FORM_URL` 단일 출처**(예전엔 account·my 에 복붙 2벌). **문의 창구는 2개(온라인 폼·이메일)이고 값의 정본이 여기다** — `CS_VIEWFORM_URL`·`CS_ENTRY_CTX`(구글폼 prefill)와 `CS_MAIL`. `CS_MAIL` 은 약관 제33조 ②·사업자 정보의 전자우편과 **같은 값**이어야 하고, 창구를 늘리거나 바꾸면 **약관 제33조 ②·방침 §5(처리위탁)·§6(국외이전)을 함께** 고쳐야 한다(구글폼을 쓰면 Google 이 그 개인정보의 수탁자가 된다).
   - **CS 창구 상세(폴백·prefill PII 금지·mailto·9곳 푸터 배치·폼 명세)는 `legal-docs` 스킬에 있다** — `foot.js` 의 CS 상수나 푸터 창구를 고치기 전에 읽을 것.
 - **헤더 메뉴에 '홈'은 없다**(260906 제거). `.site-brand`(로고+워드마크)가 이미 홈 링크이고(`aria-label="큐브네스트 홈"`) 로고→홈은 웹의 보편 관례라 순수 중복이었다. 모바일 가로 스크롤도 40px 만큼 덜 넘친다(**375px 실측: 넘침 128px → 88px**). ⚠ 다시 넣지 말 것.
-  - ⚠ **다만 모바일 메뉴 넘침은 이걸로 안 풀린다.** 375px 에서 `.site-nav` 는 폭 241px 인데 내용이 329px 라, **요금제·내 자료는 여전히 스크롤해야 보인다**(항목 폭 97·40·77·52·55). 즉 `/price` 에 있어도 `aria-current` 칩이 첫 화면 밖이다 — 햄버거가 없다는 설계 결정의 대가이고(§`nav.css`), 닫으려면 별도 작업이 필요하다.
+  - ⚠ **모바일 넘침 자체는 안 풀린다.** 375px 에서 `.site-nav` 는 폭 241px 인데 내용이 329px 다(항목 폭 97·40·77·52·55). **480px 부터 5종이 다 들어온다** — 320:2/5 · 360~390:3/5 · 412~430:4/5. 즉 **휴대폰 세로는 전부 해당**이고 태블릿·데스크톱은 무관하다.
+    - **`assets/js/nav.js` 가 증상 둘을 덮는다**(260906, 넘침을 없애는 게 아니다): ① 넘칠 때만 좌우 페이드를 걸어 **가려진 메뉴가 있음을 알리고** ② `aria-current` 칩을 스크롤 안으로 넣어 **현재 위치를 보이게** 한다(375px `/price` 기준 첫 화면 3/5 → 4/5).
+    - **완전히 닫으려면 라벨 축약(실측 88→17px)이나 햄버거뿐이고 둘 다 제품 결정이다** — `nav.css` 가 '숨기면 내비게이션이 사라진다'며 햄버거를 기각해 뒀고, 라벨은 랜딩 CTA·마스터 사이트맵과 함께 쓰는 제품 이름이다. 참고로 **글자·여백 축소는 88→50px 에 그치면서 탭 타깃을 29→28px 로 더 낮춘다**(모바일 기준 44px 과 이미 어긋나 있다).
+    - ⛔ **계정 버튼을 아이콘으로 되돌려도 12px 밖에 안 번다**(첫 화면 메뉴 수는 3/5 그대로). '로그인' 글자를 되돌릴 이유가 없다 — 실측했다.
 - **헤더 우측 계정 진입점은 로그아웃이면 '로그인' 글자, 로그인이면 사람 아이콘이다**(260906). 사람 글리프만으로는 "로그인해야 하는가 / 이미 돼 있는가"를 알 수 없고, **무로그인이 기본인 사이트라 방문자 대부분이 그 상태**였다. **두 상태를 마크업에 둘 다 넣고**(`<svg class="ico">` + `<span class="lbl">로그인</span>`) `nav.css` 가 `.authed` 로 가른다 — `auth.js mountHeader()` 는 **svg 가 있으면 라벨(aria-label·title)만 갱신하고 마크업을 보존**하므로 JS 를 안 고쳐도 된다. ⚠ `.authed` 는 세션 복원 **뒤에** 붙으므로 로그인 사용자는 '로그인'→아이콘으로 한 번 깜빡인다 — 반대로 기본값을 아이콘에 두면 **방문자 대다수가 잘못된 상태를 먼저 본다.**
 - **푸터도 헤더와 같은 규약이다**(`assets/css/foot.css`): **스타일만 공유, 마크업은 각 HTML 에 인라인.** 소비 = price·quiz·quiz/run·worksheets·account·my·terms·privacy(8곳). 랜딩은 자체 다크 푸터(`.foot`), playground·404 는 푸터 없음. **`@media print{.site-foot{display:none}}` 은 지우지 말 것** — worksheets 가 인쇄 페이지라 없으면 문제지 PDF 하단에 사업자 정보가 찍힌다.
 - **생성기 `gen`·설정 `gen-config`는 서버 전용**(Edge Function, 클라 미배포 — 아래 보안).
@@ -180,7 +188,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 소비처 찾기: `grep -rn "<모듈>.js?v=" --include=*.html .` (index · playground · quiz · quiz/run · worksheets · my · account · price 중 해당하는 것 전부)
   - **통일할 땐 기존 값 중 하나가 아니라 새 값으로 올린다.** 옛 값을 캐시한 브라우저가 그 값 그대로 옛 파일을 계속 쓰기 때문이다. (실제 사례: `api-client.js` 한 파일이 `?v=1` 2곳·`?v=0.2.0` 1곳으로 갈라져 있었다 → 260826 `0.3.0`으로 통일.)
   - `consent.js`(10곳)와 `vendor/qrcode-generator.js`(worksheets 1곳)는 `?v=` 미고정(거의 안 바뀜) — 고치게 되면 그때 붙인다. ※ 이름이 비슷한 `cubenest-qr.js` 는 **별개 파일이고 `?v=0.2.0` 으로 고정돼 있다.**
-  - **`nav.css` 는 260828 에 `?v=` 로 고정했다**(9곳, 현재 `0.4.0` — 260906 헤더 교체 때 올렸다). 로고 교체로 글리프 그림자를 바꿨는데, 캐시된 옛 `nav.css` 가 새 마크 아래에 갈색 후광을 그리는 게 로컬에서 실제로 재현됐다. **남은 무버전 CSS 는 `consent.css` 하나뿐**(`tokens.css` 는 그 뒤 `?v=0.1.0` 으로 고정됐다, 10곳) — 고치게 되면 그때 붙인다.
+  - **`nav.css` 는 260828 에 `?v=` 로 고정했다**(9곳, 현재 `0.5.0` — 260906 헤더 교체·페이드 때 두 번 올렸다). 로고 교체로 글리프 그림자를 바꿨는데, 캐시된 옛 `nav.css` 가 새 마크 아래에 갈색 후광을 그리는 게 로컬에서 실제로 재현됐다. **남은 무버전 CSS 는 `consent.css` 하나뿐**(`tokens.css` 는 그 뒤 `?v=0.1.0` 으로 고정됐다, 10곳) — 고치게 되면 그때 붙인다.
   - **이미지는 `?v=` 를 쓰지 않는다.** GitHub Pages 가 정적 자산에 `max-age=600` + ETag 를 주므로 최대 10분 뒤 조건부 재검증으로 자동 치유되고, 미관 문제라 정합성 오류가 나지 않는다. `?v=` 가 필요한 쪽은 **서버와 어긋나면 오작동하는 JS 모듈**이다.
 - **배포는 두 갈래이고 순서가 있다 — 클라 먼저, 서버 나중.** 정적 사이트 = `git push` → GitHub Pages(origin/main). 서버 = `supabase functions deploy config generate grade worksheet`. 둘은 따로 나가므로 **한쪽만 배포하면 조용히 어긋난다** — 오류가 아니라 "안 바뀐 것처럼" 보인다.
   - 클라는 `/config`(열린 학년·유형·등급)를 **정본**으로 삼는다. 서버를 먼저 배포하면 옛 클라가 **없어진 학년을 계속 팔고**(칩은 남는데 유형이 0개), 그 학년으로 시작한 퀴즈는 `normStage()`가 기본값으로 떨어뜨려 **다른 학년 문제가 조용히 나온다**(260821 중1~2 제거 때 실제로 발생).
