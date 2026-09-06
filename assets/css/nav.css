@@ -101,7 +101,15 @@ a#authNav svg{width:24px;height:24px;}
   .site-nav{flex:1 1 auto;min-width:0;flex-wrap:nowrap;justify-content:flex-start;gap:2px;
     overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;-ms-overflow-style:none;}
   .site-nav::-webkit-scrollbar{display:none;}
-  .site-nav a{padding:7px 9px;font-size:13px;}
+  /* 탭 타깃 44px — CLAUDE.md 모바일 기준. 종전엔 29px(실제 히트 30px)라 계정 버튼만 지키고
+     메뉴는 안 지키고 있었다. **헤더 높이는 안 변한다** — 57px 를 이미 계정 버튼(44px)이 정하고
+     있어서 메뉴 항목을 44px 로 키워도 위아래 죽은 공간을 링크가 가져갈 뿐이다(260906 실측).
+     ⚠ ::after 로 히트 영역만 넓히는 흔한 손은 **여기서 안 먹는다** — .site-nav 가
+        overflow-x:auto 라 사양상 세로축의 visible 이 auto 로 바뀌어 넓힌 영역이 잘린다
+        (overflow-y:visible 로 되돌리려는 시도도 무시된다). 박스를 재면 45px 로 통과한 것처럼
+        보이는데 elementFromPoint 로 재면 30px 그대로다 — **박스 말고 클릭 판정으로 확인할 것.**
+     ⚠ 데스크톱(>640px)엔 넣지 않는다 — 마우스라 불필요하고 헤더만 두꺼워진다. */
+  .site-nav a{display:flex;align-items:center;min-height:44px;padding:0 9px;font-size:13px;}
   /* 우측 1개(계정) — 44px 탭 타깃 유지. 로그아웃이면 '로그인' 글자라 조금 넓다. */
   .site-actions{flex:0 0 auto;gap:0;}
   a#authNav{padding:0 11px;}
