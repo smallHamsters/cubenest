@@ -45,6 +45,22 @@
   .my-hero .sub{margin:3px 0 0;font-size:13px;color:var(--muted);}
 
   /* ── 안내 배너(로컬 저장 정직 고지) ─────────────────── */
+  /* ── 학습자 스위처 · 가져오기 카드 ── */
+  .lrnbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 14px;}
+  .lrnbar .lb-l{font-size:12px;font-weight:700;color:var(--muted);}
+  .lb-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--panel);
+           color:var(--muted);cursor:pointer;font-family:inherit;font-size:13px;font-weight:700;
+           padding:6px 12px 6px 7px;border-radius:999px;min-height:36px;}
+  .lb-chip.on{border-color:transparent;background:var(--accent-soft);color:var(--accent-ink);}
+  .lb-av{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+         color:#fff;font-size:11px;font-weight:800;}
+  .lb-mng{margin-left:auto;font-size:12px;color:var(--muted);text-decoration:underline;text-underline-offset:2px;}
+  .imp{display:flex;gap:12px;align-items:center;flex-wrap:wrap;max-width:760px;margin:0 0 14px;
+       padding:12px 14px;border:1px dashed var(--line);border-radius:12px;background:var(--panel-2);font-size:13px;color:var(--muted);}
+  .imp b{color:var(--accent-ink);}
+  .imp-btn{margin-left:auto;border:0;border-radius:10px;background:var(--accent);color:#fff;cursor:pointer;
+           font-family:inherit;font-size:13px;font-weight:800;padding:9px 14px;min-height:38px;}
+  .imp-btn:disabled{background:var(--panel);color:var(--muted-2);cursor:default;}
   .my-note{display:flex;gap:9px;align-items:flex-start;max-width:760px;
            margin:0 0 18px;padding:12px 14px;border-radius:var(--r);
            background:var(--accent-soft);color:var(--accent-ink);
@@ -173,7 +189,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.5.0"></script>
-<script src="../assets/js/mydata.js?v=0.7.0"></script>
+<script src="../assets/js/scope.js?v=0.1.0"></script>   <!-- 저장소 스코프·학습자(공용 태블릿 격리). auth 뒤·mydata 앞 -->
+<script src="../assets/js/mydata.js?v=0.8.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
 <script>
@@ -278,6 +295,49 @@ function track(name, params){ try{ if(window.gtag) window.gtag('event', name, pa
     });
   }
 
+  /* ── 학습자 스위처 · 이 기기 기록 가져오기 ─────────────────
+     둘 다 "지금 누구의 자료를 보고 있는가"를 드러내기 위한 것이다. 로스터 편집(추가·이름·
+     삭제)의 정본은 /account 이고 여기서는 **전환만** 한다. */
+  var SCOPE = (window.CubeNest && window.CubeNest.scope) || null;
+
+  function learnerBarHtml(){
+    if(!SCOPE) return '';
+    var list = SCOPE.list(); if(!list.length) return '';
+    var cur = SCOPE.learner(), h = '<div class="lrnbar"><span class="lb-l">보는 사람</span>';
+    for(var i=0;i<list.length;i++){
+      var l=list[i], on=!!(cur&&cur.id===l.id);
+      h += '<button class="lb-chip'+(on?' on':'')+'" type="button" data-lb="'+esc(l.id)+'">'+
+             '<span class="lb-av" aria-hidden="true" style="background:'+SCOPE.colorOf(l)+'">'+esc(l.name.slice(0,1))+'</span>'+
+             esc(l.name)+'</button>';
+    }
+    if(cur) h += '<button class="lb-chip" type="button" data-lb="">모두</button>';
+    return h + '<a class="lb-mng" href="../account/">관리</a></div>';
+  }
+  function wireLearnerBar(){
+    if(!SCOPE) return;
+    document.querySelectorAll('[data-lb]').forEach(function(b){
+      b.onclick=function(){ SCOPE.select(b.getAttribute('data-lb')||null); };
+    });
+  }
+
+  /* 옛 자동 승계(adopt)의 대체 — 누를 때만 넘어온다. */
+  function importCardHtml(){
+    var n = (M && M.deviceDataCount) ? M.deviceDataCount() : 0;
+    if(!n) return '';
+    return '<div class="imp"><span>이 기기에 로그인 없이 저장된 자료가 <b>'+n+'건</b> 있어요.</span>'+
+           '<button class="imp-btn" type="button" id="impBtn">내 계정으로 가져오기</button></div>';
+  }
+  function wireImportCard(){
+    var b=document.getElementById('impBtn'); if(!b) return;
+    b.onclick=function(){
+      b.disabled=true; b.textContent='가져오는 중…';
+      Promise.resolve(M.importDeviceData()).then(function(r){
+        if(r && r.ok){ render(); }
+        else { b.disabled=false; b.textContent='가져오지 못했어요 — 다시'; }
+      });
+    };
+  }
+
   function renderLibrary(){
     /* 제목의 이름은 닉네임(account 에서 설정) 우선, 없으면 계정 표시명 */
     var nick = (M && M.getNickname && M.getNickname()) || A.userLabel();
@@ -290,8 +350,12 @@ function track(name, params){ try{ if(window.gtag) window.gtag('event', name, pa
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg>'+
         '<span>퀴즈 기록·문제지·표시 이름이 모두 <b>계정에 저장</b>돼 어느 기기에서나 열려요. 문제지는 주소만 남기므로, 여는 순간 같은 문제가 다시 만들어져요.</span>'+
       '</div>' +
+      learnerBarHtml() +
+      importCardHtml() +
       '<div id="mySections"><div class="my-skel"><i></i><i></i></div></div>';
 
+    wireLearnerBar();
+    wireImportCard();
     var host = document.getElementById('mySections');
     /* 삭제(위임): 해당 기록을 이 기기에서만 숨김 → 다시 그림 */
     host.addEventListener('click', function(e){
@@ -312,7 +376,9 @@ function track(name, params){ try{ if(window.gtag) window.gtag('event', name, pa
     if(M && M.hasDeviceData()){
       /* 퀴즈 기록(quiz_results)·문제지·모양(my_items)이 모두 서버에 미러된다 — 로그인하면
          이 기기 기록이 올라가고 다른 기기 기록도 내려온다(mydata.syncQuiz·syncItems).
-         ※ 이 기기의 비로그인 자료는 처음 로그인한 계정 하나만 승계한다(mydata.adopt). */
+         ⚠ 예전엔 로그인하는 순간 **자동으로** 승계했다(mydata.adopt). 학원 공용 태블릿에서
+           여러 아이가 무로그인으로 쌓은 기록을 첫 로그인 계정이 통째로 가져가 서버에까지
+           올리는 사고를 냈다. 지금은 로그인 뒤 '가져오기' 카드를 눌러야 넘어온다. */
       deviceHtml =
         '<div class="device">이 기기에 저장된 학습 기록이 있어요. '+
         '<b>로그인하면</b> 여기서 바로 이어서 볼 수 있어요.</div>';
@@ -343,9 +409,11 @@ function track(name, params){ try{ if(window.gtag) window.gtag('event', name, pa
      — 안 그러면 새로고침해야 보인다.
      달라진 게 **실제로 있을 때만** 다시 그린다: 무조건 재렌더하면 목록이 한 번 깜빡인다.
      ⚠ 개별 sync* 를 각자 부르지 말 것 — 동시에 돌면 로컬 저장소 쓰기가 서로를 덮는다(mydata.sync 가 순차 처리). */
+  /* ⚠ 서명에 **스코프**를 포함한다 — 없으면 학습자를 바꿔 목록이 통째로 달라져도
+     "닉네임+id 목록"이 우연히 같을 때(둘 다 비어 있을 때가 흔하다) 다시 안 그린다. */
   function libSignature(){
     return Promise.all([M.quizFeed(), M.list('worksheet'), M.list('shape')]).then(function(a){
-      return M.getNickname() + '|' + a.map(function(list){
+      return (SCOPE?SCOPE.id():'') + '|' + M.getNickname() + '|' + a.map(function(list){
         return list.map(function(it){ return it.id; }).join(',');
       }).join('|');
     });
@@ -380,6 +448,10 @@ function track(name, params){ try{ if(window.gtag) window.gtag('event', name, pa
 
   A.onAuthChange(render);
   A.ready.then(render);
+  /* 학습자를 바꾸면 목록이 통째로 달라진다 — 계정 전환과 같은 처리다.
+     ⚠ changed=false(등록 즉시 1회)는 무시한다. 위 두 줄이 이미 첫 렌더를 맡고 있어
+       여기서 또 그리면 render() 호출 수가 늘고 trackView 의 분모 가정이 흔들린다. */
+  if(SCOPE) SCOPE.onChange(function(changed){ if(changed) render(); });
 })();
 
 /* 상단바 그림자(스크롤 시) */

@@ -124,6 +124,29 @@
 
   /* 결제 내역 */
   .ah-empty{padding:8px 2px 2px;font-size:13px;color:var(--muted);line-height:1.55;}
+
+  /* ── 학습자(공용 기기에서 아이별로 기록을 나눈다) ── */
+  .lrn-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+  .lrn-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--line);
+           border-radius:12px;background:var(--panel);}
+  .lrn-row.on{border-color:var(--accent);background:var(--accent-soft);}
+  .lrn-av{width:26px;height:26px;border-radius:50%;flex:0 0 auto;display:inline-flex;align-items:center;
+          justify-content:center;color:#fff;font-size:13px;font-weight:800;}
+  .lrn-nm{flex:1;min-width:0;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lrn-now{font-size:11px;font-weight:800;color:var(--accent-ink);flex:0 0 auto;}
+  .lrn-act{flex:0 0 auto;border:0;background:none;cursor:pointer;font-family:inherit;font-size:12px;
+           font-weight:700;color:var(--muted);padding:6px 8px;border-radius:8px;min-height:32px;}
+  .lrn-act.del{color:var(--del);}
+  @media (hover:hover){ .lrn-act:hover{background:var(--line-2);} }
+  .lrn-add{display:flex;gap:8px;}
+  .lrn-add input{flex:1;min-width:0;height:44px;padding:0 13px;box-sizing:border-box;font-family:inherit;
+                 font-size:14px;border:1px solid var(--line);border-radius:11px;background:var(--panel-2);color:var(--ink);}
+  .lrn-add input:focus{outline:none;border-color:var(--accent);background:var(--panel);box-shadow:0 0 0 3px var(--accent-soft);}
+  .lrn-add button{flex:0 0 auto;height:44px;padding:0 16px;border:0;border-radius:11px;background:var(--accent);
+                  color:#fff;font-family:inherit;font-size:14px;font-weight:800;cursor:pointer;}
+  .lrn-ask{display:flex;align-items:center;gap:9px;margin-top:14px;font-size:13px;color:var(--muted);cursor:pointer;}
+  .lrn-ask input{width:18px;height:18px;flex:0 0 auto;accent-color:var(--accent);}
+  .lrn-hint{margin:10px 0 0;font-size:12px;line-height:1.55;color:var(--muted-2);}
   .ah-pay{display:flex;align-items:center;justify-content:space-between;gap:12px;
           padding:11px 0;border-top:1px solid var(--line-2);font-size:13px;}
   .ah-pay:first-child{border-top:0;}
@@ -184,7 +207,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.5.0"></script>
-<script src="../assets/js/mydata.js?v=0.7.0"></script>
+<script src="../assets/js/scope.js?v=0.1.0"></script>   <!-- 저장소 스코프·학습자(공용 태블릿 격리). auth 뒤·mydata 앞 -->
+<script src="../assets/js/mydata.js?v=0.8.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
 <script>
@@ -281,6 +305,81 @@ var CS_FORM_URL = (window.CubeNest && window.CubeNest.CS_FORM_URL) || '#';
     track(name, params);
   }
 
+  /* ── 학습자 로스터 (이 화면이 정본) ─────────────────────────
+     한 계정(보호자·선생님) 아래 아이 여러 명. **아이는 로그인하지 않는다** — 태블릿에서
+     이름을 고르기만 하고, 기록은 이 계정에 귀속된다. 규약은 assets/js/scope.js.
+     ⚠ 만 14세 미만 아동 개인정보 미수집 원칙(/privacy §10)의 방어선이 이 화면의
+       '좁음' 이다. **별명 한 칸 말고 아무것도 받지 말 것** — 생년월일·학교·연락처 금지. */
+  var SCOPE = (window.CubeNest && window.CubeNest.scope) || null;
+
+  function renderLearners(){
+    var slot = document.getElementById('lrnSlot');
+    if (!slot) return;
+    if (!SCOPE) { slot.innerHTML = '<div class="ah-empty">학습자 기능을 불러오지 못했어요.</div>'; return; }
+    var list = SCOPE.list(), cur = SCOPE.learner(), h = '';
+    if (list.length){
+      h += '<div class="lrn-list">';
+      for (var i=0;i<list.length;i++){
+        var l = list[i], on = !!(cur && cur.id===l.id);
+        h += '<div class="lrn-row'+(on?' on':'')+'">'+
+               '<span class="lrn-av" aria-hidden="true" style="background:'+SCOPE.colorOf(l)+'">'+esc(l.name.slice(0,1))+'</span>'+
+               '<span class="lrn-nm">'+esc(l.name)+'</span>'+
+               (on?'<span class="lrn-now">지금</span>'
+                  :'<button class="lrn-act" type="button" data-pick="'+esc(l.id)+'">고르기</button>')+
+               '<button class="lrn-act" type="button" data-ren="'+esc(l.id)+'">이름</button>'+
+               '<button class="lrn-act del" type="button" data-del="'+esc(l.id)+'">삭제</button>'+
+             '</div>';
+      }
+      h += '</div>';
+    } else {
+      h += '<div class="ah-empty">아직 학습자가 없어요. 아이 이름을 더하면 기기를 함께 써도 기록이 섞이지 않아요.</div>';
+    }
+    if (list.length < SCOPE.MAX_LEARNERS){
+      h += '<div class="lrn-add">'+
+             '<input id="lrnNew" type="text" maxlength="'+SCOPE.NAME_MAX+'" autocomplete="off" placeholder="아이 별명" aria-label="학습자 별명">'+
+             '<button id="lrnAdd" type="button">추가</button>'+
+           '</div>';
+    }
+    h += '<label class="lrn-ask"><input type="checkbox" id="lrnAsk"'+(SCOPE.askMode()?' checked':'')+'>'+
+         '태블릿 모드 — 퀴즈를 시작할 때마다 누구인지 묻기</label>'+
+         '<p class="lrn-hint">학원처럼 한 기기를 여러 아이가 쓰면 켜 주세요. 꺼 두면 마지막에 고른 아이로 이어가고, '+
+         '20분 넘게 쉬면 한 번 다시 물어요.<br><b>실명 대신 별명</b>을 권해요 — 나이·학교 같은 정보는 받지 않아요.</p>';
+    slot.innerHTML = h;
+
+    slot.querySelectorAll('[data-pick]').forEach(function(b){
+      b.onclick=function(){ SCOPE.select(b.getAttribute('data-pick')); renderLearners(); };
+    });
+    slot.querySelectorAll('[data-ren]').forEach(function(b){
+      b.onclick=function(){
+        var id=b.getAttribute('data-ren'), curName='';
+        SCOPE.list().forEach(function(x){ if(x.id===id) curName=x.name; });
+        var v=prompt('새 별명 ('+SCOPE.NAME_MAX+'자 이내)', curName);
+        if(v==null) return;
+        SCOPE.rename(id, v); renderLearners();
+      };
+    });
+    slot.querySelectorAll('[data-del]').forEach(function(b){
+      b.onclick=function(){
+        var id=b.getAttribute('data-del'), nm='';
+        SCOPE.list().forEach(function(x){ if(x.id===id) nm=x.name; });
+        /* ⚠ 이 기기에 저장된 그 아이의 기록(진행·연습장·자료)이 함께 지워진다.
+           서버 미러는 아직 없다(2단계) — 생기면 여기에 "서버 기록도 함께" 선택이 붙는다. */
+        if(!confirm('‘'+nm+'’을(를) 지울까요?\n이 기기에 저장된 그 아이의 퀴즈 기록·연습장도 함께 지워져요.')) return;
+        SCOPE.remove(id); renderLearners();
+      };
+    });
+    var ni=document.getElementById('lrnNew'), na=document.getElementById('lrnAdd');
+    if(na) na.onclick=function(){
+      var v=(ni.value||'').trim(); if(!v) { ni.focus(); return; }
+      var it=SCOPE.add(v);
+      if(it) SCOPE.select(it.id);
+      renderLearners();
+    };
+    if(ni) ni.onkeydown=function(e){ if(e.key==='Enter'){ e.preventDefault(); na && na.click(); } };
+    var ask=document.getElementById('lrnAsk');
+    if(ask) ask.onchange=function(){ SCOPE.setAskMode(ask.checked); };
+  }
+
   function renderHub(){
     var label = A.userLabel();
     var curNick = (M && M.getNickname && M.getNickname()) || '';
@@ -301,6 +400,7 @@ var CS_FORM_URL = (window.CubeNest && window.CubeNest.CS_FORM_URL) || '#';
               '</div>'+
               '<p class="nhint" id="nickHint">‘내 자료’ 페이지에 <b>○○님의 자료</b>로 표시돼요. 계정에 저장돼 다른 기기에서도 따라와요.</p>'+
             '</div>')+
+          sec('학습자', '<div id="lrnSlot"></div>')+
           sec('이용권', '<div id="planSlot"><div class="ah-empty">불러오는 중…</div></div>')+
           sec('결제 내역', '<div id="paySlot"><div class="ah-empty">불러오는 중…</div></div>')+
           sec('쿠폰 코드', couponBody())+
@@ -317,6 +417,7 @@ var CS_FORM_URL = (window.CubeNest && window.CubeNest.CS_FORM_URL) || '#';
       '</div>';
 
     document.getElementById('acctOut').onclick = function(){ A.signOut(); };
+    renderLearners();
 
     /* 닉네임 저장 — 로컬 즉시 + 서버(profiles) best-effort 미러. /my 제목에 반영. */
     var ni=document.getElementById('nickInput'), ns=document.getElementById('nickSave'), nh=document.getElementById('nickHint');

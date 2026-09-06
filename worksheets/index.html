@@ -237,9 +237,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.5.0"></script>
+<script src="../assets/js/scope.js?v=0.1.0"></script>   <!-- 저장소 스코프·학습자(공용 태블릿 격리). auth 뒤·mydata 앞 -->
 <script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
-<script src="../assets/js/mydata.js?v=0.7.0"></script>
+<script src="../assets/js/mydata.js?v=0.8.0"></script>
 <script src="../assets/js/cubenest-iso.js?v=0.2.0"></script>
 <script src="../assets/js/cubenest-figures.js?v=0.3.0"></script>
 <script src="../assets/js/vendor/qrcode-generator.js"></script>
@@ -262,11 +263,28 @@ function track(name,params){ try{ if(window.gtag) window.gtag('event',name,param
   var isLoggedIn=function(){ return !!(AUTH&&AUTH.isLoggedIn()); };
   var esc=function(s){ return String(s==null?"":s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); };
 
+  /* ⚠ 이 payload 에는 **아이의 연습장 필기 PNG 전량**이 들어 있는데, 위 주석대로
+       읽고 지우지 않는다(새로고침·뒤로가기 보호). 그래서 예전엔 앞 아이의 손글씨가
+       기기에 영구히 남아, 다음 아이가 이 페이지를 열기만 해도 그대로 보였다
+       (계정 전환과 무관한 누수였다). quiz/run 이 스코프와 시각을 함께 실어 보내므로
+       **둘 다 검사하고 어긋나면 지운다.** 30분 TTL 안에서는 종전 보호가 그대로다 —
+       실제 문제지 작업은 몇 분이면 끝난다. */
+  var PAYLOAD_TTL=30*60*1000;
+  function scopeId(){ try{ return (window.CubeNest&&window.CubeNest.scope) ? CubeNest.scope.id() : ''; }catch(e){ return ''; } }
   function loadPayload(){
     var raw=null;
     try{ raw=localStorage.getItem(KEY); }catch(e){}
     if(!raw) return null;
-    try{ return JSON.parse(raw); }catch(e){ return null; }
+    var o=null;
+    try{ o=JSON.parse(raw); }catch(e){ return null; }
+    if(o && o.v===2){
+      if(o.scope!==scopeId()){ try{ localStorage.removeItem(KEY); }catch(e){} return null; }   // 남의 것
+      if(Date.now()-(+o.ts||0) > PAYLOAD_TTL){ try{ localStorage.removeItem(KEY); }catch(e){} return null; }
+      return o.payload||null;
+    }
+    // 배포 직전에 쓰인 구형 payload 는 1회 수용한다(넘어가던 작업을 끊지 않는다).
+    if(o && Array.isArray(o.problems)) return o;
+    return null;
   }
 
   // ── 새 문제지 만들기(독립 생성) — 유형·난이도·문항수를 골라 서버에서 새로 뽑는다 ──

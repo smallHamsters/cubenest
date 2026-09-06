@@ -338,6 +338,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.5.0"></script>
+<script src="../assets/js/scope.js?v=0.1.0"></script>   <!-- 저장소 스코프·학습자(공용 태블릿 격리). auth 뒤·mydata 앞 -->
 <script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
 <!-- 예시 미리보기용 렌더러 — quiz/run·worksheets 와 **같은 그림**을 쓴다(재발명 금지, 마스터 §5.1). -->
@@ -645,7 +646,19 @@ function render(){
   syncURL();
 }
 
+/* 저장소 스코프(계정·학습자) — 공용 태블릿에서 누구의 기록인지 가른다.
+   ⚠ '태블릿 모드'가 켜져 있거나 20분 넘게 쉬었으면 **시작 전에** 묻는다. 시작한 뒤에
+     물으면 이미 옛 스코프로 세션 키가 잡혀 앞 아이 진행을 물려받는다. */
+const SCOPE=(window.CubeNest&&window.CubeNest.scope)||null;
 function start(t){
+  if(SCOPE && SCOPE.shouldAsk()){
+    SCOPE.ensurePicked('quiz_start').then(function(){ startNow(t); });
+    return;
+  }
+  if(SCOPE) SCOPE.touch();
+  startNow(t);
+}
+function startNow(t){
   const sup=levelsOf(t);
   const lvls=LEVELS.filter(l=>state.levels.has(l)&&sup.includes(l));
   const use=(lvls.length?lvls:sup);

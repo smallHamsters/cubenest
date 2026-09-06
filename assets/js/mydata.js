@@ -6,9 +6,13 @@
  *     서버(Supabase)는 미러다** — 백엔드를 통째로 갈아끼우지 않는다. getNickname()
  *     처럼 동기 반환을 /my·/account 가 동기로 소비하는 곳이 있어, 서버는 읽어서
  *     **로컬 캐시를 채우는** 방향으로만 붙인다.
- *   · **계정 경계:** 공용 기기에서 계정을 바꿔도 앞 사람 자료가 보이면 안 된다.
- *     저장소 키에 uid 를 붙여 계정별로 나눈다(storeKey·nickKey). 비로그인은 접미
- *     없는 기존 키를 그대로 써서 이미 쌓인 자료가 사라지지 않는다.
+ *   · **계정·학습자 경계:** 공용 기기에서 계정이나 아이를 바꿔도 앞 사람 자료가
+ *     보이면 안 된다. 저장소 키 규약의 단일 출처는 **`CubeNest.scope`** 다
+ *     (scope.js). 여기서는 scoped() 가 그걸 위임해 부를 뿐이다.
+ *     ⚠ 예전엔 이 파일이 직접 `base+'__'+uid` 를 만들고 `adopt()` 로 "첫 로그인이
+ *       익명 자료를 승계"했는데, 학원 공유 태블릿에서 **여러 아이가 무로그인으로
+ *       쌓은 기록을 첫 로그인 계정이 통째로 가져가 서버에 올리는** 사고를 냈다.
+ *       승계는 지웠고, 대신 사용자가 직접 누르는 importDeviceData() 로 바꿨다.
  *   · list/add/remove/clear/sync* 는 Promise 를 돌려준다(로컬은 즉시 resolve).
  *     ⚠ 다만 getNickname·latestQuiz·resumableCount·hasDeviceData·typeLabel·mode 는
  *       **동기 반환**이고 /my·/account 가 그렇게 소비한다. 이 6개를 Promise 로 바꾸면
@@ -23,14 +27,13 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.7.0';
+  var VERSION = '0.8.0';
 
   var STORE_BASE = 'cubenest_my_v1';   // 개인 라이브러리(정본). 로그인 시 '__<uid>' 가 붙는다
   var NICK_BASE  = 'cubenest_nick';    // 표시 이름(닉네임). 로그인 시 '__<uid>' 가 붙는다
   var LEGACY_LAST = 'cubenest_quiz_last'; // quiz/run 이 남기는 마지막 결과 1건
   var LEGACY_HIDDEN = 'cubenest_quiz_last_hidden'; // /my 에서 숨긴 마지막 결과 ts
   var SESS_PREFIX = 'cubenest_quiz_sess_'; // quiz/run 진행(이어풀기) 세션
-  var ADOPT_KEY  = 'cubenest_my_adopted';  // 이 기기의 비로그인 자료를 승계한 계정 uid(기기당 1회)
   var MAX_ITEMS  = 200;                 // 로컬 용량 보호(오래된 것부터 잘림)
 
   var KINDS = { quiz: 1, worksheet: 1, shape: 1 };
@@ -55,27 +58,45 @@
       return (u && u.id) || null;
     } catch (e) { return null; }
   }
-  function scoped(base) { var id = uid(); return id ? (base + '__' + id) : base; }
+  /* 저장소 스코프의 단일 출처는 scope.js 다. 여기서는 위임만 한다.
+     ⚠ 폴백(scope.js 미로드)은 **예전 식과 정확히 같아야 한다** — 다르면 로드 순서가
+       어긋난 페이지에서 조용히 다른 키를 보게 된다. */
+  function scopeMod() { return (global.CubeNest && global.CubeNest.scope) || null; }
+  function scopeId() { var S = scopeMod(); if (S) return S.id(); var id = uid(); return id ? '__' + id : ''; }
+  function scoped(base) { var S = scopeMod(); return S ? S.key(base) : (base + scopeId()); }
   function storeKey() { return scoped(STORE_BASE); }
   function nickKey()  { return scoped(NICK_BASE); }
 
-  function adoptedBy() {
-    try { return global.localStorage.getItem(ADOPT_KEY) || ''; } catch (e) { return ''; }
-  }
-  /* 첫 로그인 승계 — 비로그인으로 쌓은 이 기기 자료를 **처음 로그인한 계정 하나가** 물려받는다.
-     원본(익명 키)은 지우지 않는다: 로그아웃하면 그 기기 사용자가 자기 기록을 계속 봐야 한다.
-     승계한 uid 를 남겨, 뒤에 로그인하는 다른 계정은 물려받지 못하게 한다(공용 기기 노출 차단). */
-  function adopt(id) {
-    if (!id) return;
+  /* ── 이 기기 기록 가져오기 (옛 adopt() 의 대체) ──────────
+     예전엔 로그인하면 **자동으로** 익명 자료를 첫 계정이 승계했다. 학원 태블릿에서
+     여러 아이가 무로그인으로 쌓은 기록을 한 명이 통째로 가져가 서버에 올리는 사고를
+     냈고, 뒤에 로그인한 아이는 영영 승계를 못 받았다. 그래서 **사용자가 누를 때만**
+     가져온다. 원본(익명 키)은 지우지 않는다 — 로그아웃한 사람의 기록이기 때문이다. */
+  function anonStore() {
     try {
-      var ls = global.localStorage;
-      if (ls.getItem(ADOPT_KEY)) return;            // 이 기기는 이미 누군가 승계했다
-      ls.setItem(ADOPT_KEY, id);                    // 실패해도 무한 재시도되지 않게 먼저 찍는다
-      var anon = ls.getItem(STORE_BASE);
-      if (anon && !ls.getItem(STORE_BASE + '__' + id)) ls.setItem(STORE_BASE + '__' + id, anon);
-      var nick = (ls.getItem(NICK_BASE) || '').trim();
-      if (nick && !ls.getItem(NICK_BASE + '__' + id)) ls.setItem(NICK_BASE + '__' + id, nick);
-    } catch (e) {}
+      var o = JSON.parse(global.localStorage.getItem(STORE_BASE) || 'null');
+      return (o && Array.isArray(o.items)) ? o : { v: 1, items: [] };
+    } catch (e) { return { v: 1, items: [] }; }
+  }
+  /* 지금 스코프에 아직 없는 '이 기기' 항목 수. 동기 반환 — /my 가 카드에 바로 쓴다. */
+  function deviceDataCount() {
+    if (!scopeId()) return 0;                       // 익명 스코프에선 자기 자신이라 의미가 없다
+    var have = {};
+    readStore().items.forEach(function (it) { have[it.id] = true; });
+    return anonStore().items.filter(function (it) { return !have[it.id]; }).length;
+  }
+  function importDeviceData() {
+    if (!scopeId()) return Promise.resolve({ ok: false, reason: 'anonymous' });
+    var store = readStore(), have = {};
+    store.items.forEach(function (it) { have[it.id] = true; });
+    var add = anonStore().items.filter(function (it) { return !have[it.id]; });
+    if (!add.length) return Promise.resolve({ ok: true, imported: 0 });
+    store.items = store.items.concat(add);
+    store.items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+    if (store.items.length > MAX_ITEMS) store.items.length = MAX_ITEMS;
+    if (!writeStore(store)) return Promise.resolve({ ok: false, reason: 'storage' });
+    // ⚠ 개별 sync* 를 직접 부르지 말 것 — 같은 localStorage 키를 두고 경쟁한다.
+    return syncAll().then(function () { return { ok: true, imported: add.length }; });
   }
 
   /* ── 로컬 백엔드 ─────────────────────────────────────────── */
@@ -180,7 +201,6 @@
   function syncProfile() {
     var id = uid(), c = db();
     if (!id || !c) return Promise.resolve(null);
-    adopt(id);
     // wireAuth(ready+onAuthChange)와 페이지가 동시에 부른다 — 같은 계정 요청은 하나로 합친다.
     if (inflight && inflightUid === id) return inflight;
     inflightUid = id;
@@ -241,21 +261,22 @@
      pull = 다른 기기에서 푼 기록 가져오기 / push = 이 기기(비로그인 시절 포함) 기록 올리기.
      로그인 직후 한 번 돌면 '첫 로그인 승계'가 자동으로 끝난다 — 따로 pending intent 를 두지 않는다. */
   function syncQuiz() {
-    var id = uid(), c = db();
+    var id = uid(), c = db(), startScope = scopeId();
     if (!id || !c) return Promise.resolve({ ok: false, reason: 'offline' });
-    adopt(id);
     return c.from('quiz_results')
       .select('attempt_id,type,seed,n,score,title,stage,sub,created_at')
       .order('created_at', { ascending: false })
       .limit(MAX_ITEMS)
       .then(function (r) {
         if (!r || r.error) throw new Error('pull');
-        // ⚠ 응답이 오는 사이에 계정이 바뀌었으면 **버린다.** readStore/writeStore 는
-        //   storeKey() → uid() 를 **지금** 다시 계산하므로, 로그아웃 뒤에 쓰면 계정 A 가
+        // ⚠ 응답이 오는 사이에 **스코프**가 바뀌었으면 버린다. readStore/writeStore 는
+        //   storeKey() → scope.id() 를 **지금** 다시 계산하므로, 로그아웃 뒤에 쓰면 계정 A 가
         //   서버에서 받아온 기록이 접미 없는 익명 키에 저장돼 다음 사람에게 보인다.
         //   (로그아웃 버튼·auth.js 의 죽은 세션 자동 정리가 이 창을 연다.)
+        //   ⚠ 계정뿐 아니라 **학습자 전환**도 같은 사고를 낸다 — 공용 태블릿에서 A 가
+        //     받아온 서버 기록이 B 의 저장소에 써진다. 그래서 uid 가 아니라 scopeId 를 본다.
         //   아래 readStore→writeStore 는 전부 동기라 여기 한 번의 검사로 충분하다.
-        if (uid() !== id) return { ok: false, reason: 'account-changed' };
+        if (scopeId() !== startScope) return { ok: false, reason: 'scope-changed' };
         var store = readStore(), have = {};
         store.items.forEach(function (it) { have[it.id] = true; });
         // pull — 로컬에 없는 서버 행만 넣는다(로컬을 덮어쓰지 않는다).
@@ -322,16 +343,15 @@
 
   /* 양방향 동기화 — quiz 쪽 syncQuiz() 와 같은 모양이다. */
   function syncItems() {
-    var id = uid(), c = db();
+    var id = uid(), c = db(), startScope = scopeId();
     if (!id || !c) return Promise.resolve({ ok: false, reason: 'offline' });
-    adopt(id);
     return c.from('my_items')
       .select('item_id,kind,title,sub,type,seed,n,url,created_at')
       .order('created_at', { ascending: false })
       .limit(MAX_ITEMS)
       .then(function (r) {
         if (!r || r.error) throw new Error('pull');
-        if (uid() !== id) return { ok: false, reason: 'account-changed' };   // syncQuiz 와 같은 이유
+        if (scopeId() !== startScope) return { ok: false, reason: 'scope-changed' };   // syncQuiz 와 같은 이유
         var store = readStore(), have = {};
         store.items.forEach(function (it) { have[it.id] = true; });
         var seen = {};
@@ -366,11 +386,11 @@
      즉시 끝나는 빈 promise 인데, 키가 없으면 그 사이 로그인해서 들어온 호출이 그걸
      그대로 돌려받는다 — 동기화가 통째로 스킵되고(다른 기기 자료가 안 보임)
      quiz/run 의 '결과 저장하기'가 저장은 됐는데 "저장 실패"로 뜬다. */
-  var allInflight = null, allInflightUid = '';
+  var allInflight = null, allInflightScope = null;
   function syncAll() {
-    var me = uid() || '';
-    if (allInflight && allInflightUid === me) return allInflight;
-    allInflightUid = me;
+    var me = scopeId();
+    if (allInflight && allInflightScope === me) return allInflight;
+    allInflightScope = me;
     var acc = {};
     var p = Promise.resolve()
       .then(function () { return syncProfile(); })
@@ -405,16 +425,15 @@
      그걸 읽어 합성 아이템으로 함께 보여준다(중복은 seed+type 으로 걸러낸다). */
   function latestQuiz() {
     try {
-      // 계정 경계: 이 기기의 비로그인 흔적은 **승계한 계정에게만** 보인다.
-      //   (레거시 키는 quiz/run 이 계정과 무관하게 쓰므로 여기서 가린다.)
-      var me = uid();
-      if (me && adoptedBy() !== me) return null;
-      var raw = global.localStorage.getItem(LEGACY_LAST);
+      // 스코프 경계: run.js 가 이제 이 키를 스코프에 담아 쓰므로(공용 태블릿에서 앞
+      //   사람 점수가 다음 사람에게 보이던 사고) 읽을 때도 같은 스코프로 읽는다.
+      //   익명·미선택이면 접미어가 없어 **예전 키 그대로**라 기존 흔적이 계속 보인다.
+      var raw = global.localStorage.getItem(scoped(LEGACY_LAST));
       if (!raw) return null;
       var q = JSON.parse(raw);           // {type, seed, n, score, ts}
       if (!q || !q.type || !q.seed) return null;
       // /my 에서 '삭제'로 숨긴 마지막 결과면 표시하지 않는다(클라이언트 전용).
-      try { if (global.localStorage.getItem(LEGACY_HIDDEN) === String(+q.ts || 0)) return null; } catch (e) {}
+      try { if (global.localStorage.getItem(scoped(LEGACY_HIDDEN)) === String(+q.ts || 0)) return null; } catch (e) {}
       var label = QUIZ_TYPE_LABEL[q.type] || q.type;
       var n = Math.max(1, +q.n || 0), score = Math.max(0, +q.score || 0);
       return {
@@ -433,13 +452,19 @@
     } catch (e) { return null; }
   }
 
-  /* 진행 중(이어풀기) 퀴즈 개수 — 정확한 URL 재현은 어려워 "개수"만 알린다. */
+  /* 진행 중(이어풀기) 퀴즈 개수 — 정확한 URL 재현은 어려워 "개수"만 알린다.
+     ⚠ **현재 스코프의 것만 센다.** 안 그러면 공용 태블릿에서 "이어서 풀 퀴즈 3개"가
+       뜨는데 정작 내 것은 하나도 없는 상태가 된다(앞 아이들 세션까지 셌기 때문).
+     ⚠ 익명·미선택(sid === '')일 땐 **반대로** 접미어가 붙은 키를 빼야 한다 —
+       접미어 없는 키가 곧 익명 스코프이므로 "끝이 sid 와 같다"로는 못 가른다. */
+  var SCOPED_TAIL = /__[0-9a-fA-F-]{36}(~[0-9a-fA-F-]{36})?$/;
   function resumableCount() {
     try {
-      var ls = global.localStorage, c = 0;
+      var ls = global.localStorage, c = 0, sid = scopeId();
       for (var i = 0; i < ls.length; i++) {
         var k = ls.key(i);
-        if (k && k.indexOf(SESS_PREFIX) === 0 && k.slice(-3) !== '_sc') c++;
+        if (!k || k.indexOf(SESS_PREFIX) !== 0 || k.slice(-3) === '_sc') continue;
+        if (sid ? (k.slice(-sid.length) === sid) : !SCOPED_TAIL.test(k)) c++;
       }
       return c;
     } catch (e) { return 0; }
@@ -531,6 +556,10 @@
     latestQuiz: latestQuiz,
     resumableCount: resumableCount,
     hasDeviceData: hasDeviceData,
+    /* 옛 adopt() 의 대체 — /my 가 카드로 노출한다(자동 승계 금지, §공용 태블릿). */
+    deviceDataCount: deviceDataCount,     // 동기
+    importDeviceData: importDeviceData,   // Promise
+    scopeId: scopeId,                     // 표시·서명(libSignature)용. 저장소 규약은 scope.js 가 정본
     typeLabel: function (t) { return QUIZ_TYPE_LABEL[t] || t; },
 
     /* 표시 이름(닉네임) — account 에서 설정, /my 제목에서 사용.
@@ -567,7 +596,7 @@
 
     /* /my '삭제' — quiz/run 이 남긴 마지막 결과(레거시)를 이 기기에서만 숨긴다. */
     dismissLatestQuiz: function (ts) {
-      try { global.localStorage.setItem(LEGACY_HIDDEN, String(+ts || 0)); } catch (e) {}
+      try { global.localStorage.setItem(scoped(LEGACY_HIDDEN), String(+ts || 0)); } catch (e) {}
       return Promise.resolve(true);
     }
   };

@@ -387,9 +387,66 @@
       // sub 는 뒤에 덧붙인다 — 같은 seed 로 hidden 서브만 바꿔 들어오면 진행상태가 섞이기 때문.
       // (앞에 끼워 넣으면 hidden 이 아닌 기존 세션 키가 전부 바뀌어 이어풀기가 끊긴다.)
       // stage 도 sub 와 같은 이유로 뒤에 덧붙인다 — 스테이지가 다르면 같은 seed 라도 다른 문제다.
-      const SKEY="cubenest_quiz_sess_"+[PRM.seed,PRM.type,PRM.n,(PRM.levels||[]).join(""),PRM.edu||"",PRM.dim||""].join("_")+(PRM.sub?"_"+PRM.sub:"")+(PRM.stage?"_"+PRM.stage:"");
-      // /my "다시풀기"(restart=1): 저장 세션·연습장 제거 후 처음부터.
-      if(PRM.restart){ try{ localStorage.removeItem(SKEY); localStorage.removeItem(SKEY+"_sc"); }catch(e){} }
+      const SKEY_BASE="cubenest_quiz_sess_"+[PRM.seed,PRM.type,PRM.n,(PRM.levels||[]).join(""),PRM.edu||"",PRM.dim||""].join("_")+(PRM.sub?"_"+PRM.sub:"")+(PRM.stage?"_"+PRM.stage:"");
+      /* 저장소 스코프(계정·학습자) — 규약의 단일 출처는 assets/js/scope.js 다.
+         ⚠ 여기에 스코프가 없던 시절, 학원에서 같은 링크(같은 seed)로 들어온 다음 아이가
+           **앞 아이의 답·연습장을 이어풀기로 그대로 물려받았다.** 그게 이 분리의 이유다. */
+      const SCOPE=(window.CubeNest&&window.CubeNest.scope)||{
+        ready:Promise.resolve(), id:()=>"", key:b=>b, onChange:()=>()=>{}, touch:()=>{},
+        ensurePicked:()=>Promise.resolve(null), pruneSessions:()=>0 };
+      /* ⚠ SKEY 는 **auth 세션이 복원된 뒤에야** 확정된다(scope.ready). let 인 이유다.
+         초깃값을 base 로 두는 것은 안전한 기본값이다 — 스코프가 없으면 오늘과 같다. */
+      let SKEY=SKEY_BASE;
+
+      /* 접기 상태·음소거는 **학습 데이터가 아니라 기기 취향**이라 유출 가치가 0이다.
+         그래도 스코프를 붙이는 이유는 아이마다 다를 수 있어서고, 대신 **읽기는 무접미
+         키로 폴백**해 기존 사용자의 설정을 그대로 승계한다(첫 저장 때 새 키로 옮겨간다).
+         기기 전역으로 두는 것도 정당한 대안이다 — 바꾸려면 이 두 함수만 보면 된다. */
+      const prefGet=(k)=>{ try{ const v=localStorage.getItem(SCOPE.key(k)); return v!==null?v:localStorage.getItem(k); }catch(e){ return null; } };
+      const prefSet=(k,v)=>{ try{ localStorage.setItem(SCOPE.key(k),v); }catch(e){} };
+
+      /* 진행 중이던 이어풀기를 새 스코프로 **1회만** 옮긴다.
+         안 옮기면 배포 순간 전 사용자의 진행이 끊긴다(로그인 상태면 키가 바뀌므로).
+         ⚠ 원본을 지우지 않고 **툼스톤으로 덮는다**:
+            · 지우면 롤백했을 때 이어풀기가 통째로 사라진다.
+            · 남겨 두면 다음 아이가 물려받는다 — 고치려던 바로 그 사고다.
+            · 툼스톤은 state 배열이 없어 아래 :1325 의 `Array.isArray(saved.state)` 가
+              **구본·신본 양쪽에서** 걸러 낸다(롤백해도 예외 없이 새 세션이 된다).
+         ⚠ 12시간 TTL — "누가 먼저 여느냐"의 창을 좁힌다. 그보다 오래된 고아 세션을
+            물려받으면 엉뚱한 아이의 답이 붙을 수 있다(지금도 어차피 방치 상태다). */
+      function claimLegacySession(){
+        if(SKEY===SKEY_BASE) return;                       // 익명·미선택 = 키가 그대로다
+        try{
+          if(localStorage.getItem(SKEY)) return;           // 이미 이 스코프 것이 있다
+          const raw=localStorage.getItem(SKEY_BASE); if(!raw) return;
+          let old=null; try{ old=JSON.parse(raw); }catch(e){ return; }
+          if(!old||!Array.isArray(old.state)) return;      // 이미 툼스톤이거나 쓰레기
+          if(!(Date.now()-(+old.ts||0) < 12*3600*1000)) return;
+          localStorage.setItem(SKEY,raw);
+          const sc=localStorage.getItem(SKEY_BASE+"_sc");
+          if(sc) localStorage.setItem(SKEY+"_sc",sc);
+          localStorage.setItem(SKEY_BASE,JSON.stringify({migratedTo:SCOPE.id(),ts:Date.now()}));
+          localStorage.removeItem(SKEY_BASE+"_sc");
+        }catch(e){}
+      }
+      /* /my "다시풀기"(restart=1): 저장 세션·연습장 제거 후 처음부터.
+         ⚠ 스코프가 확정된 **뒤에** 지워야 한다 — 예전처럼 여기서 즉시 지우면
+           아직 base 키를 가리키고 있어 엉뚱한(익명) 세션을 지운다. */
+      function applyRestart(){
+        try{ localStorage.removeItem(SKEY); localStorage.removeItem(SKEY+"_sc"); }catch(e){}
+      }
+      /* init() 이 가장 먼저 부른다. 이 await 없이 SKEY 를 쓰면 로그인 사용자는
+         세션 복원 전에 익명 키를 보고, 복원 뒤 스코프가 바뀌어 리로드 루프에 빠진다. */
+      async function resolveScope(){
+        try{ await SCOPE.ready; }catch(e){}
+        SKEY=SCOPE.key(SKEY_BASE);
+        if(PRM.restart) applyRestart();                    // 다시풀기면 승계할 이유가 없다
+        else claimLegacySession();
+        SCOPE.touch();
+        try{ SCOPE.pruneSessions(14); }catch(e){}          // 학습자 N명 × 연습장 = 용량 N배
+        // 기기 취향은 모듈 로드 시점(스코프 미확정)에 한 번 읽혔다 — 확정된 스코프로 다시 읽는다.
+        try{ MUTED=(prefGet("cubenest_quiz_muted")==="1"); refreshMute(); }catch(e){}
+      }
       /* restart 는 1회용 지시다 — 주소에 남으면 **새로고침할 때마다** 진행이 지워진다.
          (탭 복원·모바일 백그라운드 복귀도 새로고침이다. 실제로 7문제 풀고 0/10 으로 돌아갔다.)
          ⚠ 아래 seed 보정(:1256) 안에 넣으면 안 된다 — 그 블록은 seed 가 **없을 때만** 도는데
@@ -710,9 +767,9 @@
         // 접기
         const fold=document.getElementById("scratchFold"), foldtxt=document.getElementById("foldtxt");
         const setFoldTxt=()=>{ if(foldtxt) foldtxt.textContent=box.classList.contains("collapsed")?"펼치기":"접기"; };
-        if(localStorage.getItem("cubenest_scratch_fold")==="1") box.classList.add("collapsed");
+        if(prefGet("cubenest_scratch_fold")==="1") box.classList.add("collapsed");
         setFoldTxt();
-        if(fold)fold.onclick=()=>{const c=box.classList.toggle("collapsed");localStorage.setItem("cubenest_scratch_fold",c?"1":"0");setFoldTxt();if(!c)requestAnimationFrame(fitKeep);};
+        if(fold)fold.onclick=()=>{const c=box.classList.toggle("collapsed");prefSet("cubenest_scratch_fold",c?"1":"0");setFoldTxt();if(!c)requestAnimationFrame(fitKeep);};
         window.addEventListener("resize",()=>{ if(!box.hidden && !box.classList.contains("collapsed")) fitKeep(); });
         // 문제지 임베드용: 벡터 획 → PNG dataURL(오프스크린 렌더). 저장은 벡터, 출력만 이미지.
         function renderDataURL(idx,key){ const ss=strokesOf(idx,key); if(!ss.length)return null;
@@ -732,7 +789,7 @@
       }
 
       /* ===== 효과음 + 음소거 ===== */
-      let MUTED=(localStorage.getItem("cubenest_quiz_muted")==="1"); let ACTX=null;
+      let MUTED=(prefGet("cubenest_quiz_muted")==="1"); let ACTX=null;
       function playSound(ok){
         if(MUTED) return;
         try{
@@ -764,7 +821,7 @@
           : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8 8 0 0 1 0 12"/></svg>';
       }
       function refreshMute(){ if(muteBtn){muteBtn.innerHTML=muteIcon(); muteBtn.classList.toggle("on",!MUTED); muteBtn.setAttribute("aria-pressed", MUTED?"true":"false");} }
-      if(muteBtn) muteBtn.addEventListener("click",()=>{ MUTED=!MUTED; try{localStorage.setItem("cubenest_quiz_muted",MUTED?"1":"0");}catch(e){} refreshMute(); if(!MUTED) playSound(true); });
+      if(muteBtn) muteBtn.addEventListener("click",()=>{ MUTED=!MUTED; prefSet("cubenest_quiz_muted",MUTED?"1":"0"); refreshMute(); if(!MUTED) playSound(true); });
       refreshMute();
 
       /* ===== 채점 캐릭터 (브랜드 큐브 버디) ===== */
@@ -1086,7 +1143,7 @@
         qcard.style.display="none";document.getElementById("topbar").style.display="none";
         const score=S.answered.filter(Boolean).length;
         const dots=S.answered.map((o,i)=>`<span class="dot ${o?'o':'x'}">${i+1}</span>`).join("");
-        try{localStorage.setItem("cubenest_quiz_last",JSON.stringify({type:S.type,seed:S.seed,n:S.n,score,ts:Date.now()}));}catch(e){}
+        try{localStorage.setItem(SCOPE.key("cubenest_quiz_last"),JSON.stringify({type:S.type,seed:S.seed,n:S.n,score,ts:Date.now()}));}catch(e){}
         // /my "퀴즈 기록" 적립 — 로컬 우선(로그인 불필요), 로그인 상태면 mydata 가 서버에도 미러한다.
         //   id 를 attemptId 로 고정한다: 예전엔 id 를 안 넘겨 같은 퀴즈를 끝낼 때마다 사본이 쌓였다.
         //   meta.attemptId 는 서버 멱등키로 그대로 쓰인다(quiz_results.attempt_id).
@@ -1251,7 +1308,13 @@
         // worksheets 는 별도 페이지라 함수 호출로 넘길 수 없다(스크립트가 이 페이지에 없다).
         // ⚠ sessionStorage 는 안 된다 — noopener 로 연 탭은 새 브라우징 컨텍스트 그룹이라
         //   세션 스토리지를 물려받지 못한다. localStorage 에 한 번 쓰고 worksheets 가 읽자마자 지운다.
-        try{ localStorage.setItem("cubenest_ws_payload", JSON.stringify(payload)); }
+        /* ⚠ 이 payload 에는 **아이의 연습장 필기 PNG 전량**(위 scratch:)이 들어 있는데,
+           worksheets 는 "읽고 지우지 않는다"(새로고침·뒤로가기 보호). 그래서 예전엔 앞
+           아이의 손글씨가 기기에 영구히 남아, 다음 아이가 /worksheets/ 를 열기만 해도
+           그대로 보였다(계정 전환과 무관). 스코프와 만료를 함께 실어 보낸다 —
+           worksheets 의 loadPayload() 가 둘 다 검사하고 어긋나면 지운다. */
+        try{ localStorage.setItem("cubenest_ws_payload",
+               JSON.stringify({ v:2, scope:SCOPE.id(), ts:Date.now(), payload:payload })); }
         catch(e){ alert("문제지 데이터가 너무 커서 저장하지 못했어요. 문항 수를 줄여 다시 시도해 주세요."); return; }
         // 같은 탭으로 이동한다. payload 를 만드는 데 await 가 걸려 클릭의 사용자 제스처가 이미
         // 만료돼 window.open 은 사실상 항상 차단된다 — 폴백에 기대는 대신 동작을 하나로 고정한다.
@@ -1298,7 +1361,40 @@
       (function(){const u=new URL(location);if(!u.searchParams.get("seed")){u.searchParams.set("seed",PRM.seed);u.searchParams.set("type",PRM.type);u.searchParams.set("n",PRM.n);history.replaceState(null,"",u.toString());}})();
 
       // gen_config 정본 로드(리포) → 폴백(인라인) → 세션 생성 → 시작
+      /* 풀던 중에 계정·학습자가 바뀌면 **통째로 다시 그린다.**
+         S.probs·S.state·SCRATCH·SKEY 가 전부 옛 스코프의 것이라 부분 갱신은 위험하다
+         (앞 아이의 답이 남은 채 뒤 아이의 키에 저장되는, 고치려던 그 사고가 재발한다).
+         ⚠ changed=false(등록 즉시 1회·세션 복원)는 무시한다 — 안 그러면 로그인 사용자가
+           페이지를 열 때마다 리로드된다. */
+      SCOPE.onChange(function(changed){
+        renderLearnerChip();
+        if(!changed) return;
+        try{ saveSession(); }catch(e){}
+        location.reload();
+      });
+
+      /* 헤더 칩 — 푸는 내내 "지금 ○○" 이 보이게 한다. 강제하지 않고 **오인식만 드러낸다**:
+         다른 아이가 앉아 자기 이름이 아닌 걸 보면 바로 눌러 바꾼다. 학습자를 안 만든
+         사람에겐 아무것도 안 보인다(가정용에서는 순수 잡음이라). */
+      // ⚠ 학습자 이름은 사용자가 직접 친 값이라 innerHTML 에 넣기 전에 반드시 막는다.
+      const escHtml=(s)=>String(s==null?"":s).replace(/[&<>"']/g,
+        (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+      function renderLearnerChip(){
+        const el=document.getElementById("lrnChip"); if(!el) return;
+        const l=SCOPE.learner&&SCOPE.learner();
+        if(!l || !(SCOPE.list&&SCOPE.list().length)){ el.hidden=true; return; }
+        const c=(SCOPE.colorOf&&SCOPE.colorOf(l))||"#8a8f9a";
+        el.hidden=false;
+        el.title="학습자 바꾸기";
+        el.setAttribute("aria-label","지금 "+l.name+" — 학습자 바꾸기");
+        el.innerHTML='<span class="av" aria-hidden="true" style="background:'+escHtml(c)+'">'
+          +escHtml(l.name.slice(0,1))+'</span><span class="nm">'+escHtml(l.name)+'</span>';
+        el.onclick=()=>{ if(SCOPE.openPicker) SCOPE.openPicker("quiz_run"); };
+      }
+
       (async function init(){
+        // ⚠ 가장 먼저 — SKEY 를 확정하기 전에는 어떤 세션도 읽거나 쓰면 안 된다.
+        await resolveScope();
         // gen-config는 서버 소유(정적 json 폐지). 클라는 INLINE_CONFIG 폴백만 유지(서버가 config 무시).
         if(window.CubeNest&&CubeNest.api&&CubeNest.api.__setConfig)CubeNest.api.__setConfig(GEN_CONFIG);
         Loader.show('generate');

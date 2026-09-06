@@ -16,6 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 명령 (빌드 없음 — 아래가 전부다)
 - **로컬 서버:** `py -m http.server 5500` (리포 루트. **5500 고정**·**`py`** 인 이유는 「기술·규약」)
+  - ⚠ **서버 없이 `/quiz/run` 을 도는 방법은 없다.** `api-client.js:15` 의 `USE_MOCK` 은 **죽은 스위치**다 — 주석은 "개발/오프라인 폴백"이라 하지만 `NS._mockApi` **생산자가 리포에 없어서**(미추적 파일 포함 전수 확인) `true` 로 바꿔도 가드가 falsy 라 그대로 실 fetch 로 간다. 퀴즈를 로컬에서 보려면 배포된 Edge Function 이 살아 있어야 한다.
 - **드리프트 검사:** `py .claude/tools/check-drift.py` — 헤더 메뉴 9페이지 · 브랜드 지역화 훅 · `?v=` 통일 · 파비콘 11페이지 · 글리프 상대경로 · `og:image` 단일 대상 · 셸 `box-sizing` · **GA4 동의 3종 세트 10페이지** 8항목. exit 0/1 이라 CI 에 걸 수 있다. **이 리포의 유일한 자동 검사이고 테스트 프레임워크는 없다** — 나머지는 브라우저 수동 확인이다. 검사 항목은 전부 260828~30 에 실제로 난 사고에서 왔다.
 - **클라↔서버 복본 확인:** `diff -u assets/js/<m>.js supabase/functions/_shared/<m>.js` — 두 벌인 건 `core`·`iso` 둘뿐이고 ESM export 꼬리 2줄 외 차이가 나오면 드리프트다. **위 드리프트 검사는 이걸 안 본다** — 따로 돌린다.
 - **`?v=` 소비처 찾기:** `grep -rn "<모듈>.js?v=" --include=*.html .`
@@ -49,7 +50,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ※ 아래는 **인벤토리가 아니라 함정 목록**이다 — 조심할 게 없는 모듈(`cubenest-figures.js`·`cubenest-qr.js`)은 일부러 빠져 있다. 전체 목록은 `ls assets/js/`.
 - `cubenest-core.js` — 계산 코어(§4 실행형). **`?m=`·`&h=` 코덱의 단일 출처**(`serialize`/`deserialize`/`cellOrder`/`serializeMarks`/`deserializeMarks`) — **비트 index 수식을 소비처에 복제 금지**(playground 에 있던 `b64urlEnc`/`cellIdx` 사본은 260828 삭제). `cubenest-viewer.js` — 3D 뷰어·펼쳐보기.
 - `cubenest-iso.js` — 겨냥도 SVG 렌더러. **서버 복본(`_shared/`)이 은닉 유형 제시물을 그린다** — 그리는 순서(뒤→앞)가 곧 가림이라 정렬을 바꾸면 숨은 나무가 드러난다.
-- `auth.js` — **공용 인증(`CubeNest.auth`·`isLoggedIn` 단일 진실)**. `mydata.js` — **공용 데이터 계층(로컬 우선, `/my` 오너·account 소비)**. **저장소 키는 계정별로 나뉜다**(`cubenest_my_v1__<uid>`) — 공용 기기에서 계정을 바꿔도 앞 사람 자료가 안 보인다. 이 기기의 비로그인 자료는 **처음 로그인한 계정 하나만** 승계하고(`cubenest_my_adopted`) 원본은 남긴다.
+- `auth.js` — **공용 인증(`CubeNest.auth`·`isLoggedIn` 단일 진실)**.
+- **`scope.js` — 저장소 스코프·학습자의 단일 진실(`CubeNest.scope`, 260906 신설).** auth 를 참조하는 쪽이고 auth.js 는 이걸 모른다. 로드 순서 `auth.js → scope.js → mydata.js`(6페이지).
+  - **키 규약은 덧붙이기(append-only)다** — `key(base)` = `base` / `base__<uid>` / `base__<uid>~<lid>`. 학습자를 안 고른 사용자의 키는 **한 글자도 안 바뀐다**(mydata 의 옛 `scoped()` 와 바이트 동일). 이 성질이 무손실 마이그레이션·롤백 안전의 전부다 — **구분자 `~` 를 바꾸거나 접미어 순서를 뒤집지 말 것.**
+  - **전부 동기 반환**(`id`·`key`·`learner`·`list`). `/my`·`/account`·`run.js` 가 렌더 시점에 동기로 소비한다 — Promise 로 바꾸면 세 페이지가 깨진다(`mydata.getNickname()` 과 같은 규약).
+  - **학습자 = 보호자·교사 계정 아래 아이 N명. 아이는 로그인하지 않는다.** ⚠ **별명 한 칸 말고 아무것도 받지 말 것** — 생년월일·학교·연락처 입력을 추가하면 `/privacy` §10-2("만 14세 미만 아동의 개인정보를 수집하지 않습니다")가 거짓이 된다. 로스터 화면의 '좁음'이 그 방어선이다.
+  - `onChange(cb)` 는 `cb(changed, id)`. **`changed=false`(등록 즉시 1회·세션 복원)를 변경으로 취급하지 말 것** — run.js 가 리로드 루프에 빠지고 `/my` 는 뷰 계측이 부풀어 오른다.
+- `mydata.js` — **공용 데이터 계층(로컬 우선, `/my` 오너·account 소비)**. 저장소 키는 `scope.js` 에 **위임**한다(`scoped()` → `CubeNest.scope.key()`).
+  - ⚠ **옛 `adopt()`(첫 로그인 자동 승계)는 260906 에 삭제됐다.** 학원 공용 태블릿에서 **여러 아이가 무로그인으로 쌓은 기록을 첫 로그인 계정이 통째로 가져가 서버에까지 올렸고**, 뒤에 로그인한 아이는 `cubenest_my_adopted` 때문에 영영 승계를 못 받았다. 지금은 `deviceDataCount()`(동기)+`importDeviceData()` 로 **사용자가 누를 때만** 넘어온다(원본 익명 키는 보존 — 로그아웃한 사람의 기록이다). **자동 승계를 되살리지 말 것.**
+  - 왕복 후 가드는 `uid()` 가 아니라 **`scopeId()`** 를 본다 — 계정 전환뿐 아니라 **학습자 전환**도 같은 교차 오염을 낸다.
   - **`readStore`/`writeStore` 는 `storeKey()` → `uid()` 를 부를 때마다 다시 계산한다.** 그래서 sync 는 쿼리 시작 시점의 `id` 를 잡아두고 **응답 콜백 첫 줄에서 `uid() !== id` 면 버린다**(`syncQuiz`·`syncItems`). 안 그러면 `syncAll()` 이 도는 중 로그아웃했을 때 A 가 받아온 기록이 익명 키에 저장돼 다음 사람에게 보인다(260830 수정). 같은 이유로 `syncAll` 의 중복 합치기도 **계정별**이다(`allInflightUid` — `syncProfile` 의 `inflightUid` 와 같은 규약). **이 검사들을 지우지 말 것.**
   - 로그아웃 자체도 260830 에 고쳤다 — `signOut()` 이 `{error}` 를 확인하고 실패 시 `scope:'local'` 로 폴백한다(예전엔 오프라인에서 UI 만 로그아웃되고 새로고침하면 세션이 되살아났다).
   - **`/account` 는 렌더 뒤 `sync()` 를 돌리고 그때까지 닉네임 '저장'을 비활성화한다.** `getNickname()` 이 동기라 새 기기에선 렌더 시점에 빈 값인데, 그대로 저장하면 `profiles.nickname=null` 로 **서버 닉네임이 지워졌다**(260830 수정). 사용자가 이미 입력 중이면 sync 결과로 덮지 않는다. 빈 값 저장 자체는 정상 기능이라 차단이 아니라 **누르기 전에 진짜 값을 보여주는 것**이 수정 방향이다.
@@ -58,6 +67,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **CS 창구 상세(폴백·prefill PII 금지·mailto·9곳 푸터 배치·폼 명세)는 `legal-docs` 스킬에 있다** — `foot.js` 의 CS 상수나 푸터 창구를 고치기 전에 읽을 것.
 - **푸터도 헤더와 같은 규약이다**(`assets/css/foot.css`): **스타일만 공유, 마크업은 각 HTML 에 인라인.** 소비 = guide·quiz·quiz/run·worksheets·account·my·terms·privacy(8곳). 랜딩은 자체 다크 푸터(`.foot`), playground·404 는 푸터 없음. **`@media print{.site-foot{display:none}}` 은 지우지 말 것** — worksheets 가 인쇄 페이지라 없으면 문제지 PDF 하단에 사업자 정보가 찍힌다.
 - **생성기 `gen`·설정 `gen-config`는 서버 전용**(Edge Function, 클라 미배포 — 아래 보안).
+  - ⛔ **난이도 밴드의 정본은 `cubenest-gen-config.js` 의 `BANDS`+`resolveCfg` 하나뿐이다. `gen-modules.ts:17` 의 `GEN_CONFIG` 는 읽히지 않는 죽은 표다** — 하/중/상/최상 격자·`nMin`/`nMax` 가 그럴듯하게 적혀 있고 `version:"0.2.0"` 까지 달려 있지만, `gen-adapter.ts:27` 이 `config:` 로 넘겨도 `genSession`(`cubenest-gen.js:625`)이 `CFG ? CFG.resolveCfg(…) : (o.config && …)` 라 **`CFG` 가 있으면 절대 안 본다.** `CFG` 는 항상 있다(`gen-config.js` 끝의 `global.CubeNest.genConfig = CFG`), `resolveCfg` 는 null 을 안 주며(던지면 500 이지 폴백이 아니다), `genProblem` 을 우회 호출하는 곳도 없다(`generate`·`grade`·`worksheet` **셋 다** `buildProbs`→`genSession` 을 지난다). **여기를 고치면 아무 일도 안 일어난다** — 난이도 작업(P1.9)이 가장 먼저 열어 볼 자리라 적어 둔다.
 - **클라↔서버 복본 규약(마스터 §5.2):** 같은 모듈이 `assets/js/`와 `_shared/`에 두 벌이면 **정본은 클라**, 복본은 **원문 그대로 + ESM export 꼬리 2줄**만 다르다. 커밋 전 `diff -u assets/js/X.js supabase/functions/_shared/X.js` → **export 블록 외 차이가 나오면 드리프트**. **클라가 `<script src>`로 로드하지 않는 모듈은 복본 금지(서버 단일본)** — 죽은 사본은 증상 없이 갈라진다(`minmax`·`manip`이 실제로 갈라져 260821 클라 사본 삭제 = 서버 단일본). 서버 전용 신규 계산 모듈은 처음부터 `_shared/`에만(`cubenest-hidden.js`). **현재 두 벌인 모듈 = `core`·`iso` 둘뿐**(둘 다 diff 일치 확인).
 
 ## 퀴즈 실행 (`/quiz/run`) — 조용한 멈춤을 막는 규약
@@ -67,6 +77,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **뷰어 생성은 `makeViewer()` 만 쓴다(`VIEWER.createViewer` 직접 호출 금지).** `has3D`(=THREE 로드됨)를 통과하고도 WebGL 컨텍스트를 못 얻는 경우가 있다(GPU 차단·저사양·탭당 컨텍스트 한도). 이 예외가 `renderProblem`/`submit` 을 중단시키면 **`setActions()` 가 안 돌아 `#submit` 자체가 만들어지지 않는다** — 문제는 보이는데 제출 버튼이 없는 완전 정지이고, `submit()` 쪽에서는 `saveSession()` 까지 건너뛰어 채점한 답이 새로고침에 사라졌다. 실패하면 정적 겨냥도로 갈아 끼우고 "돌려서 확인" 안내·정면 버튼을 함께 치운다(거짓말이 되므로).
 - **`/grade` 403 은 재시도 안내를 주면 안 된다.** gsig 불일치 = 이 문항의 지문이 서버와 안 맞는다는 뜻이라 **다시 제출해도 영원히 실패한다**(서버 배포로 설정이 바뀐 뒤 옛 세션을 이어풀 때 난다). `NEEDMSG.stale` 이 '새로 시작' 링크를 준다. 401/429/네트워크와 달리 **재시도가 답이 아닌 유일한 분기**다.
 - **URL 파라미터는 `loadParams()` 에서 전부 정규화한다.** `Math.max/min` 은 NaN 을 걸러 주지 않는다 — 옛 `+(p.get("n")||10)` 은 `?n=abc` 를 **NaN** 그대로 통과시켜 `SKEY`·`GRADE_PARAMS` 까지 오염시켰다. 랜딩(`quiz/index.html`)이 검사해도 소용없다, `/quiz/run` 은 **직접 진입도 되기 때문**이다.
+- **유형을 늘릴 때 — 디스패치 키가 세 종류다.** 서버 생성은 `type`/`sub`(`gen.js genProblem` → `gen-adapter.ts` 의 `answerKeyFor`·`questionFor`·`explainFor`·`resolveDim`/`GIVEN_ONLY`, `gen-config.js` 의 `GATE`/`support`/`subsFor`/`paperSafe`, `config/index.ts` 의 `TYPE_LABEL`), **클라 렌더는 `q.given.kind`**(현재 7종 — `numTop`·`layers`·`sils`·`isoTop`·`topOneSil`·`isoMark`·`paintedCube`, 생산·소비 일치 확인), 채점은 `answer.type`(`num`·`bool`·`mc`·`markCount`·`markCells`·`drawSil`). 셋은 이름이 안 겹치므로 **하나를 늘리고 나머지를 잊기 쉽다.**
+  - ⚠ **모르는 `kind` 는 오류가 아니라 default 분기로 떨어진다** — 세 렌더 함수 전부 마지막 `return` 이 조건 없는 default 다. `renderMGiven`(:270)은 `g.iso||""` 라 **예외 없이 엉뚱한 문구**("가장 작은 정육면체를 만들려면?")를 붙여 그리고, `renderGGiven`(:254)·`renderHiddenGiven`(:289)은 없는 `g.sils`·`g.top` 을 만져 **예외**가 난다. 그 예외는 `renderProblem` 을 중단시키는데 **`setActions()` 가 그 함수 맨 끝(:622)** 이라 → 위 뷰어 사고와 **같은 정지**(제출 버튼이 안 생긴다). `givenShape`(:103)는 default 가 아예 없어 조용히 빈 모양을 준다.
 
 ## 인증 · 저장 · 게이트
 - **로그인: Supabase OAuth 전용**(카카오·구글, 검증 완료). 비밀번호 없음·PKCE·세션 지속. 성인(교사·학부모) 중심, **학생 무로그인**, 아동 PII 최소화.
@@ -75,7 +87,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - ⚠ **네트워크 실패로는 절대 로그아웃하지 않는다.** 오프라인이면 `AuthRetryableFetchError`(`status:0`)가 오고, 서버가 **401/403**으로 명시적으로 부정할 때만 정리한다. 여길 느슨하게 고치면 오프라인에서 세션이 날아가 '로컬 우선' 설계가 무너진다.
   - 검증은 **`ready`를 막지 않는다**(백그라운드) — 첫 페인트를 네트워크 왕복만큼 늦추면 잠금 깜빡임 방지가 깨진다.
 - **게이트:** 무로그인 = home·guide·playground(편집·관찰)·quiz(랜딩·플레이). 로그인 = calc 30분 이후·quiz 결과 저장·worksheets·`/account`·`/my`.
-  - calc: 첫 상호작용 후 **30분 무료** → 이후 잠금·로그인 유도(치팅 방지+가입 유도). 세션 복원 전엔 잠그지 않음.
+  - calc: 첫 상호작용 후 **30분 무료** → 이후 잠금·로그인 유도(치팅 방지+가입 유도). 세션 복원 전엔 잠그지 않음. **타이머 키는 스코프별이다**(`cubenest_pg_first` + `scope.id()`, 260906) — 예전엔 기기 단위라 **학원에서 첫 아이가 30분을 쓰면 나머지 아이 전원이 즉시 잠긴 채로 시작**했다. ⚠ 대가로 **학습자를 새로 만들면 30분이 리셋된다** — 게이트는 DRM 이 아니라 가입 유도이고 localStorage 를 지우면 어차피 리셋되므로 수용했다(`track('calc_timegate_scope_reset')` 으로 남용률을 본다).
     - **가리는 대상은 `#calcBody`(과정)와 상단 요약 `#statHead`(개수·부피·겉넓이) 둘 다다**(260830). 예전엔 패널만 가려서, 잠겨도 — 그리고 '정답 가리기'(F4)를 눌러도 — **바로 위 스트립에 답이 그대로** 떠 있었다. 두 기능이 이름값을 못 했고 '치팅 방지'가 성립하지 않았다. 값만 `?` 로 바꾸고 단위(cm³·cm²)는 남긴다.
 - **저장:** 로컬 우선(`mydata.js`) + **서버 미러**. 백엔드를 통째로 갈아끼우지 않는다 — `getNickname()` 처럼 **동기 반환**을 `/my`·`/account` 가 동기로 소비하므로, 서버는 읽어서 **로컬 캐시를 채우는** 방향으로만 붙인다(시그니처 바꾸지 말 것). **RLS가 실제 방어선**("본인 것만"). 진도·연습장은 로컬 전용, **완료 결과만** 저장. `entitlements`는 사용자 select만(쓰기=결제 서버). `/account`=계정 허브·`/my`=내 자료.
   - **구현됨 = `profiles`·`quiz_results`·`my_items`**(260827). 닉네임·**퀴즈 완료 결과**·**문제지**가 계정에 귀속돼 기기를 넘어 따라온다. `entitlements`만 남았다.
@@ -102,6 +114,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - ⚠ **청소는 증식을 치울 뿐 우회를 막지 않는다.** `worksheet` 은 위 신원 버킷으로 닫혔지만, `/generate` 의 XFF·`FAIL_OPEN` 은 그대로다.
     - **개정은 새 파일로 했고(`…ratecleanup…260830.sql`), 옛 `…rate_schema_260815.sql` 상단에 '단독 재실행 금지' 경고를 남겼다.** 같은 함수를 두 파일이 `create or replace` 하므로 **반드시 날짜 순으로** 실행해야 한다 — 옛 파일만 다시 Run 하면 청소가 조용히 사라진다. 그 함정은 문서가 아니라 **그 파일 첫 줄**에 적혀 있어야 한다.
 - **gsig 지문(`paramsHash`)은 `buildProbs` 의 모든 입력을 덮는다** — `seed` 는 서명 대상인 `id`(`seed#i`)에, 나머지(`type·levels·n·edu·sub·stage`)는 지문에. **`buildProbs` 에 인자를 추가하면 `paramsHash` 에도 반드시 함께 넣을 것.**
+  - ⚠ **지문에 넣는 것과 값을 검증하는 것은 다르다.** `sub` 는 260831 에 지문에 들어갔지만 **값 자체는 아직 화이트리스트 검증이 없다**(`generate/index.ts:37` 이 `body.sub` 를 그대로 넘긴다). ⚠ **경계에서 화이트리스트하는 건 `dim` 뿐이다**(`:24`) — `stage` 도 `:20` 이 `body.stage ?? null` 로 그냥 통과시키고, 안전한 이유는 downstream `normStage()` 가 닫혔거나 모르는 값을 `DEFAULT_STAGE` 로 **조용히 정규화**하기 때문이다. 즉 `sub` 에 없는 것은 "경계 검증"이 아니라 **그 정규화기**다. 그래서 `?type=hidden&sub=A-b&stage=S2` 같은 **그 학년에 없는 조합**이 통과하고, S2 는 `cfg.flatten` 이라 숨은 열이 아예 없어 A-b 의 재시도 루프가 **구조적으로 전부 실패** → `hcols=[]` = **정답을 낼 방법이 없는 문항**이 나간다. 지문은 위조를 막지 **조합의 유효성을 보지 않는다.** 랜딩 UI 는 막지만 **공유 링크·문제지 QR·직접 진입**이 뚫려 있다. `gen-config.js:224 subsFor(type, stage)` 가 **이미 허용 서브를 안다** — 검증 함수를 새로 만들지 말 것. (미수정 · 마스터 §7.2 P1.9)
   - 260831 에 `sub` 가 실제로 빠져 있었다 — 같은 `id`·`gsig` 로 `sub` 만 `A-c`→`A-f` 로 바꿔 보내면 서명이 통과하고 **서버가 다른 문제로 채점**했다(라이브 실측: 정답 8→2, 나무 8개→9개). 지문 밖 인자는 **조용한 오채점**이고, 안에 있으면 403 으로 즉시 드러난다.
   - 새 필드는 **있을 때만 덧붙인다**(`stage` 가 세운 전례). 무조건 붙이면 기존 gsig 가 전부 어긋나 진행 중이던 세션이 403 을 맞는다. `sub` 엔 `sub=` 마커를 붙여 stage-only 지문과 구조가 겹치지 않게 했고, 그 덕에 **서브 없는 6유형의 지문은 바이트 단위로 그대로**다.
   - ⚠ `/generate` 와 `/grade` 가 `paramsHash` 에 넘기는 `sub` 표현식은 **`buildProbs` 에 넘기는 것과 정확히 같아야 한다.** 한쪽만 정규화하면 정상 요청이 403 난다.
@@ -164,12 +177,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **이미지는 `?v=` 를 쓰지 않는다.** GitHub Pages 가 정적 자산에 `max-age=600` + ETag 를 주므로 최대 10분 뒤 조건부 재검증으로 자동 치유되고, 미관 문제라 정합성 오류가 나지 않는다. `?v=` 가 필요한 쪽은 **서버와 어긋나면 오작동하는 JS 모듈**이다.
 - **배포는 두 갈래이고 순서가 있다 — 클라 먼저, 서버 나중.** 정적 사이트 = `git push` → GitHub Pages(origin/main). 서버 = `supabase functions deploy config generate grade worksheet`. 둘은 따로 나가므로 **한쪽만 배포하면 조용히 어긋난다** — 오류가 아니라 "안 바뀐 것처럼" 보인다.
   - 클라는 `/config`(열린 학년·유형·등급)를 **정본**으로 삼는다. 서버를 먼저 배포하면 옛 클라가 **없어진 학년을 계속 팔고**(칩은 남는데 유형이 0개), 그 학년으로 시작한 퀴즈는 `normStage()`가 기본값으로 떨어뜨려 **다른 학년 문제가 조용히 나온다**(260821 중1~2 제거 때 실제로 발생).
-  - 확인: `curl .../functions/v1/config` 의 `version` == `cubenest-gen-config.js` 의 `VERSION`, 그리고 라이브 HTML에 그 커밋의 표식이 있는지.
+  - 확인: `curl .../functions/v1/config` 의 `version` == `cubenest-gen-config.js` 의 `VERSION`, 그리고 라이브 HTML에 그 커밋의 표식이 있는지. ⚠ **`/generate` 응답의 `version` 은 보지 말 것** — `generate/index.ts:53` 이 `{gen:"1.0.0", config:"1.0.0"}` 을 하드코딩한 것이라 실제(gen `0.5.0`·cfg `0.4.1`)와 무관하다. 소비처가 0 이라 안 고쳤을 뿐이다.
   - **서버가 호출하지 않는 함수만 추가돼 `_shared/` 복본이 바뀐 경우, 재배포는 동작상 불필요하다**(다음 서버 배포에 묻어 보내면 된다). 위의 "한쪽만 배포하면 조용히 어긋난다"가 경고하는 유형이 아니다 — 어긋날 호출 자체가 없기 때문. 단 **`diff` 일치는 커밋 시점에 지킬 것**. (전례: 260828 `core` 에 `?h=` 코덱 추가.)
 
 ## 데이터·수익화
 - **login-free-first:** 무료 도구는 클라만으로 완결. 로그인은 저장·유료의 선택 강화층.
 - 수익화(학부모 B2C): 베타 무료 → **기간 이용권 단건결제**부터 → 월 자동결제 확장(관리형·Supabase Pro).
+- ⛔ **요금제가 260906 에 재편됐다 — 아래 260831 안은 대체됐다(미구현).** 새 경계: 무료(로그인) = 퀴즈 풀기·채점·해설 전부 + **같은 기기 세션 복원**(새로고침 이어풀기는 무로그인 포함 **전원 무료**) + 계산기 + **문제지 평생 1장**(정답지·인쇄 온전, 그 1장은 `item_id` 를 기록해 재열람 허용) / **이용권(30일권, 기간형 단건)** = 퀴즈 기록 저장 + **크로스기기 이어풀기·결과보기** + 문제지 무제한(한 장의 `MAX_N=30` 은 유지).
+  - **선행 조건 둘.** ① `entitlements` 가 **아직 존재하지 않는다**(리포 전체에서 마이그레이션 주석 2줄뿐) — 권한을 판정할 수단이 0이다. ② **결제(P3)가 없어 게이트를 켜면 전원이 잠긴다** → 가입 시 `kind='beta'` 를 자동 부여해 전원 통과시키고, 결제가 붙을 때 베타를 만료시켜야 유료화가 개시된다.
+  - ⚠ **RLS 는 행 단위라 컬럼 일부만 못 막는다.** 요약(제목·점수)은 무료도 봐야 하고 상세(답안·연습장)는 유료여야 하므로 **`quiz_result_details` 로 테이블을 갈라야 한다** — `quiz_results` 에 `payload`/`scratch` 컬럼이 이미 있지만 그대로 쓰면 권한을 가를 수 없다.
+  - ⚠ **`/my` 를 통째로 잠그면 안 된다.** `privacy/index.html:253` 이 삭제권 행사 수단으로 **"저장한 자료 삭제 — 내 자료 화면에서 항목별 삭제"** 를 지목하고 `:261` 이 "권리를 요구한 이용자를 그 이유로 불리하게 대우하지 않는다"고 못박는다. 목록·삭제는 남기고 **열기·재생성만** 잠근다.
+  - ⚠ 문제지 체험 1장의 id 는 **서버가 요청 파라미터로 직접 계산**해야 한다 — 클라가 보낸 `item_id` 를 믿으면 매번 새 id 를 보내 체험이 무한이 된다. `entitlements` 에 **사용자 쓰기 정책을 주지 않는다**(service_role 전용) — 아니면 체험 기록을 지우고 재발급한다.
+- ~~**요금제 = 기능 경계(260831 확정, 마스터 §6.5.1). 수량 미터링이 아니다.**~~ (아래는 대체된 옛 안 — 근거·기각 사유는 여전히 유효해 남긴다)
+  - 무료(로그인) = 문제지 **10문항 + 정답지(값)** · 퀴즈·계산기 전부 / 이용권 = **30문항 + 정답지 해설 + 혼합 + 오답만 다시 풀기**.
+  - **정답지(값)는 무료에 남긴다** — 빼면 문제지가 반쪽이 되어 "써보고 산다"가 아니라 "써보니 불편하다"가 된다. 가르는 것은 **해설**이고, 해설은 지금 **구현조차 안 돼 있어**(`/worksheet` 가 `explainFor` 미호출) 뺏는 게 아니라 신설이다.
+  - ⚠ **미터링을 기각한 이유는 저장 모델 때문이다** — 문제지 본문을 저장하지 않고 **URL 만 남겨 열 때 재생성**하므로 생성 횟수를 세면 `/my` 재열람이 장수를 깎는다. 막으려면 정수 카운터가 아니라 기간별 distinct `item_id` 집합이 필요해 `rate_counter` 재사용이 불가하고 새 테이블이 든다. 인쇄는 `window.print()` 라 서버가 셀 수도 없다. **나중에 얹는 것은 가능하다**(배타적이지 않다).
+  - **판정 지점은 서버다** — `worksheet/index.ts` 의 `requireUser()` 뒤에 권한 조회 + `n` 상한·`explain` 분기. 클라 게이트(`worksheets/index.html:412`·`:596`)는 UI 편의일 뿐 방어선이 아니다.
+  - ⚠ **`worksheet_print` 에 파라미터가 0개다** — "누가 무엇을 몇 장 인쇄했나"를 못 본다. `{type,n,mix,stage}` 를 붙이는 것이 결제 착수 전 선행이다(마스터 §6.5.2).
 - **계측(F1) — GA4 로더는 `assets/js/consent.js` 하나뿐이다.** 리포 전체에서 `googletagmanager` 문자열이 그 파일에만 있다. 페이지가 gtag 스니펫을 따로 넣는 구조가 **아니다**.
   - **3종 세트를 한 벌로 넣는다**(헤더·푸터와 같은 규약 — 스타일만 공유, 마크업은 각 HTML 인라인): `consent.css` 링크 · `#consent` 배너 마크업 · `consent.js` 스크립트(`auth.js` **뒤**). 배너 문구는 `index.html` 의 블록을 **복사**하고 새로 쓰지 않는다.
   - **하나만 빠지면 `window.gtag` 가 없고, `track()` 은 `if(window.gtag)` 가드라 이벤트가 오류 없이 조용히 버려진다.** 260830 이전에 `quiz`·`worksheets`·`guide`·`terms`·`privacy` 5페이지가 그 상태였다 — `quiz_preview_*` 100% 유실, worksheets 는 `login_prompt`·`login_success` 등 auth 계측 6종까지 통째로 유실(=**유료화 대상 기능의 사용량이 0으로 보였다**). **`check-drift.py` 8번이 이 짝을 강제한다.**
@@ -184,6 +208,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - **뷰 이벤트는 렌더가 아니라 상태 전환을 센다**(`account`·`my` 의 `trackView()`). `render()` 는 **페이지 로드 1회에 2~3번** 돈다 — `A.onAuthChange(render)` 와 `A.ready.then(render)` 가 각각 부르고, supabase 이벤트가 `settled` **뒤에** 도착하면 한 번 더 온다(경쟁 조건이라 2회일 때도 3회일 때도 있었다). `track()` 을 렌더 함수 안에 두면 방문 수가 2~3배로 부풀어 **이걸 분모로 쓰는 전환율이 전부 틀어진다.** 새 페이지에서도 뷰 이벤트를 렌더 안에 넣지 말 것.
 
 ## 현재/다음
-- **완료:** 상태 공유(F2·F3)·계측/동의(F1)·서버 생성/채점(gen 서버화)·OAuth 로그인·**유형 19종**(리매핑 + 안보이는나무 A-a~f + G군 + H군)·정답 은닉·worksheets(문제지·정답지 인쇄·QR)·**난이도 개편(연령 스테이지 S0~S4 + 개수 밴드, gen-config 구조 교체)**·세션 내 중복 회피(gen v0.5.0)·**DB+RLS 저장(`profiles`+`quiz_results`+`my_items`, 닉네임·퀴즈 기록·문제지 계정 귀속, 멱등키 `attempt_id`/`item_id`, 계정별 로컬 분리, 죽은 세션 자동 로그아웃)**·**이용약관·개인정보처리방침(`/terms`·`/privacy`, 전 페이지 공통 푸터 + 로그인 고지형 동의)**.
-- **다음:** **결제(이용권 `entitlements`)** — 저장 계층은 끝났다. ⚠ 여기까지 진척이 전부 콘텐츠·보안·UI였고 **수익화 검증 경로는 아직 0** — 마스터 §7.2 참조.
+- **완료:** 상태 공유(F2·F3)·계측/동의(F1)·서버 생성/채점(gen 서버화)·OAuth 로그인·**유형 19종**(리매핑 + 안보이는나무 A-a~f + G군 + H군)·정답 은닉·worksheets(문제지·정답지 인쇄·QR)·**난이도 개편(연령 스테이지 S0~S4 + 개수 밴드, gen-config 구조 교체)**·세션 내 중복 회피(gen v0.5.0)·**DB+RLS 저장(`profiles`+`quiz_results`+`my_items`, 닉네임·퀴즈 기록·문제지 계정 귀속, 멱등키 `attempt_id`/`item_id`, 계정별 로컬 분리, 죽은 세션 자동 로그아웃)**·**이용약관·개인정보처리방침(`/terms`·`/privacy`, 전 페이지 공통 푸터 + 로그인 고지형 동의)**·**공용 태블릿 격리 1단계(`scope.js` 신설 + 학습자 로컬 로스터, 260906)**.
+  - **260906 격리 — 학원에서 한 태블릿을 여러 아이가 쓰는 시나리오에서 난 사고 6건을 고쳤다**(전부 클라 전용, DB·법적 문서 무변경). ① 세션 키에 스코프가 없어 **같은 링크면 다음 아이가 앞 아이 답·연습장을 이어풀기로 물려받았다** ② 익명 저장소가 공용이라 기록이 섞였다 ③ `adopt()` 자동 승계 ④ `cubenest_quiz_last`·`ws_payload`·접기·음소거가 스코프 밖 ⑤ 타임게이트가 기기 단위 ⑥ **`cubenest_ws_payload` 가 아이 연습장 PNG 를 담은 채 영구 잔류해, 다음 아이가 `/worksheets/` 를 열기만 해도 앞 아이 손글씨가 보였다**(계정 전환과 무관).
+  - 진행 중이던 이어풀기는 **12시간 TTL + 툼스톤**으로 1회 승계한다(`run.js claimLegacySession`). ⚠ 원본을 **지우지 않고 `{migratedTo,ts}` 로 덮는다** — 지우면 롤백 시 진행이 사라지고, 그냥 두면 다음 아이가 물려받는다. 툼스톤엔 `state` 배열이 없어 **구본·신본 양쪽이** 새 세션으로 취급한다.
+  - **남은 것(미구현):** 로그아웃 상태에서 만든 학습자를 **계정 로스터로 가져오는 경로가 없다**(자료는 `importDeviceData` 가 있는데 학습자는 없다) · `/playground` 에 학습자 칩이 없어 **타임게이트가 왜 잠겼는지 화면에 안 보인다** · 선택 시트의 '학습자 추가'가 `window.prompt()`(정본은 `/account`).
+- **다음: 제품을 먼저 가다듬고 결제를 붙인다**(260831 사용자 결정 · 순서 정본 = 마스터 §7.2). 종전엔 "다음 = 결제"였는데, **19종 전수 재실측에서 팔 물건 자체에 구멍이 드러나** 순서를 바꿨다.
+  1. **P1.9 퀴즈 품질** — ⛔ **정상 경로에서 정답을 낼 수 없는 문항이 있다**(`hidden A-b` 하 **14%** 가 정답 0칸 → `run.js:422` 가 제출을 막는다 · `A-d` 하 **10.8%** 가 `max===min` 인데 "차"를 묻는다). ⛔ **안 풀고 맞히는 등급**(`A-f` 하는 500/500 이 "2가지" · `H-d` 최상은 정답 2종). ⛔ **등급 역전**(`H-c` 제시물 23→16→**47**→29 · `surface` 상 594 > 최상 336). 📉 **시장 괴리** — 상·최상이 3×3 **0%**(문제집 3권은 80~85%)이고 기본 난이도가 '중·상'이라 **실사용자가 보는 절반이 4×4**. 원인 대부분이 **`widenCfg` 를 G-c·H-a/H-b 에만 적용**한 데서 온다(고정 cfg 를 60번 반복 = 같은 좁은 공간). 정본 = `.claude/quiz/cubenest_난이도_재설계` **§11**.
+     - **해법의 축 = `edu`(교과/사고력)를 실제 생성 축으로 승격.** 랜딩 셀렉트가 지금은 카드 목록 필터일 뿐인데 사용자는 규격도 정할 것으로 기대한다. **배선은 이미 전부 있다**(`generate` 가 `body.edu` 를 받고 gsig 지문에도 포함) — 랜딩이 URL 에 안 싣고 `gen` 이 안 읽을 뿐이라 **진행 중 세션은 무영향**(`edu` 가 계속 `null`).
+     - 필터도 함께: **`dim` 이 19종 중 13종에서 조용히 무시된다**(`syncDimControl` 이 학년만 보고 유형을 안 본다) · 죽은 필드 `t.levels`·`t.dim` · S2 만 `facesMc` 게이트 구멍.
+  2. **P1.10 워크시트** — 진단서 P0 3건 중 **2건이 260818 이후 미수정**이다: `facesMc` 보기 4개가 인쇄되지 않아 **고를 대상이 종이에 없고**(성립불가), 정답지에 **해설이 없다**(`explainFor` 미호출). 둘 다 "서버가 이미 보내는 것을 문제지가 안 쓰는" 유형이라 신규 렌더러 0·신규 계산 0. 정본 = `.claude/worksheets/worksheets_지면적합성_진단` **§0.1**.
+  3. **P1.11 시각 통일 · 랜딩** — 공용 CSS **203줄** 대 페이지 인라인 **1,548줄**, 컴포넌트 레이어가 없다(1차 버튼이 높이 6종·radius 5종·글자 6종, 타이포·간격 토큰 0개). `tokens.css` 확장 + **`ui.css` 신설**(헤더·푸터와 같은 규약 — 스타일만 공유, 마크업은 각 HTML 인라인).
+  4. **P2.1 `entitlements`** → 5. **P3 결제.** ⚠ **수익화 검증 경로는 여전히 0** — 요금제는 확정됐고(위 「데이터·수익화」) 결정이 아니라 **제품이 밀려 있다.**
 - 새 기능은 F1~F5·`CubeNest.auth`·`CubeNest.mydata`·서버 gen을 **재사용**한다.

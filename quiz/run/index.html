@@ -32,6 +32,14 @@
       header.site-top{display:flex;align-items:center;padding:12px var(--gutter);border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:50;transition:transform .5s cubic-bezier(.16,1,.3,1);will-change:transform;backface-visibility:hidden}
       header.site-top.hide{transform:translateY(-100%)}
       .site-topin{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;max-width:var(--wrap);margin:0 auto}
+      /* 지금 누가 푸는지 — 오인식을 강제 없이 드러낸다(공용 태블릿). 누르면 전환 시트. */
+      .lrn-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);
+                color:var(--muted);cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:700;
+                padding:5px 10px 5px 5px;border-radius:999px;min-height:34px;max-width:132px;}
+      .lrn-chip[hidden]{display:none;}
+      .lrn-chip .av{width:22px;height:22px;border-radius:50%;flex:0 0 auto;display:inline-flex;
+                    align-items:center;justify-content:center;color:#fff;font-size:11.5px;font-weight:800;}
+      .lrn-chip .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
       .site-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
       .site-brand .glyph{width:26px;height:26px}
       .site-brand .t{display:flex;flex-direction:column;line-height:1.05}
@@ -319,6 +327,7 @@
           <a href="../../my/" id="myNav">내 자료</a>
         </nav>
         <div class="site-actions">
+          <button class="lrn-chip" type="button" id="lrnChip" hidden></button>
           <a href="../../account/" id="authNav" aria-label="로그인" title="로그인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg></a>
         </div>
       </div>
@@ -394,14 +403,15 @@
     </div>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../../assets/js/auth.js?v=0.5.0"></script>
-    <script src="../../assets/js/mydata.js?v=0.7.0"></script>
+    <script src="../../assets/js/scope.js?v=0.1.0"></script>   <!-- 저장소 스코프·학습자(공용 태블릿 격리). auth 뒤·mydata 앞 -->
+    <script src="../../assets/js/mydata.js?v=0.8.0"></script>
     <script src="../../assets/js/consent.js"></script>
     <script src="../../assets/js/foot.js?v=0.4.0"></script>
 
 
     <!-- ⚠ ?v= 를 반드시 올릴 것. 없으면 옛 run.js 가 캐시에 남아 새 서버 응답을 만난다
          (서버가 2D 에서 형상을 빼는 단계적 배포의 전제가 이 한 줄이다). -->
-    <script src="./run.js?v=0.20.0"></script>
+    <script src="./run.js?v=0.21.0"></script>
     <script>
     // 헤더 워드마크 언어 전환 — 정본은 account/index.html.
     // ⚠ 헤더 마크업을 옮길 때 이 스크립트도 같이 옮긴다. 훅(data-brand)만 복사하고
