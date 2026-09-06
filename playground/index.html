@@ -559,7 +559,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.5.0"></script>
-<script src="../assets/js/scope.js?v=0.1.0"></script>   <!-- 저장소 스코프·학습자(공용 태블릿 격리). auth 뒤·mydata 앞 -->
 <script src="../assets/js/consent.js"></script>
 <script>
 "use strict";
@@ -1318,28 +1317,28 @@ function postEdit(mkLayers=true){
 }
 /* ===== F4 정답 숨기기 + calc 30분 타임게이트 (마스터 6.3.1) ===== */
 const LOCK_SVG='<svg viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" stroke-width="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
-const TIMEGATE_MS=30*60*1000, TIMEGATE_BASE='cubenest_pg_first';
+/* ⚠ 이 키에 **학습자 스코프를 붙이지 말 것**(260906 에 붙였다가 되돌렸다).
+     · 게이트의 목적은 "가입 유도 + 치팅 방지"(§6.3.1)인데, 학습자별로 나누면
+       **아이를 하나 더 만들 때마다 30분이 새로 생겨** 두 목적이 동시에 무너진다.
+       localStorage 를 지우는 우회보다 더 싸다(자료를 안 잃는다).
+     · "학원에서 첫 아이가 30분을 쓰면 나머지가 잠긴다"는 사고가 아니라 **설계대로**다 —
+       탈출구가 이미 있고 무료다: 아래 authLoggedIn() 분기가 **로그인하면 즉시 푼다.**
+       교사가 가입하는 것이 이 게이트가 유도하려던 전환 그 자체다.
+     · playground 는 학습자에게 귀속될 데이터가 없다(모양 저장 미구현) — 그래서 이
+       페이지는 CubeNest.scope 를 아예 로드하지 않는다. */
+const TIMEGATE_MS=30*60*1000, TIMEGATE_KEY='cubenest_pg_first';
 /* 인증(§6): CubeNest.auth 가 로그인 상태의 단일 진실 소스. 로그인하면 calc 타임게이트가 풀린다. */
 const AUTH=(window.CubeNest&&window.CubeNest.auth)||null;
-/* 저장소 스코프(계정·학습자) — assets/js/scope.js 가 규약의 단일 출처.
-   ⚠ 예전엔 이 키가 **기기 단위**라, 학원 태블릿에서 첫 아이가 30분을 쓰면 그 뒤에
-     앉는 아이들이 **전원 즉시 잠긴** 채로 시작했다. 스코프를 붙여 아이별로 센다.
-   ⚠ 알려진 약화: 학습자를 새로 만들면 30분이 리셋된다. 이 게이트는 DRM 이 아니라
-     가입 유도이고(§6.3.1) localStorage 를 지우면 어차피 리셋되므로 수용한다 —
-     대신 아래 track('calc_timegate_scope_reset') 으로 실제 남용률을 관측한다. */
-const SCOPE=(window.CubeNest&&window.CubeNest.scope)||{ id:()=>'', key:b=>b, onChange:()=>()=>{} };
-function tgKey(){ return SCOPE.key(TIMEGATE_BASE); }
 function authLoggedIn(){ return !!(AUTH&&AUTH.isLoggedIn()); }
-function markFirstInteract(){ try{ const k=tgKey(); if(!localStorage.getItem(k)){ localStorage.setItem(k, String(Date.now()));
-  if(SCOPE.id()) { try{track('calc_timegate_scope_reset');}catch(e){} } } }catch(e){} }
-function timeGateElapsed(){ if(authLoggedIn()) return false; try{ const t=Number(localStorage.getItem(tgKey())); return Number.isFinite(t)&&t>0&&(Date.now()-t>=TIMEGATE_MS); }catch(e){ return false; } }
+function markFirstInteract(){ try{ if(!localStorage.getItem(TIMEGATE_KEY)) localStorage.setItem(TIMEGATE_KEY, String(Date.now())); }catch(e){} }
+function timeGateElapsed(){ if(authLoggedIn()) return false; try{ const t=Number(localStorage.getItem(TIMEGATE_KEY)); return Number.isFinite(t)&&t>0&&(Date.now()-t>=TIMEGATE_MS); }catch(e){ return false; } }
 function checkTimeGate(){ if(AUTH&&!AUTH.settled) return;   // 세션 복원 전엔 잠그지 않는다(잠금 깜빡임 방지)
   const l=timeGateElapsed(); if(l!==calcLocked){ calcLocked=l; renderStats(); syncCalcLockBtn(); if(l){ try{track('calc_timegate_lock');}catch(e){} } } }
 function fmtMMSS(ms){ const s=Math.max(0,Math.ceil(ms/1000)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
 function updateFreeTimer(){
   const el=document.getElementById('freeTimer'); if(!el) return;
   if(authLoggedIn()){ el.hidden=true; const _p0=document.getElementById('freeTimerPop'); if(_p0) _p0.hidden=true; return; }   // 로그인 → 무료 타이머 자체가 무의미
-  let first=0; try{ first=Number(localStorage.getItem(tgKey()))||0; }catch(e){}
+  let first=0; try{ first=Number(localStorage.getItem(TIMEGATE_KEY))||0; }catch(e){}
   const rem = first ? (TIMEGATE_MS-(Date.now()-first)) : 0;
   if(!first || calcLocked || rem<=0){ el.hidden=true; const _p=document.getElementById('freeTimerPop'); if(_p) _p.hidden=true; return; }
   el.hidden=false;
@@ -1748,8 +1747,6 @@ document.getElementById('calcBody').addEventListener('click',(e)=>{ const a=e.ta
 setInterval(()=>{ updateFreeTimer(); checkTimeGate(); }, 1000);
 /* 로그인/로그아웃 즉시 반영 — 모달에서 로그인하면 새로고침 없이 calc 잠금이 풀린다 */
 if(AUTH) AUTH.onAuthChange(()=>{ checkTimeGate(); updateFreeTimer(); });
-/* 학습자를 바꾸면 타임게이트도 그 아이 기준으로 다시 판정한다(계정 전환과 같은 처리). */
-SCOPE.onChange(function(changed){ if(changed){ checkTimeGate(); updateFreeTimer(); } });
 (function(){ const info=document.getElementById('freeTimerInfo'), pop=document.getElementById('freeTimerPop');
   if(info&&pop){ info.addEventListener('click',(e)=>{ e.stopPropagation(); pop.hidden=!pop.hidden; try{ if(!pop.hidden) track('free_info_open'); }catch(_){} });
     document.addEventListener('click',(e)=>{ if(!pop.hidden && !pop.contains(e.target) && !info.contains(e.target)) pop.hidden=true; });

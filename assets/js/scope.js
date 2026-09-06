@@ -31,7 +31,19 @@
 (function (global) {
   'use strict';
 
-  var VERSION = '0.1.0';
+  var VERSION = '0.2.0';
+
+  /* ── '학생 미지정' ────────────────────────────────────────
+     ⛔ **이것에 uuid 를 주지 말 것.** 미지정은 로스터의 행이 아니라 **센티널**이다 —
+       이미 존재하던 "학습자 미선택" 상태에 이름과 자리를 준 것뿐이고, 스코프 토큰은
+       **빈 문자열 그대로**다. 실제 학습자로 만들어 기본 선택으로 두는 순간 모든 기존
+       사용자의 키가 `base` → `base~<새id>` 로 바뀌어 진행 세션·/my 자료·닉네임이
+       통째로 사라진 것처럼 보인다(append-only 규약이 무너진다).
+     · 2단계 서버 모델과도 이게 맞다 — 미지정 = `learner_id IS NULL` 이라
+       `learners` 테이블에 행이 생기지 않는다. */
+  var NONE = 'none';
+  var NONE_LABEL = '학생 미지정';
+  var NONE_COLOR = '#8a8f9a';
 
   var ROSTER_BASE = 'cubenest_learners';     // [{id,name,color,ts}] — 계정별(uid)로 나뉜다
   var CUR_BASE    = 'cubenest_learner_cur';  // {id, at} — 현재 선택 + 마지막 활동 시각
@@ -103,14 +115,24 @@
       return (o && o.id) ? o : null;
     } catch (e) { return null; }
   }
-  /* 선택된 학습자. **로스터에 없으면 null** — 지운 학습자의 스코프에 갇히지 않게 한다. */
+  /* 선택된 학습자. **로스터에 없으면 null** — 지운 학습자의 스코프에 갇히지 않게 한다.
+     ⚠ 미지정(NONE)도 null 이다 — 그래야 curId() 가 '' 이 되어 토큰이 안 붙는다. */
   function learner() {
-    var c = curRaw(); if (!c) return null;
+    var c = curRaw(); if (!c || c.id === NONE) return null;
     var r = roster();
     for (var i = 0; i < r.length; i++) if (r[i].id === c.id) return r[i];
     return null;
   }
   function curId() { var l = learner(); return l ? l.id : ''; }
+
+  /* 「골랐는가」와 「누구인가」를 가른다 — learner() 만으로는 둘을 구분할 수 없다.
+       null   = 한 번도 안 골랐다(그래서 한 번은 물어본다)
+       'none' = 미지정을 **의도적으로** 골랐다(그래서 다시 묻지 않는다)
+       uuid   = 그 학습자 */
+  function selection() { var c = curRaw(); return c ? c.id : null; }
+  function isUnassigned() { return !curId(); }
+  /* 화면에 쓸 현재 이름. UI 3곳이 `cur ? cur.name : …` 를 반복하던 것을 대체한다. */
+  function currentLabel() { var l = learner(); return l ? l.name : NONE_LABEL; }
 
   /* ── 스코프 토큰 ──────────────────────────────────────── */
   function id() {
@@ -163,7 +185,8 @@
     var n = roster().length;
     if (!n) return false;                       // 학습자를 안 만든 사람에겐 아무것도 묻지 않는다
     if (askMode()) return true;                 // 학원 기기 — 시작할 때마다
-    if (!curId()) return true;                  // 아직 아무도 안 골랐다
+    // ⚠ `!curId()` 로 보면 안 된다 — 미지정을 **고른** 사람까지 매번 다시 묻게 된다.
+    if (selection() === null) return true;      // 한 번도 안 골랐다 → 한 번은 묻는다
     return n > 1 && idleExpired();              // 후보가 둘 이상일 때만 유휴로 되묻는다
   }
 
@@ -190,11 +213,15 @@
     if (!saveRoster(r)) return false;
     purgeScope('~' + lid);
     var c = curRaw();
-    if (c && c.id === lid) { rm(acctKey(CUR_BASE)); notify(true); }
+    // 지운 학습자가 현재였으면 **미지정으로 내린다**(기록을 지우면 곧바로 다시 묻힌다).
+    if (c && c.id === lid) { wr(acctKey(CUR_BASE), JSON.stringify({ id: NONE, at: Date.now() })); notify(true); }
     return true;
   }
+  /* lid: uuid = 그 학습자 / NONE = 미지정을 의도적으로 고름 / null = 선택 기록 자체를 지움 */
   function select(lid) {
-    if (lid) {
+    if (lid === NONE) {
+      wr(acctKey(CUR_BASE), JSON.stringify({ id: NONE, at: Date.now() }));
+    } else if (lid) {
       var r = roster(), ok = false;
       for (var i = 0; i < r.length; i++) if (r[i].id === lid) ok = true;
       if (!ok) return false;
@@ -221,6 +248,77 @@
       }
       doomed.forEach(rm);
     } catch (e) {}
+  }
+
+  /* ── 기기 학습자 가져오기 ─────────────────────────────────
+     로스터는 계정별(`cubenest_learners__<uid>`)이라, 로그아웃 중 만든 아이는 로그인하면
+     안 보인다. `/account` 로스터가 로그인 게이트라 **로그아웃 중 학습자를 만드는 유일한
+     경로가 선택 시트**여서, 학원 교사가 태블릿을 세팅해 두고 나중에 가입하는 흐름이
+     통째로 막혔다. 자료(mydata.importDeviceData)와 짝이 되는 학습자 쪽 경로다. */
+  function anonRoster() {
+    try {
+      var o = JSON.parse(rd(ROSTER_BASE) || '[]');
+      return Array.isArray(o) ? o.filter(function (x) { return x && x.id && x.name; }) : [];
+    } catch (e) { return []; }
+  }
+  /* 지금 계정에 아직 없는 '이 기기' 학습자. 동기 반환 — /my 가 카드에 바로 쓴다. */
+  function deviceLearners() {
+    if (!uid()) return [];                      // 익명 스코프에선 자기 자신이라 의미가 없다
+    var have = {};
+    roster().forEach(function (x) { have[x.id] = 1; });
+    return anonRoster().filter(function (x) { return !have[x.id]; });
+  }
+
+  /* 그 학습자의 로컬 자료를 계정 스코프로 **복사**한다.
+     ⚠ 키 이름을 열거하지 않는다 — `~<lid>` 로 끝나는 모든 키를 `__<uid>~<lid>` 로 옮기면
+       진행 세션(`_sc` 포함)·cubenest_my_v1·닉네임·quiz_last·접기·음소거가 **전부** 덮이고,
+       앞으로 스코프 키가 늘어도 자동으로 따라온다. 베이스를 나열하면 반드시 빠뜨린다.
+     ⚠ 대상이 이미 있으면 **덮지 않는다**(계정 자료가 우선).
+     ⚠ 원본은 지우지 않는다 — 로그아웃하면 그 기기 사용자가 자기 기록을 계속 봐야 한다. */
+  /* ⚠ 접미어가 **항상 키의 끝에 있지는 않다** — 연습장은 `…~<lid>_sc` 다.
+     꼬리를 떼고 본 뒤 다시 붙인다. purgeScope() 도 같은 이유로 같은 분기를 갖는다.
+     (이걸 빠뜨리면 학습자를 가져올 때 진행은 따라오는데 **필기만 사라진다.**) */
+  function splitScoped(k, from) {
+    var sc = k.slice(-3) === '_sc';
+    var b = sc ? k.slice(0, -3) : k;
+    if (b.length > from.length && b.slice(-from.length) === from) return { head: b.slice(0, -from.length), sc: sc };
+    return null;
+  }
+  function rekeyLearner(lid) {
+    var u = uid(); if (!u) return 0;
+    var from = '~' + lid, to = '__' + u + '~' + lid, moved = 0;
+    try {
+      var s = ls(), src = [];
+      for (var i = 0; i < s.length; i++) {
+        var k = s.key(i);
+        if (k && splitScoped(k, from)) src.push(k);
+      }
+      src.forEach(function (k) {
+        var p = splitScoped(k, from);
+        var nk = p.head + to + (p.sc ? '_sc' : '');
+        if (rd(nk) !== null) return;            // 계정에 이미 있다 → 건드리지 않는다
+        if (wr(nk, rd(k))) moved++;
+      });
+    } catch (e) {}
+    return moved;
+  }
+
+  function importDeviceLearners() {
+    if (!uid()) return { ok: false, reason: 'anonymous' };
+    var add = deviceLearners();
+    if (!add.length) return { ok: true, learners: 0, keys: 0 };
+    var r = roster(), room = MAX_LEARNERS - r.length;
+    if (room <= 0) return { ok: false, reason: 'full' };
+    add = add.slice(0, room);
+    // id 를 **그대로** 보존해야 재키잉이 맞고, 2단계에서 서버 PK 로도 그대로 올라간다.
+    var merged = r.concat(add.map(function (x) {
+      return { id: x.id, name: cleanName(x.name), color: x.color | 0, ts: x.ts || Date.now() };
+    }));
+    if (!saveRoster(merged)) return { ok: false, reason: 'storage' };
+    var keys = 0;
+    add.forEach(function (x) { keys += rekeyLearner(x.id); });
+    notify(false);                              // 로스터만 바뀌었다 — 스코프 토큰은 그대로다
+    return { ok: true, learners: add.length, keys: keys };
   }
 
   /* ── 세션 청소 ────────────────────────────────────────── */
@@ -258,8 +356,9 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function colorOf(l) { return COLORS[(l && l.color | 0) % COLORS.length] || COLORS[0]; }
-  function initialOf(l) { return (l && l.name) ? l.name.slice(0, 1) : '?'; }
+  /* l 이 없으면(= 미지정) 중립 회색과 점 — 아이 색과 한눈에 구분된다. */
+  function colorOf(l) { return l ? (COLORS[(l.color | 0) % COLORS.length] || COLORS[0]) : NONE_COLOR; }
+  function initialOf(l) { return (l && l.name) ? l.name.slice(0, 1) : '·'; }
 
   var sheetEl = null, sheetResolve = null;
 
@@ -281,11 +380,27 @@
       if (e.target.closest('[data-close]')) { closeSheet(); return; }
       var pick = e.target.closest('[data-pick]');
       if (pick) { select(pick.getAttribute('data-pick')); closeSheet(); return; }
-      if (e.target.closest('[data-new]')) { promptNew(); return; }
+      if (e.target.closest('[data-new]')) { adding = true; renderSheet(); focusAdd(); return; }
+      if (e.target.closest('[data-addok]')) { commitAdd(); return; }
     });
     host().appendChild(d);
     sheetEl = d;
     return d;
+  }
+
+  var adding = false;      // 인라인 '추가' 입력이 열려 있는가
+
+  /* 한 줄짜리 선택 버튼. l 이 null 이면 '학생 미지정'. */
+  function rowHtml(l, on, dim) {
+    return '<button class="cn-auth-btn ' + (on ? 'accent' : 'ghost') + '" type="button"' +
+           ' data-pick="' + esc(l ? l.id : NONE) + '"' +
+           ' style="justify-content:flex-start;gap:10px' + (dim && !on ? ';opacity:.7' : '') + '">' +
+           '<span aria-hidden="true" style="width:22px;height:22px;border-radius:50%;flex:0 0 auto;' +
+             'display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;' +
+             'color:#fff;background:' + colorOf(l) + '">' + esc(initialOf(l)) + '</span>' +
+           esc(l ? l.name : NONE_LABEL) +
+           (on ? ' <span style="margin-left:auto;font-size:11.5px;opacity:.8">지금</span>' : '') +
+           '</button>';
   }
 
   function renderSheet() {
@@ -294,32 +409,45 @@
     var r = roster(), cur = curId(), h = '';
     h += '<h2 class="cn-auth-t" id="cnScopeTitle">누가 공부하나요?</h2>';
     h += '<p class="cn-auth-d">고른 사람의 기록만 보이고 저장돼요.<br>기기를 함께 쓰면 시작할 때마다 골라 주세요.</p>';
-    for (var i = 0; i < r.length; i++) {
-      var l = r[i], on = (l.id === cur);
-      h += '<button class="cn-auth-btn ' + (on ? 'accent' : 'ghost') + '" type="button" data-pick="' + esc(l.id) + '"' +
-           ' style="justify-content:flex-start;gap:10px">' +
-           '<span aria-hidden="true" style="width:22px;height:22px;border-radius:50%;flex:0 0 auto;' +
-             'display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;' +
-             'color:#fff;background:' + colorOf(l) + '">' + esc(initialOf(l)) + '</span>' +
-           esc(l.name) + (on ? ' <span style="margin-left:auto;font-size:11.5px;opacity:.8">지금</span>' : '') +
-           '</button>';
-    }
-    if (r.length < MAX_LEARNERS) {
+    for (var i = 0; i < r.length; i++) h += rowHtml(r[i], r[i].id === cur, false);
+    /* 미지정은 **맨 아래에 흐리게** — 고를 수는 있되(손님 아이·체험 수업) 기본 동선은
+       제대로 고르는 쪽이 되게 한다. 막아도 DevTools 로 우회되므로 방어선이 아니다. */
+    h += rowHtml(null, !cur, true);
+    if (adding) {
+      h += '<div style="display:flex;gap:8px;margin-top:2px">' +
+             '<input id="cnScopeNew" type="text" maxlength="' + NAME_MAX + '" autocomplete="off"' +
+               ' placeholder="아이 별명" aria-label="학습자 별명"' +
+               ' style="flex:1;min-width:0;height:44px;padding:0 13px;box-sizing:border-box;font-family:inherit;' +
+               'font-size:14px;border:1px solid var(--line);border-radius:11px;background:var(--panel-2);color:var(--ink)">' +
+             '<button class="cn-auth-btn accent" type="button" data-addok="1"' +
+               ' style="width:auto;flex:0 0 auto;margin:0;padding:0 16px">확인</button>' +
+           '</div>';
+    } else if (r.length < MAX_LEARNERS) {
       h += '<button class="cn-auth-btn ghost" type="button" data-new="1">+ 학습자 추가</button>';
     }
-    h += '<p class="cn-auth-fine">실명 대신 <b>별명</b>을 권해요. 이름은 이 계정에만 저장되고, ' +
+    h += '<p class="cn-auth-fine">실명 대신 <b>별명</b>을 권해요. 이름은 이 기기·계정에만 저장되고, ' +
          '나이·학교 같은 정보는 받지 않아요.</p>';
     body.innerHTML = h;
   }
 
-  /* prompt() 를 쓰는 이유: 이 시트는 보호자가 아주 가끔 쓰는 경로라 전용 입력 UI 의
-     값보다 코드 표면이 더 비싸다. /account 의 로스터 화면이 정식 편집 자리다. */
-  function promptNew() {
-    var nm = null;
-    try { nm = global.prompt('학습자 별명을 적어 주세요 (' + NAME_MAX + '자 이내)'); } catch (e) { nm = null; }
-    if (nm == null) return;
+  /* ⚠ 예전엔 window.prompt() 였다 — 모바일에서 투박하고 자동화에선 블로킹이라 걷어냈다.
+     시트를 닫지 않고 그 자리에서 받는다(고르러 왔다가 만들고 바로 이어가게). */
+  function focusAdd() {
+    var i = document.getElementById('cnScopeNew'); if (!i) return;
+    i.focus();
+    i.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); commitAdd(); }
+      // Esc 는 시트 전체를 닫는 전역 핸들러가 먹는다 — 입력 중엔 입력만 취소한다.
+      if (e.key === 'Escape') { e.stopPropagation(); adding = false; renderSheet(); }
+    });
+  }
+  function commitAdd() {
+    var i = document.getElementById('cnScopeNew');
+    var nm = i ? (i.value || '').trim() : '';
+    if (!nm) { if (i) i.focus(); return; }
     var it = add(nm);
-    if (!it) { renderSheet(); return; }
+    adding = false;
+    if (!it) { renderSheet(); return; }         // 상한 초과·저장 실패
     select(it.id);
     closeSheet();
   }
@@ -328,6 +456,7 @@
   function openPicker(ctx) {
     var d = buildSheet();
     d.setAttribute('data-ctx', ctx || '');
+    adding = false;                             // 지난번 입력 상태를 물고 들어오지 않게
     renderSheet();
     lastFocus = document.activeElement;
     d.hidden = false;
@@ -384,7 +513,14 @@
     id: id,
     key: key,
     learner: learner,
+    selection: selection,            // null(안 고름) | 'none'(미지정) | uuid
+    isUnassigned: isUnassigned,
+    currentLabel: currentLabel,      // 학습자 이름 또는 '학생 미지정'
+    NONE: NONE,
+    NONE_LABEL: NONE_LABEL,
     list: roster,
+    deviceLearners: deviceLearners,          // 동기 — /my 카드가 개수를 센다
+    importDeviceLearners: importDeviceLearners,
     add: add,
     rename: rename,
     remove: remove,

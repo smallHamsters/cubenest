@@ -1381,14 +1381,18 @@
         (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
       function renderLearnerChip(){
         const el=document.getElementById("lrnChip"); if(!el) return;
-        const l=SCOPE.learner&&SCOPE.learner();
-        if(!l || !(SCOPE.list&&SCOPE.list().length)){ el.hidden=true; return; }
+        // 학습자를 안 만든 사람에겐 아무것도 안 보인다(집에서 혼자 쓰면 순수 잡음이다).
+        if(!(SCOPE.list&&SCOPE.list().length)){ el.hidden=true; return; }
+        // ⚠ 미지정(learner()===null)도 **보여준다** — 예전엔 숨겨서 "지금 누구인지"가
+        //   상태로 안 드러났다. 오인식을 드러내는 것이 이 칩의 유일한 목적이다.
+        const l=(SCOPE.learner&&SCOPE.learner())||null;
+        const nm=l?l.name:((SCOPE.NONE_LABEL)||"학생 미지정");
         const c=(SCOPE.colorOf&&SCOPE.colorOf(l))||"#8a8f9a";
         el.hidden=false;
         el.title="학습자 바꾸기";
-        el.setAttribute("aria-label","지금 "+l.name+" — 학습자 바꾸기");
+        el.setAttribute("aria-label","지금 "+nm+" — 학습자 바꾸기");
         el.innerHTML='<span class="av" aria-hidden="true" style="background:'+escHtml(c)+'">'
-          +escHtml(l.name.slice(0,1))+'</span><span class="nm">'+escHtml(l.name)+'</span>';
+          +escHtml(l?nm.slice(0,1):"·")+'</span><span class="nm">'+escHtml(nm)+'</span>';
         el.onclick=()=>{ if(SCOPE.openPicker) SCOPE.openPicker("quiz_run"); };
       }
 

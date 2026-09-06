@@ -133,6 +133,8 @@
   .lrn-av{width:26px;height:26px;border-radius:50%;flex:0 0 auto;display:inline-flex;align-items:center;
           justify-content:center;color:#fff;font-size:13px;font-weight:800;}
   .lrn-nm{flex:1;min-width:0;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .lrn-badge{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:6px;background:var(--line-2);
+             color:var(--muted-2);font-size:10.5px;font-weight:800;vertical-align:1px;}
   .lrn-now{font-size:11px;font-weight:800;color:var(--accent-ink);flex:0 0 auto;}
   .lrn-act{flex:0 0 auto;border:0;background:none;cursor:pointer;font-family:inherit;font-size:12px;
            font-weight:700;color:var(--muted);padding:6px 8px;border-radius:8px;min-height:32px;}
@@ -207,8 +209,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.5.0"></script>
-<script src="../assets/js/scope.js?v=0.1.0"></script>   <!-- 저장소 스코프·학습자(공용 태블릿 격리). auth 뒤·mydata 앞 -->
-<script src="../assets/js/mydata.js?v=0.8.0"></script>
+<script src="../assets/js/scope.js?v=0.2.0"></script>   <!-- 저장소 스코프·학습자(공용 태블릿 격리). auth 뒤·mydata 앞 -->
+<script src="../assets/js/mydata.js?v=0.9.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
 <script>
@@ -319,6 +321,14 @@ var CS_FORM_URL = (window.CubeNest && window.CubeNest.CS_FORM_URL) || '#';
     var list = SCOPE.list(), cur = SCOPE.learner(), h = '';
     if (list.length){
       h += '<div class="lrn-list">';
+      /* '학생 미지정'은 로스터의 행이 아니라 **기본값**이다 — 지울 수도 이름을 바꿀 수도
+         없으므로 그 두 버튼을 주지 않는다. 아무도 안 골랐을 때가 이 상태다. */
+      h += '<div class="lrn-row'+(cur?'':' on')+'">'+
+             '<span class="lrn-av" aria-hidden="true" style="background:'+SCOPE.colorOf(null)+'">·</span>'+
+             '<span class="lrn-nm">'+esc(SCOPE.NONE_LABEL)+' <span class="lrn-badge">기본</span></span>'+
+             (cur?'<button class="lrn-act" type="button" data-pick="'+esc(SCOPE.NONE)+'">고르기</button>'
+                 :'<span class="lrn-now">지금</span>')+
+           '</div>';
       for (var i=0;i<list.length;i++){
         var l = list[i], on = !!(cur && cur.id===l.id);
         h += '<div class="lrn-row'+(on?' on':'')+'">'+
@@ -332,7 +342,8 @@ var CS_FORM_URL = (window.CubeNest && window.CubeNest.CS_FORM_URL) || '#';
       }
       h += '</div>';
     } else {
-      h += '<div class="ah-empty">아직 학습자가 없어요. 아이 이름을 더하면 기기를 함께 써도 기록이 섞이지 않아요.</div>';
+      h += '<div class="ah-empty">아직 학습자가 없어요. 아이 이름을 더하면 기기를 함께 써도 기록이 섞이지 않아요.<br>'+
+           '만들기 전까지는 모든 기록이 <b>'+esc(SCOPE.NONE_LABEL)+'</b>으로 쌓여요.</div>';
     }
     if (list.length < SCOPE.MAX_LEARNERS){
       h += '<div class="lrn-add">'+

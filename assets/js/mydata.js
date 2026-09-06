@@ -87,16 +87,26 @@
   }
   function importDeviceData() {
     if (!scopeId()) return Promise.resolve({ ok: false, reason: 'anonymous' });
+    /* ⚠ 학습자를 **먼저** 가져온다 — 그래야 그 아이들의 스코프 버킷(`~lid` → `__uid~lid`)이
+       만들어진 뒤에 아래 items 병합이 올라탄다. 순서를 뒤집으면 학습자 자료가 한 박자 늦는다. */
+    var lrn = { learners: 0 };
+    try {
+      var S = scopeMod();
+      if (S && S.importDeviceLearners) lrn = S.importDeviceLearners() || lrn;
+    } catch (e) {}
     var store = readStore(), have = {};
     store.items.forEach(function (it) { have[it.id] = true; });
     var add = anonStore().items.filter(function (it) { return !have[it.id]; });
-    if (!add.length) return Promise.resolve({ ok: true, imported: 0 });
+    if (!add.length) {
+      if (!lrn.learners) return Promise.resolve({ ok: true, imported: 0, learners: 0 });
+      return syncAll().then(function () { return { ok: true, imported: 0, learners: lrn.learners }; });
+    }
     store.items = store.items.concat(add);
     store.items.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
     if (store.items.length > MAX_ITEMS) store.items.length = MAX_ITEMS;
     if (!writeStore(store)) return Promise.resolve({ ok: false, reason: 'storage' });
     // ⚠ 개별 sync* 를 직접 부르지 말 것 — 같은 localStorage 키를 두고 경쟁한다.
-    return syncAll().then(function () { return { ok: true, imported: add.length }; });
+    return syncAll().then(function () { return { ok: true, imported: add.length, learners: lrn.learners || 0 }; });
   }
 
   /* ── 로컬 백엔드 ─────────────────────────────────────────── */

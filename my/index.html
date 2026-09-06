@@ -189,8 +189,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="../assets/js/auth.js?v=0.5.0"></script>
-<script src="../assets/js/scope.js?v=0.1.0"></script>   <!-- 저장소 스코프·학습자(공용 태블릿 격리). auth 뒤·mydata 앞 -->
-<script src="../assets/js/mydata.js?v=0.8.0"></script>
+<script src="../assets/js/scope.js?v=0.2.0"></script>   <!-- 저장소 스코프·학습자(공용 태블릿 격리). auth 뒤·mydata 앞 -->
+<script src="../assets/js/mydata.js?v=0.9.0"></script>
 <script src="../assets/js/consent.js"></script>
 <script src="../assets/js/foot.js?v=0.4.0"></script>
 <script>
@@ -300,31 +300,38 @@ function track(name, params){ try{ if(window.gtag) window.gtag('event', name, pa
      삭제)의 정본은 /account 이고 여기서는 **전환만** 한다. */
   var SCOPE = (window.CubeNest && window.CubeNest.scope) || null;
 
+  function chipHtml(l, on){
+    /* l 이 null 이면 '학생 미지정'. ⚠ 예전엔 이 자리가 "모두" 였는데, 집계 뷰처럼 읽혀
+       오해를 불렀다 — 실제로는 학습자를 안 고른 **별도 버킷**이다. */
+    return '<button class="lb-chip'+(on?' on':'')+'" type="button" data-lb="'+esc(l?l.id:SCOPE.NONE)+'">'+
+             '<span class="lb-av" aria-hidden="true" style="background:'+SCOPE.colorOf(l)+'">'+
+               esc(l?l.name.slice(0,1):'·')+'</span>'+
+             esc(l?l.name:SCOPE.NONE_LABEL)+'</button>';
+  }
   function learnerBarHtml(){
     if(!SCOPE) return '';
-    var list = SCOPE.list(); if(!list.length) return '';
+    var list = SCOPE.list(); if(!list.length) return '';   // 학습자를 안 만든 사람에겐 안 보인다
     var cur = SCOPE.learner(), h = '<div class="lrnbar"><span class="lb-l">보는 사람</span>';
-    for(var i=0;i<list.length;i++){
-      var l=list[i], on=!!(cur&&cur.id===l.id);
-      h += '<button class="lb-chip'+(on?' on':'')+'" type="button" data-lb="'+esc(l.id)+'">'+
-             '<span class="lb-av" aria-hidden="true" style="background:'+SCOPE.colorOf(l)+'">'+esc(l.name.slice(0,1))+'</span>'+
-             esc(l.name)+'</button>';
-    }
-    if(cur) h += '<button class="lb-chip" type="button" data-lb="">모두</button>';
+    h += chipHtml(null, !cur);                             // 미지정 = 기본값이라 항상 첫 칩
+    for(var i=0;i<list.length;i++) h += chipHtml(list[i], !!(cur&&cur.id===list[i].id));
     return h + '<a class="lb-mng" href="../account/">관리</a></div>';
   }
   function wireLearnerBar(){
     if(!SCOPE) return;
     document.querySelectorAll('[data-lb]').forEach(function(b){
-      b.onclick=function(){ SCOPE.select(b.getAttribute('data-lb')||null); };
+      b.onclick=function(){ SCOPE.select(b.getAttribute('data-lb')); };
     });
   }
 
-  /* 옛 자동 승계(adopt)의 대체 — 누를 때만 넘어온다. */
+  /* 옛 자동 승계(adopt)의 대체 — 누를 때만 넘어온다. 자료와 학습자를 함께 센다. */
   function importCardHtml(){
     var n = (M && M.deviceDataCount) ? M.deviceDataCount() : 0;
-    if(!n) return '';
-    return '<div class="imp"><span>이 기기에 로그인 없이 저장된 자료가 <b>'+n+'건</b> 있어요.</span>'+
+    var lr = (SCOPE && SCOPE.deviceLearners) ? SCOPE.deviceLearners().length : 0;
+    if(!n && !lr) return '';
+    var what = [];
+    if(n)  what.push('자료 <b>'+n+'건</b>');
+    if(lr) what.push('학습자 <b>'+lr+'명</b>');
+    return '<div class="imp"><span>이 기기에 로그인 없이 저장된 '+what.join(' · ')+'이 있어요.</span>'+
            '<button class="imp-btn" type="button" id="impBtn">내 계정으로 가져오기</button></div>';
   }
   function wireImportCard(){
