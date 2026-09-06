@@ -27,7 +27,7 @@
 
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <link rel="stylesheet" href="../assets/css/tokens.css?v=0.1.0">
-<link rel="stylesheet" href="../assets/css/nav.css?v=0.3.0">
+<link rel="stylesheet" href="../assets/css/nav.css?v=0.4.0">
 <link rel="stylesheet" href="../assets/css/consent.css">
 <link rel="stylesheet" href="../assets/css/auth.css?v=0.1.0">
 <link rel="stylesheet" href="../assets/css/foot.css?v=0.3.0">
@@ -174,15 +174,14 @@
       <span class="t"><b data-brand>CubeNest</b></span>
     </a>
     <nav class="site-nav" aria-label="주요 메뉴">
-      <a href="../">홈</a>
-      <a href="../guide/">가이드</a>
       <a href="../playground/">플레이그라운드</a>
       <a href="../quiz/">퀴즈</a>
       <a href="../worksheets/">문제지 생성</a>
+      <a href="../price/">요금제</a>
       <a href="../my/" id="myNav">내 자료</a>
     </nav>
     <div class="site-actions">
-      <a href="./" id="authNav" aria-current="page" aria-label="로그인" title="로그인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg></a>
+      <a href="./" id="authNav" aria-current="page" aria-label="로그인" title="로그인"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg><span class="lbl">로그인</span></a>
     </div>
   </div>
 </header>
@@ -276,7 +275,7 @@ var CS_FORM_URL = (window.CubeNest && window.CubeNest.CS_FORM_URL) || '#';
         '<span class="pill">무료</span>'+
         '<span class="pt"><b>'+esc(ent.label)+'</b><span>'+esc(ent.note)+'</span></span>'+
       '</div>'+
-      '<p class="ah-planfoot">정식 출시 후에는 <b>기간 이용권</b>으로 전환돼요. 베타 동안은 모든 기능이 무료입니다.</p>';
+      '<p class="ah-planfoot">정식 출시 후에는 <b>기간 이용권</b>으로 전환돼요. 베타 동안은 모든 기능이 무료입니다. <a href="../price/">요금제 보기</a></p>';
   }
   function paymentsBody(pays){
     return (pays && pays.length)

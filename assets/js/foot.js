@@ -6,7 +6,7 @@
    — quiz/index.html 처럼 consent.js 조차 안 싣는 가벼운 페이지도 이걸 쓴다.
    (로그인 여부는 있으면 읽고, 없으면 조용히 건너뛴다 — 의존이 아니다.)
 
-   소비: index(랜딩 '정보' 열) · guide · quiz · quiz/run · worksheets · terms · privacy ·
+   소비: index(랜딩 '정보' 열) · price · quiz · quiz/run · worksheets · terms · privacy ·
          account · my — **playground 와 404 만 제외**한 전 페이지. */
 (function () {
   'use strict';

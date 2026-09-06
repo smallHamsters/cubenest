@@ -33,7 +33,7 @@
 
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
 <link rel="stylesheet" href="assets/css/tokens.css?v=0.1.0">
-<link rel="stylesheet" href="assets/css/nav.css?v=0.3.0">
+<link rel="stylesheet" href="assets/css/nav.css?v=0.4.0">
 <link rel="stylesheet" href="assets/css/consent.css">
 <link rel="stylesheet" href="assets/css/auth.css?v=0.1.0">
 <!-- 히어로 3D 뷰어용 (playground 정본과 동일 버전) -->
@@ -396,15 +396,14 @@
       <span class="t"><b id="brandName">CubeNest</b></span>
     </a>
     <nav class="site-nav" aria-label="주요 메뉴">
-      <a href="./" aria-current="page">홈</a>
-      <a data-cta="nav" href="guide/">가이드</a>
       <a data-cta="nav" href="playground/">플레이그라운드</a>
       <a data-cta="nav" href="quiz/">퀴즈</a>
       <a data-cta="nav" href="worksheets/">문제지 생성</a>
+      <a data-cta="nav" href="price/">요금제</a>
       <a data-cta="nav" href="my/" id="myNav">내 자료</a>
     </nav>
     <div class="site-actions">
-      <a data-cta="nav" href="account/" id="authNav" aria-label="로그인" title="로그인"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg></a>
+      <a data-cta="nav" href="account/" id="authNav" aria-label="로그인" title="로그인"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="10" r="3.2"/><path d="M5.7 19a6.5 6.5 0 0 1 12.6 0"/></svg><span class="lbl">로그인</span></a>
     </div>
   </div>
 </header>
@@ -839,7 +838,7 @@ const PLAYGROUND_URL  = 'playground/';
      preventDefault + setTimeout 으로 이동을 늦추지 말 것 — 계측 때문에 사용자가 기다리게 된다. */
 function destOf(href){
   var h=String(href||'');
-  var m=h.match(/^(playground|quiz|worksheets|guide|my|account)\//);
+  var m=h.match(/^(playground|quiz|worksheets|price|my|account)\//);
   return m ? m[1] : (h==='./' ? 'home' : 'other');
 }
 document.addEventListener('click', function(e){

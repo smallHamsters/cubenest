@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **대상: 만 5~11세**(한국 교육과정 기준, **기본 스테이지 = 초6** '공간과 입체'). 난이도는 **연령 스테이지가 유형·밴드를 먼저 정하고** 하/중/상/최상은 그 안의 상대 난이도다 — 출시 **S0~S4**(유아 · 초1~2 · 초3~4 · 초5 · **초6**(기본)), **S5(중1~2) 비노출**(설계는 코드에 보존). **S0·S1은 `count`·`facesMc` 2종만** 열고 `facesMc`는 묻는 방향 제한(S0=위 / S1=위·앞). 정본 = `.claude/quiz/cubenest_난이도_재설계_260818_v0_1.md` §7·§10.
 - 해외(미국·싱가포르·태국) 진출은 **후순위**. 조사 결과는 `.claude/quiz/cubenest_연령별_국제_난이도설계_260819_v0_1.md`에 보관(보류).
 - 태블릿·휴대폰 우선. 무료 런칭(트래픽·피드백) 단계. 개인사업자·정적 호스팅.
-- 사이트맵: `/`(landing) · `/playground`(3D 도구) · `/quiz`(퀴즈 랜딩) · `/quiz/run`(퀴즈 플레이) · `/worksheets`(문제지·정답지 인쇄·QR) · `/guide`(가이드) · `/account`(계정 허브: 로그인·닉네임·이용권·결제·CS, 성인 중심) · `/my`(내 자료: 퀴즈 기록·문제지·모양, 로컬 우선) · `/terms`·`/privacy`(법적 문서, 정적).
+- 사이트맵: `/`(landing) · `/playground`(3D 도구) · `/quiz`(퀴즈 랜딩) · `/quiz/run`(퀴즈 플레이) · `/worksheets`(문제지·정답지 인쇄·QR) · `/price`(요금제: 무료·이용권 경계 안내, 무로그인) · `/account`(계정 허브: 로그인·닉네임·이용권·결제·CS, 성인 중심) · `/my`(내 자료: 퀴즈 기록·문제지·모양, 로컬 우선) · `/terms`·`/privacy`(법적 문서, 정적).
 
 ## 명령 (빌드 없음 — 아래가 전부다)
 - **로컬 서버:** `py -m http.server 5500` (리포 루트. **5500 고정**·**`py`** 인 이유는 「기술·규약」)
@@ -68,7 +68,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **`writeStore()` 실패(quota·프라이빗 모드)를 삼키지 않는다** — sync 는 `{ok:false, reason:'storage'}` 로 끊어 **push 를 안 한다**(안 그러면 로컬엔 없고 서버엔 있는 상태로 갈린다). `add()` 는 호출부가 promise 를 동기 `try` 로만 감싸고 있어 reject 대신 `it._stored=false` + `console.warn` 으로 알린다.
     - ⚠ **남은 것:** `localBackend.add` 의 `MAX_ITEMS` 잘라내기는 `syncQuiz` 가 지키는 "push 대상을 자르기 전에 뽑는다"를 안 지킨다. 지금은 잘린 id 를 `console.warn` 으로 드러내기만 한다 — 제대로 고치려면 항목별 미전송 상태가 필요하고, 그게 위에서 막은 것과 같은 경쟁을 새로 만든다. **`CubeNest.auth` 를 참조하는 유일한 모듈**이다. `consent.js` — GA4·동의. `foot.js` — **공용 푸터 배선(`#year`·`#csLink`·`#csMail`)과 `CS_FORM_URL` 단일 출처**(예전엔 account·my 에 복붙 2벌). **문의 창구는 2개(온라인 폼·이메일)이고 값의 정본이 여기다** — `CS_VIEWFORM_URL`·`CS_ENTRY_CTX`(구글폼 prefill)와 `CS_MAIL`. `CS_MAIL` 은 약관 제33조 ②·사업자 정보의 전자우편과 **같은 값**이어야 하고, 창구를 늘리거나 바꾸면 **약관 제33조 ②·방침 §5(처리위탁)·§6(국외이전)을 함께** 고쳐야 한다(구글폼을 쓰면 Google 이 그 개인정보의 수탁자가 된다).
   - **CS 창구 상세(폴백·prefill PII 금지·mailto·9곳 푸터 배치·폼 명세)는 `legal-docs` 스킬에 있다** — `foot.js` 의 CS 상수나 푸터 창구를 고치기 전에 읽을 것.
-- **푸터도 헤더와 같은 규약이다**(`assets/css/foot.css`): **스타일만 공유, 마크업은 각 HTML 에 인라인.** 소비 = guide·quiz·quiz/run·worksheets·account·my·terms·privacy(8곳). 랜딩은 자체 다크 푸터(`.foot`), playground·404 는 푸터 없음. **`@media print{.site-foot{display:none}}` 은 지우지 말 것** — worksheets 가 인쇄 페이지라 없으면 문제지 PDF 하단에 사업자 정보가 찍힌다.
+- **헤더 메뉴에 '홈'은 없다**(260906 제거). `.site-brand`(로고+워드마크)가 이미 홈 링크이고(`aria-label="큐브네스트 홈"`) 로고→홈은 웹의 보편 관례라 순수 중복이었다. 모바일 가로 스크롤도 40px 만큼 덜 넘친다(**375px 실측: 넘침 128px → 88px**). ⚠ 다시 넣지 말 것.
+  - ⚠ **다만 모바일 메뉴 넘침은 이걸로 안 풀린다.** 375px 에서 `.site-nav` 는 폭 241px 인데 내용이 329px 라, **요금제·내 자료는 여전히 스크롤해야 보인다**(항목 폭 97·40·77·52·55). 즉 `/price` 에 있어도 `aria-current` 칩이 첫 화면 밖이다 — 햄버거가 없다는 설계 결정의 대가이고(§`nav.css`), 닫으려면 별도 작업이 필요하다.
+- **헤더 우측 계정 진입점은 로그아웃이면 '로그인' 글자, 로그인이면 사람 아이콘이다**(260906). 사람 글리프만으로는 "로그인해야 하는가 / 이미 돼 있는가"를 알 수 없고, **무로그인이 기본인 사이트라 방문자 대부분이 그 상태**였다. **두 상태를 마크업에 둘 다 넣고**(`<svg class="ico">` + `<span class="lbl">로그인</span>`) `nav.css` 가 `.authed` 로 가른다 — `auth.js mountHeader()` 는 **svg 가 있으면 라벨(aria-label·title)만 갱신하고 마크업을 보존**하므로 JS 를 안 고쳐도 된다. ⚠ `.authed` 는 세션 복원 **뒤에** 붙으므로 로그인 사용자는 '로그인'→아이콘으로 한 번 깜빡인다 — 반대로 기본값을 아이콘에 두면 **방문자 대다수가 잘못된 상태를 먼저 본다.**
+- **푸터도 헤더와 같은 규약이다**(`assets/css/foot.css`): **스타일만 공유, 마크업은 각 HTML 에 인라인.** 소비 = price·quiz·quiz/run·worksheets·account·my·terms·privacy(8곳). 랜딩은 자체 다크 푸터(`.foot`), playground·404 는 푸터 없음. **`@media print{.site-foot{display:none}}` 은 지우지 말 것** — worksheets 가 인쇄 페이지라 없으면 문제지 PDF 하단에 사업자 정보가 찍힌다.
 - **생성기 `gen`·설정 `gen-config`는 서버 전용**(Edge Function, 클라 미배포 — 아래 보안).
   - ⛔ **난이도 밴드의 정본은 `cubenest-gen-config.js` 의 `BANDS`+`resolveCfg` 하나뿐이다. `gen-modules.ts:17` 의 `GEN_CONFIG` 는 읽히지 않는 죽은 표다** — 하/중/상/최상 격자·`nMin`/`nMax` 가 그럴듯하게 적혀 있고 `version:"0.2.0"` 까지 달려 있지만, `gen-adapter.ts:27` 이 `config:` 로 넘겨도 `genSession`(`cubenest-gen.js:625`)이 `CFG ? CFG.resolveCfg(…) : (o.config && …)` 라 **`CFG` 가 있으면 절대 안 본다.** `CFG` 는 항상 있다(`gen-config.js` 끝의 `global.CubeNest.genConfig = CFG`), `resolveCfg` 는 null 을 안 주며(던지면 500 이지 폴백이 아니다), `genProblem` 을 우회 호출하는 곳도 없다(`generate`·`grade`·`worksheet` **셋 다** `buildProbs`→`genSession` 을 지난다). **여기를 고치면 아무 일도 안 일어난다** — 난이도 작업(P1.9)이 가장 먼저 열어 볼 자리라 적어 둔다.
 - **클라↔서버 복본 규약(마스터 §5.2):** 같은 모듈이 `assets/js/`와 `_shared/`에 두 벌이면 **정본은 클라**, 복본은 **원문 그대로 + ESM export 꼬리 2줄**만 다르다. 커밋 전 `diff -u assets/js/X.js supabase/functions/_shared/X.js` → **export 블록 외 차이가 나오면 드리프트**. **클라가 `<script src>`로 로드하지 않는 모듈은 복본 금지(서버 단일본)** — 죽은 사본은 증상 없이 갈라진다(`minmax`·`manip`이 실제로 갈라져 260821 클라 사본 삭제 = 서버 단일본). 서버 전용 신규 계산 모듈은 처음부터 `_shared/`에만(`cubenest-hidden.js`). **현재 두 벌인 모듈 = `core`·`iso` 둘뿐**(둘 다 diff 일치 확인).
@@ -89,7 +92,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **죽은 세션 자동 정리:** 계정이 서버에서 삭제·차단돼도 access token 만료 전까지 로컬 세션이 남아 `isLoggedIn()`이 계속 `true`다(260827 실제 발생 — 화면은 로그인된 듯 그려지는데 서버 호출만 조용히 실패). 세션 복원 직후 `getUser()`로 한 번 확인하고 죽었으면 로그아웃한다.
   - ⚠ **네트워크 실패로는 절대 로그아웃하지 않는다.** 오프라인이면 `AuthRetryableFetchError`(`status:0`)가 오고, 서버가 **401/403**으로 명시적으로 부정할 때만 정리한다. 여길 느슨하게 고치면 오프라인에서 세션이 날아가 '로컬 우선' 설계가 무너진다.
   - 검증은 **`ready`를 막지 않는다**(백그라운드) — 첫 페인트를 네트워크 왕복만큼 늦추면 잠금 깜빡임 방지가 깨진다.
-- **게이트:** 무로그인 = home·guide·playground(편집·관찰)·quiz(랜딩·플레이). 로그인 = calc 30분 이후·quiz 결과 저장·worksheets·`/account`·`/my`.
+- **게이트:** 무로그인 = home·price·playground(편집·관찰)·quiz(랜딩·플레이). 로그인 = calc 30분 이후·quiz 결과 저장·worksheets·`/account`·`/my`.
   - calc: 첫 상호작용 후 **30분 무료** → 이후 잠금·로그인 유도(치팅 방지+가입 유도). 세션 복원 전엔 잠그지 않음. **타이머 키는 `cubenest_pg_first` 기기 단위다.**
     - ⛔ **여기에 학습자 스코프를 붙이지 말 것**(260906 에 붙였다가 같은 날 되돌렸다). 학습자별로 나누면 **아이를 하나 더 만들 때마다 30분이 새로 생겨** 위 두 목적(가입 유도·치팅 방지)이 동시에 무너진다 — localStorage 를 지우는 우회보다 더 싸다(자료를 안 잃는다). "학원에서 첫 아이가 30분을 쓰면 나머지가 잠긴다"는 **사고가 아니라 설계대로**다: `timeGateElapsed()` 가 **로그인하면 즉시 푼다**. 교사가 가입하는 것이 이 게이트가 유도하려던 전환이다. **playground 는 학습자에게 귀속될 데이터가 없어(모양 저장 미구현) `scope.js` 를 아예 로드하지 않는다.**
     - **가리는 대상은 `#calcBody`(과정)와 상단 요약 `#statHead`(개수·부피·겉넓이) 둘 다다**(260830). 예전엔 패널만 가려서, 잠겨도 — 그리고 '정답 가리기'(F4)를 눌러도 — **바로 위 스트립에 답이 그대로** 떠 있었다. 두 기능이 이름값을 못 했고 '치팅 방지'가 성립하지 않았다. 값만 `?` 로 바꾸고 단위(cm³·cm²)는 남긴다.
@@ -155,7 +158,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **레이아웃 폭·거터는 `tokens.css` 의 `--wrap`(1080px)·`--gutter`(22px, ≤640px 에서 16px)가 단일 출처다.**
   헤더 `.site-topin` 과 줄을 맞춰야 하는 **바깥 셸**에만 쓴다. `--gutter` 가 미디어쿼리까지 담당하므로
   소비처는 `var(--gutter)` 만 쓰고 브레이크포인트를 복제하지 않는다.
-  - **⚠ 셸 컨테이너에는 `box-sizing:border-box` 를 반드시 명시한다.** `guide`·`my`·`account`·`worksheets`·
+  - **⚠ 셸 컨테이너에는 `box-sizing:border-box` 를 반드시 명시한다.** `price`·`my`·`account`·`worksheets`·
     `privacy`·`terms` 에는 전역 `border-box` 리셋이 없어서, 같은 `max-width:1080px` 이 헤더(border-box, 총 1080)와
     본문(content-box, 1080+좌우 44 = **1124**)에서 다른 뜻이 된다 — 폭을 맞춰도 22px 어긋난다.
     **눈으로는 안 보이고 rect 실측으로만 잡힌다**(260829 에 실제로 이렇게 찾았다). 전역 리셋을 새로 넣지 말 것 —
@@ -174,10 +177,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **`verify_jwt`(`supabase/config.toml`)는 함수별로 다르다 — 일괄 규칙이 아니다.** `generate`·`grade`·`config`만 **`false`**(무료 익명 플레이·UI 메타. `true`로 바꾸면 무로그인 플레이가 깨진다). **`worksheet`는 이미 `true`이고 그게 맞다** — 정답이 함께 내려가는 유일한 경로라 게이트웨이가 JWT를 검증하고, `api-client.worksheet`가 `CubeNest.auth` 토큰을 붙여 호출한다. **여기를 `false`로 "정정"하지 말 것.** 함수 안 `requireUser()`(`_shared/auth.ts`)도 함께 막는다 — **둘 중 하나를 중복이라며 지우지 말 것.**
   - ⚠ **이유가 오래 반대로 적혀 있었다**(260830 정정). 게이트웨이의 `verify_jwt=true` 는 "프로젝트 시크릿으로 서명된 JWT"만 검사하는데 **anon key 자체가 그런 JWT 다** — `Authorization: Bearer <anon key>` 로 게이트웨이는 그냥 통과한다. 익명 요청을 실제로 막는 것은 `requireUser()`(`auth.ts:33-38`, 토큰을 `/auth/v1/user` 에 태워 `sub` 확인)다. 즉 **`requireUser()` 가 안전망이 아니라 본체이고, 게이트웨이가 앞단 필터**다.
 - **캐시 무효화 `?v=` — 공용 모듈을 고치면 로드하는 모든 HTML의 `?v=`를 함께 올린다.** `<script src="../assets/js/cubenest-core.js?v=0.5.0">`처럼 소비처마다 버전이 박혀 있고, 안 올리면 GitHub Pages가 옛 파일을 계속 준다 — **오류가 아니라 "안 고쳐진 것처럼" 보인다**(아래 배포 순서와 같은 실패 유형).
-  - 소비처 찾기: `grep -rn "<모듈>.js?v=" --include=*.html .` (index · playground · quiz · quiz/run · worksheets · my · account · guide 중 해당하는 것 전부)
+  - 소비처 찾기: `grep -rn "<모듈>.js?v=" --include=*.html .` (index · playground · quiz · quiz/run · worksheets · my · account · price 중 해당하는 것 전부)
   - **통일할 땐 기존 값 중 하나가 아니라 새 값으로 올린다.** 옛 값을 캐시한 브라우저가 그 값 그대로 옛 파일을 계속 쓰기 때문이다. (실제 사례: `api-client.js` 한 파일이 `?v=1` 2곳·`?v=0.2.0` 1곳으로 갈라져 있었다 → 260826 `0.3.0`으로 통일.)
   - `consent.js`(10곳)와 `vendor/qrcode-generator.js`(worksheets 1곳)는 `?v=` 미고정(거의 안 바뀜) — 고치게 되면 그때 붙인다. ※ 이름이 비슷한 `cubenest-qr.js` 는 **별개 파일이고 `?v=0.2.0` 으로 고정돼 있다.**
-  - **`nav.css` 는 260828 에 `?v=` 로 고정했다**(9곳, 현재 `0.3.0`). 로고 교체로 글리프 그림자를 바꿨는데, 캐시된 옛 `nav.css` 가 새 마크 아래에 갈색 후광을 그리는 게 로컬에서 실제로 재현됐다. **남은 무버전 CSS 는 `consent.css` 하나뿐**(`tokens.css` 는 그 뒤 `?v=0.1.0` 으로 고정됐다, 10곳) — 고치게 되면 그때 붙인다.
+  - **`nav.css` 는 260828 에 `?v=` 로 고정했다**(9곳, 현재 `0.4.0` — 260906 헤더 교체 때 올렸다). 로고 교체로 글리프 그림자를 바꿨는데, 캐시된 옛 `nav.css` 가 새 마크 아래에 갈색 후광을 그리는 게 로컬에서 실제로 재현됐다. **남은 무버전 CSS 는 `consent.css` 하나뿐**(`tokens.css` 는 그 뒤 `?v=0.1.0` 으로 고정됐다, 10곳) — 고치게 되면 그때 붙인다.
   - **이미지는 `?v=` 를 쓰지 않는다.** GitHub Pages 가 정적 자산에 `max-age=600` + ETag 를 주므로 최대 10분 뒤 조건부 재검증으로 자동 치유되고, 미관 문제라 정합성 오류가 나지 않는다. `?v=` 가 필요한 쪽은 **서버와 어긋나면 오작동하는 JS 모듈**이다.
 - **배포는 두 갈래이고 순서가 있다 — 클라 먼저, 서버 나중.** 정적 사이트 = `git push` → GitHub Pages(origin/main). 서버 = `supabase functions deploy config generate grade worksheet`. 둘은 따로 나가므로 **한쪽만 배포하면 조용히 어긋난다** — 오류가 아니라 "안 바뀐 것처럼" 보인다.
   - 클라는 `/config`(열린 학년·유형·등급)를 **정본**으로 삼는다. 서버를 먼저 배포하면 옛 클라가 **없어진 학년을 계속 팔고**(칩은 남는데 유형이 0개), 그 학년으로 시작한 퀴즈는 `normStage()`가 기본값으로 떨어뜨려 **다른 학년 문제가 조용히 나온다**(260821 중1~2 제거 때 실제로 발생).
@@ -188,11 +191,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **login-free-first:** 무료 도구는 클라만으로 완결. 로그인은 저장·유료의 선택 강화층.
 - 수익화(학부모 B2C): 베타 무료 → **기간 이용권 단건결제**부터 → 월 자동결제 확장(관리형·Supabase Pro).
 - ⛔ **요금제가 260906 에 재편됐다 — 아래 260831 안은 대체됐다(미구현).** 새 경계: 무료(로그인) = 퀴즈 풀기·채점·해설 전부 + **같은 기기 세션 복원**(새로고침 이어풀기는 무로그인 포함 **전원 무료**) + 계산기 + **문제지 평생 1장**(정답지·인쇄 온전, 그 1장은 `item_id` 를 기록해 재열람 허용) / **이용권(30일권, 기간형 단건)** = 퀴즈 기록 저장 + **크로스기기 이어풀기·결과보기** + 문제지 무제한(한 장의 `MAX_N=30` 은 유지).
+  - **화면 정본은 `/price` 다**(260906 신설, 무로그인 공개). 종전엔 요금 안내가 `/account` 이용권 섹션뿐이라 **로그인해야 보였다** — 가격을 궁금해하는 사람은 대개 로그인 전이다. `/price` 는 **표시물일 뿐 판정 지점이 아니다**(판정은 서버).
+    - ⚠ **"베타 기간 무료" 문구는 이제 4곳이 세트다** — `/price` 히어로 배너 · `/account:279` · 랜딩 안심요소(`index.html:729`) · 약관 **제19조 단서**. 한쪽만 고치지 말 것.
+    - ⚠ **화면은 두 층으로 나눠 쓴다** — 히어로는 "지금 베타 무료"(사실), 표는 "정식 출시 후"(예정). 섞으면 거짓말이 된다(문제지는 지금 로그인만 하면 무제한인데 표는 "무료 1장"이라고 말한다).
+    - ⛔ **금액·환급 조건을 `/price` 에 적지 말 것.** 금액은 아직 어디에도 없고, 환급은 약관 **제26·27·30조**가 정본이라 화면에 다시 쓰면 유리하게든 불리하게든 어긋난다 — **링크만** 건다.
   - **선행 조건 둘.** ① `entitlements` 가 **아직 존재하지 않는다**(리포 전체에서 마이그레이션 주석 2줄뿐) — 권한을 판정할 수단이 0이다. ② **결제(P3)가 없어 게이트를 켜면 전원이 잠긴다** → 가입 시 `kind='beta'` 를 자동 부여해 전원 통과시키고, 결제가 붙을 때 베타를 만료시켜야 유료화가 개시된다.
   - ⚠ **RLS 는 행 단위라 컬럼 일부만 못 막는다.** 요약(제목·점수)은 무료도 봐야 하고 상세(답안·연습장)는 유료여야 하므로 **`quiz_result_details` 로 테이블을 갈라야 한다** — `quiz_results` 에 `payload`/`scratch` 컬럼이 이미 있지만 그대로 쓰면 권한을 가를 수 없다.
   - ⚠ **`/my` 를 통째로 잠그면 안 된다.** `privacy/index.html:253` 이 삭제권 행사 수단으로 **"저장한 자료 삭제 — 내 자료 화면에서 항목별 삭제"** 를 지목하고 `:261` 이 "권리를 요구한 이용자를 그 이유로 불리하게 대우하지 않는다"고 못박는다. 목록·삭제는 남기고 **열기·재생성만** 잠근다.
   - ⚠ 문제지 체험 1장의 id 는 **서버가 요청 파라미터로 직접 계산**해야 한다 — 클라가 보낸 `item_id` 를 믿으면 매번 새 id 를 보내 체험이 무한이 된다. `entitlements` 에 **사용자 쓰기 정책을 주지 않는다**(service_role 전용) — 아니면 체험 기록을 지우고 재발급한다.
-- ~~**요금제 = 기능 경계(260831 확정, 마스터 §6.5.1). 수량 미터링이 아니다.**~~ (아래는 대체된 옛 안 — 근거·기각 사유는 여전히 유효해 남긴다)
+- ~~**요금제 = 기능 경계(260831 확정). 수량 미터링이 아니다.**~~ (아래는 대체된 옛 안 — 근거·기각 사유는 여전히 유효해 남긴다. **마스터 §6.5.1 은 260906 에 재편안으로 교체됐다** — 이제 세 문서가 같은 말을 한다)
   - 무료(로그인) = 문제지 **10문항 + 정답지(값)** · 퀴즈·계산기 전부 / 이용권 = **30문항 + 정답지 해설 + 혼합 + 오답만 다시 풀기**.
   - **정답지(값)는 무료에 남긴다** — 빼면 문제지가 반쪽이 되어 "써보고 산다"가 아니라 "써보니 불편하다"가 된다. 가르는 것은 **해설**이고, 해설은 지금 **구현조차 안 돼 있어**(`/worksheet` 가 `explainFor` 미호출) 뺏는 게 아니라 신설이다.
   - ⚠ **미터링을 기각한 이유는 저장 모델 때문이다** — 문제지 본문을 저장하지 않고 **URL 만 남겨 열 때 재생성**하므로 생성 횟수를 세면 `/my` 재열람이 장수를 깎는다. 막으려면 정수 카운터가 아니라 기간별 distinct `item_id` 집합이 필요해 `rate_counter` 재사용이 불가하고 새 테이블이 든다. 인쇄는 `window.print()` 라 서버가 셀 수도 없다. **나중에 얹는 것은 가능하다**(배타적이지 않다).
@@ -200,7 +207,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - ⚠ **`worksheet_print` 에 파라미터가 0개다** — "누가 무엇을 몇 장 인쇄했나"를 못 본다. `{type,n,mix,stage}` 를 붙이는 것이 결제 착수 전 선행이다(마스터 §6.5.2).
 - **계측(F1) — GA4 로더는 `assets/js/consent.js` 하나뿐이다.** 리포 전체에서 `googletagmanager` 문자열이 그 파일에만 있다. 페이지가 gtag 스니펫을 따로 넣는 구조가 **아니다**.
   - **3종 세트를 한 벌로 넣는다**(헤더·푸터와 같은 규약 — 스타일만 공유, 마크업은 각 HTML 인라인): `consent.css` 링크 · `#consent` 배너 마크업 · `consent.js` 스크립트(`auth.js` **뒤**). 배너 문구는 `index.html` 의 블록을 **복사**하고 새로 쓰지 않는다.
-  - **하나만 빠지면 `window.gtag` 가 없고, `track()` 은 `if(window.gtag)` 가드라 이벤트가 오류 없이 조용히 버려진다.** 260830 이전에 `quiz`·`worksheets`·`guide`·`terms`·`privacy` 5페이지가 그 상태였다 — `quiz_preview_*` 100% 유실, worksheets 는 `login_prompt`·`login_success` 등 auth 계측 6종까지 통째로 유실(=**유료화 대상 기능의 사용량이 0으로 보였다**). **`check-drift.py` 8번이 이 짝을 강제한다.**
+  - **하나만 빠지면 `window.gtag` 가 없고, `track()` 은 `if(window.gtag)` 가드라 이벤트가 오류 없이 조용히 버려진다.** 260830 이전에 `quiz`·`worksheets`·`guide`(삭제됨)·`terms`·`privacy` 5페이지가 그 상태였다 — `quiz_preview_*` 100% 유실, worksheets 는 `login_prompt`·`login_success` 등 auth 계측 6종까지 통째로 유실(=**유료화 대상 기능의 사용량이 0으로 보였다**). **`check-drift.py` 8번이 이 짝을 강제한다.**
   - **`track()` 한 줄은 페이지마다 복제한다 — 공용 모듈로 올리지 말 것.** 의도된 크래시 가드다(정의가 없으면 호출한 함수가 ReferenceError 로 통째로 죽는다 — `/quiz` 미리보기가 실제로 이걸로 안 열렸다). `consent.js` 에 의존시키면 그 파일 로드 실패가 페이지를 죽인다. **`auth.js` 의 `trk()` 와 `consent.js` 의 `consent_granted` 는 전역 `track` 을 덕타이핑으로 찾으므로 IIFE 안에 넣지 말 것**(worksheets 가 그 경우다).
   - **`consent.js` 는 `?v=` 없이 10곳 전부 무버전이다.** `check_versions` 는 "어디선 붙고 어디선 안 붙은" 경우만 잡으므로 지금은 통과한다 — **일부에만 붙이는 순간 FAIL 이다.** 고칠 일이 생기면 10곳 전부 함께 붙인다.
   - **동의 전 이벤트는 큐잉이 아니라 폐기다.** `dataLayer` 자체가 `loadGA()` 안에서 생기므로 나중에 동의해도 소급 전송이 없다. 거부는 24시간 TTL 로 만료돼 배너가 다시 뜬다(`consent.js:13`).
@@ -212,9 +219,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
     - **뷰 이벤트는 렌더가 아니라 상태 전환을 센다**(`account`·`my` 의 `trackView()`). `render()` 는 **페이지 로드 1회에 2~3번** 돈다 — `A.onAuthChange(render)` 와 `A.ready.then(render)` 가 각각 부르고, supabase 이벤트가 `settled` **뒤에** 도착하면 한 번 더 온다(경쟁 조건이라 2회일 때도 3회일 때도 있었다). `track()` 을 렌더 함수 안에 두면 방문 수가 2~3배로 부풀어 **이걸 분모로 쓰는 전환율이 전부 틀어진다.** 새 페이지에서도 뷰 이벤트를 렌더 안에 넣지 말 것.
 
 ## 현재/다음
-- **완료:** 상태 공유(F2·F3)·계측/동의(F1)·서버 생성/채점(gen 서버화)·OAuth 로그인·**유형 19종**(리매핑 + 안보이는나무 A-a~f + G군 + H군)·정답 은닉·worksheets(문제지·정답지 인쇄·QR)·**난이도 개편(연령 스테이지 S0~S4 + 개수 밴드, gen-config 구조 교체)**·세션 내 중복 회피(gen v0.5.0)·**DB+RLS 저장(`profiles`+`quiz_results`+`my_items`, 닉네임·퀴즈 기록·문제지 계정 귀속, 멱등키 `attempt_id`/`item_id`, 계정별 로컬 분리, 죽은 세션 자동 로그아웃)**·**이용약관·개인정보처리방침(`/terms`·`/privacy`, 전 페이지 공통 푸터 + 로그인 고지형 동의)**·**공용 태블릿 격리 1단계(`scope.js` 신설 + 학습자 로컬 로스터, 260906)**.
+- **완료:** 상태 공유(F2·F3)·계측/동의(F1)·서버 생성/채점(gen 서버화)·OAuth 로그인·**유형 19종**(리매핑 + 안보이는나무 A-a~f + G군 + H군)·정답 은닉·worksheets(문제지·정답지 인쇄·QR)·**난이도 개편(연령 스테이지 S0~S4 + 개수 밴드, gen-config 구조 교체)**·세션 내 중복 회피(gen v0.5.0)·**DB+RLS 저장(`profiles`+`quiz_results`+`my_items`, 닉네임·퀴즈 기록·문제지 계정 귀속, 멱등키 `attempt_id`/`item_id`, 계정별 로컬 분리, 죽은 세션 자동 로그아웃)**·**이용약관·개인정보처리방침(`/terms`·`/privacy`, 전 페이지 공통 푸터 + 로그인 고지형 동의)**·**공용 태블릿 격리 1단계(`scope.js` 신설 + 학습자 로컬 로스터, 260906)**·**`/price` 요금제 페이지(260906, `/guide` 대체)**.
   - **260906 격리 — 학원에서 한 태블릿을 여러 아이가 쓰는 시나리오에서 난 사고 6건을 고쳤다**(전부 클라 전용, DB·법적 문서 무변경). ① 세션 키에 스코프가 없어 **같은 링크면 다음 아이가 앞 아이 답·연습장을 이어풀기로 물려받았다** ② 익명 저장소가 공용이라 기록이 섞였다 ③ `adopt()` 자동 승계 ④ `cubenest_quiz_last`·`ws_payload`·접기·음소거가 스코프 밖 ⑤ 타임게이트가 기기 단위 ⑥ **`cubenest_ws_payload` 가 아이 연습장 PNG 를 담은 채 영구 잔류해, 다음 아이가 `/worksheets/` 를 열기만 해도 앞 아이 손글씨가 보였다**(계정 전환과 무관).
   - 진행 중이던 이어풀기는 **12시간 TTL + 툼스톤**으로 1회 승계한다(`run.js claimLegacySession`). ⚠ 원본을 **지우지 않고 `{migratedTo,ts}` 로 덮는다** — 지우면 롤백 시 진행이 사라지고, 그냥 두면 다음 아이가 물려받는다. 툼스톤엔 `state` 배열이 없어 **구본·신본 양쪽이** 새 세션으로 취급한다.
+  - **260906 헤더 교체 —** `/guide` 를 **삭제**하고 `/price`(요금제)를 신설했다. 가이드는 본문이 "가이드, 준비 중입니다" 7줄뿐인 플레이스홀더인데 **주요 메뉴 6칸 중 하나**를 차지하고 있었다 — 처음 온 사람이 사용법을 찾아 누르는 칸이 막다른 길이었다. 링크가 **헤더 9곳뿐**이라 삭제 비용이 없었다. 메뉴는 `플레이그라운드·퀴즈·문제지 생성·요금제·내 자료` **5종**이다(요금제를 2번째가 아니라 제품 뒤·내 자료 앞에 둔다). 헤더 계정 진입점도 **로그아웃이면 '로그인' 글자**로 바뀌었다(위 §불변 규칙).
+    - ⚠ **`check_menu` 는 라벨만 보고 href 를 안 본다** — 9곳의 상대경로 깊이(`quiz/run` 만 `../../`)는 브라우저로 확인해야 한다.
+    - ⚠ 자동 검사가 **없는** 3곳을 함께 고쳤다: `check-drift.py` 의 `SHARED` · `sitemap.xml` · 랜딩 `destOf()` 정규식(빠뜨리면 `cta_click{to}` 가 전부 `'other'`).
+    - **사용법 안내는 지금 사이트 어디에도 없다**(사용자 결정) — 랜딩 `#howto` 섹션이 다음 작업이다.
   - **260906 마무리 —** '학생 미지정'을 기본값으로 노출(센티널) · 기기 학습자·기록 가져오기(`importDeviceLearners`) · 선택 시트의 `prompt()` 제거(인라인 입력) · **playground 타임게이트 스코프화 되돌림**(위 §게이트).
   - **남은 것(미구현):** `/account` 의 **이름 수정이 아직 `prompt()`** 다(로그인한 성인이 가끔 쓰는 경로라 후순위) · `/my` 의 `kind:'shape'`(playground 모양 저장)가 생기면 그때는 playground 도 스코프를 알아야 한다 — **그때 타임게이트를 같이 스코프화하지 말 것**(위 경고).
 - **다음: 제품을 먼저 가다듬고 결제를 붙인다**(260831 사용자 결정 · 순서 정본 = 마스터 §7.2). 종전엔 "다음 = 결제"였는데, **19종 전수 재실측에서 팔 물건 자체에 구멍이 드러나** 순서를 바꿨다.

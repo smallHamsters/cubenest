@@ -28,7 +28,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)
 os.chdir(ROOT)
 
 # 공용 헤더/푸터를 쓰는 페이지. playground(전용 오버레이)·404(자립형)는 규약 밖이다.
-SHARED = ['index.html', 'guide/index.html', 'my/index.html', 'account/index.html',
+SHARED = ['index.html', 'price/index.html', 'my/index.html', 'account/index.html',
           'privacy/index.html', 'terms/index.html', 'worksheets/index.html',
           'quiz/index.html', 'quiz/run/index.html']
 ALL_HTML = sorted(p.replace('\\', '/') for p in glob.glob('**/*.html', recursive=True)
@@ -173,7 +173,8 @@ def check_og():
 #     없으면 같은 max-width 가 헤더(border-box)와 다른 뜻이 돼 22px 어긋난다.
 SHELLS = [('assets/css/foot.css', '.site-foot'), ('assets/css/nav.css', '.site-topin'),
           ('my/index.html', '.my-main'), ('account/index.html', '.acct-main'),
-          ('worksheets/index.html', '.page'), ('assets/css/legal.css', '.legal-main')]
+          ('worksheets/index.html', '.page'), ('assets/css/legal.css', '.legal-main'),
+          ('price/index.html', '.price-main')]
 def check_boxsizing():
     bad = []
     for path, sel in SHELLS:
