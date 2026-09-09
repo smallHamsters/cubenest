@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # CubeNest (단일 자립 명세)
 
 이 파일이 기본 참조 문서다. 이것만 보고 작업하되, **두 작업에만 딸린 상세는 스킬로 뺐다** — 로고·파비콘·OG 는 `brand-assets`, 약관·방침·CS 창구는 `legal-docs`. 해당 작업 전에 그 스킬을 읽는다. (현행 구현의 세부는 코드가 기준.)
-※ 상세 기획·불변 원리의 정본은 마스터 문서 `CubeNest_00_마스터_공통`(별도 관리). 코드 주석의 `§` 표기는 그 마스터의 장 번호를 가리킨다.
+※ 상세 기획·불변 원리의 정본은 마스터 문서 `.claude/master/master.md`(v1.9.7, 260906). 코드 주석의 `§` 표기는 그 마스터의 장 번호를 가리킨다.
 
 ## 개요
 - **CubeNest(큐브네스트):** '쌓기나무(공간과 입체)' 3D 학습 웹 도구 — 3D 회전, 위·앞·옆 투상, 개수·부피·겉넓이 자동 계산, 블록 추가·삭제.
@@ -13,6 +13,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 해외(미국·싱가포르·태국) 진출은 **후순위**. 조사 결과는 `.claude/quiz/cubenest_연령별_국제_난이도설계_260819_v0_1.md`에 보관(보류).
 - 태블릿·휴대폰 우선. 무료 런칭(트래픽·피드백) 단계. 개인사업자·정적 호스팅.
 - 사이트맵: `/`(landing) · `/playground`(3D 도구) · `/quiz`(퀴즈 랜딩) · `/quiz/run`(퀴즈 플레이) · `/worksheets`(문제지·정답지 인쇄·QR) · `/price`(요금제: 무료·이용권 경계 안내, 무로그인) · `/account`(계정 허브: 로그인·닉네임·이용권·결제·CS, 성인 중심) · `/my`(내 자료: 퀴즈 기록·문제지·모양, 로컬 우선) · `/terms`·`/privacy`(법적 문서, 정적).
+
+## 리포 지형 (빌드 산출물 없음 — 소스가 곧 배포물)
+- **페이지 로직은 각 `index.html` 안에 인라인이다.** `assets/js/` 는 공용 모듈만이고 페이지 코드는 거기 없다 — 인라인 JS 실측: playground 1,334줄 · quiz 랜딩 528 · worksheets 421 · account 328 · my 275 · 랜딩 188. **유일한 예외가 `/quiz/run`** — `quiz/run/run.js`(1,461줄)·`quiz/run/api-client.js`(97줄)는 외부 파일이고 `assets/js/` 가 **아니다**.
+- **의존성 설치가 없다** — `package.json`·`node_modules` 가 리포에 없고 Three.js·supabase-js 는 CDN `<script>` 다. Edge Function 만 **Deno TypeScript**(`.vscode/settings.json` 이 `deno.enablePaths` 를 `supabase/functions` 로 좁혀 둔다).
+- **기획 정본이 `.claude/` 안에 있다:** `master/master.md`(마스터 v1.9.7, `§` 의 출처) · `quiz/*`(유형 맵·리매핑·난이도 재설계 §11) · `worksheets/*`(지면 적합성 진단 §0.1) · `skills/{brand-assets,legal-docs}` · `tools/check-drift.py`.
 
 ## 명령 (빌드 없음 — 아래가 전부다)
 - **로컬 서버:** `py -m http.server 5500` (리포 루트. **5500 고정**·**`py`** 인 이유는 「기술·규약」)
@@ -59,7 +64,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - ⚠ **웹폰트가 늦게 오면 글자 폭이 바뀌어 넘침 여부가 달라진다** — `document.fonts.ready` 와 `load` 에서 다시 잰다. 안 하면 폰트 전 값으로 판단한 페이드가 틀린 채 남는다.
   - 랜딩·`/account`·`/terms`·`/privacy` 는 `.site-nav` 안에 `aria-current` 가 없어 **자동 스크롤이 no-op** 이다(정상).
 - `auth.js` — **공용 인증(`CubeNest.auth`·`isLoggedIn` 단일 진실)**.
-- **`scope.js` — 저장소 스코프·학습자의 단일 진실(`CubeNest.scope`, 260906 신설).** auth 를 참조하는 쪽이고 auth.js 는 이걸 모른다. 로드 순서 `auth.js → scope.js → mydata.js`(6페이지).
+- **`scope.js` — 저장소 스코프·학습자의 단일 진실(`CubeNest.scope`, 260906 신설).** auth 를 참조하는 쪽이고 auth.js 는 이걸 모른다. 로드 순서 `auth.js → scope.js → mydata.js`(scope 5페이지 = quiz·quiz/run·worksheets·account·my / mydata 는 그중 4곳, quiz 랜딩 제외).
   - **키 규약은 덧붙이기(append-only)다** — `key(base)` = `base` / `base__<uid>` / `base__<uid>~<lid>`. 학습자를 안 고른 사용자의 키는 **한 글자도 안 바뀐다**(mydata 의 옛 `scoped()` 와 바이트 동일). 이 성질이 무손실 마이그레이션·롤백 안전의 전부다 — **구분자 `~` 를 바꾸거나 접미어 순서를 뒤집지 말 것.**
   - **전부 동기 반환**(`id`·`key`·`learner`·`list`). `/my`·`/account`·`run.js` 가 렌더 시점에 동기로 소비한다 — Promise 로 바꾸면 세 페이지가 깨진다(`mydata.getNickname()` 과 같은 규약).
   - **학습자 = 보호자·교사 계정 아래 아이 N명. 아이는 로그인하지 않는다.** ⚠ **별명 한 칸 말고 아무것도 받지 말 것** — 생년월일·학교·연락처 입력을 추가하면 `/privacy` §10-2("만 14세 미만 아동의 개인정보를 수집하지 않습니다")가 거짓이 된다. 로스터 화면의 '좁음'이 그 방어선이다.
@@ -74,7 +79,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - 로그아웃 자체도 260830 에 고쳤다 — `signOut()` 이 `{error}` 를 확인하고 실패 시 `scope:'local'` 로 폴백한다(예전엔 오프라인에서 UI 만 로그아웃되고 새로고침하면 세션이 되살아났다).
   - **`/account` 는 렌더 뒤 `sync()` 를 돌리고 그때까지 닉네임 '저장'을 비활성화한다.** `getNickname()` 이 동기라 새 기기에선 렌더 시점에 빈 값인데, 그대로 저장하면 `profiles.nickname=null` 로 **서버 닉네임이 지워졌다**(260830 수정). 사용자가 이미 입력 중이면 sync 결과로 덮지 않는다. 빈 값 저장 자체는 정상 기능이라 차단이 아니라 **누르기 전에 진짜 값을 보여주는 것**이 수정 방향이다.
   - **`writeStore()` 실패(quota·프라이빗 모드)를 삼키지 않는다** — sync 는 `{ok:false, reason:'storage'}` 로 끊어 **push 를 안 한다**(안 그러면 로컬엔 없고 서버엔 있는 상태로 갈린다). `add()` 는 호출부가 promise 를 동기 `try` 로만 감싸고 있어 reject 대신 `it._stored=false` + `console.warn` 으로 알린다.
-    - ⚠ **남은 것:** `localBackend.add` 의 `MAX_ITEMS` 잘라내기는 `syncQuiz` 가 지키는 "push 대상을 자르기 전에 뽑는다"를 안 지킨다. 지금은 잘린 id 를 `console.warn` 으로 드러내기만 한다 — 제대로 고치려면 항목별 미전송 상태가 필요하고, 그게 위에서 막은 것과 같은 경쟁을 새로 만든다. **`CubeNest.auth` 를 참조하는 유일한 모듈**이다. `consent.js` — GA4·동의. `foot.js` — **공용 푸터 배선(`#year`·`#csLink`·`#csMail`)과 `CS_FORM_URL` 단일 출처**(예전엔 account·my 에 복붙 2벌). **문의 창구는 2개(온라인 폼·이메일)이고 값의 정본이 여기다** — `CS_VIEWFORM_URL`·`CS_ENTRY_CTX`(구글폼 prefill)와 `CS_MAIL`. `CS_MAIL` 은 약관 제33조 ②·사업자 정보의 전자우편과 **같은 값**이어야 하고, 창구를 늘리거나 바꾸면 **약관 제33조 ②·방침 §5(처리위탁)·§6(국외이전)을 함께** 고쳐야 한다(구글폼을 쓰면 Google 이 그 개인정보의 수탁자가 된다).
+    - ⚠ **남은 것:** `localBackend.add` 의 `MAX_ITEMS` 잘라내기는 `syncQuiz` 가 지키는 "push 대상을 자르기 전에 뽑는다"를 안 지킨다. 지금은 잘린 id 를 `console.warn` 으로 드러내기만 한다 — 제대로 고치려면 항목별 미전송 상태가 필요하고, 그게 위에서 막은 것과 같은 경쟁을 새로 만든다. **`CubeNest.auth` 를 참조하는 유일한 모듈**이다. `consent.js` — GA4·동의. `foot.js` — **공용 푸터 배선(`#year`·`#csLink`·`#csMail`)과 `CS_FORM_URL` 단일 출처**(예전엔 account·my 에 복붙 2벌). **9곳이고 `foot.css` 8곳과 다르다** — 랜딩은 자체 다크 푸터라 CSS 는 안 쓰면서 배선만 공용을 쓴다. **문의 창구는 2개(온라인 폼·이메일)이고 값의 정본이 여기다** — `CS_VIEWFORM_URL`·`CS_ENTRY_CTX`(구글폼 prefill)와 `CS_MAIL`. `CS_MAIL` 은 약관 제33조 ②·사업자 정보의 전자우편과 **같은 값**이어야 하고, 창구를 늘리거나 바꾸면 **약관 제33조 ②·방침 §5(처리위탁)·§6(국외이전)을 함께** 고쳐야 한다(구글폼을 쓰면 Google 이 그 개인정보의 수탁자가 된다).
   - **CS 창구 상세(폴백·prefill PII 금지·mailto·9곳 푸터 배치·폼 명세)는 `legal-docs` 스킬에 있다** — `foot.js` 의 CS 상수나 푸터 창구를 고치기 전에 읽을 것.
 - **헤더 메뉴에 '홈'은 없다**(260906 제거). `.site-brand`(로고+워드마크)가 이미 홈 링크이고(`aria-label="큐브네스트 홈"`) 로고→홈은 웹의 보편 관례라 순수 중복이었다. 모바일 가로 스크롤도 40px 만큼 덜 넘친다(**375px 실측: 넘침 128px → 88px**). ⚠ 다시 넣지 말 것.
   - ⚠ **모바일 넘침 자체는 안 풀린다.** 375px 에서 `.site-nav` 는 폭 241px 인데 내용이 329px 다(항목 폭 97·40·77·52·55). **480px 부터 5종이 다 들어온다** — 320:2/5 · 360~390:3/5 · 412~430:4/5. 즉 **휴대폰 세로는 전부 해당**이고 태블릿·데스크톱은 무관하다.
@@ -189,6 +194,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - ⚠ **이유가 오래 반대로 적혀 있었다**(260830 정정). 게이트웨이의 `verify_jwt=true` 는 "프로젝트 시크릿으로 서명된 JWT"만 검사하는데 **anon key 자체가 그런 JWT 다** — `Authorization: Bearer <anon key>` 로 게이트웨이는 그냥 통과한다. 익명 요청을 실제로 막는 것은 `requireUser()`(`auth.ts:33-38`, 토큰을 `/auth/v1/user` 에 태워 `sub` 확인)다. 즉 **`requireUser()` 가 안전망이 아니라 본체이고, 게이트웨이가 앞단 필터**다.
 - **캐시 무효화 `?v=` — 공용 모듈을 고치면 로드하는 모든 HTML의 `?v=`를 함께 올린다.** `<script src="../assets/js/cubenest-core.js?v=0.5.0">`처럼 소비처마다 버전이 박혀 있고, 안 올리면 GitHub Pages가 옛 파일을 계속 준다 — **오류가 아니라 "안 고쳐진 것처럼" 보인다**(아래 배포 순서와 같은 실패 유형).
   - 소비처 찾기: `grep -rn "<모듈>.js?v=" --include=*.html .` (index · playground · quiz · quiz/run · worksheets · my · account · price 중 해당하는 것 전부)
+    - ⚠ **`/quiz` 랜딩은 `core`·`viewer`·three 를 `<script src>` 가 아니라 JS 로 늦게 싣는다**(`quiz/index.html:694-696` 미리보기 로더). `?v=` 가 그 줄에 박혀 있어 위 grep 은 잡지만, HTML 의 `<script>` 목록만 훑으면 **소비처 하나를 빠뜨린다**(`core`·`viewer` 소비처는 playground·quiz·quiz/run **3곳**이다).
+    - `assets/og/og-card.html` 은 `cubenest-iso.js` 를 **`?v=` 없이** 부르는데 정상이다 — 배포 페이지가 아니라 OG 카드 캡처용이고 `check-drift.py` 도 `assets/` 를 훑지 않는다. `?v=` 를 붙이러 가지 말 것.
   - **통일할 땐 기존 값 중 하나가 아니라 새 값으로 올린다.** 옛 값을 캐시한 브라우저가 그 값 그대로 옛 파일을 계속 쓰기 때문이다. (실제 사례: `api-client.js` 한 파일이 `?v=1` 2곳·`?v=0.2.0` 1곳으로 갈라져 있었다 → 260826 `0.3.0`으로 통일.)
   - `consent.js`(10곳)와 `vendor/qrcode-generator.js`(worksheets 1곳)는 `?v=` 미고정(거의 안 바뀜) — 고치게 되면 그때 붙인다. ※ 이름이 비슷한 `cubenest-qr.js` 는 **별개 파일이고 `?v=0.2.0` 으로 고정돼 있다.**
   - **`nav.css` 는 260828 에 `?v=` 로 고정했다**(9곳, 현재 `0.6.0` — 260906 에 헤더 교체·페이드·탭 타깃으로 세 번 올렸다). 로고 교체로 글리프 그림자를 바꿨는데, 캐시된 옛 `nav.css` 가 새 마크 아래에 갈색 후광을 그리는 게 로컬에서 실제로 재현됐다. **남은 무버전 CSS 는 `consent.css` 하나뿐**(`tokens.css` 는 그 뒤 `?v=0.1.0` 으로 고정됐다, 10곳) — 고치게 되면 그때 붙인다.
