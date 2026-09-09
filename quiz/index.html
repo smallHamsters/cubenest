@@ -89,30 +89,83 @@
   .results-head .count b{color:var(--accent-ink)}
   .results-head .hint{font-size:12.5px;color:var(--muted)}
 
+  /* ── 학년 — 히어로 바로 아래 ──
+     난이도보다 **앞**이다(난이도 재설계 §7.8-A6). 같은 '중'이 초3과 초6에게 다른 문제를
+     뜻하므로 스테이지를 모르면 난이도 라벨이 의미가 없고, 학년이 곧 카드 수를 정한다(2/2/5/7/19).
+     ⚠ 이걸 .filters 안으로 되돌리지 말 것 — 기본값이 초6이라 초3 학부모가 못 알아챈다. */
+  .stagebar{max-width:var(--wrap);margin:16px auto 0;padding:0 var(--gutter);box-sizing:border-box;
+            display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+  .stagebar .slab{font-size:12.5px;font-weight:800;color:var(--accent-ink);letter-spacing:.02em}
+  .stagebar .seg label{min-height:44px;padding:0 15px;font-size:13.5px}
+
   /* ── 카드 ──
      아코디언을 없애고 이 한 벌만 남긴다. 뺀 것: 번호 뱃지(필터로 순서가 바뀌는 그리드에서
-     고정 번호는 거짓 정보) · 차원 태그(실제 dim 은 서버가 정한다) · 등급 뱃지 4개(전 카드 동일). */
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
+     고정 번호는 거짓 정보) · 차원 태그(실제 dim 은 서버가 정한다) · 등급 뱃지 4개(전 카드 동일).
+     '준비 중' 6종도 그리드에서 뺐다(.soonline) — 유아에선 8장 중 6장이 못 쓰는 카드였다. */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
   .gsec{grid-column:1/-1;margin:10px 2px 0;font-size:12.5px;font-weight:800;color:var(--muted);
         letter-spacing:.02em;display:flex;align-items:center;gap:7px}
   .gsec:first-child{margin-top:0}
   .gsec b{font-weight:800;color:var(--muted-2);font-size:11.5px}
-  .gsec-soon{color:var(--muted-2);margin-top:16px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm);
-        padding:13px;display:flex;flex-direction:column;gap:7px;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
-  .card.soon{opacity:.6}
-  .card-top{display:flex;align-items:center;gap:8px}
-  .card-top .glyph{width:34px;height:34px;flex:none;border-radius:10px;background:var(--panel-2);display:grid;place-items:center}
-  .card-top .glyph svg{width:24px;height:24px}
+        box-sizing:border-box;padding:13px;display:flex;flex-direction:column;gap:8px;
+        transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+
+  /* ── 썸네일 = 진짜 문제 그림 ──
+     35개 (유형·서브·학년) 표본을 오프라인에서 굽고(.claude/tools/bake-samples.mjs)
+     quiz/samples.json 으로 배송한다 — /generate 는 1콜=1유형이고 익명 한도가 20/분이라
+     (rate.ts:6-11) 로드 시점에 35콜은 불가능하다. 표본이 없으면 글리프로 되돌아간다.
+     ⚠ 렌더러(cubenest-figures/iso)의 SVG 는 **viewBox 만 있고 고유 폭이 없다.**
+       치수를 안 주면 flex 안에서 0 으로 찌그러진다 — worksheets/index.html:142-146 이
+       인쇄에서 같은 함정을 겪었다(삼면도가 10px 로 나왔다). 아래 치수는 장식이 아니라 필수다. */
+  .qthumb{width:100%;height:120px;box-sizing:border-box;padding:6px;margin:0;
+          border:1px solid var(--line);border-radius:12px;background:var(--panel-2);
+          display:grid;align-items:stretch;justify-items:center;overflow:hidden;cursor:pointer;
+          font:inherit;color:inherit;transition:border-color .16s ease}
+  .qthumb .glyph{width:44px;height:44px;align-self:center;display:grid;place-items:center}   /* 표본 없을 때의 폴백 */
+  .qthumb .glyph svg{width:38px;height:38px}
+  /* ⚠ 세로가 아니라 **가로**다. .viewer 의 기본은 세로 쌓기라 겨냥도와 '위에서 본 모양'이
+     120px 를 반씩 나눠 둘 다 못 읽는다. 35조합 중 23개가 이 한 줄에 달려 있다. */
+  .qthumb .viewer{width:100%;height:100%;box-sizing:border-box;background:none;border:0;padding:0;margin:0;
+                  display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;min-height:0}
+  .qthumb .isofig{flex:1 1 auto;min-width:0;min-height:0;height:100%;display:grid;place-items:center}
+  .qthumb .isofig svg{display:block;width:100%;height:100%}
+  .qthumb .pv{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px}
+  .qthumb .pv svg{display:block;width:46px;height:46px}
+  .qthumb .pv span{font-size:9px;font-weight:800;color:var(--muted-2);line-height:1;white-space:nowrap}
+  /* '위에서 본 모양'(7자 ≈ 48px)이 그것이 붙은 실루엣(46px)보다 넓다 → 썸네일에선 '위'.
+     ⚠ **직계 자식** 선택자라야 한다 — .viewer 의 직계 .pv 는 위모양 패널 하나뿐이고
+       (figures.js:155·178), .threeviews 안의 위/앞/옆·n층 라벨은 건드리면 안 된다. */
+  .qthumb .viewer > .pv > span{font-size:0}
+  .qthumb .viewer > .pv > span::after{content:'위';font-size:9px}
+  /* 삼면도(sils)·층별(layers)·위+한방향(topOneSil) — 패널이 2~4개라 폭이 1차 제약이다.
+     .pv 가 flex-basis:0 으로 폭을 **나눠 갖고** svg 가 그 폭을 채운다(고정 px 이면 4패널에서 넘친다). */
+  .qthumb .threeviews{flex:1 1 auto;min-width:0;margin:0;display:flex;gap:6px;
+                      align-items:center;justify-content:center;flex-wrap:nowrap}
+  .qthumb .threeviews .pv{flex:1 1 0;min-width:0;max-width:56px}
+  .qthumb .threeviews .pv svg{width:100%;height:auto;max-height:82px}
+  /* numTop 은 렌더러 중 **유일하게** svg 가 width/height 속성을 갖는다(figures.js:62).
+     그래서 키우는 게 아니라 가둔다 — 4×4 가 119px 이라 그대로 두면 넘친다. */
+  .qthumb .viewer > svg{width:auto;height:100%;max-width:100%}
+  /* 굽는 쪽에서 opts 를 저장하지 않아 .opts 는 애초에 안 생긴다. 이건 이중 안전장치다. */
+  .qthumb .opts,.qthumb .rotcap{display:none}
+
   .card h3{margin:0;font-size:14.5px;letter-spacing:-.01em;line-height:1.3}
-  .card .desc{margin:0;color:var(--muted);font-size:12.5px;line-height:1.45;flex:1}
+  /* 발문 2줄 고정. ⚠ 문자열을 자르지 않는다 — ask 에 <b>·<br><small> 이 있어 부분 문자열이
+     태그를 쪼갠다. 문말 단서 제거는 굽는 쪽이 <br> 로 **구조적으로**, 길이는 여기 line-clamp 가. */
+  .card .qask{margin:0;color:var(--muted);font-size:12.5px;line-height:1.45;flex:1;min-height:2.9em;
+              display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+  .card .qask b{color:var(--ink);font-weight:700}
+  .card .qask br,.card .qask small{display:none}   /* 옛 형식 표본이 와도 2줄을 안 넘긴다 */
   .tag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:7px;background:var(--accent-soft);color:var(--accent-ink);align-self:flex-start}
   .cta-row{margin-top:auto;display:flex;gap:6px}
   .cta{flex:1;border:none;cursor:pointer;font-family:inherit;font-weight:800;font-size:13.5px;min-height:44px;
        border-radius:11px;background:var(--accent);color:#fff;transition:.15s}
-  .cta.locked{background:var(--panel-2);color:var(--muted-2);cursor:not-allowed}
   .btn-peek{flex:none;border:1px solid var(--line);background:var(--panel);color:var(--accent-ink);cursor:pointer;
             font-family:inherit;font-weight:700;font-size:13px;padding:0 12px;min-height:44px;border-radius:11px;white-space:nowrap;transition:.15s}
+  /* 곧 공개 — 그리드에서 빼고 목록 아래 한 줄로. 로드맵 신호는 유지되고 선택 방해만 사라진다. */
+  .soonline{grid-column:1/-1;margin:16px 2px 0;font-size:12.5px;color:var(--muted-2);line-height:1.7}
+  .soonline b{font-weight:800;color:var(--muted)}
 
   .empty{grid-column:1/-1;text-align:center;padding:44px 20px;color:var(--muted);border:1.5px dashed var(--line);border-radius:var(--r-lg);background:rgba(255,255,255,.5)}
   .empty b{display:block;color:var(--ink);margin-bottom:6px;font-size:15px}
@@ -123,8 +176,9 @@
   /* hover 는 마우스에서만 — 터치에서 탭하면 hover 잔상이 '눌린 것처럼' 남는다(nav.css 와 같은 가드). */
   @media (hover:hover) and (pointer:fine){
     .card:hover{transform:translateY(-2px);box-shadow:var(--shadow);border-color:#dbe3ef}
+    .card:hover .qthumb{border-color:#dbe3ef}
+    .qthumb:hover{border-color:var(--accent)}
     .cta:hover{background:var(--accent-ink)}
-    .cta.locked:hover{background:var(--panel-2)}
     .btn-peek:hover{background:var(--accent-soft);border-color:var(--accent)}
     .reset:hover{background:var(--accent-soft);border-color:var(--accent)}
     .seg label:hover{color:var(--ink)}
@@ -137,8 +191,12 @@
     .fg > label{flex:none;min-width:52px}
     .fsel{flex:1}
     .reset{margin-left:0;flex:1 1 100%}
-    .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+    /* 그림이 읽히는 것이 목적이라 폰에서는 사실상 1열이 낫다 — 375px 폭에 2열을 넣으면
+       썸네일이 150px 이 되어 삼면도·층별 패널이 다시 안 읽힌다. */
+    .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
     .card{padding:11px}
+    .qthumb{height:132px}
+    .stagebar{gap:8px 10px}
   }
   @media (max-width:400px){
     .seg{width:100%}
@@ -234,6 +292,14 @@
     </div>
   </section>
 
+  <!-- 학년은 필터가 아니라 **첫 질문**이다(난이도 재설계 §7.8-A6). 카드 수를 정하는 것이
+       이 컨트롤이라 히어로 바로 아래 둔다. 라디오는 서버 /config 의 열린 스테이지로 그린다.
+       ⚠ .filters 밖이므로 change 위임을 .filters 에만 걸면 **오류 없이 죽는다**(아래 리스너 참고). -->
+  <div class="stagebar" id="stagebar">
+    <span class="slab" id="stageLbl">몇 학년인가요?</span>
+    <div class="seg" id="stageSeg" role="radiogroup" aria-labelledby="stageLbl"></div>
+  </div>
+
   <div class="page">
     <section class="filters" aria-label="퀴즈 조건">
       <!-- [찾기] — 여기를 바꾸면 아래 카드 목록이 바뀐다. -->
@@ -246,11 +312,6 @@
             <option value="curr">교과수학</option>
             <option value="think">사고력수학</option>
           </select>
-        </div>
-        <div class="fg">
-          <label id="stageLbl">학년</label>
-          <!-- 학년 라디오는 서버 /config 의 열린 스테이지로 그린다(renderStages). 아래는 폴백. -->
-          <div class="seg" id="stageSeg" role="radiogroup" aria-labelledby="stageLbl"></div>
         </div>
         <div class="fg">
           <label for="fConcept">개념유형</label>
@@ -488,9 +549,12 @@ const state={ edu:'all', dim:'auto', count:DEFAULT_COUNT, stage:DEFAULT_STAGE,
 /* ---------- 필터 이벤트 ----------
    ⚠ click 이 아니라 change 위임이다. native radio 는 화살표 키로 click 없이 값이 바뀐다.
    그리고 renderStages() 가 학년 라디오를 innerHTML 로 갈아엎으므로 **위임이어야** 한다. */
-document.querySelector('.filters').addEventListener('change',e=>{
-  const el=e.target;
-  if(el.name==='stage'){ state.stage=el.value; syncDimControl(); renderConceptSelect(); render(); return; }
+/* ⚠ 위임 대상이 .filters 가 아니라 **document** 다 — 학년 라디오가 .stagebar(히어로 아래)로
+     옮겨가 .filters 서브트리 밖이 됐다. .filters 에만 걸면 학년이 **오류 없이 아무 일도 안 한다.** */
+document.addEventListener('change',e=>{
+  const el=e.target; if(!el || !el.name && !el.id) return;
+  if(el.name==='stage'){ state.stage=el.value; track('quiz_stage_change',{stage:el.value});
+                         syncDimControl(); renderConceptSelect(); render(); return; }
   if(el.name==='dim'){ state.dim=el.value; syncURL(); return; }
   if(el.name==='lv'){
     // ⚠ 최소 하나는 켜져 있어야 한다. 0개가 되면 start() 의 lvls.length?lvls:sup 때문에
@@ -523,13 +587,15 @@ function renderStages(){
      그 사이 사라진 유형이면 'all' 로 되돌린다. 여기서 render() 를 부르면 무한 루프다. */
 function renderConceptSelect(){
   const sel=document.getElementById('fConcept'); if(!sel) return;
-  const vis=TYPES.filter(visibleByFind);
+  // '준비 중'은 빼고 센다 — 그리드에서 뺐으므로(맨 아래 한 줄) 여기서 고를 수 있게 두면
+  //   고르는 순간 카드가 0장이 되고, 개수도 그리드('19가지')와 어긋난다(전엔 25라고 했다).
+  const vis=TYPES.filter(t=>t.status==='live'&&visibleByFind(t));
   let html=`<option value="all">전체 — ${vis.length}가지</option>`;
   CATS.forEach(c=>{
     const kids=vis.filter(t=>t.cat===c.id); if(!kids.length) return;
     html+=`<optgroup label="${c.name}">`
         + `<option value="cat:${c.id}">${c.name} 전체 (${kids.length})</option>`
-        + kids.map(t=>`<option value="type:${t.id}">${t.name}${t.status==='soon'?' (곧 공개)':''}</option>`).join('')
+        + kids.map(t=>`<option value="type:${t.id}">${t.name}</option>`).join('')
         + `</optgroup>`;
   });
   sel.innerHTML=html;
@@ -603,46 +669,104 @@ function levelsOf(t){ return (t.status==='live' ? (gateFor(t,state.stage)||t.lev
 
 /* ---------- 결과 렌더 ---------- */
 const grid=document.getElementById('grid'), countEl=document.getElementById('count');
+
+/* ---------- 카드 썸네일 표본 ----------
+   카드가 글리프 + 이름뿐이면 "이게 무슨 문제인지"를 알 수 없다 — 19유형이 글리프 9종을
+   공유하고 hidden 6종은 **완전히 같은 그림**이라 구별이 원리적으로 불가능했다.
+   그래서 실제 생성기가 만든 제시물을 카드에 박는다.
+   ⚠ 실시간 생성이 아니다 — /generate 는 1콜=1유형이고 익명 한도가 20/분이라(rate.ts:6-11)
+     35조합을 로드마다 부르면 첫 로드에서 이미 초과한다. 생성기가 시드에 결정적이므로
+     .claude/tools/bake-samples.mjs 가 오프라인에서 한 번 굽고 정적으로 배송한다.
+   ⚠ 정답은 여기 없다 — 표본엔 제시물만 있고 answerKey·gsig 는 굽는 쪽이 저장하지 않는다(§6.7). */
+let SAMPLES=null;
+const sampleKey=(t,stage)=>`${t.type||t.id}|${t.sub||''}|${stage}`;
+/* 발문은 우리가 구운 파일에서 오지만 화이트리스트로 검증하고 넣는다 — 굽기가 잘못돼도
+   랜딩에 임의 마크업이 들어가지 않게. 실제로 오는 태그는 <b> <small> <br> 뿐이다. */
+const ASK_SAFE=/^(?:[^<>]|<\/?(?:b|small|br)\s*\/?>)*$/i;
+const safeAsk=h=>{ h=String(h||''); return ASK_SAFE.test(h)?h:h.replace(/<[^>]*>/g,''); };
+
+function figHTML(s){
+  const F=(window.CubeNest&&window.CubeNest.figures)||null;
+  if(!F||!s) return '';
+  try{
+    const gp = s.kind==='sh'
+      ? { sh:{gx:s.sh.gx,gz:s.sh.gz,cells:(s.sh.cells||[]).map(c=>({x:c[0],y:c[1],z:c[2]}))}, top:s.top||null }
+      : { given:s.given };
+    // caption:'' — isoMark 의 자동 캡션('빨강 줄에 n개 더')을 끈다. 썸네일 폭에 안 들어가고
+    //   바로 아래 발문이 같은 말을 한다. renderQuestion 의 opts 는 caption 하나뿐이다.
+    const html=F.renderQuestion(gp,{caption:''});
+    return (html && html.indexOf('<svg')>=0) ? html : '';   // iso 가 비면 빈 껍데기가 나온다
+  }catch(e){ return ''; }
+}
+// ⚠ 글리프 표 G 는 죽은 코드가 아니라 **폴백 층**이다 — 표본이 없거나 렌더가 실패하면 여기로 온다.
+const thumbHTML=(s,t)=> figHTML(s) || `<span class="glyph">${G[t.glyph]()}</span>`;
+
+/* ⚠ 재렌더가 아니라 **부분 패치**여야 한다 — render() 는 필터 변경마다, 그리고 /config 가
+   도착할 때 또 돈다. 표본 도착 시점에 통째로 다시 그리면 입력 중 포커스가 날아간다. */
+function paintSamples(){
+  if(!SAMPLES) return;
+  let miss=0;
+  grid.querySelectorAll('.card[data-key]').forEach(card=>{
+    const s=SAMPLES[card.dataset.key];
+    const fig=s?figHTML(s):'';
+    if(!fig){ miss++; return; }                       // 글리프 유지
+    card.querySelector('.qthumb').innerHTML=fig;
+    card.querySelector('.qask').innerHTML=safeAsk(s.ask);
+  });
+  // 낡은 굽기는 운영에서 달리 보이지 않는다 — 그림이 조용히 글리프로 되돌아갈 뿐이다.
+  if(miss) track('quiz_samples_miss',{n:miss,stage:state.stage});
+}
+
+fetch('./samples.json',{cache:'no-cache'}).then(r=>r.ok?r.json():null)
+  .then(j=>{ if(j&&j.items){ SAMPLES=j.items; paintSamples(); }
+             else track('quiz_samples_miss',{reason:'empty'}); })
+  .catch(()=>{ track('quiz_samples_miss',{reason:'network'}); });   // 실패 = 글리프. 화면은 안 죽는다
+
 function render(){
-  // 풀 수 있는 것 먼저(카테고리 순), '준비 중'은 전부 맨 뒤로.
-  //   soon 4종이 각자 카테고리를 차지하면 카드 1~2장짜리 섹션이 4줄을 낭비한다 → 한 묶음으로.
-  const ord=t=>t.status==='soon'?999:CATS.findIndex(c=>c.id===t.cat);
-  const list=TYPES.filter(match).sort((a,b)=>ord(a)-ord(b)
-    || CATS.findIndex(c=>c.id===a.cat)-CATS.findIndex(c=>c.id===b.cat));
+  const ord=t=>CATS.findIndex(c=>c.id===t.cat);
+  const all=TYPES.filter(match);
+  // '준비 중'은 그리드에서 뺀다 — 유아·초1~2 에선 8장 중 6장이 못 쓰는 카드였다(맨 아래 한 줄로).
+  const list=all.filter(t=>t.status==='live').sort((a,b)=>ord(a)-ord(b));
+  const soon=all.filter(t=>t.status==='soon');
   countEl.innerHTML=`<b>${list.length}</b>가지`;
   grid.innerHTML='';
   if(!list.length){
     grid.innerHTML=`<div class="empty"><b>조건에 맞는 개념유형이 없어요</b>학년이나 개념유형을 바꿔 보세요.</div>`;
-    syncURL(); return;
   }
-  // 카테고리 섹션 헤더 — 아코디언이 주던 '개념 묶음' 가치를 클릭 0회로 보전한다.
-  //   CATS 순서상 추론·구성·변환·세기가 뒤라 '준비 중' 6종이 자연스럽게 맨 아래로 모인다.
+  /* 카테고리 섹션 헤더 — 아코디언이 주던 '개념 묶음' 가치를 클릭 0회로 보전한다.
+     ⚠ 목록이 짧으면 **끈다**. 헤더가 grid-column:1/-1 라 줄을 끊는데, 초3~4(5장)·초5(7장)는
+       카테고리마다 카드가 1~2장이라 5장이 5줄을 차지하고 오른쪽이 통째로 빈다.
+       묶음은 훑을 것이 많을 때만 도움이 된다 — 19장(초6)에서만 켠다. */
+  const useSec=list.length>8;
   let lastKey=null;
   list.forEach(t=>{
-    const soon=t.status==='soon';
-    const key=soon?'__soon':t.cat;
-    if(key!==lastKey){
-      lastKey=key;
+    if(useSec && t.cat!==lastKey){
+      lastKey=t.cat;
       const c=CATS.find(x=>x.id===t.cat);
-      const n=list.filter(x=>(x.status==='soon'?'__soon':x.cat)===key).length;
-      const h=document.createElement('h2'); h.className='gsec'+(soon?' gsec-soon':'');
-      h.innerHTML=`${soon?'곧 공개':(c?c.name:'')} <b>${n}</b>`;
+      const h=document.createElement('h2'); h.className='gsec';
+      h.innerHTML=`${c?c.name:''} <b>${list.filter(x=>x.cat===t.cat).length}</b>`;
       grid.appendChild(h);
     }
     // 사고력 전용 유형만 태그를 단다 — 대부분이 교과·사고력 둘 다라 전부 달면 배경 소음이 된다.
     const only=t.edu.length===1&&t.edu[0]==='think';
-    const card=document.createElement('article'); card.className='card'+(soon?' soon':'');
+    const key=sampleKey(t,state.stage), s=SAMPLES&&SAMPLES[key];
+    const card=document.createElement('article'); card.className='card'; card.dataset.key=key;
     card.innerHTML=`
-      <div class="card-top"><span class="glyph">${G[t.glyph]()}</span><h3>${t.name}</h3></div>
-      <p class="desc">${t.desc}</p>
+      <button type="button" class="qthumb" aria-label="${t.name} 예시 보기">${thumbHTML(s,t)}</button>
+      <h3>${t.name}</h3>
+      <p class="qask">${s?safeAsk(s.ask):t.desc}</p>
       ${only?'<span class="tag">사고력</span>':''}
-      <div class="cta-row">${soon?'':'<button type="button" class="btn-peek">예시</button>'}<button class="cta ${soon?'locked':''}" ${soon?'disabled':''}>${soon?'준비 중':'시작'}</button></div>`;
-    if(!soon){
-      card.querySelector('.cta').addEventListener('click',()=>start(t));
-      card.querySelector('.btn-peek').addEventListener('click',()=>openPreview(t));
-    }
+      <div class="cta-row"><button type="button" class="btn-peek">예시</button><button class="cta">시작</button></div>`;
+    card.querySelector('.cta').addEventListener('click',()=>start(t,'card'));
+    card.querySelector('.btn-peek').addEventListener('click',()=>openPreview(t));
+    card.querySelector('.qthumb').addEventListener('click',()=>openPreview(t));   // 120px = 탭 타깃
     grid.appendChild(card);
   });
+  if(soon.length){
+    const d=document.createElement('div'); d.className='soonline';
+    d.innerHTML=`<b>곧 공개</b> — ${soon.map(t=>t.name).join(' · ')}`;
+    grid.appendChild(d);
+  }
   syncURL();
 }
 
@@ -650,7 +774,11 @@ function render(){
    ⚠ '태블릿 모드'가 켜져 있거나 20분 넘게 쉬었으면 **시작 전에** 묻는다. 시작한 뒤에
      물으면 이미 옛 스코프로 세션 키가 잡혀 앞 아이 진행을 물려받는다. */
 const SCOPE=(window.CubeNest&&window.CubeNest.scope)||null;
-function start(t){
+function start(t,from){
+  /* ⚠ 계측은 여기 한 번뿐이다 — 스코프 분기 뒤에 두면 '학습자 고르기'에서 이탈한 사람이
+     분모에서 빠지고, startNow 에 두면 같은 뜻인데 이름만 다른 지표가 하나 더 생긴다.
+     이 페이지엔 종전에 시작 계측이 **아예 없어서** 어떤 유형이 선택되는지 데이터가 0이었다. */
+  track('quiz_type_start',{type:t.type||t.id, sub:t.sub||null, stage:state.stage, from:from||'card'});
   if(SCOPE && SCOPE.shouldAsk()){
     SCOPE.ensurePicked('quiz_start').then(function(){ startNow(t); });
     return;
@@ -828,7 +956,7 @@ pvEl('pvPrev').onclick=()=>{ if(PV.i>0){PV.i--;pvRender();} };
 pvEl('pvNext').onclick=()=>{ if(PV.i<PV.probs.length-1){PV.i++;pvRender();} };
 pvEl('pvNew').onclick=()=>{ PV.seed=Math.random().toString(36).slice(2,9); pvFetch(); };
 pvEl('pvAnsBtn').onclick=pvToggleAnswer;
-pvEl('pvStart').onclick=()=>{ const t=PV.t; closePreview(); if(t) start(t); };
+pvEl('pvStart').onclick=()=>{ const t=PV.t; closePreview(); if(t) start(t,'preview'); };
 
 let toastTimer;
 function showToast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2800); }

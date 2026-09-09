@@ -17,7 +17,7 @@ CubeNest 드리프트 검사 — 리포 루트에서  py .claude/tools/check-dri
 
 종료코드 0 = 이상 없음, 1 = 문제 있음(CI 에 걸기 좋게).
 """
-import io, os, re, sys, glob
+import io, json, os, re, sys, glob
 from collections import defaultdict
 
 # Windows 콘솔이 cp949 라 한글 출력이 깨진다 — stdout 을 UTF-8 로 직접 잡는다.
@@ -220,8 +220,70 @@ def check_consent():
         note(f'GA4 동의 3종 세트 {len(CONSENT_PAGES)}페이지 정상')
 
 
+# ── 9. quiz 표본(samples.json)이 서버 설정과 같은 세대인가 ────────────────────
+#     /quiz 카드 썸네일은 .claude/tools/bake-samples.mjs 가 구운 정적 표본이다.
+#     서버 GATE 가 유형을 열고 닫아도 이 파일은 그대로라, 카드가 조용히 글리프로 되돌아가거나
+#     닫힌 유형의 그림이 남는다 — **둘 다 화면상으로는 정상으로 보인다**(가장 조용한 실패).
+#     게다가 모르는 given.kind 는 렌더러에서 오류가 아니라 default 분기로 떨어져
+#     엉뚱한 그림·문구가 나간다(CLAUDE.md 「퀴즈 실행」 참고).
+#     조합 목록을 여기 복제하지 않고 gen-config.js 의 GATE 를 **파싱해서** 대조한다.
+SAMPLES = 'quiz/samples.json'
+GENCFG  = 'supabase/functions/_shared/cubenest-gen-config.js'
+KINDS   = {'sh', 'numTop', 'layers', 'sils', 'topOneSil', 'isoTop', 'isoMark', 'paintedCube'}
+
+def _gate_from_config():
+    """gen-config.js 의 VERSION·열린 스테이지·GATE 를 읽어 (버전, 조합집합) 을 낸다."""
+    src = read(GENCFG)
+    ver = re.search(r'var\s+VERSION\s*=\s*"([^"]+)"', src).group(1)
+    opens = [m.group(1) for m in re.finditer(r'(S\d)\s*:\s*\{[^{}]*open:\s*true', src)]
+    def arr(name):
+        return json.loads(re.search(r'var\s+' + name + r'\s*=\s*(\[[^\]]*\])', src).group(1))
+    body = re.search(r'var\s+GATE\s*=\s*\{(.*?)^  \};', src, re.S | re.M).group(1)
+    body = re.sub(r'//[^\n]*', '', body)                                  # 줄 주석 제거
+    body = body.replace('ALL_A', json.dumps(arr('ALL_A'))).replace('ALL_G', json.dumps(arr('ALL_G')))
+    body = re.sub(r'([A-Za-z_][\w-]*)\s*:', lambda m: '"%s":' % m.group(1), body)  # 맨키 → 따옴표
+    body = re.sub(r',(\s*[}\]])', r'\1', body)                            # 트레일링 콤마
+    gate = json.loads('{' + body + '}')
+    combos = set()
+    for st in opens:
+        for t, v in (gate.get(st) or {}).items():
+            for sub in ([''] if v is True else v):
+                combos.add('%s|%s|%s' % (t, sub, st))
+    return ver, combos
+
+def check_samples():
+    if not os.path.exists(SAMPLES):
+        fail('표본', '%s 가 없다 — node .claude/tools/bake-samples.mjs 로 구울 것' % SAMPLES)
+        return
+    # 구워 놓고 페이지가 안 읽으면 아무 일도 안 일어난다.
+    #   부분 문자열로 보면 XXsamples.json 에도 걸린다 — fetch 호출을 그대로 찾는다.
+    if "fetch('./samples.json'" not in read('quiz/index.html'):
+        fail('표본', "quiz/index.html 이 fetch('./samples.json') 을 안 한다 — 구운 파일이 죽어 있다")
+    data = json.loads(read(SAMPLES))
+    ver, want = _gate_from_config()
+    if data.get('cfgVersion') != ver:
+        fail('표본', '옛 설정으로 구운 표본이다: samples=%s != gen-config=%s — 다시 구울 것'
+                     % (data.get('cfgVersion'), ver))
+    items = data.get('items') or {}
+    have = set(items)
+    for k in sorted(want - have):
+        fail('표본', '표본 없음 — 그 카드는 글리프로 되돌아간다: %s' % k)
+    for k in sorted(have - want):
+        fail('표본', '닫힌 조합의 표본이 남아 있다: %s' % k)
+    for k in sorted(have & want):
+        it = items[k] or {}
+        if it.get('kind') not in KINDS:
+            fail('표본', '%s: 모르는 kind=%r — 렌더러가 빈 그림을 낸다' % (k, it.get('kind')))
+        blob = json.dumps(it, ensure_ascii=False)
+        for leak in ('answerKey', 'gsig', 'explain', '"correct"'):
+            if leak in blob:
+                fail('표본', '%s: 정답이 샜다 — %s 가 들어 있다' % (k, leak))
+    if not any(sec == '표본' for sec, _ in fails):
+        note('quiz 표본 %d조합 · cfg=%s 일치' % (len(have), ver))
+
+
 for fn in (check_menu, check_brand, check_versions, check_icons,
-           check_glyph_paths, check_og, check_boxsizing, check_consent):
+           check_glyph_paths, check_og, check_boxsizing, check_consent, check_samples):
     try:
         fn()
     except Exception as e:                       # 검사 자체가 죽어도 나머지는 돌린다

@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # CubeNest (단일 자립 명세)
 
 이 파일이 기본 참조 문서다. 이것만 보고 작업하되, **두 작업에만 딸린 상세는 스킬로 뺐다** — 로고·파비콘·OG 는 `brand-assets`, 약관·방침·CS 창구는 `legal-docs`. 해당 작업 전에 그 스킬을 읽는다. (현행 구현의 세부는 코드가 기준.)
-※ 상세 기획·불변 원리의 정본은 마스터 문서 `.claude/master/master.md`(v1.9.7, 260906). 코드 주석의 `§` 표기는 그 마스터의 장 번호를 가리킨다.
+※ 상세 기획·불변 원리의 정본은 마스터 문서 `.claude/master/master.md`(v1.9.8, 260909). 코드 주석의 `§` 표기는 그 마스터의 장 번호를 가리킨다.
 
 ## 개요
 - **CubeNest(큐브네스트):** '쌓기나무(공간과 입체)' 3D 학습 웹 도구 — 3D 회전, 위·앞·옆 투상, 개수·부피·겉넓이 자동 계산, 블록 추가·삭제.
@@ -22,7 +22,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## 명령 (빌드 없음 — 아래가 전부다)
 - **로컬 서버:** `py -m http.server 5500` (리포 루트. **5500 고정**·**`py`** 인 이유는 「기술·규약」)
   - ⚠ **서버 없이 `/quiz/run` 을 도는 방법은 없다.** `api-client.js:15` 의 `USE_MOCK` 은 **죽은 스위치**다 — 주석은 "개발/오프라인 폴백"이라 하지만 `NS._mockApi` **생산자가 리포에 없어서**(미추적 파일 포함 전수 확인) `true` 로 바꿔도 가드가 falsy 라 그대로 실 fetch 로 간다. 퀴즈를 로컬에서 보려면 배포된 Edge Function 이 살아 있어야 한다.
-- **드리프트 검사:** `py .claude/tools/check-drift.py` — 헤더 메뉴 9페이지 · 브랜드 지역화 훅 · `?v=` 통일 · 파비콘 11페이지 · 글리프 상대경로 · `og:image` 단일 대상 · 셸 `box-sizing` · **GA4 동의 3종 세트 10페이지** 8항목. exit 0/1 이라 CI 에 걸 수 있다. **이 리포의 유일한 자동 검사이고 테스트 프레임워크는 없다** — 나머지는 브라우저 수동 확인이다. 검사 항목은 전부 260828~30 에 실제로 난 사고에서 왔다.
+- **드리프트 검사:** `py .claude/tools/check-drift.py` — 헤더 메뉴 9페이지 · 브랜드 지역화 훅 · `?v=` 통일 · 파비콘 11페이지 · 글리프 상대경로 · `og:image` 단일 대상 · 셸 `box-sizing` · **GA4 동의 3종 세트 10페이지** · **quiz 표본 35조합** 9항목. exit 0/1 이라 CI 에 걸 수 있다. **이 리포의 유일한 자동 검사이고 테스트 프레임워크는 없다** — 나머지는 브라우저 수동 확인이다. 검사 항목은 전부 260828~30 에 실제로 난 사고에서 왔다.
+- **퀴즈 카드 표본 굽기:** `node .claude/tools/bake-samples.mjs` — `/quiz` 랜딩 카드의 문제 그림을 다시 굽는다(약 5분). **배포된 Edge Function 이 살아 있어야 한다**(`/quiz/run` 과 같은 단서). 평소엔 안 돌린다 — **다시 구울 때는 아래 「퀴즈 랜딩」 참고**.
 - **클라↔서버 복본 확인:** `diff -u assets/js/<m>.js supabase/functions/_shared/<m>.js` — 두 벌인 건 `core`·`iso` 둘뿐이고 ESM export 꼬리 2줄 외 차이가 나오면 드리프트다. **위 드리프트 검사는 이걸 안 본다** — 따로 돌린다.
 - **`?v=` 소비처 찾기:** `grep -rn "<모듈>.js?v=" --include=*.html .`
 - **배포:** 클라 `git push` → GitHub Pages / 서버 `supabase functions deploy config generate grade worksheet`. **순서는 클라 먼저, 단 DB 스키마만 서버 먼저** — 이유는 「기술·규약」.
@@ -101,6 +102,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **URL 파라미터는 `loadParams()` 에서 전부 정규화한다.** `Math.max/min` 은 NaN 을 걸러 주지 않는다 — 옛 `+(p.get("n")||10)` 은 `?n=abc` 를 **NaN** 그대로 통과시켜 `SKEY`·`GRADE_PARAMS` 까지 오염시켰다. 랜딩(`quiz/index.html`)이 검사해도 소용없다, `/quiz/run` 은 **직접 진입도 되기 때문**이다.
 - **유형을 늘릴 때 — 디스패치 키가 세 종류다.** 서버 생성은 `type`/`sub`(`gen.js genProblem` → `gen-adapter.ts` 의 `answerKeyFor`·`questionFor`·`explainFor`·`resolveDim`/`GIVEN_ONLY`, `gen-config.js` 의 `GATE`/`support`/`subsFor`/`paperSafe`, `config/index.ts` 의 `TYPE_LABEL`), **클라 렌더는 `q.given.kind`**(현재 7종 — `numTop`·`layers`·`sils`·`isoTop`·`topOneSil`·`isoMark`·`paintedCube`, 생산·소비 일치 확인), 채점은 `answer.type`(`num`·`bool`·`mc`·`markCount`·`markCells`·`drawSil`). 셋은 이름이 안 겹치므로 **하나를 늘리고 나머지를 잊기 쉽다.**
   - ⚠ **모르는 `kind` 는 오류가 아니라 default 분기로 떨어진다** — 세 렌더 함수 전부 마지막 `return` 이 조건 없는 default 다. `renderMGiven`(:270)은 `g.iso||""` 라 **예외 없이 엉뚱한 문구**("가장 작은 정육면체를 만들려면?")를 붙여 그리고, `renderGGiven`(:254)·`renderHiddenGiven`(:289)은 없는 `g.sils`·`g.top` 을 만져 **예외**가 난다. 그 예외는 `renderProblem` 을 중단시키는데 **`setActions()` 가 그 함수 맨 끝(:622)** 이라 → 위 뷰어 사고와 **같은 정지**(제출 버튼이 안 생긴다). `givenShape`(:103)는 default 가 아예 없어 조용히 빈 모양을 준다.
+
+## 퀴즈 랜딩 (`/quiz`) — 카드 썸네일은 **구운 정적 표본**이다 (260909)
+카드가 글리프 + 이름뿐이던 시절엔 **19유형이 글리프 9종을 공유**했고 `hidden` 6종은 그림이 완전히 같아 구별이 원리적으로 불가능했다. 지금은 실제 생성기가 만든 제시물이 카드에 박힌다.
+- **실시간 생성이 아니다.** `/generate` 는 **1콜=1유형**(`generate/index.ts:37`, 배열 분기 없음)이고 익명 한도가 **20/분**(`rate.ts:6-11`)이라 35조합을 로드마다 부르면 **첫 로드에서 초과**한다. 생성기가 시드에 완전히 결정적이라(`cubenest-gen.js:12,34`) `.claude/tools/bake-samples.mjs` 가 오프라인에서 굽고 `quiz/samples.json`(56KB / **gzip 4.5KB**)으로 배송한다. 렌더는 이미 페이지에 있는 `CubeNest.figures.renderQuestion(gp,{caption:''})` 를 쓴다 — **새 렌더러를 만들지 말 것.**
+- **표본은 (유형·서브·**학년**) 35조합이다** — 유형당 하나가 아니다. `STAGES[].dim` 이 S0~S3 `'3d'`, S4 만 `'any'` 라 학년마다 제시물이 다르다. 개수 = S0 2 · S1 2 · S2 5 · S3 7 · S4 19.
+- ⛔ **`answerKey`·`explain`·`id`·`gsig` 를 저장하지 않는다.** `id`+`gsig` 는 특히 위험하다 — 저장하면 `samples.json` 이 **35개 고정 문항에 대한 영구 `/grade` 오라클 티켓**이 된다(gsig 엔 만료가 없다). 굽기는 `/grade` 를 **성립 검증에만** 쓰고 응답을 그 자리에서 버리며, 항목은 **화이트리스트로 짓는다**(응답에서 `delete` 하면 서버가 필드를 늘릴 때마다 새 것이 조용히 샌다). 산출물 문자열도 마지막에 훑는다.
+- **다시 구워야 하는 때:** `cubenest-gen-config.js` 의 `VERSION`·`GATE`·`BANDS` 가 바뀌었을 때. **`check-drift.py` 9번이 `cfgVersion` 과 35조합을 대조해 잡는다** — 안 하면 카드가 오류 없이 글리프로 되돌아가거나 닫힌 유형의 그림이 남는데 **둘 다 화면상 정상으로 보인다.**
+- ⚠ **렌더러 SVG 는 `viewBox` 만 있고 고유 폭이 없다** — 치수를 안 주면 flex 안에서 0px 로 찌그러진다(`worksheets:142-146` 이 인쇄에서 겪은 것과 같은 함정). `.qthumb` 의 치수 규칙은 장식이 아니다. 셋을 특히 조심할 것: ① `.viewer` 를 **`flex-direction:row`** 로(기본 세로면 겨냥도와 위모양이 120px 를 반씩 나눠 둘 다 못 읽는다 — 35 중 23조합) ② `.qthumb` 격자를 **`align-items:stretch`** 로(`center` 면 높이가 불확정이라 `height:100%` 사슬이 끊겨 SVG 가 종횡비로 자란다 — `max-height:100%` 로는 못 고친다) ③ **`renderTopNums` 만 svg 에 `width/height` 속성이 있다**(`figures.js:62`) — 키우는 게 아니라 **가둔다.**
+- ⚠ **글리프 표 `G` 와 `.glyph{--w-top:…}` 를 지우지 말 것** — 죽은 코드가 아니라 **폴백 층**이다(파일 실패·항목 없음·렌더 실패 3층 전부 글리프로 되돌아간다).
+- **카테고리 머리글은 목록이 9장 이상일 때만 켠다**(`useSec`). `grid-column:1/-1` 라 줄을 끊는데, 초3~4(5장)·초5(7장)는 카테고리마다 카드가 1~2장이라 **5장이 5줄을 차지하고 오른쪽이 통째로 빈다**(실측 1500px → 603px).
+- **'준비 중' 6종은 그리드가 아니라 맨 아래 한 줄**이다. 종전엔 `visibleByFind()` 가 `t.status==='live' &&` 로 게이트를 건너뛰어 **모든 학년에서 항상 보였고**, 유아에선 8장 중 6장이 못 쓰는 카드였다. 개념유형 셀렉트에서도 뺀다(안 빼면 고르는 순간 0장이 되고 개수도 그리드와 어긋난다).
 
 ## 인증 · 저장 · 게이트
 - **로그인: Supabase OAuth 전용**(카카오·구글, 검증 완료). 비밀번호 없음·PKCE·세션 지속. 성인(교사·학부모) 중심, **학생 무로그인**, 아동 PII 최소화.
@@ -231,13 +243,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - **동의 전 이벤트는 큐잉이 아니라 폐기다.** `dataLayer` 자체가 `loadGA()` 안에서 생기므로 나중에 동의해도 소급 전송이 없다. 거부는 24시간 TTL 로 만료돼 배너가 다시 뜬다(`consent.js:13`).
   - **`/privacy`·`/terms` 에도 배너가 있어야 한다** — 방침 §6 이 "화면 하단의 동의 배너에서 '거부'"로 옵트아웃을 안내하는데, 정작 그 페이지에 배너가 없으면 안내한 수단이 그 자리에 없다.
   - **전환 퍼널(260830):** 랜딩 `cta_click{at,to}`(`data-cta` 속성이 대상을 정한다 — 선택자로 추측하지 않는다) → playground `calc_timegate_lock` → `login_prompt{ctx}` → `login_success` → **worksheets `worksheet_make_click`→`_done`/`_fail{reason}`·`worksheet_print`**. `worksheet_make_click` 은 **로그인 게이트 앞**에 있다 — 막혀서 이탈한 비율의 분모라 성공만 세면 안 된다. `_fail` 의 `reason` 은 화면 분기 라벨(`rate`/`network`/`401`/`server`)을 그대로 쓴다.
+  - **퀴즈 선택 퍼널(260909 신설):** `/quiz` `quiz_stage_change{stage}` → `quiz_type_start{type,sub,stage,from:'card'|'preview'}` → run `quiz_run_start`. 종전엔 **시작 클릭 계측이 아예 없어** 어떤 유형이 선택되는지 데이터가 0이었다 — 카드 재설계의 효과를 측정할 방법이 그래서 없었다. `quiz_type_start` 는 `start()` 안 **스코프 분기보다 앞**에 둔다(뒤에 두면 '학습자 고르기'에서 이탈한 사람이 분모에서 빠진다). `quiz_samples_miss{n|reason}` 은 낡은 굽기 감시용 — 표본이 없으면 그림이 조용히 글리프로 되돌아갈 뿐이다.
   - **`login_prompt` 는 `auth.js` 가 발화한다 — 게이트 쪽에서 같이 쏘지 말 것**(중복 계측).
   - **계측 중복 2건을 260831 에 고쳤다 — GA4 실데이터로 발견했다. 되돌리지 말 것.**
     - **`login_success` 는 '로그인 표'가 있을 때만 나간다**(`auth.js` `loginTicketPut/Take`, sessionStorage `cubenest_login_pending`, TTL 10분). ⚠ **supabase-js 는 저장소에서 세션을 복원할 때도 `SIGNED_IN` 을 쏜다**(세션이 없을 땐 `INITIAL_SESSION` 만 온다 — 측정으로 확인). `session` 은 페이지 로드마다 `null` 로 시작하므로 옛 가드 `evt==='SIGNED_IN' && !was` 는 **새 로그인과 단순 새로고침을 구분하지 못했다** — 로그인 상태로 페이지를 이동만 해도 매번 발화했고, GA4 에서 로그인 전환이 사실상 페이지뷰였다. `signIn()` 이 표를 끊고 `SIGNED_IN` 이 회수한다(OAuth 는 같은 탭 전체 리다이렉트라 sessionStorage 가 왕복을 건너 살아남는다 — **localStorage 를 쓰면 다른 탭까지 새 로그인으로 오인한다**).
     - **뷰 이벤트는 렌더가 아니라 상태 전환을 센다**(`account`·`my` 의 `trackView()`). `render()` 는 **페이지 로드 1회에 2~3번** 돈다 — `A.onAuthChange(render)` 와 `A.ready.then(render)` 가 각각 부르고, supabase 이벤트가 `settled` **뒤에** 도착하면 한 번 더 온다(경쟁 조건이라 2회일 때도 3회일 때도 있었다). `track()` 을 렌더 함수 안에 두면 방문 수가 2~3배로 부풀어 **이걸 분모로 쓰는 전환율이 전부 틀어진다.** 새 페이지에서도 뷰 이벤트를 렌더 안에 넣지 말 것.
 
 ## 현재/다음
-- **완료:** 상태 공유(F2·F3)·계측/동의(F1)·서버 생성/채점(gen 서버화)·OAuth 로그인·**유형 19종**(리매핑 + 안보이는나무 A-a~f + G군 + H군)·정답 은닉·worksheets(문제지·정답지 인쇄·QR)·**난이도 개편(연령 스테이지 S0~S4 + 개수 밴드, gen-config 구조 교체)**·세션 내 중복 회피(gen v0.5.0)·**DB+RLS 저장(`profiles`+`quiz_results`+`my_items`, 닉네임·퀴즈 기록·문제지 계정 귀속, 멱등키 `attempt_id`/`item_id`, 계정별 로컬 분리, 죽은 세션 자동 로그아웃)**·**이용약관·개인정보처리방침(`/terms`·`/privacy`, 전 페이지 공통 푸터 + 로그인 고지형 동의)**·**공용 태블릿 격리 1단계(`scope.js` 신설 + 학습자 로컬 로스터, 260906)**·**`/price` 요금제 페이지(260906, `/guide` 대체)**.
+- **완료:** 상태 공유(F2·F3)·계측/동의(F1)·서버 생성/채점(gen 서버화)·OAuth 로그인·**유형 19종**(리매핑 + 안보이는나무 A-a~f + G군 + H군)·정답 은닉·worksheets(문제지·정답지 인쇄·QR)·**난이도 개편(연령 스테이지 S0~S4 + 개수 밴드, gen-config 구조 교체)**·세션 내 중복 회피(gen v0.5.0)·**DB+RLS 저장(`profiles`+`quiz_results`+`my_items`, 닉네임·퀴즈 기록·문제지 계정 귀속, 멱등키 `attempt_id`/`item_id`, 계정별 로컬 분리, 죽은 세션 자동 로그아웃)**·**이용약관·개인정보처리방침(`/terms`·`/privacy`, 전 페이지 공통 푸터 + 로그인 고지형 동의)**·**공용 태블릿 격리 1단계(`scope.js` 신설 + 학습자 로컬 로스터, 260906)**·**`/price` 요금제 페이지(260906, `/guide` 대체)**·**`/quiz` 카드에 실제 문제 그림(260909, 구운 정적 표본 35조합 + 학년 선택을 앞으로 + '준비 중' 정리)**.
   - **260906 격리 — 학원에서 한 태블릿을 여러 아이가 쓰는 시나리오에서 난 사고 6건을 고쳤다**(전부 클라 전용, DB·법적 문서 무변경). ① 세션 키에 스코프가 없어 **같은 링크면 다음 아이가 앞 아이 답·연습장을 이어풀기로 물려받았다** ② 익명 저장소가 공용이라 기록이 섞였다 ③ `adopt()` 자동 승계 ④ `cubenest_quiz_last`·`ws_payload`·접기·음소거가 스코프 밖 ⑤ 타임게이트가 기기 단위 ⑥ **`cubenest_ws_payload` 가 아이 연습장 PNG 를 담은 채 영구 잔류해, 다음 아이가 `/worksheets/` 를 열기만 해도 앞 아이 손글씨가 보였다**(계정 전환과 무관).
   - 진행 중이던 이어풀기는 **12시간 TTL + 툼스톤**으로 1회 승계한다(`run.js claimLegacySession`). ⚠ 원본을 **지우지 않고 `{migratedTo,ts}` 로 덮는다** — 지우면 롤백 시 진행이 사라지고, 그냥 두면 다음 아이가 물려받는다. 툼스톤엔 `state` 배열이 없어 **구본·신본 양쪽이** 새 세션으로 취급한다.
   - **260906 헤더 교체 —** `/guide` 를 **삭제**하고 `/price`(요금제)를 신설했다. 가이드는 본문이 "가이드, 준비 중입니다" 7줄뿐인 플레이스홀더인데 **주요 메뉴 6칸 중 하나**를 차지하고 있었다 — 처음 온 사람이 사용법을 찾아 누르는 칸이 막다른 길이었다. 링크가 **헤더 9곳뿐**이라 삭제 비용이 없었다. 메뉴는 `플레이그라운드·퀴즈·문제지 생성·요금제·내 자료` **5종**이다(요금제를 2번째가 아니라 제품 뒤·내 자료 앞에 둔다). 헤더 계정 진입점도 **로그아웃이면 '로그인' 글자**로 바뀌었다(위 §불변 규칙).

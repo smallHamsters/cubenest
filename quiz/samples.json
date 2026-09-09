@@ -1,0 +1,1593 @@
+{
+ "_generated": ".claude/tools/bake-samples.mjs 가 만든다 — 손으로 고치지 말 것",
+ "bakedAt": "2026-09-09",
+ "cfgVersion": "cfg-0.4.1",
+ "level": "중",
+ "count": 35,
+ "items": {
+  "count||S0": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 쌓기나무는 모두 몇 개일까요?",
+   "sh": {
+    "gx": 2,
+    "gz": 2,
+    "cells": [
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      1
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bke1e502",
+    "idx": 1,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "facesMc||S0": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 위에서 본 모양을 고르세요.",
+   "sh": {
+    "gx": 2,
+    "gz": 2,
+    "cells": [
+     [
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      0,
+      1
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bk16bc5f",
+    "idx": 1,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "count||S1": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 쌓기나무는 모두 몇 개일까요?",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      2,
+      0,
+      2
+     ],
+     [
+      2,
+      0,
+      1
+     ],
+     [
+      2,
+      1,
+      1
+     ],
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      1,
+      0,
+      2
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bk3f3505",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "facesMc||S1": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 위에서 본 모양을 고르세요.",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      2
+     ],
+     [
+      0,
+      0,
+      2
+     ],
+     [
+      0,
+      1,
+      2
+     ],
+     [
+      0,
+      0,
+      1
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bke6026b",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "count||S2": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 쌓기나무는 모두 몇 개일까요?",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      2
+     ],
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      2,
+      0,
+      1
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bk08fde1",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "heightmap||S2": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 위에서 본 모양의 각 칸에 쌓인 나무 수를 써 보세요.",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      2,
+      1,
+      0
+     ],
+     [
+      1,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bk5505ae",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "hidden|A-c|S2": {
+   "kind": "numTop",
+   "ask": "위에서 본 모양의 각 칸에 <b>쌓인 나무 수</b>가 적혀 있어요. 쌓기나무는 모두 몇 개일까요?",
+   "given": {
+    "kind": "numTop",
+    "gx": 3,
+    "gz": 3,
+    "heights": {
+     "0,1": 2,
+     "0,2": 1,
+     "1,2": 1,
+     "2,2": 3
+    }
+   },
+   "_src": {
+    "seed": "bk781265",
+    "idx": 3,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "hidden|A-e|S2": {
+   "kind": "layers",
+   "ask": "<b>층별로 나타낸 모양</b>이에요. 쌓기나무는 모두 몇 개일까요?",
+   "given": {
+    "kind": "layers",
+    "gx": 3,
+    "gz": 3,
+    "layers": [
+     [
+      "0,2",
+      "1,1",
+      "1,2",
+      "2,1",
+      "2,2"
+     ],
+     [
+      "1,2",
+      "2,1"
+     ],
+     [
+      "1,2"
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bke6f7f3",
+    "idx": 3,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "minmax|G-c|S2": {
+   "kind": "isoTop",
+   "ask": "겨냥도를 보고, <b>2층 이상</b> 쌓인 칸은 모두 몇 칸인지 세요.",
+   "given": {
+    "kind": "isoTop",
+    "iso": "<svg viewBox=\"-90 -68 180 158\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"-20,-14 0,-4 -20,6 -40,-4\" fill=\"#e6c9a0\"/><polygon points=\"40,20 20,30 20,6 40,-4\" fill=\"#c8965a\"/><polygon points=\"0,-4 20,6 20,-18 0,-28\" fill=\"#d8a76e\"/><polygon points=\"40,-4 20,6 20,-18 40,-28\" fill=\"#c8965a\"/><polygon points=\"20,-38 40,-28 20,-18 0,-28\" fill=\"#e6c9a0\"/><polygon points=\"-60,30 -40,40 -40,16 -60,6\" fill=\"#d8a76e\"/><polygon points=\"-40,-4 -20,6 -40,16 -60,6\" fill=\"#e6c9a0\"/><polygon points=\"20,30 0,40 0,16 20,6\" fill=\"#c8965a\"/><polygon points=\"0,-4 20,6 0,16 -20,6\" fill=\"#e6c9a0\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#d8a76e\"/><polygon points=\"-20,6 0,16 -20,26 -40,16\" fill=\"#e6c9a0\"/><polygon points=\"-20,50 0,60 0,36 -20,26\" fill=\"#d8a76e\"/><polygon points=\"20,50 0,60 0,36 20,26\" fill=\"#c8965a\"/><polygon points=\"0,16 20,26 0,36 -20,26\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-50.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-64.4\" y=\"43.2\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"64.4\" y=\"43.2\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>",
+    "top": {
+     "t": "grid",
+     "g": [
+      [
+       0,
+       1,
+       0
+      ],
+      [
+       1,
+       1,
+       0
+      ],
+      [
+       1,
+       1,
+       1
+      ]
+     ],
+     "cols": 3,
+     "rows": 3
+    }
+   },
+   "_src": {
+    "seed": "bkaef419",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "count||S3": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 쌓기나무는 모두 몇 개일까요?",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      2
+     ],
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      2,
+      0,
+      1
+     ],
+     [
+      2,
+      1,
+      1
+     ],
+     [
+      2,
+      0,
+      2
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bk7a4f26",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "facesMc||S3": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 옆에서 본 모양을 고르세요.",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      1
+     ],
+     [
+      0,
+      2,
+      1
+     ],
+     [
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      2,
+      1,
+      0
+     ],
+     [
+      2,
+      2,
+      0
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bk78df4b",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "heightmap||S3": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 위에서 본 모양의 각 칸에 쌓인 나무 수를 써 보세요.",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      0,
+      0,
+      2
+     ],
+     [
+      0,
+      1,
+      2
+     ],
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      0,
+      2
+     ],
+     [
+      2,
+      0,
+      1
+     ],
+     [
+      2,
+      0,
+      2
+     ],
+     [
+      2,
+      1,
+      2
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bk7cb6ca",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "hidden|A-c|S3": {
+   "kind": "numTop",
+   "ask": "위에서 본 모양의 각 칸에 <b>쌓인 나무 수</b>가 적혀 있어요. 쌓기나무는 모두 몇 개일까요?",
+   "given": {
+    "kind": "numTop",
+    "gx": 3,
+    "gz": 3,
+    "heights": {
+     "1,1": 2,
+     "1,2": 3,
+     "2,1": 2,
+     "2,2": 2
+    }
+   },
+   "_src": {
+    "seed": "bkcd3bae",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "hidden|A-e|S3": {
+   "kind": "layers",
+   "ask": "<b>층별로 나타낸 모양</b>이에요. 쌓기나무는 모두 몇 개일까요?",
+   "given": {
+    "kind": "layers",
+    "gx": 3,
+    "gz": 3,
+    "layers": [
+     [
+      "0,1",
+      "0,2",
+      "1,1",
+      "1,2",
+      "2,1"
+     ],
+     [
+      "0,1",
+      "1,1",
+      "1,2",
+      "2,1"
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bkdd15d1",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "manip|H-c|S3": {
+   "kind": "isoTop",
+   "ask": "이 모양에 쌓기나무를 더 놓아 <b>가장 작은 정육면체</b>를 만들려고 해요. 몇 개가 더 필요할까요?",
+   "given": {
+    "kind": "isoTop",
+    "iso": "<svg viewBox=\"-90 -102 180 192\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"0,-72 20,-62 0,-52 -20,-62\" fill=\"#e6c9a0\"/><polygon points=\"-40,-28 -20,-18 -20,-42 -40,-52\" fill=\"#d8a76e\"/><polygon points=\"0,-28 -20,-18 -20,-42 0,-52\" fill=\"#c8965a\"/><polygon points=\"-20,-62 0,-52 -20,-42 -40,-52\" fill=\"#e6c9a0\"/><polygon points=\"0,-28 20,-18 20,-42 0,-52\" fill=\"#d8a76e\"/><polygon points=\"20,-62 40,-52 20,-42 0,-52\" fill=\"#e6c9a0\"/><polygon points=\"-60,30 -40,40 -40,16 -60,6\" fill=\"#d8a76e\"/><polygon points=\"60,30 40,40 40,16 60,6\" fill=\"#c8965a\"/><polygon points=\"-60,6 -40,16 -40,-8 -60,-18\" fill=\"#d8a76e\"/><polygon points=\"-20,6 -40,16 -40,-8 -20,-18\" fill=\"#c8965a\"/><polygon points=\"-40,-28 -20,-18 -40,-8 -60,-18\" fill=\"#e6c9a0\"/><polygon points=\"-20,6 0,16 0,-8 -20,-18\" fill=\"#d8a76e\"/><polygon points=\"20,6 0,16 0,-8 20,-18\" fill=\"#c8965a\"/><polygon points=\"0,-28 20,-18 0,-8 -20,-18\" fill=\"#e6c9a0\"/><polygon points=\"20,6 40,16 40,-8 20,-18\" fill=\"#d8a76e\"/><polygon points=\"60,6 40,16 40,-8 60,-18\" fill=\"#c8965a\"/><polygon points=\"20,-18 40,-8 40,-32 20,-42\" fill=\"#d8a76e\"/><polygon points=\"60,-18 40,-8 40,-32 60,-42\" fill=\"#c8965a\"/><polygon points=\"40,-52 60,-42 40,-32 20,-42\" fill=\"#e6c9a0\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#d8a76e\"/><polygon points=\"-20,6 0,16 -20,26 -40,16\" fill=\"#e6c9a0\"/><polygon points=\"40,40 20,50 20,26 40,16\" fill=\"#c8965a\"/><polygon points=\"20,6 40,16 20,26 0,16\" fill=\"#e6c9a0\"/><polygon points=\"-20,50 0,60 0,36 -20,26\" fill=\"#d8a76e\"/><polygon points=\"20,50 0,60 0,36 20,26\" fill=\"#c8965a\"/><polygon points=\"0,16 20,26 0,36 -20,26\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-84.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-69.8\" y=\"28.9\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"69.8\" y=\"28.9\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>",
+    "top": {
+     "t": "grid",
+     "g": [
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       1,
+       1,
+       1
+      ]
+     ],
+     "cols": 3,
+     "rows": 3
+    }
+   },
+   "_src": {
+    "seed": "bk3a694d",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "minmax|G-c|S3": {
+   "kind": "isoTop",
+   "ask": "겨냥도를 보고, <b>2층 이상</b> 쌓인 칸은 모두 몇 칸인지 세요.",
+   "given": {
+    "kind": "isoTop",
+    "iso": "<svg viewBox=\"-90 -58 180 148\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"20,10 0,20 0,-4 20,-14\" fill=\"#c8965a\"/><polygon points=\"0,-24 20,-14 0,-4 -20,-14\" fill=\"#e6c9a0\"/><polygon points=\"-20,-14 0,-4 -20,6 -40,-4\" fill=\"#e6c9a0\"/><polygon points=\"60,30 40,40 40,16 60,6\" fill=\"#c8965a\"/><polygon points=\"0,-4 20,6 0,16 -20,6\" fill=\"#e6c9a0\"/><polygon points=\"-60,30 -40,40 -40,16 -60,6\" fill=\"#d8a76e\"/><polygon points=\"-40,-4 -20,6 -40,16 -60,6\" fill=\"#e6c9a0\"/><polygon points=\"20,6 40,16 40,-8 20,-18\" fill=\"#d8a76e\"/><polygon points=\"60,6 40,16 40,-8 60,-18\" fill=\"#c8965a\"/><polygon points=\"40,-28 60,-18 40,-8 20,-18\" fill=\"#e6c9a0\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#d8a76e\"/><polygon points=\"-20,6 0,16 -20,26 -40,16\" fill=\"#e6c9a0\"/><polygon points=\"40,40 20,50 20,26 40,16\" fill=\"#c8965a\"/><polygon points=\"20,6 40,16 20,26 0,16\" fill=\"#e6c9a0\"/><polygon points=\"-20,50 0,60 0,36 -20,26\" fill=\"#d8a76e\"/><polygon points=\"20,50 0,60 0,36 20,26\" fill=\"#c8965a\"/><polygon points=\"0,16 20,26 0,36 -20,26\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-40.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-64.4\" y=\"48.2\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"64.4\" y=\"48.2\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>",
+    "top": {
+     "t": "grid",
+     "g": [
+      [
+       1,
+       0,
+       1
+      ],
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       1,
+       1,
+       1
+      ]
+     ],
+     "cols": 3,
+     "rows": 3
+    }
+   },
+   "_src": {
+    "seed": "bk8842d9",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "count||S4": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 쌓기나무는 모두 몇 개일까요?",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      2,
+      0
+     ],
+     [
+      2,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      2
+     ],
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      2,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      2,
+      0
+     ],
+     [
+      0,
+      0,
+      1
+     ]
+    ]
+   },
+   "top": {
+    "t": "grid",
+    "g": [
+     [
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      1,
+      0
+     ]
+    ],
+    "cols": 3,
+    "rows": 3
+   },
+   "_src": {
+    "seed": "bk97ac5c",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "facesDraw||S4": {
+   "kind": "isoTop",
+   "ask": "쌓기나무로 쌓은 모양입니다. <b>앞</b>에서 본 모양을 각 칸을 칠해 그려 보세요.",
+   "given": {
+    "kind": "isoTop",
+    "iso": "<svg viewBox=\"-90 -68 180 158\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"0,-24 20,-14 0,-4 -20,-14\" fill=\"#e6c9a0\"/><polygon points=\"-20,-14 0,-4 -20,6 -40,-4\" fill=\"#e6c9a0\"/><polygon points=\"0,-4 20,6 20,-18 0,-28\" fill=\"#d8a76e\"/><polygon points=\"40,-4 20,6 20,-18 40,-28\" fill=\"#c8965a\"/><polygon points=\"20,-38 40,-28 20,-18 0,-28\" fill=\"#e6c9a0\"/><polygon points=\"60,30 40,40 40,16 60,6\" fill=\"#c8965a\"/><polygon points=\"40,-4 60,6 40,16 20,6\" fill=\"#e6c9a0\"/><polygon points=\"0,-4 20,6 0,16 -20,6\" fill=\"#e6c9a0\"/><polygon points=\"-60,30 -40,40 -40,16 -60,6\" fill=\"#d8a76e\"/><polygon points=\"-40,-4 -20,6 -40,16 -60,6\" fill=\"#e6c9a0\"/><polygon points=\"40,40 20,50 20,26 40,16\" fill=\"#c8965a\"/><polygon points=\"20,6 40,16 20,26 0,16\" fill=\"#e6c9a0\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#d8a76e\"/><polygon points=\"-20,6 0,16 -20,26 -40,16\" fill=\"#e6c9a0\"/><polygon points=\"-20,50 0,60 0,36 -20,26\" fill=\"#d8a76e\"/><polygon points=\"20,50 0,60 0,36 20,26\" fill=\"#c8965a\"/><polygon points=\"0,16 20,26 0,36 -20,26\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-50.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-64.4\" y=\"43.2\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"64.4\" y=\"43.2\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>",
+    "top": {
+     "t": "grid",
+     "g": [
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       1,
+       1,
+       1
+      ]
+     ],
+     "cols": 3,
+     "rows": 3
+    }
+   },
+   "_src": {
+    "seed": "bke41688",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "facesMc||S4": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 앞에서 본 모양을 고르세요.",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      0,
+      2
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      2
+     ],
+     [
+      0,
+      1,
+      2
+     ],
+     [
+      0,
+      0,
+      1
+     ],
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      2,
+      1,
+      0
+     ],
+     [
+      2,
+      0,
+      2
+     ]
+    ]
+   },
+   "top": {
+    "t": "grid",
+    "g": [
+     [
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    "cols": 3,
+    "rows": 3
+   },
+   "_src": {
+    "seed": "bk778a99",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "heightmap||S4": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 위에서 본 모양의 각 칸에 쌓인 나무 수를 써 보세요.",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      2
+     ],
+     [
+      1,
+      1,
+      2
+     ],
+     [
+      0,
+      0,
+      2
+     ],
+     [
+      1,
+      0,
+      0
+     ],
+     [
+      2,
+      0,
+      0
+     ],
+     [
+      2,
+      1,
+      0
+     ],
+     [
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      1
+     ]
+    ]
+   },
+   "top": {
+    "t": "grid",
+    "g": [
+     [
+      0,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      0
+     ]
+    ],
+    "cols": 3,
+    "rows": 3
+   },
+   "_src": {
+    "seed": "bkec118d",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "hidden|A-a|S4": {
+   "kind": "isoTop",
+   "ask": "겨냥도와 위에서 본 모양을 비교해요. <b>안 보이게 숨은 쌓기나무가 있나요?</b>",
+   "given": {
+    "kind": "isoTop",
+    "iso": "<svg viewBox=\"-90 -78 180 168\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"-20,10 0,20 0,-4 -20,-14\" fill=\"#d8a76e\"/><polygon points=\"-20,-14 0,-4 0,-28 -20,-38\" fill=\"#d8a76e\"/><polygon points=\"0,-48 20,-38 0,-28 -20,-38\" fill=\"#e6c9a0\"/><polygon points=\"0,-4 20,6 20,-18 0,-28\" fill=\"#d8a76e\"/><polygon points=\"20,-38 40,-28 20,-18 0,-28\" fill=\"#e6c9a0\"/><polygon points=\"60,30 40,40 40,16 60,6\" fill=\"#c8965a\"/><polygon points=\"20,6 40,16 40,-8 20,-18\" fill=\"#d8a76e\"/><polygon points=\"60,6 40,16 40,-8 60,-18\" fill=\"#c8965a\"/><polygon points=\"40,-28 60,-18 40,-8 20,-18\" fill=\"#e6c9a0\"/><polygon points=\"40,40 20,50 20,26 40,16\" fill=\"#c8965a\"/><polygon points=\"20,6 40,16 20,26 0,16\" fill=\"#e6c9a0\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#d8a76e\"/><polygon points=\"-40,16 -20,26 -20,2 -40,-8\" fill=\"#d8a76e\"/><polygon points=\"-20,-18 0,-8 -20,2 -40,-8\" fill=\"#e6c9a0\"/><polygon points=\"-20,50 0,60 0,36 -20,26\" fill=\"#d8a76e\"/><polygon points=\"20,50 0,60 0,36 20,26\" fill=\"#c8965a\"/><polygon points=\"-20,26 0,36 0,12 -20,2\" fill=\"#d8a76e\"/><polygon points=\"20,26 0,36 0,12 20,2\" fill=\"#c8965a\"/><polygon points=\"-20,2 0,12 0,-12 -20,-22\" fill=\"#d8a76e\"/><polygon points=\"20,2 0,12 0,-12 20,-22\" fill=\"#c8965a\"/><polygon points=\"0,-32 20,-22 0,-12 -20,-22\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-60.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-64.4\" y=\"38.2\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"64.4\" y=\"38.2\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>",
+    "top": {
+     "t": "grid",
+     "g": [
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       0,
+       1,
+       1
+      ],
+      [
+       0,
+       1,
+       1
+      ]
+     ],
+     "cols": 3,
+     "rows": 3
+    }
+   },
+   "_src": {
+    "seed": "bk52a57c",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "hidden|A-b|S4": {
+   "kind": "isoTop",
+   "ask": "위에서 본 모양에서 <b>안 보이는 나무가 숨은 칸</b>을 모두 눌러요.",
+   "given": {
+    "kind": "isoTop",
+    "iso": "<svg viewBox=\"-90 -102 180 192\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"-20,-14 0,-4 0,-28 -20,-38\" fill=\"#d8a76e\"/><polygon points=\"20,-14 0,-4 0,-28 20,-38\" fill=\"#c8965a\"/><polygon points=\"-20,-38 0,-28 0,-52 -20,-62\" fill=\"#d8a76e\"/><polygon points=\"20,-38 0,-28 0,-52 20,-62\" fill=\"#c8965a\"/><polygon points=\"0,-72 20,-62 0,-52 -20,-62\" fill=\"#e6c9a0\"/><polygon points=\"60,30 40,40 40,16 60,6\" fill=\"#c8965a\"/><polygon points=\"-20,30 0,40 0,16 -20,6\" fill=\"#d8a76e\"/><polygon points=\"60,6 40,16 40,-8 60,-18\" fill=\"#c8965a\"/><polygon points=\"-20,6 0,16 0,-8 -20,-18\" fill=\"#d8a76e\"/><polygon points=\"0,-28 20,-18 0,-8 -20,-18\" fill=\"#e6c9a0\"/><polygon points=\"60,-18 40,-8 40,-32 60,-42\" fill=\"#c8965a\"/><polygon points=\"40,-52 60,-42 40,-32 20,-42\" fill=\"#e6c9a0\"/><polygon points=\"0,40 20,50 20,26 0,16\" fill=\"#d8a76e\"/><polygon points=\"40,40 20,50 20,26 40,16\" fill=\"#c8965a\"/><polygon points=\"0,16 20,26 20,2 0,-8\" fill=\"#d8a76e\"/><polygon points=\"40,16 20,26 20,2 40,-8\" fill=\"#c8965a\"/><polygon points=\"0,-8 20,2 20,-22 0,-32\" fill=\"#d8a76e\"/><polygon points=\"40,-8 20,2 20,-22 40,-32\" fill=\"#c8965a\"/><polygon points=\"20,-42 40,-32 20,-22 0,-32\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-84.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-69.8\" y=\"28.9\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"69.8\" y=\"28.9\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>",
+    "top": {
+     "t": "grid",
+     "g": [
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       0,
+       1,
+       1
+      ],
+      [
+       0,
+       0,
+       0
+      ]
+     ],
+     "cols": 3,
+     "rows": 3
+    }
+   },
+   "_src": {
+    "seed": "bk7d3f49",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "hidden|A-c|S4": {
+   "kind": "numTop",
+   "ask": "위에서 본 모양의 각 칸에 <b>쌓인 나무 수</b>가 적혀 있어요. 쌓기나무는 모두 몇 개일까요?",
+   "given": {
+    "kind": "numTop",
+    "gx": 3,
+    "gz": 3,
+    "heights": {
+     "0,0": 1,
+     "0,1": 2,
+     "0,2": 2,
+     "1,0": 1,
+     "1,1": 1,
+     "1,2": 1,
+     "2,0": 3,
+     "2,1": 1,
+     "2,2": 1
+    }
+   },
+   "_src": {
+    "seed": "bk550ddf",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "hidden|A-d|S4": {
+   "kind": "sils",
+   "ask": "세 방향(위·앞·옆)에서 본 모양이 되려면 쌓기나무는 <b>최대</b> 몇 개일까요?",
+   "given": {
+    "kind": "sils",
+    "sils": {
+     "top": {
+      "t": "grid",
+      "g": [
+       [
+        1,
+        0,
+        0
+       ],
+       [
+        1,
+        1,
+        0
+       ],
+       [
+        1,
+        0,
+        0
+       ]
+      ],
+      "cols": 3,
+      "rows": 3
+     },
+     "front": {
+      "t": "bars",
+      "a": [
+       3,
+       3,
+       0
+      ],
+      "rows": 3
+     },
+     "side": {
+      "t": "bars",
+      "a": [
+       3,
+       3,
+       3
+      ],
+      "rows": 3
+     }
+    }
+   },
+   "_src": {
+    "seed": "bka298ba",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "hidden|A-e|S4": {
+   "kind": "layers",
+   "ask": "<b>층별로 나타낸 모양</b>이에요. 쌓기나무는 모두 몇 개일까요?",
+   "given": {
+    "kind": "layers",
+    "gx": 3,
+    "gz": 3,
+    "layers": [
+     [
+      "0,0",
+      "0,1",
+      "0,2"
+     ],
+     [
+      "0,0",
+      "0,1",
+      "0,2"
+     ],
+     [
+      "0,0",
+      "0,1",
+      "0,2"
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bkbc0850",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "hidden|A-f|S4": {
+   "kind": "isoTop",
+   "ask": "겨냥도와 위에서 본 모양이 이래요. <b>쌓은 모양이 될 수 있는 것은 몇 가지</b>일까요?",
+   "note": "(단, 돌렸을 때 같은 모양은 한 가지로 봅니다.)",
+   "given": {
+    "kind": "isoTop",
+    "iso": "<svg viewBox=\"-90 -72 180 162\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"-60,30 -40,40 -40,16 -60,6\" fill=\"#d8a76e\"/><polygon points=\"-40,-4 -20,6 -40,16 -60,6\" fill=\"#e6c9a0\"/><polygon points=\"0,-28 20,-18 0,-8 -20,-18\" fill=\"#e6c9a0\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#d8a76e\"/><polygon points=\"0,40 -20,50 -20,26 0,16\" fill=\"#c8965a\"/><polygon points=\"0,40 20,50 20,26 0,16\" fill=\"#d8a76e\"/><polygon points=\"40,40 20,50 20,26 40,16\" fill=\"#c8965a\"/><polygon points=\"-40,16 -20,26 -20,2 -40,-8\" fill=\"#d8a76e\"/><polygon points=\"0,16 -20,26 -20,2 0,-8\" fill=\"#c8965a\"/><polygon points=\"0,16 20,26 20,2 0,-8\" fill=\"#d8a76e\"/><polygon points=\"40,16 20,26 20,2 40,-8\" fill=\"#c8965a\"/><polygon points=\"-40,-8 -20,2 -20,-22 -40,-32\" fill=\"#d8a76e\"/><polygon points=\"0,-8 -20,2 -20,-22 0,-32\" fill=\"#c8965a\"/><polygon points=\"-20,-42 0,-32 -20,-22 -40,-32\" fill=\"#e6c9a0\"/><polygon points=\"0,-8 20,2 20,-22 0,-32\" fill=\"#d8a76e\"/><polygon points=\"40,-8 20,2 20,-22 40,-32\" fill=\"#c8965a\"/><polygon points=\"20,-42 40,-32 20,-22 0,-32\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-54.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-64.4\" y=\"41.2\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"64.4\" y=\"41.2\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>",
+    "top": {
+     "t": "grid",
+     "g": [
+      [
+       0,
+       1,
+       0
+      ],
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       1,
+       1,
+       0
+      ]
+     ],
+     "cols": 3,
+     "rows": 3
+    }
+   },
+   "_src": {
+    "seed": "bkec9e00",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "manip|H-a|S4": {
+   "kind": "isoMark",
+   "ask": "표시한 줄에 <b>1개를 더 쌓은</b> 뒤의 <b>위·앞·옆에서 본 모양</b>을 각 칸을 칠해 그리세요.",
+   "given": {
+    "kind": "isoMark",
+    "iso": "<svg viewBox=\"-90 -102 180 192\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"-20,10 0,20 0,-4 -20,-14\" fill=\"#d8a76e\"/><polygon points=\"20,10 0,20 0,-4 20,-14\" fill=\"#c8965a\"/><polygon points=\"0,-24 20,-14 0,-4 -20,-14\" fill=\"#e6c9a0\"/><polygon points=\"-20,-14 0,-4 0,-28 -20,-38\" fill=\"#d8a76e\"/><polygon points=\"20,-14 0,-4 0,-28 20,-38\" fill=\"#c8965a\"/><polygon points=\"0,-48 20,-38 0,-28 -20,-38\" fill=\"#e6c9a0\"/><polygon points=\"-20,-38 0,-28 0,-52 -20,-62\" fill=\"#d8a76e\"/><polygon points=\"20,-38 0,-28 0,-52 20,-62\" fill=\"#c8965a\"/><polygon points=\"0,-72 20,-62 0,-52 -20,-62\" fill=\"#e6c9a0\"/><polygon points=\"-40,20 -20,30 -20,6 -40,-4\" fill=\"#d84a5e\" stroke=\"#7c1f2c\"/><polygon points=\"0,20 -20,30 -20,6 0,-4\" fill=\"#b83346\" stroke=\"#7c1f2c\"/><polygon points=\"-20,-14 0,-4 -20,6 -40,-4\" fill=\"#ef7f8e\" stroke=\"#7c1f2c\"/><polygon points=\"-40,-4 -20,6 -20,-18 -40,-28\" fill=\"#d84a5e\" stroke=\"#7c1f2c\"/><polygon points=\"0,-4 -20,6 -20,-18 0,-28\" fill=\"#b83346\" stroke=\"#7c1f2c\"/><polygon points=\"-20,-38 0,-28 -20,-18 -40,-28\" fill=\"#ef7f8e\" stroke=\"#7c1f2c\"/><polygon points=\"-60,30 -40,40 -40,16 -60,6\" fill=\"#d8a76e\"/><polygon points=\"-20,30 -40,40 -40,16 -20,6\" fill=\"#c8965a\"/><polygon points=\"-40,-4 -20,6 -40,16 -60,6\" fill=\"#e6c9a0\"/><polygon points=\"-20,30 0,40 0,16 -20,6\" fill=\"#d8a76e\"/><polygon points=\"20,30 0,40 0,16 20,6\" fill=\"#c8965a\"/><polygon points=\"0,-4 20,6 0,16 -20,6\" fill=\"#e6c9a0\"/><polygon points=\"-60,6 -40,16 -40,-8 -60,-18\" fill=\"#d8a76e\"/><polygon points=\"-20,6 -40,16 -40,-8 -20,-18\" fill=\"#c8965a\"/><polygon points=\"-40,-28 -20,-18 -40,-8 -60,-18\" fill=\"#e6c9a0\"/><polygon points=\"-20,6 0,16 0,-8 -20,-18\" fill=\"#d8a76e\"/><polygon points=\"20,6 0,16 0,-8 20,-18\" fill=\"#c8965a\"/><polygon points=\"0,-28 20,-18 0,-8 -20,-18\" fill=\"#e6c9a0\"/><polygon points=\"-60,-18 -40,-8 -40,-32 -60,-42\" fill=\"#d8a76e\"/><polygon points=\"-20,-18 -40,-8 -40,-32 -20,-42\" fill=\"#c8965a\"/><polygon points=\"-40,-52 -20,-42 -40,-32 -60,-42\" fill=\"#e6c9a0\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#d8a76e\"/><polygon points=\"0,40 -20,50 -20,26 0,16\" fill=\"#c8965a\"/><polygon points=\"-20,6 0,16 -20,26 -40,16\" fill=\"#e6c9a0\"/><polygon points=\"-20,50 0,60 0,36 -20,26\" fill=\"#d8a76e\"/><polygon points=\"20,50 0,60 0,36 20,26\" fill=\"#c8965a\"/><polygon points=\"0,16 20,26 0,36 -20,26\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-84.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-69.8\" y=\"28.9\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"69.8\" y=\"28.9\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>"
+   },
+   "_src": {
+    "seed": "bk872390",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "manip|H-b|S4": {
+   "kind": "isoMark",
+   "ask": "표시한 줄에서 <b>1개를 빼낸</b> 뒤의 <b>위·앞·옆에서 본 모양</b>을 각 칸을 칠해 그리세요.",
+   "given": {
+    "kind": "isoMark",
+    "iso": "<svg viewBox=\"-90 -68 180 158\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"-20,10 0,20 0,-4 -20,-14\" fill=\"#d8a76e\"/><polygon points=\"20,10 0,20 0,-4 20,-14\" fill=\"#c8965a\"/><polygon points=\"0,-24 20,-14 0,-4 -20,-14\" fill=\"#e6c9a0\"/><polygon points=\"0,20 20,30 20,6 0,-4\" fill=\"#d8a76e\"/><polygon points=\"40,20 20,30 20,6 40,-4\" fill=\"#c8965a\"/><polygon points=\"20,-14 40,-4 20,6 0,-4\" fill=\"#e6c9a0\"/><polygon points=\"-40,20 -20,30 -20,6 -40,-4\" fill=\"#d84a5e\" stroke=\"#7c1f2c\"/><polygon points=\"0,20 -20,30 -20,6 0,-4\" fill=\"#b83346\" stroke=\"#7c1f2c\"/><polygon points=\"-20,-14 0,-4 -20,6 -40,-4\" fill=\"#ef7f8e\" stroke=\"#7c1f2c\"/><polygon points=\"0,-4 20,6 20,-18 0,-28\" fill=\"#d8a76e\"/><polygon points=\"40,-4 20,6 20,-18 40,-28\" fill=\"#c8965a\"/><polygon points=\"20,-38 40,-28 20,-18 0,-28\" fill=\"#e6c9a0\"/><polygon points=\"-40,-4 -20,6 -20,-18 -40,-28\" fill=\"#d84a5e\" stroke=\"#7c1f2c\"/><polygon points=\"0,-4 -20,6 -20,-18 0,-28\" fill=\"#b83346\" stroke=\"#7c1f2c\"/><polygon points=\"-20,-38 0,-28 -20,-18 -40,-28\" fill=\"#ef7f8e\" stroke=\"#7c1f2c\"/><polygon points=\"20,30 40,40 40,16 20,6\" fill=\"#d8a76e\"/><polygon points=\"60,30 40,40 40,16 60,6\" fill=\"#c8965a\"/><polygon points=\"40,-4 60,6 40,16 20,6\" fill=\"#e6c9a0\"/><polygon points=\"-20,30 0,40 0,16 -20,6\" fill=\"#d8a76e\"/><polygon points=\"20,30 0,40 0,16 20,6\" fill=\"#c8965a\"/><polygon points=\"0,-4 20,6 0,16 -20,6\" fill=\"#e6c9a0\"/><polygon points=\"-60,30 -40,40 -40,16 -60,6\" fill=\"#d8a76e\"/><polygon points=\"-20,30 -40,40 -40,16 -20,6\" fill=\"#c8965a\"/><polygon points=\"-40,-4 -20,6 -40,16 -60,6\" fill=\"#e6c9a0\"/><polygon points=\"0,40 20,50 20,26 0,16\" fill=\"#d8a76e\"/><polygon points=\"40,40 20,50 20,26 40,16\" fill=\"#c8965a\"/><polygon points=\"20,6 40,16 20,26 0,16\" fill=\"#e6c9a0\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#d8a76e\"/><polygon points=\"0,40 -20,50 -20,26 0,16\" fill=\"#c8965a\"/><polygon points=\"-20,6 0,16 -20,26 -40,16\" fill=\"#e6c9a0\"/><polygon points=\"-20,50 0,60 0,36 -20,26\" fill=\"#d8a76e\"/><polygon points=\"20,50 0,60 0,36 20,26\" fill=\"#c8965a\"/><polygon points=\"0,16 20,26 0,36 -20,26\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-50.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-64.4\" y=\"43.2\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"64.4\" y=\"43.2\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>"
+   },
+   "_src": {
+    "seed": "bk7f67ce",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "manip|H-c|S4": {
+   "kind": "isoTop",
+   "ask": "이 모양에 쌓기나무를 더 놓아 <b>가장 작은 정육면체</b>를 만들려고 해요. 몇 개가 더 필요할까요?",
+   "given": {
+    "kind": "isoTop",
+    "iso": "<svg viewBox=\"-90 -102 180 192\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"20,-38 0,-28 0,-52 20,-62\" fill=\"#c8965a\"/><polygon points=\"0,-72 20,-62 0,-52 -20,-62\" fill=\"#e6c9a0\"/><polygon points=\"-40,-4 -20,6 -20,-18 -40,-28\" fill=\"#d8a76e\"/><polygon points=\"40,-4 20,6 20,-18 40,-28\" fill=\"#c8965a\"/><polygon points=\"20,-38 40,-28 20,-18 0,-28\" fill=\"#e6c9a0\"/><polygon points=\"-40,-28 -20,-18 -20,-42 -40,-52\" fill=\"#d8a76e\"/><polygon points=\"0,-28 -20,-18 -20,-42 0,-52\" fill=\"#c8965a\"/><polygon points=\"-20,-62 0,-52 -20,-42 -40,-52\" fill=\"#e6c9a0\"/><polygon points=\"-60,30 -40,40 -40,16 -60,6\" fill=\"#d8a76e\"/><polygon points=\"-40,-4 -20,6 -40,16 -60,6\" fill=\"#e6c9a0\"/><polygon points=\"60,30 40,40 40,16 60,6\" fill=\"#c8965a\"/><polygon points=\"40,-4 60,6 40,16 20,6\" fill=\"#e6c9a0\"/><polygon points=\"-20,6 0,16 0,-8 -20,-18\" fill=\"#d8a76e\"/><polygon points=\"20,6 0,16 0,-8 20,-18\" fill=\"#c8965a\"/><polygon points=\"0,-28 20,-18 0,-8 -20,-18\" fill=\"#e6c9a0\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#d8a76e\"/><polygon points=\"-20,6 0,16 -20,26 -40,16\" fill=\"#e6c9a0\"/><polygon points=\"40,40 20,50 20,26 40,16\" fill=\"#c8965a\"/><polygon points=\"20,6 40,16 20,26 0,16\" fill=\"#e6c9a0\"/><polygon points=\"-20,50 0,60 0,36 -20,26\" fill=\"#d8a76e\"/><polygon points=\"20,50 0,60 0,36 20,26\" fill=\"#c8965a\"/><polygon points=\"0,16 20,26 0,36 -20,26\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-84.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-69.8\" y=\"28.9\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"69.8\" y=\"28.9\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>",
+    "top": {
+     "t": "grid",
+     "g": [
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       1,
+       1,
+       1
+      ]
+     ],
+     "cols": 3,
+     "rows": 3
+    }
+   },
+   "_src": {
+    "seed": "bk0d82f3",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "manip|H-d|S4": {
+   "kind": "paintedCube",
+   "ask": "한 변이 <b>3개</b>인 정육면체의 겉면을 모두 색칠한 뒤 낱개로 떼어내면, <b>한 면만 색칠된</b> 쌓기나무는 몇 개일까요?",
+   "given": {
+    "kind": "paintedCube",
+    "iso": "<svg viewBox=\"-90 -102 180 192\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"0,-72 20,-62 0,-52 -20,-62\" fill=\"#a9d1f5\"/><polygon points=\"-20,-62 0,-52 -20,-42 -40,-52\" fill=\"#a9d1f5\"/><polygon points=\"20,-62 40,-52 20,-42 0,-52\" fill=\"#a9d1f5\"/><polygon points=\"-60,30 -40,40 -40,16 -60,6\" fill=\"#7fb3e8\"/><polygon points=\"60,30 40,40 40,16 60,6\" fill=\"#5b93cc\"/><polygon points=\"-60,6 -40,16 -40,-8 -60,-18\" fill=\"#7fb3e8\"/><polygon points=\"60,6 40,16 40,-8 60,-18\" fill=\"#5b93cc\"/><polygon points=\"-60,-18 -40,-8 -40,-32 -60,-42\" fill=\"#7fb3e8\"/><polygon points=\"-40,-52 -20,-42 -40,-32 -60,-42\" fill=\"#a9d1f5\"/><polygon points=\"0,-52 20,-42 0,-32 -20,-42\" fill=\"#a9d1f5\"/><polygon points=\"60,-18 40,-8 40,-32 60,-42\" fill=\"#5b93cc\"/><polygon points=\"40,-52 60,-42 40,-32 20,-42\" fill=\"#a9d1f5\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#7fb3e8\"/><polygon points=\"40,40 20,50 20,26 40,16\" fill=\"#5b93cc\"/><polygon points=\"-40,16 -20,26 -20,2 -40,-8\" fill=\"#7fb3e8\"/><polygon points=\"40,16 20,26 20,2 40,-8\" fill=\"#5b93cc\"/><polygon points=\"-40,-8 -20,2 -20,-22 -40,-32\" fill=\"#7fb3e8\"/><polygon points=\"-20,-42 0,-32 -20,-22 -40,-32\" fill=\"#a9d1f5\"/><polygon points=\"40,-8 20,2 20,-22 40,-32\" fill=\"#5b93cc\"/><polygon points=\"20,-42 40,-32 20,-22 0,-32\" fill=\"#a9d1f5\"/><polygon points=\"-20,50 0,60 0,36 -20,26\" fill=\"#7fb3e8\"/><polygon points=\"20,50 0,60 0,36 20,26\" fill=\"#5b93cc\"/><polygon points=\"-20,26 0,36 0,12 -20,2\" fill=\"#7fb3e8\"/><polygon points=\"20,26 0,36 0,12 20,2\" fill=\"#5b93cc\"/><polygon points=\"-20,2 0,12 0,-12 -20,-22\" fill=\"#7fb3e8\"/><polygon points=\"20,2 0,12 0,-12 20,-22\" fill=\"#5b93cc\"/><polygon points=\"0,-32 20,-22 0,-12 -20,-22\" fill=\"#a9d1f5\"/></g><text x=\"0.0\" y=\"-84.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-69.8\" y=\"28.9\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"69.8\" y=\"28.9\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>"
+   },
+   "_src": {
+    "seed": "bk5691d0",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "minmax|G-a|S4": {
+   "kind": "sils",
+   "ask": "세 방향 모양이 같도록 쌓을 때, <b>최대와 최소의 차이</b>는 몇 개일까요?",
+   "given": {
+    "kind": "sils",
+    "sils": {
+     "top": {
+      "t": "grid",
+      "g": [
+       [
+        1,
+        1,
+        1
+       ],
+       [
+        1,
+        1,
+        1
+       ],
+       [
+        0,
+        1,
+        0
+       ]
+      ],
+      "cols": 3,
+      "rows": 3
+     },
+     "front": {
+      "t": "bars",
+      "a": [
+       2,
+       2,
+       2
+      ],
+      "rows": 2
+     },
+     "side": {
+      "t": "bars",
+      "a": [
+       2,
+       1,
+       2
+      ],
+      "rows": 2
+     }
+    }
+   },
+   "_src": {
+    "seed": "bkd8ef6f",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "minmax|G-b|S4": {
+   "kind": "topOneSil",
+   "ask": "위에서 본 모양과 <b>옆에서 본 모양</b>이 이래요. 쌓기나무는 <b>최소</b> 몇 개일까요?",
+   "given": {
+    "kind": "topOneSil",
+    "dir": "side",
+    "top": {
+     "t": "grid",
+     "g": [
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       0,
+       1,
+       1
+      ]
+     ],
+     "cols": 3,
+     "rows": 3
+    },
+    "bars": {
+     "t": "bars",
+     "a": [
+      3,
+      2,
+      1
+     ],
+     "rows": 3
+    }
+   },
+   "_src": {
+    "seed": "bka23eff",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "minmax|G-c|S4": {
+   "kind": "isoTop",
+   "ask": "겨냥도를 보고, <b>2층 이상</b> 쌓인 칸은 모두 몇 칸인지 세요.",
+   "given": {
+    "kind": "isoTop",
+    "iso": "<svg viewBox=\"-90 -82 180 172\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"0,-24 20,-14 0,-4 -20,-14\" fill=\"#e6c9a0\"/><polygon points=\"-20,-14 0,-4 -20,6 -40,-4\" fill=\"#e6c9a0\"/><polygon points=\"0,-4 20,6 20,-18 0,-28\" fill=\"#d8a76e\"/><polygon points=\"20,-38 40,-28 20,-18 0,-28\" fill=\"#e6c9a0\"/><polygon points=\"-60,30 -40,40 -40,16 -60,6\" fill=\"#d8a76e\"/><polygon points=\"-40,-4 -20,6 -40,16 -60,6\" fill=\"#e6c9a0\"/><polygon points=\"60,30 40,40 40,16 60,6\" fill=\"#c8965a\"/><polygon points=\"0,-4 20,6 0,16 -20,6\" fill=\"#e6c9a0\"/><polygon points=\"60,6 40,16 40,-8 60,-18\" fill=\"#c8965a\"/><polygon points=\"20,-18 40,-8 40,-32 20,-42\" fill=\"#d8a76e\"/><polygon points=\"60,-18 40,-8 40,-32 60,-42\" fill=\"#c8965a\"/><polygon points=\"40,-52 60,-42 40,-32 20,-42\" fill=\"#e6c9a0\"/><polygon points=\"0,40 20,50 20,26 0,16\" fill=\"#d8a76e\"/><polygon points=\"40,40 20,50 20,26 40,16\" fill=\"#c8965a\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#d8a76e\"/><polygon points=\"0,40 -20,50 -20,26 0,16\" fill=\"#c8965a\"/><polygon points=\"-20,6 0,16 -20,26 -40,16\" fill=\"#e6c9a0\"/><polygon points=\"0,16 20,26 20,2 0,-8\" fill=\"#d8a76e\"/><polygon points=\"40,16 20,26 20,2 40,-8\" fill=\"#c8965a\"/><polygon points=\"20,-18 40,-8 20,2 0,-8\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-64.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-64.4\" y=\"36.2\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"64.4\" y=\"36.2\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>",
+    "top": {
+     "t": "grid",
+     "g": [
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       1,
+       1,
+       1
+      ],
+      [
+       1,
+       1,
+       0
+      ]
+     ],
+     "cols": 3,
+     "rows": 3
+    }
+   },
+   "_src": {
+    "seed": "bked5a47",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "surface||S4": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 이 모양의 겉넓이는 얼마일까요?",
+   "note": "(단, 바닥에 닿는 면도 포함합니다.)",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      0,
+      2
+     ],
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      2
+     ],
+     [
+      0,
+      0,
+      0
+     ],
+     [
+      0,
+      1,
+      0
+     ],
+     [
+      2,
+      0,
+      2
+     ],
+     [
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0
+     ],
+     [
+      2,
+      0,
+      1
+     ],
+     [
+      2,
+      0,
+      0
+     ]
+    ]
+   },
+   "top": {
+    "t": "grid",
+    "g": [
+     [
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      1,
+      1
+     ]
+    ],
+    "cols": 3,
+    "rows": 3
+   },
+   "_src": {
+    "seed": "bk7bd854",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
+  "volume||S4": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 이 모양의 부피는 얼마일까요?",
+   "note": "(단, 위에서 본 모양에는 있는데 보이지 않는 자리에는 쌓기나무가 1개씩 있습니다.)",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      0,
+      0,
+      1
+     ],
+     [
+      0,
+      1,
+      1
+     ],
+     [
+      1,
+      0,
+      0
+     ],
+     [
+      1,
+      1,
+      0
+     ],
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      1,
+      0,
+      2
+     ],
+     [
+      1,
+      1,
+      2
+     ],
+     [
+      2,
+      0,
+      1
+     ],
+     [
+      2,
+      1,
+      1
+     ],
+     [
+      2,
+      0,
+      2
+     ],
+     [
+      2,
+      1,
+      2
+     ],
+     [
+      2,
+      2,
+      2
+     ]
+    ]
+   },
+   "top": {
+    "t": "grid",
+    "g": [
+     [
+      0,
+      1,
+      0
+     ],
+     [
+      1,
+      1,
+      1
+     ],
+     [
+      0,
+      1,
+      1
+     ]
+    ],
+    "cols": 3,
+    "rows": 3
+   },
+   "_src": {
+    "seed": "bkc2f76f",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  }
+ }
+}
