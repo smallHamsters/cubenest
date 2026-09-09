@@ -1,7 +1,7 @@
 {
  "_generated": ".claude/tools/bake-samples.mjs 가 만든다 — 손으로 고치지 말 것",
  "bakedAt": "2026-09-09",
- "cfgVersion": "cfg-0.4.1",
+ "cfgVersion": "cfg-0.5.0",
  "level": "중",
  "count": 35,
  "items": {
@@ -215,6 +215,62 @@
     "try": 0
    }
   },
+  "facesMc||S2": {
+   "kind": "sh",
+   "ask": "쌓기나무로 쌓은 모양입니다. 앞에서 본 모양을 고르세요.",
+   "sh": {
+    "gx": 3,
+    "gz": 3,
+    "cells": [
+     [
+      1,
+      0,
+      2
+     ],
+     [
+      1,
+      1,
+      2
+     ],
+     [
+      2,
+      0,
+      2
+     ],
+     [
+      2,
+      1,
+      2
+     ],
+     [
+      2,
+      2,
+      2
+     ],
+     [
+      1,
+      0,
+      1
+     ],
+     [
+      1,
+      1,
+      1
+     ],
+     [
+      1,
+      2,
+      1
+     ]
+    ]
+   },
+   "_src": {
+    "seed": "bk20cc1e",
+    "idx": 0,
+    "level": "중",
+    "try": 0
+   }
+  },
   "heightmap||S2": {
    "kind": "sh",
    "ask": "쌓기나무로 쌓은 모양입니다. 위에서 본 모양의 각 칸에 쌓인 나무 수를 써 보세요.",
@@ -309,42 +365,6 @@
    "_src": {
     "seed": "bke6f7f3",
     "idx": 3,
-    "level": "중",
-    "try": 0
-   }
-  },
-  "minmax|G-c|S2": {
-   "kind": "isoTop",
-   "ask": "겨냥도를 보고, <b>2층 이상</b> 쌓인 칸은 모두 몇 칸인지 세요.",
-   "given": {
-    "kind": "isoTop",
-    "iso": "<svg viewBox=\"-90 -68 180 158\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"0\" y1=\"0\" x2=\"-60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"20\" y1=\"10\" x2=\"-40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"40\" y1=\"20\" x2=\"-20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"0\" y1=\"0\" x2=\"60\" y2=\"30\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-20\" y1=\"10\" x2=\"40\" y2=\"40\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-40\" y1=\"20\" x2=\"20\" y2=\"50\" stroke=\"#c3ccda\" stroke-width=\"1\"/><line x1=\"-60\" y1=\"30\" x2=\"0\" y2=\"60\" stroke=\"#c3ccda\" stroke-width=\"1\"/><polygon points=\"0,0 60,30 0,60 -60,30\" fill=\"none\" stroke=\"#8a95a6\" stroke-width=\"1.8\" stroke-linejoin=\"round\"/><g stroke=\"#9c6b30\" stroke-width=\"1\" stroke-linejoin=\"round\"><polygon points=\"-20,-14 0,-4 -20,6 -40,-4\" fill=\"#e6c9a0\"/><polygon points=\"40,20 20,30 20,6 40,-4\" fill=\"#c8965a\"/><polygon points=\"0,-4 20,6 20,-18 0,-28\" fill=\"#d8a76e\"/><polygon points=\"40,-4 20,6 20,-18 40,-28\" fill=\"#c8965a\"/><polygon points=\"20,-38 40,-28 20,-18 0,-28\" fill=\"#e6c9a0\"/><polygon points=\"-60,30 -40,40 -40,16 -60,6\" fill=\"#d8a76e\"/><polygon points=\"-40,-4 -20,6 -40,16 -60,6\" fill=\"#e6c9a0\"/><polygon points=\"20,30 0,40 0,16 20,6\" fill=\"#c8965a\"/><polygon points=\"0,-4 20,6 0,16 -20,6\" fill=\"#e6c9a0\"/><polygon points=\"-40,40 -20,50 -20,26 -40,16\" fill=\"#d8a76e\"/><polygon points=\"-20,6 0,16 -20,26 -40,16\" fill=\"#e6c9a0\"/><polygon points=\"-20,50 0,60 0,36 -20,26\" fill=\"#d8a76e\"/><polygon points=\"20,50 0,60 0,36 20,26\" fill=\"#c8965a\"/><polygon points=\"0,16 20,26 0,36 -20,26\" fill=\"#e6c9a0\"/></g><text x=\"0.0\" y=\"-50.0\" fill=\"#3f8fd0\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">위</text><text x=\"-64.4\" y=\"43.2\" fill=\"#4fae72\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">앞</text><text x=\"64.4\" y=\"43.2\" fill=\"#d0546f\" font-size=\"13\" font-weight=\"800\" text-anchor=\"middle\" dominant-baseline=\"central\" paint-order=\"stroke\" stroke=\"#fff\" stroke-width=\"3.5\" stroke-linejoin=\"round\">옆</text></svg>",
-    "top": {
-     "t": "grid",
-     "g": [
-      [
-       0,
-       1,
-       0
-      ],
-      [
-       1,
-       1,
-       0
-      ],
-      [
-       1,
-       1,
-       1
-      ]
-     ],
-     "cols": 3,
-     "rows": 3
-    }
-   },
-   "_src": {
-    "seed": "bkaef419",
-    "idx": 0,
     "level": "중",
     "try": 0
    }

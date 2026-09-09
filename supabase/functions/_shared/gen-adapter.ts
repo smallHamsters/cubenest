@@ -303,6 +303,14 @@ export function resolveDim(stage: string | null, type: string, req?: string | nu
   // facesDraw 가 2D 인 이유(사용자 결정 260821): ① 위모양 + 문말 단서로 답이 이미 유일하다.
   //   ② 오히려 3D 를 앞·옆으로 돌리면 **답 실루엣을 그대로 읽을 수 있어** 문항이 무의미해진다.
   if (GIVEN_ONLY[type]) return "2d";
+  /* ⛔ 위 한 줄이 **스테이지 검사보다 먼저** 반환한다는 것을 알고 있을 것 —
+       즉 `STAGES[].dim` 은 이 넷(hidden·minmax·manip·facesDraw)을 **구조적으로 못 막는다.**
+       "저학년은 정적 겨냥도를 안 본다"는 아래 정책이 그 넷에는 적용되지 않는다.
+     실제로 그래서 새어 나갔다(260910 발견): `minmax G-c` 가 S2(초3~4)에 열려 있어
+       "**겨냥도를 보고**, 2층 이상 쌓인 칸은…" 을 미학습 학년에 내고 있었다. GATE 에서 닫았다.
+     ⚠ 이 넷 중 하나를 저학년 스테이지에 열 때는 **게이트만 보지 말고 제시물을 직접 확인할 것.**
+       순서를 바꿔 스테이지가 이기게 만들면 안 된다 — 형상이 없어 3D 를 띄울 수단이 아예 없다
+       (그 시도가 예전에 q.dim 이 거짓말을 하던 원인이었다, 위 GIVEN_ONLY 주석). */
   // 저학년(S0~S3)은 겨냥도를 아직 안 배웠으므로(초5에서 처음 나온다) 3D 고정이 요청보다 우선한다.
   const sd = stage && genConfig.STAGES[stage] ? genConfig.STAGES[stage].dim : "any";
   if (sd === "3d") return "3d";

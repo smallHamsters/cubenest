@@ -443,7 +443,7 @@ const TYPES=[
   { id:'volume',   cat:'calc',    name:'부피 구하기',      chip:'부피',        edu:['curr','think'], desc:'한 모서리 길이로 부피를 구해요.',          dim:'both', levels:['중','상'],     status:'live', glyph:'ruler' },
   { id:'surface',  cat:'calc',    name:'겉넓이 구하기',    chip:'겉넓이',      edu:['curr','think'], desc:'바닥까지 포함해 겉넓이를 구해요.',         dim:'both', levels:['중','상'],     status:'live', glyph:'faces' },
   { id:'facesMc',  cat:'views',   name:'위·앞·옆 모양 고르기', chip:'모양 고르기', edu:['curr','think'], desc:'맞는 앞/옆에서 본 모양을 골라요.',      dim:'both',   levels:['하','중'],     status:'live', glyph:'panels' },
-  { id:'heightmap',cat:'views',   name:'위에서 본 수 쓰기',chip:'수 쓰기',     edu:['curr','think'], desc:'겨냥도를 보고 위 모양 각 칸에 수를 써요.', dim:'both',   levels:['하','중'],     status:'live', glyph:'topnum' },
+  { id:'heightmap',cat:'views',   name:'위에서 본 수 쓰기',chip:'수 쓰기',     edu:['curr','think'], desc:'쌓은 모양을 보고 위 모양 각 칸에 수를 써요.', dim:'both',   levels:['하','중'],     status:'live', glyph:'topnum' },
   { id:'facesDraw',cat:'views',   name:'위·앞·옆 그리기',  chip:'그리기',      edu:['curr','think'], desc:'세 방향에서 본 모양을 칸으로 칠해요.',     dim:'2d', levels:['중','상'],     status:'live', glyph:'draw' },
   { id:'minmax-Ga', type:'minmax', sub:'G-a', cat:'minmax', name:'삼면도 최대·최소',   chip:'삼면도 최대최소', edu:['curr','think'], desc:'위·앞·옆 세 방향만 보고 가능한 개수의 범위를 찾아요.', dim:'2d', levels:['중','상','최상'], status:'live', glyph:'range' },
   { id:'minmax-Gb', type:'minmax', sub:'G-b', cat:'minmax', name:'위+한 방향 최대·최소', chip:'위+한 방향',    edu:['think'],        desc:'위 모양과 한 방향 모양만으로 최대·최소를 구해요.',    dim:'2d', levels:['상','최상'],      status:'live', glyph:'range' },
@@ -513,7 +513,7 @@ let SRV=null;                                    // /config 응답(오면 이걸
 const GATE_FB={
   S0:{count:null,facesMc:null},
   S1:{count:null,facesMc:null},
-  S2:{count:null,heightmap:null,hidden:['A-c','A-e'],minmax:['G-c']},
+  S2:{count:null,heightmap:null,facesMc:null,hidden:['A-c','A-e']},   // 260910: G-c 제거·facesMc 개방
   S3:{count:null,heightmap:null,hidden:['A-c','A-e'],minmax:['G-c'],facesMc:null,manip:['H-c']},
   S4:{count:null,volume:null,surface:null,heightmap:null,facesMc:null,facesDraw:null,
       hidden:['A-a','A-b','A-c','A-d','A-e','A-f'],minmax:['G-a','G-b','G-c'],manip:['H-a','H-b','H-c','H-d']}
