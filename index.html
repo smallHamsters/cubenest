@@ -318,6 +318,46 @@
 .qthumb .pcleg i{flex:none;width:10px;height:10px;border-radius:3px;border:1px solid rgba(0,0,0,.14)}
 .qthumb .opts,.qthumb .rotcap{display:none}
 
+/* ── 학습 계획(준비 중) — 매주 분량을 대신 정해 주는 기능의 예고 ─────────
+   ⛔ **아직 없는 기능이다.** '준비 중' 칩을 제목 **위**에 두는 이유가 이것 —
+      아래에 두면 카드 세 장을 다 읽고 나서야 "없는 것"임을 알게 된다.
+   ⛔ 경쟁 서비스 이름(등록상표)을 화면에 쓰지 않는다. 기능으로만 설명한다.
+   ⛔ 신청·알림받기 입력란을 붙이지 않는다 — 이메일을 받는 순간 개인정보 수집이라
+      `/privacy` 를 함께 고쳐야 한다(수집항목·목적·보유기간). 예고는 예고로 끝낸다. */
+.s-plan .soon{display:inline-flex;align-items:center;gap:6px;margin:0 0 10px;
+  font-size:11.5px;font-weight:800;padding:5px 11px;border-radius:999px;
+  background:#ecebfb;color:#2d2d95}
+.s-plan .soon::before{content:'';width:6px;height:6px;border-radius:50%;background:#3f3fbf}
+.plan{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:center;
+  background:#fff;border:1px solid #e5eaf1;border-radius:16px;padding:22px 24px;
+  box-shadow:0 10px 30px rgba(24,34,51,.07)}
+/* 한 주 배정 미리보기 — 그림이 아니라 **화면의 모형**이다. 숫자는 예시값이다. */
+.pw{background:#fbfcfe;border:1px solid #eef2f7;border-radius:13px;padding:14px 14px 12px}
+.pw-h{margin:0 0 11px;font-size:11.5px;font-weight:800;letter-spacing:.02em;color:#8a95a6}
+.pw-h b{color:#182233;font-weight:800}
+.pw-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:0;padding:0;list-style:none}
+.pw-days li{border-radius:9px;padding:8px 2px 7px;text-align:center;background:#fff;
+  border:1px solid #e5eaf1}
+.pw-days .dy{display:block;font-size:11px;font-weight:800;color:#6a7789;line-height:1}
+.pw-days .st{display:block;margin-top:5px;font-size:10px;font-weight:700;color:#8a95a6;line-height:1.2}
+.pw-days .st i{font-style:normal}
+.pw-days .done{background:#e6f5ec;border-color:#bfe6cf}
+.pw-days .done .dy{color:#0b6e3e} .pw-days .done .st{color:#0f9d58}
+.pw-days .today{background:#3f3fbf;border-color:#3f3fbf;box-shadow:0 6px 14px rgba(63,63,191,.28)}
+.pw-days .today .dy,.pw-days .today .st{color:#fff}
+.pw-days .off{background:#f7f9fc;border-style:dashed}
+.pw-days .off .dy,.pw-days .off .st{color:#b4bdca}
+.pw-f{margin:11px 0 0;font-size:11.5px;color:#6a7789;font-weight:700}
+.plan-steps{margin:0;padding:0;list-style:none;counter-reset:ps}
+.plan-steps li{position:relative;padding:0 0 0 32px;margin:0 0 15px}
+.plan-steps li:last-child{margin-bottom:0}
+.plan-steps li::before{counter-increment:ps;content:counter(ps);position:absolute;left:0;top:1px;
+  width:22px;height:22px;border-radius:50%;background:#ecebfb;color:#2d2d95;
+  font-size:11.5px;font-weight:800;display:grid;place-items:center}
+.plan-steps b{display:block;font-size:14.5px;font-weight:800;letter-spacing:-.02em;margin:0 0 3px}
+.plan-steps span{display:block;font-size:13px;color:#6a7789;line-height:1.6}
+.plan-note{margin:14px 0 0;font-size:12.5px;color:#8a95a6}
+
 /* ── 약속: 카드 4장이 아니라 조용한 목록 ───────────────────── */
 .promise{border-top:1px solid #dde4ee;margin-top:6px}
 .promise > div{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:8px 28px;
@@ -335,6 +375,8 @@
 /* ── 반응형 ─────────────────────────────────────────────────── */
 /* 헤더는 배포본과 같이 동작시킨다 — ≤640px 에서 워드마크를 숨기고 메뉴는 가로 스크롤(261020). */
 @media (max-width:860px){
+  /* ⚠ 한 단으로 내리지 않으면 요일 7칸이 **16px** 로 찌그러져 글자가 칸 밖으로 나간다(실측). */
+  .plan{grid-template-columns:1fr;gap:18px}
   .bench-main{grid-template-columns:1fr}
   .bench-3d{border-right:0;border-bottom:1px solid #eef2f7}
   .views{flex-direction:row;flex-wrap:wrap}
@@ -367,6 +409,9 @@
   .q figcaption .qd{-webkit-line-clamp:4;min-height:6.2em}
 }
 @media (max-width:560px){
+  /* 요일 칸이 35px 라 '10문항'(48px)이 안 들어간다 — 단위만 접는다(숫자는 남는다) */
+  .pw-days .st i{display:none}
+  .plan{padding:16px}
     /* 휴대폰에서도 2열을 지킨다 — 1열로 떨어뜨리면 9장이 그대로 9화면이 된다.
      /quiz 랜딩이 같은 폭에서 같은 썸네일로 이미 2열을 돌린다. */
   .qgrid{grid-template-columns:repeat(2,1fr);gap:10px}
@@ -586,6 +631,35 @@
       </div>
       <a data-cta="types" href="quiz/">유형 19가지 모두 보기</a>
     </div>
+  </div></section>
+
+  <!-- 학습 계획(준비 중) — 분량을 대신 정해 주는 기능 예고 -->
+  <section class="s-sec s-plan" id="plan"><div class="wrap">
+    <span class="soon">준비 중</span>
+    <h2>매일 풀 분량을, 아이마다 정해 둡니다</h2>
+    <p class="d">요일과 분량만 정해 두면 그날 풀 문제가 자동으로 배정됩니다. 아이는 링크를 눌러 풀고, 보호자는 <b>끝냈는지와 어디서 막혔는지</b>만 확인해요.</p>
+
+    <div class="plan">
+      <div class="pw">
+        <p class="pw-h">이번 주 · <b>서연</b> · 주 4일 · 하루 10문항</p>
+        <ol class="pw-days">
+          <li class="done"><span class="dy">월</span><span class="st">끝</span></li>
+          <li class="done"><span class="dy">화</span><span class="st">끝</span></li>
+          <li class="off"><span class="dy">수</span><span class="st">쉼</span></li>
+          <li class="today"><span class="dy">목</span><span class="st">오늘</span></li>
+          <li class="off"><span class="dy">금</span><span class="st">쉼</span></li>
+          <li><span class="dy">토</span><span class="st">10<i>문항</i></span></li>
+          <li class="off"><span class="dy">일</span><span class="st">쉼</span></li>
+        </ol>
+        <p class="pw-f">지난주에 <b>겉넓이</b>에서 막혔어요 — 이번 주에 두 문항 더 넣었습니다</p>
+      </div>
+      <ol class="plan-steps">
+        <li><b>요일과 분량을 정합니다</b><span>주 3일·하루 10문항처럼. 아이가 여럿이면 아이마다 따로 정해요.</span></li>
+        <li><b>그날 문제가 자동으로 배정됩니다</b><span>학년과 난이도에 맞춰 뽑고, 지난주에 틀린 유형을 조금 더 넣어요.</span></li>
+        <li><b>종이로도 받을 수 있습니다</b><span>한 주 분량을 정답지와 함께 한 번에 인쇄해요. 화면과 같은 문제입니다.</span></li>
+      </ol>
+    </div>
+    <p class="plan-note">아직 만들고 있는 기능이에요. 지금은 학년·유형·난이도를 직접 골라 풀 수 있습니다.</p>
   </div></section>
 
   <!-- 약속 — 카드 4장이 아니라 목록 -->
