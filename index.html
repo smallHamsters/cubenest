@@ -124,8 +124,8 @@
 
 
 /* ── 히어로: 설명이 아니라 물건이 먼저다 ───────────────────── */
-.s-hero{padding:46px 0 10px}
-.s-hero h1{margin:0 0 12px;font-size:clamp(28px,4.6vw,42px);font-weight:800;letter-spacing:-.042em;
+.s-hero{padding:clamp(40px,4.4vw,60px) 0 10px}
+.s-hero h1{margin:0 0 16px;font-size:clamp(28px,4.6vw,42px);font-weight:800;letter-spacing:-.042em;
   line-height:1.16;text-wrap:balance;max-width:620px}
 /* ⚠ 제목 행폭도 ch 가 아니라 px 다 — 아래 본문과 같은 이유(ch 는 숫자 '0' 폭이라 한글에서
    과소 적용된다). 21ch 는 42px 에서 529px 로 계산돼 본문(606px)보다 좁았다.
@@ -140,7 +140,7 @@
 /* 행폭은 ch 가 아니라 px 로 잡는다 — ch 는 숫자 '0' 한 글자 폭이라 한글에서 과소 적용되고,
    글자 크기가 다르면 같은 ch 값이 다른 글자 수를 준다(13.5px 62ch=52자 / 15.5px 62ch=44자).
    한국어는 한 줄 40~44자가 편하다. 히어로 본문만 제목(610px)에 맞춰 606px, 나머지 본문은 560px. */
-.s-hero .sub{margin:0 0 22px;font-size:15.5px;color:#6a7789;max-width:606px;line-height:1.72}
+.s-hero .sub{margin:0 0 30px;font-size:15.5px;color:#6a7789;max-width:606px;line-height:1.72}
 .s-hero .sub b{color:#182233;font-weight:700}
 
 /* 작업판 — 겨냥도와 세 방향이 한 덩어리. 카드 두 개로 쪼개지 않는다. */
@@ -170,9 +170,9 @@
 .bench-vals dt{margin:0 0 3px;font-size:11px;font-weight:700;color:#8a95a6;letter-spacing:.02em}
 .bench-vals dd{margin:0;font-size:21px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .bench-vals dd span{font-size:12.5px;font-weight:700;color:#6a7789;margin-left:3px}
-.bench-note{margin:14px 0 0;font-size:12.5px;color:#8a95a6}
+.bench-note{margin:18px 0 0;font-size:12.5px;color:#8a95a6}
 
-.s-cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 24px}
+.s-cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 28px}
 /* ⚠ .lp 로 한 번 더 감싼다 — 위의 `.lp a{color:inherit}` 가 특이도 (0,1,1) 이라
    한 클래스짜리 `.b1{color:#fff}`(0,1,0)을 이긴다. 그대로 두면 보라색 버튼 위에 먹색
    글자가 찍혀 대비가 2:1 로 떨어진다(눈으로는 '좀 어둡네' 정도라 놓치기 쉽다). */
@@ -190,36 +190,38 @@
    모눈 바닥 위에 본문이 바로 앉으면 결이 글자 뒤로 지나가 마감이 덜 된 것처럼 읽힌다.
    그렇다고 각각을 카드로 만들면 '전부 카드'로 되돌아가므로, 면 하나에 구분선만 넣는다.
    히어로 작업판(순백 + 그림자)보다 한 단 낮게 — 종속 관계가 보이도록 그림자는 주지 않는다. */
-.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:40px 0 0;
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:clamp(36px,4vw,56px) 0 0;
   background:#fbfcfe;border:1px solid #e5eaf1;border-radius:14px;overflow:hidden}
-.pillar{padding:20px 22px 22px;border-right:1px solid #eef2f7;display:flex;flex-direction:column}
+.pillar{padding:24px 24px 26px;border-right:1px solid #eef2f7;display:flex;flex-direction:column}
 .pillar:last-child{border-right:0}
 /* 세 칸의 제목 줄을 맞추려고 최소 높이를 준다 — 문구 길이가 제각각이라 안 주면 어긋난다. */
 .pillar .n{font-size:20px;font-weight:800;letter-spacing:-.03em;color:#2d2d95;
   display:block;line-height:1.32;min-height:2.64em}
 .pillar h3{margin:10px 0 7px;font-size:15px;font-weight:800;letter-spacing:-.02em}
 .pillar h3 a{color:#2d2d95;border-bottom:1.5px solid #c9c9ee;padding-bottom:1px}
-.pillar p{margin:0;font-size:13.5px;color:#6a7789;line-height:1.62}
+.pillar p{margin:0;font-size:13.5px;color:#6a7789;line-height:1.72}
 .pillar p b{color:#182233;font-weight:700}
 
 /* ── 학년: 카드 5장이 아니라 실제 눈금 ─────────────────────── */
-.s-sec{padding:58px 0 0}
-.s-sec h2{margin:0 0 10px;font-size:clamp(21px,3.2vw,27px);font-weight:800;letter-spacing:-.035em;
+.s-sec{padding:clamp(62px,6.4vw,94px) 0 0}
+/* 근거 밴드는 히어로의 연장이라 한 단 좁게 붙인다 */
+.s-ev{padding-top:clamp(40px,4.2vw,58px)}
+.s-sec h2{margin:0 0 14px;font-size:clamp(21px,3.2vw,27px);font-weight:800;letter-spacing:-.035em;
   line-height:1.25;text-wrap:balance}
-.s-sec > .wrap > p.d{margin:0 0 26px;font-size:14.5px;color:#6a7789;max-width:560px;line-height:1.7}
+.s-sec > .wrap > p.d{margin:0 0 36px;font-size:14.5px;color:#6a7789;max-width:560px;line-height:1.78}
 
-.axis{position:relative;margin:0 0 18px;padding:0 0 4px}
+.axis{position:relative;margin:0 0 26px;padding:0 0 4px}
 .axis .rule{position:relative;height:3px;background:#d7dfea;border-radius:2px;margin:0 0 0}
 .axis .fill{position:absolute;left:0;top:0;height:3px;width:100%;border-radius:2px;
   background:linear-gradient(90deg,#c9d3e2,#3f3fbf)}
-.marks{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:-6px}
+.marks{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:-6px}
 .mark{padding-top:16px;position:relative}
 .mark::before{content:"";position:absolute;top:-2px;left:0;width:11px;height:11px;border-radius:50%;
   background:#fff;border:3px solid #c9d3e2}
 .mark.core::before{border-color:#3f3fbf;box-shadow:0 0 0 4px #ecebfb}
 .mark .age{font-size:11.5px;font-weight:700;color:#8a95a6;font-variant-numeric:tabular-nums}
 .mark h3{margin:1px 0 4px;font-size:15px;font-weight:800;letter-spacing:-.02em}
-.mark p{margin:0;font-size:12.5px;color:#6a7789;line-height:1.55}
+.mark p{margin:0;font-size:12.5px;color:#6a7789;line-height:1.68}
 .mark .chip{display:inline-block;font-size:10.5px;font-weight:800;color:#2d2d95;background:#ecebfb;
   border-radius:6px;padding:1px 6px;margin-left:5px;vertical-align:1px}
 
@@ -233,7 +235,7 @@
    사진은 카드 안에 얌전히 든 네모가 아니라 **밴드 전체에 깔고**, 글이 놓일 오른쪽만
    어두운 그라디언트로 덮는다 — 액자에 넣으면 '삽입한 이미지'로, 깔면 '이 장면'으로 읽힌다.
    ⚠ 방향색(위·앞·옆)은 쓰지 않는다 — 장식으로 쓰면 방향의 뜻이 흐려진다. */
-.evidence{position:relative;overflow:hidden;margin:30px 0 0;padding:32px 34px;border:0;
+.evidence{position:relative;overflow:hidden;margin:0;padding:clamp(28px,3vw,40px) clamp(26px,3vw,40px);border:0;
   border-radius:16px;color:#fff;background:#1b2436;min-height:340px;
   display:grid;grid-template-columns:52% minmax(0,1fr);gap:26px;align-items:center}
 /* ⚠ 사진 폭을 밴드 전체로 두면 **가로 3.3 : 세로 1** 로 늘어나 원본(1.7:1)이 과하게 잘린다 —
@@ -252,14 +254,14 @@
 .evidence-txt h3{margin:0;font-size:21px;font-weight:800;letter-spacing:-.032em;
   line-height:1.42;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.35)}
 .evidence-txt h3 br{display:block}
-.evidence-txt p{margin:12px 0 0;font-size:14.5px;color:#b3c0d5;line-height:1.85;text-wrap:pretty}
+.evidence-txt p{margin:16px 0 0;font-size:14.5px;color:#b3c0d5;line-height:1.85;text-wrap:pretty}
 .evidence-txt p b{color:#fff;font-weight:700}
 
 /* ── 유형: 글자 칩 9개가 아니라 진짜 문제 ───────────────────── */
-.qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .q{margin:0;background:#fff;border:1px solid #e5eaf1;border-radius:14px;overflow:hidden;
   display:flex;flex-direction:column}
-.q figcaption{padding:11px 13px 13px;border-top:1px solid #eef2f7;background:#fbfcfe}
+.q figcaption{padding:13px 15px 15px;border-top:1px solid #eef2f7;background:#fbfcfe}
 .q figcaption b{display:block;font-size:13.5px;font-weight:800;letter-spacing:-.015em;margin:0 0 3px}
 /* 심화 표식 — 교과 밖인 두 장에만 붙는다. 캡션이 아니라 **그림 모서리**에 두는 이유:
    캡션에 두면 뱃지가 있는 칸만 제목 줄이 내려가 한 줄 안에서 어긋난다.
@@ -272,17 +274,17 @@
   box-shadow:0 2px 6px rgba(200,64,26,.32)}
 /* 발문은 3줄까지 — 2줄로 자르면 '한 변이 3개…'처럼 뜻이 사라진 채 끊긴다.
    세 칸의 캡션 높이를 맞추려 최소 높이를 3줄로 고정한다. */
-.q figcaption .qd{font-size:12.5px;color:#8a95a6;line-height:1.55;min-height:4.65em;
+.q figcaption .qd{font-size:12.5px;color:#8a95a6;line-height:1.66;min-height:4.98em;
   display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
 /* 격자 아래 마감 — 왼쪽 끝에 붙은 작은 링크는 아홉 장을 다 본 눈이 지나친다.
    가운데로 모아 '다음 행동'을 분명히 둔다. */
 /* 격자 아래 마감 — "10종이 더 있다"를 문장으로 말하는 대신 **카드가 이어지다 흐려지게** 둔다.
    잘린 카드는 '더 있다'를 설명 없이 알린다. 오른쪽 마스크가 그 역할을 하므로 가로 스크롤은 없다. */
-.qmore{margin:14px 0 0;text-align:center}
+.qmore{margin:18px 0 0;text-align:center}
 /* ⚠ 폭을 `.qgrid` 와 **같은 식으로** 계산한다 — 카드가 작아지면 '격자가 이어진다'가 아니라
      '다른 띠가 하나 더 있다'로 읽힌다. 한 줄로 흘려 오른쪽으로 넘기고, 넘친 부분은
      overflow 로 자르고 마스크로 흐린다(가로 스크롤 없음). */
-.qmore-strip{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 28px)/3);gap:14px;
+.qmore-strip{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 36px)/3);gap:18px;
   margin:0 0 20px;overflow:hidden;
   -webkit-mask-image:linear-gradient(to right,#000 0,#000 52%,rgba(0,0,0,.10) 100%);
           mask-image:linear-gradient(to right,#000 0,#000 52%,rgba(0,0,0,.10) 100%);
@@ -329,7 +331,7 @@
   background:#ecebfb;color:#2d2d95}
 .s-plan .soon::before{content:'';width:6px;height:6px;border-radius:50%;background:#3f3fbf}
 .plan{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:center;
-  background:#fff;border:1px solid #e5eaf1;border-radius:16px;padding:22px 24px;
+  background:#fff;border:1px solid #e5eaf1;border-radius:16px;padding:26px 28px;
   box-shadow:0 10px 30px rgba(24,34,51,.07)}
 /* 한 주 배정 미리보기 — 그림이 아니라 **화면의 모형**이다. 숫자는 예시값이다. */
 .pw{background:#fbfcfe;border:1px solid #eef2f7;border-radius:13px;padding:14px 14px 12px}
@@ -349,27 +351,27 @@
 .pw-days .off .dy,.pw-days .off .st{color:#b4bdca}
 .pw-f{margin:11px 0 0;font-size:11.5px;color:#6a7789;font-weight:700}
 .plan-steps{margin:0;padding:0;list-style:none;counter-reset:ps}
-.plan-steps li{position:relative;padding:0 0 0 32px;margin:0 0 15px}
+.plan-steps li{position:relative;padding:0 0 0 32px;margin:0 0 19px}
 .plan-steps li:last-child{margin-bottom:0}
 .plan-steps li::before{counter-increment:ps;content:counter(ps);position:absolute;left:0;top:1px;
   width:22px;height:22px;border-radius:50%;background:#ecebfb;color:#2d2d95;
   font-size:11.5px;font-weight:800;display:grid;place-items:center}
 .plan-steps b{display:block;font-size:14.5px;font-weight:800;letter-spacing:-.02em;margin:0 0 3px}
-.plan-steps span{display:block;font-size:13px;color:#6a7789;line-height:1.6}
-.plan-note{margin:14px 0 0;font-size:12.5px;color:#8a95a6}
+.plan-steps span{display:block;font-size:13px;color:#6a7789;line-height:1.7}
+.plan-note{margin:18px 0 0;font-size:12.5px;color:#8a95a6}
 
 /* ── 약속: 카드 4장이 아니라 조용한 목록 ───────────────────── */
 .promise{border-top:1px solid #dde4ee;margin-top:6px}
 .promise > div{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:8px 28px;
-  padding:18px 0;border-bottom:1px solid #e5eaf1}
+  padding:22px 0;border-bottom:1px solid #e5eaf1}
 .promise h3{margin:0;font-size:15px;font-weight:800;letter-spacing:-.02em}
 .promise p{margin:0;font-size:13.5px;color:#6a7789;line-height:1.7}
 .promise p b{color:#182233;font-weight:700}
 
 /* ── 마감: 보라 밴드 없이 ───────────────────────────────────── */
-.s-end{padding:56px 0 64px;text-align:center}
-.s-end h2{margin:0 0 10px;font-size:clamp(20px,3vw,26px);font-weight:800;letter-spacing:-.035em}
-.s-end p{margin:0 auto 22px;font-size:14.5px;color:#6a7789;max-width:560px}
+.s-end{padding:clamp(66px,7vw,100px) 0 clamp(72px,7.5vw,108px);text-align:center}
+.s-end h2{margin:0 0 14px;font-size:clamp(20px,3vw,26px);font-weight:800;letter-spacing:-.035em}
+.s-end p{margin:0 auto 28px;font-size:14.5px;color:#6a7789;max-width:560px}
 .s-end .s-cta{justify-content:center}
 
 /* ── 반응형 ─────────────────────────────────────────────────── */
@@ -385,7 +387,7 @@
   .pillar{border-right:0;border-bottom:1px solid #dde4ee}
   .pillar:last-child{border-bottom:0}
   .qgrid{grid-template-columns:repeat(2,1fr)}
-  .qmore-strip{grid-auto-columns:calc((100% - 14px)/2)}
+  .qmore-strip{grid-auto-columns:calc((100% - 18px)/2)}
   .marks{grid-template-columns:repeat(2,1fr);gap:18px 10px}
   .axis .rule{display:none}
   .mark{padding-top:0}
@@ -406,7 +408,7 @@
 /* 320px 급 — 카드가 128px 라 3줄 제한에 설명이 걸려 잘린다(숨은 나무 칸 찾기·정육면체 완성하기·
    색칠한 정육면체 셋이 실제로 잘렸다). 한 줄을 더 준다 — min-height 가 em 이라 칸 높이는 계속 맞는다. */
 @media (max-width:360px){
-  .q figcaption .qd{-webkit-line-clamp:4;min-height:6.2em}
+  .q figcaption .qd{-webkit-line-clamp:4;min-height:6.64em}
 }
 @media (max-width:560px){
   /* 요일 칸이 35px 라 '10문항'(48px)이 안 들어간다 — 단위만 접는다(숫자는 남는다) */
@@ -414,15 +416,30 @@
   .plan{padding:16px}
     /* 휴대폰에서도 2열을 지킨다 — 1열로 떨어뜨리면 9장이 그대로 9화면이 된다.
      /quiz 랜딩이 같은 폭에서 같은 썸네일로 이미 2열을 돌린다. */
-  .qgrid{grid-template-columns:repeat(2,1fr);gap:10px}
-  .qmore-strip{grid-auto-columns:calc((100% - 10px)/2);gap:10px}
+  .qgrid{grid-template-columns:repeat(2,1fr);gap:12px}
+  .qmore-strip{grid-auto-columns:calc((100% - 12px)/2);gap:12px}
   .qthumb{height:112px}
   .q figcaption{padding:9px 10px 11px}
   .q figcaption b{font-size:12.5px}
   .q figcaption span{font-size:11px}
   .marks{grid-template-columns:1fr}
-  .bench-vals{grid-template-columns:1fr}
-  .bench-vals div{border-right:0;border-bottom:1px solid #eef2f7}
+  /* ⚠ 작업판은 휴대폰에서 **면적을 가장 많이 먹는 덩어리**다(390px 히어로 1,922px 중 절반).
+     3D 칸 270px + 세 방향 3줄 + 세 값 3줄이 세로로 쌓였기 때문 — 가로로 눕혀 접는다.
+     읽을 것이 줄어드는 게 아니라 **같은 것이 덜 흩어진다**. */
+  .bench-3d{min-height:210px}
+  .views{flex-direction:row;gap:8px;padding:14px 12px 12px}
+  .views > p{width:100%;margin:0 0 4px}
+  .view{flex:1 1 0;min-width:0;flex-direction:column;align-items:center;gap:6px;text-align:center}
+  .view svg{width:44px;height:44px}
+  /* 방향 설명은 접는다 — 세 칸에 들어갈 폭이 없고, 라벨(위·앞·옆)과 방향색이 이미 같은 말을 한다 */
+  .view .vd{display:none}
+  /* ⚠ 세 값을 1열로 떨어뜨리지 않는다 — 3줄이 되면 그것만으로 180px 를 먹는다 */
+  .bench-vals{grid-template-columns:repeat(3,1fr)}
+  .bench-vals div{padding:11px 8px 13px;border-right:1px solid #eef2f7;border-bottom:0}
+  .bench-vals div:last-child{border-right:0}
+  .bench-vals dt{font-size:10px}
+  .bench-vals dd{font-size:17px}
+  .bench-vals dd span{font-size:11px;margin-left:2px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 
@@ -525,7 +542,7 @@
     </div>
     <p class="bench-note">모양을 바꾸면 세 방향 그림과 세 값이 함께 바뀝니다. 만든 모양은 주소 하나로 그대로 전달돼요.</p>
 
-    <div class="s-cta" style="margin-top:24px">
+    <div class="s-cta" style="margin-top:28px">
       <a data-cta="hero" class="b1" id="heroCta" href="playground/">직접 쌓아보기</a>
       <a data-cta="hero2" class="b2" href="quiz/">퀴즈 풀어보기</a>
       <small>학생은 로그인하지 않아요 · 태블릿·휴대폰에서도</small>
@@ -550,6 +567,19 @@
     </div>
   </div></section>
 
+  <!-- 왜 돌려 봐야 하는가 — 히어로 바로 다음에 둔다(사용자 결정 261024).
+       학년 섹션 끝에 있을 때는 눈금을 다 읽고 나서야 나와서, 설득이 가장 필요한
+       첫 스크롤에 없었다. -->
+  <section class="s-sec s-ev"><div class="wrap">
+    <div class="evidence">
+      <div class="evidence-ph"><img src="assets/img/landing-child-tablet.webp" width="1447" height="842" loading="lazy" decoding="async" alt="책상 위 태블릿으로 쌓기나무를 돌려 보는 모습"></div>
+      <div class="evidence-txt">
+      <h3>입체도형을 어려워하는 아이일수록, <br>직접 돌려 봐야 합니다</h3>
+      <p>종이에 그려진 입체는 머릿속에서 돌려야 보입니다. 그 과정을 손으로 대신해 주면 뒤쪽과 가려진 자리가 눈에 들어오고, 그만큼 <b>공간지각능력</b>이 자랍니다. 교실에서는 한 화면을 함께 돌려 보며 설명할 수 있어, 학생마다 교구를 나눠 줄 필요가 없습니다.</p>
+      </div>
+    </div>
+  </div></section>
+
   <!-- 학년 — 카드 5장이 아니라 눈금 하나 -->
   <section class="s-sec" id="coverage"><div class="wrap">
     <h2>교과부터 경시대회까지, 한 곳에서</h2>
@@ -566,13 +596,6 @@
       </div>
     </div>
 
-    <div class="evidence">
-      <div class="evidence-ph"><img src="assets/img/landing-child-tablet.webp" width="1447" height="842" loading="lazy" decoding="async" alt="책상 위 태블릿으로 쌓기나무를 돌려 보는 모습"></div>
-      <div class="evidence-txt">
-      <h3>입체도형을 어려워하는 아이일수록, <br>직접 돌려 봐야 합니다</h3>
-      <p>종이에 그려진 입체는 머릿속에서 돌려야 보입니다. 그 과정을 손으로 대신해 주면 뒤쪽과 가려진 자리가 눈에 들어오고, 그만큼 <b>공간지각능력</b>이 자랍니다. 교실에서는 한 화면을 함께 돌려 보며 설명할 수 있어, 학생마다 교구를 나눠 줄 필요가 없습니다.</p>
-      </div>
-    </div>
   </div></section>
 
   <!-- 유형 — 설명 대신 진짜 문제 -->
