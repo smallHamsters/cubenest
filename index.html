@@ -95,194 +95,295 @@
   .skip:focus{left:0;}
 
   .wrap{max-width:var(--wrap);margin:0 auto;padding:0 var(--gutter);}
-  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;color:var(--accent);
-    text-transform:uppercase;margin:0 0 12px;display:inline-flex;align-items:center;gap:8px;}
-  .eyebrow::before{content:"";width:18px;height:2px;background:var(--accent);border-radius:2px;opacity:.7;}
-  h2.sec{font-size:clamp(23px,4vw,33px);font-weight:800;letter-spacing:-.03em;
-    line-height:1.18;margin:0 0 14px;}
-  .lead{font-size:clamp(15px,2.2vw,17px);color:var(--muted);max-width:56ch;margin:0;line-height:1.72;}
 
   /* ---------- top bar ---------- */
   /* header.site-top / .site-topin / .site-brand / .site-nav / .site-actions 는
      assets/css/nav.css 공용 정의. 헤더의 별도 CTA 버튼은 제거했다 —
      바로 아래 히어로에 같은 CTA가 있고, 모바일에서 메뉴 폭을 잡아먹었다. */
 
-  /* ---------- hero ---------- */
-  .hero{position:relative;overflow:hidden;
-    background:radial-gradient(120% 100% at 82% 12%, #e9eef4 0%, #eef2f7 46%, #eef2f7 100%);}
-  .hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:30px;align-items:center;
-    padding-top:clamp(40px,7vw,86px);padding-bottom:clamp(48px,8vw,92px);}
-  .hero-copy{max-width:34rem;}
-  .hero-tag{display:inline-flex;align-items:center;gap:8px;background:var(--panel);
-    border:1px solid var(--line);border-radius:999px;padding:6px 13px 6px 10px;
-    font-size:12px;font-weight:700;color:var(--accent-ink);box-shadow:var(--shadow-sm);margin-bottom:20px;}
-  .hero-tag .dot{width:16px;height:16px;flex:0 0 auto;}
-  h1.hero-h{font-size:clamp(30px,6.2vw,52px);font-weight:800;letter-spacing:-.038em;
-    line-height:1.08;margin:0 0 18px;}
-  h1.hero-h .hl{color:var(--accent);position:relative;white-space:nowrap;}
-  h1.hero-h .hl::after{content:"";position:absolute;left:-2px;right:-2px;bottom:.06em;height:.28em;
-    background:var(--accent-soft);z-index:-1;border-radius:4px;}
-  .hero-sub{font-size:clamp(15px,2.4vw,18px);color:var(--muted);line-height:1.72;margin:0 0 28px;max-width:33rem;}
-  .hero-btns{display:flex;flex-wrap:wrap;gap:12px;align-items:center;}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;
-    height:52px;padding:0 26px;border-radius:14px;font-weight:800;font-size:16px;
-    white-space:nowrap;
-    transition:transform .12s,box-shadow .2s,background .2s;cursor:pointer;border:none;font-family:inherit;}
-  /* ⚠ 아이콘 크기는 .btn 전체에 건다. 예전엔 .btn-primary 에만 있어서
-     .btn-onaccent(Final CTA) 의 SVG 가 width/height 속성 없이 기본 크기(61px)로 부풀었고,
-     52px 버튼 안의 글자를 밖으로 밀어냈다. 변형별로 나눠 쓰지 말 것. */
-  .btn svg{width:19px;height:19px;flex:0 0 auto;}
-  .btn-primary{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(63,63,191,.32);}
-  .btn-primary:hover{background:var(--accent-ink);box-shadow:0 9px 26px rgba(63,63,191,.4);transform:translateY(-1px);}
-  .btn-primary:active{transform:translateY(0);}
-  .btn-ghost{background:var(--panel);color:var(--ink);border:1px solid var(--line);box-shadow:var(--shadow-sm);}
-  .btn-ghost:hover{border-color:#d3dbe6;background:var(--panel-2);}
-  .hero-note{margin:18px 0 0;font-size:12.5px;color:var(--muted-2);display:flex;align-items:center;gap:7px;}
-  .hero-note svg{width:14px;height:14px;flex:0 0 auto;color:var(--add);}
+/* ══ 랜딩 본문(261024 재구성) ═══════════════════════════════════
+   섹션 구성·치수는 목업에서 실측해 옮겼다. 토큰은 tokens.css 를 쓴다 —
+   figures.js 가 fill 에 var(--line-2)·var(--add)·var(--accent-soft) 를 쓰므로
+   그 셋이 없으면 SVG 가 **검정**으로 칠해진다(목업에서 실제로 났다). */
+.lp{
+  /* ⚠ 색 토큰을 여기서 다시 선언하지 않는다 — tokens.css 가 정본이고, 베끼면 두 벌이 갈라진다.
+     (목업은 독립 파일이라 전부 들고 있었다. 옮기면서 뺐다.)
+     figures.js 는 fill 에 var(--line-2)·var(--add)·var(--add-soft)·var(--accent-soft) 를 쓰는데
+     그 넷이 tokens.css 에 전부 있다. 하나라도 없으면 fill 이 무효가 되어 SVG 가
+     기본값인 **검정**으로 칠해진다 — 목업에서 실제로 그렇게 났다. */
+  --top:#3f8fd0; --front:#4fae72; --side:#d0546f;          /* 방향색 — 방향에만 쓴다. tokens.css 에 없다 */
+  font-size:15px;
+  /* 모눈 바닥 — 이 과목의 실제 재료다. 흰/회색 밴드를 번갈아 까는 대신 바닥 하나로 간다. */
+  background-image:linear-gradient(#dfe6ef 1px,transparent 1px),linear-gradient(90deg,#dfe6ef 1px,transparent 1px);
+  background-size:28px 28px;background-position:-1px -1px;
+}
+.lp a{color:inherit;text-decoration:none}
+/* 한국어는 어절 단위로 끊는다 — 기본값이면 '아이/가' 처럼 낱말 중간에서 잘린다.
+   긴 영문·URL 이 섞이면 넘칠 수 있어 overflow-wrap 으로 받쳐 둔다. */
+.lp,.lp h1,.lp h2,.lp h3,.lp p,.lp span,.lp a{word-break:keep-all;overflow-wrap:break-word}
 
-  /* hero visual: 돌려보는 3D 뷰어 (스탯은 캔버스 안쪽 하단에 오버레이) */
-  .hero-visual{position:relative;display:flex;align-items:center;justify-content:flex-end;min-height:300px;}
-  .viewer-card{position:relative;width:min(400px,100%);aspect-ratio:1/1;
-    background:linear-gradient(160deg,#ffffff 0%,#f4f7fb 100%);
-    border:1px solid var(--line);border-radius:26px;box-shadow:var(--shadow-lg);
-    overflow:hidden;touch-action:none;cursor:grab;}
-  .viewer-card:active{cursor:grabbing;}
-  .viewer-card::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:0;
-    background-image:linear-gradient(var(--line-2) 1px,transparent 1px),linear-gradient(90deg,var(--line-2) 1px,transparent 1px);
-    background-size:34px 34px;background-position:center;opacity:.6;
-    -webkit-mask-image:radial-gradient(circle at 50% 46%,#000 42%,transparent 80%);
-            mask-image:radial-gradient(circle at 50% 46%,#000 42%,transparent 80%);}
-  #heroCanvas{position:relative;z-index:1;display:block;width:100%;height:100%;}
-  .viewer-hint{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:2;
-    display:inline-flex;align-items:center;gap:6px;pointer-events:none;
-    background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:999px;
-    padding:6px 12px;font-size:11.5px;font-weight:700;color:var(--muted);box-shadow:var(--shadow-sm);
-    transition:opacity .4s;
-    /* ⚠ left:50% 라 절대배치 상자의 가용 폭이 카드의 '오른쪽 절반'뿐이다. nowrap 이 없으면
-       좁은 카드(320px 기기)에서 "끌어서 돌려보/기" 로 갈라진다. */
-    white-space:nowrap;}
-  .viewer-hint svg{width:14px;height:14px;color:var(--accent);}
-  .viewer-hint.hide{opacity:0;}
-  /* 스탯 패널 — playground .stats/.stat-head와 같은 UI(하나의 둥근 패널 + 칸 구분선), 위치만 캔버스 하단 중앙 */
-  .viewer-stats{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:2;
-    display:flex;background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;
-    width:min(280px,86%);}
-  .viewer-stats .vs{flex:1;padding:10px 8px 9px;text-align:center;position:relative;}
-  .viewer-stats .vs + .vs::before{content:"";position:absolute;left:0;top:22%;bottom:22%;width:1px;background:var(--line);}
-  .viewer-stats .vs .k{font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.02em;}
-  .viewer-stats .vs .v{font-size:20px;font-weight:800;color:var(--ink);letter-spacing:-.02em;line-height:1.15;
-    margin-top:1px;font-variant-numeric:tabular-nums;
-    /* 좁은 카드(모바일 200px)에서 단위(개·cm³)가 아랫줄로 떨어지는 것을 막는다 */
-    white-space:nowrap;}
-  .viewer-stats .vs .v .u{font-size:10px;color:var(--muted);font-weight:600;margin-left:1px;}
 
-  /* ---------- section shell ---------- */
-  section.band{padding:clamp(56px,9vw,100px) 0;}
-  section.band.white{background:var(--panel);}
-  .sec-head{max-width:60ch;margin-bottom:clamp(30px,5vw,48px);}
+/* ── 히어로: 설명이 아니라 물건이 먼저다 ───────────────────── */
+.s-hero{padding:46px 0 10px}
+.s-hero h1{margin:0 0 12px;font-size:clamp(28px,4.6vw,42px);font-weight:800;letter-spacing:-.042em;
+  line-height:1.16;text-wrap:balance;max-width:620px}
+/* ⚠ 제목 행폭도 ch 가 아니라 px 다 — 아래 본문과 같은 이유(ch 는 숫자 '0' 폭이라 한글에서
+   과소 적용된다). 21ch 는 42px 에서 529px 로 계산돼 본문(606px)보다 좁았다.
+   nowrap 은 걸지 않는다 — '360° 돌려가며'까지 한 줄로 묶으면 320px 에서 넘친다.
+   keep-all 이 어절 단위로 끊어 주므로 그대로 둔다. */
+/* ⚠ '모든 방향에서'만 묶는다 — 그대로 두면 balance 가 '…돌려가며 모든 / 방향에서…'로 끊어
+   **한 덩어리로 읽혀야 할 말이 두 줄로 갈라진다**. br 로 자리를 박는 손도 있지만,
+   좁은 폭에서 br 을 끄면 그 자리의 공백까지 사라져 '돌려가며모든'으로 붙는다(실측).
+   묶기는 폭이 변해도 깨지지 않는다 — 320px 에서도 '모든 방향에서'는 166px 라 한 줄에 든다. */
+.s-hero h1 .nb{white-space:nowrap}
+.s-hero h1 em{font-style:normal;color:#2d2d95}
+/* 행폭은 ch 가 아니라 px 로 잡는다 — ch 는 숫자 '0' 한 글자 폭이라 한글에서 과소 적용되고,
+   글자 크기가 다르면 같은 ch 값이 다른 글자 수를 준다(13.5px 62ch=52자 / 15.5px 62ch=44자).
+   한국어는 한 줄 40~44자가 편하다. 히어로 본문만 제목(610px)에 맞춰 606px, 나머지 본문은 560px. */
+.s-hero .sub{margin:0 0 22px;font-size:15.5px;color:#6a7789;max-width:606px;line-height:1.72}
+.s-hero .sub b{color:#182233;font-weight:700}
 
-  /* ---------- 카드 그리드 (안심 섹션에서 사용) ---------- */
-  .fgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-  .fgrid.f4{grid-template-columns:repeat(4,1fr);}
-  .fcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
-    padding:24px 22px 22px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden;
-    transition:transform .18s,box-shadow .2s,border-color .2s;}
-  .fcard:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#d8e0ea;}
-  .fcard .ico{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;
-    margin-bottom:16px;background:var(--accent-soft);color:var(--accent);}
-  .fcard .ico svg{width:25px;height:25px;}
-  .fcard.g .ico{background:var(--add-soft);color:var(--add);}
-  .fcard.w .ico{background:#fbf1e3;color:#b9834a;}
-  .fcard h3{font-size:17px;font-weight:800;letter-spacing:-.02em;margin:0 0 7px;}
-  .fcard p{font-size:13.5px;color:var(--muted);margin:0;line-height:1.6;}
+/* 작업판 — 겨냥도와 세 방향이 한 덩어리. 카드 두 개로 쪼개지 않는다. */
+.bench{background:#fff;border:1px solid #e5eaf1;border-radius:18px;overflow:hidden;
+  box-shadow:0 14px 40px rgba(24,34,51,.09);}
+.bench-main{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);}
+.bench-3d{position:relative;padding:22px 20px;display:grid;place-items:center;min-height:270px;
+  border-right:1px solid #eef2f7;}
+.bench-3d > svg{width:100%;height:auto;max-height:236px;display:block}
+.bench-3d .live{position:absolute;left:16px;top:14px;display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:700;color:#6a7789;background:#f7f9fc;border:1px solid #e5eaf1;
+  border-radius:999px;padding:4px 10px}
+.bench-3d .live i{width:6px;height:6px;border-radius:50%;background:#4fae72;font-style:normal}
+.bench-3d .drag{position:absolute;right:16px;bottom:14px;font-size:11.5px;font-weight:700;color:#8a95a6}
 
-  /* ---------- 섹션 보조 CTA (본문에서 기능으로 보내는 진입점) ---------- */
-  .sec-cta{display:inline-flex;align-items:center;gap:7px;height:46px;padding:0 19px;border-radius:12px;
-    background:var(--panel);border:1px solid var(--line);color:var(--accent-ink);
-    font-weight:800;font-size:14.5px;box-shadow:var(--shadow-sm);
-    transition:background .15s,border-color .15s,transform .12s;}
-  .sec-cta:hover{background:var(--accent-soft);border-color:transparent;transform:translateY(-1px);}
-  .sec-cta svg{width:16px;height:16px;flex:0 0 auto;}
-  .band.white .sec-cta{background:var(--bg);}
-  .band.white .sec-cta:hover{background:var(--accent-soft);}
+.views{padding:18px 18px 16px;display:flex;flex-direction:column;gap:12px;justify-content:center}
+.views > p{margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#8a95a6}
+.view{display:flex;align-items:center;gap:12px}
+.view svg{width:52px;height:52px;flex:0 0 auto;display:block}
+.view .vk{font-size:13.5px;font-weight:800;letter-spacing:-.01em}
+.view .vd{font-size:11.5px;color:#8a95a6;display:block;font-weight:500;letter-spacing:0}
+.view.t .vk{color:var(--top)} .view.f .vk{color:var(--front)} .view.s .vk{color:var(--side)}
 
-  /* ---------- 좌우 교차 블록 (지금 할 수 있는 것) ----------
-     카드 그리드가 세 섹션 연속으로 이어지던 단조로움을 끊는 장치. */
-  .zig{display:grid;gap:clamp(34px,6vw,66px);}
-  .zrow{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,5vw,54px);align-items:center;}
-  .zrow:nth-child(even) .zvis{order:2;}
-  .zvis{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);
-    padding:clamp(20px,3vw,30px);box-shadow:var(--shadow-sm);
-    display:grid;place-items:center;min-height:200px;}
-  .band .zvis{background:var(--panel);}
-  .ztag{display:inline-block;font-size:11.5px;font-weight:800;letter-spacing:.04em;
-    color:var(--accent-ink);background:var(--accent-soft);border-radius:999px;padding:5px 11px;margin-bottom:13px;}
-  .ztxt h3{font-size:clamp(19px,2.7vw,25px);font-weight:800;letter-spacing:-.026em;margin:0 0 10px;line-height:1.25;}
-  .ztxt > p{font-size:14.5px;color:var(--muted);line-height:1.72;margin:0 0 15px;}
-  .zlist{list-style:none;padding:0;margin:0 0 19px;display:grid;gap:8px;}
-  .zlist li{display:flex;gap:9px;align-items:flex-start;font-size:13.5px;color:var(--muted);line-height:1.6;}
-  .zlist li svg{width:15px;height:15px;flex:0 0 auto;margin-top:3px;color:var(--accent);}
-  .zlist li b{color:var(--ink);font-weight:700;}
+.bench-vals{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #eef2f7;background:#fbfcfe}
+.bench-vals div{padding:13px 18px 15px;border-right:1px solid #eef2f7}
+.bench-vals div:last-child{border-right:0}
+.bench-vals dt{margin:0 0 3px;font-size:11px;font-weight:700;color:#8a95a6;letter-spacing:.02em}
+.bench-vals dd{margin:0;font-size:21px;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.bench-vals dd span{font-size:12.5px;font-weight:700;color:#6a7789;margin-left:3px}
+.bench-note{margin:14px 0 0;font-size:12.5px;color:#8a95a6}
 
-  /* ---------- 학년 다섯 단계 ---------- */
-  .steps{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
-  .step{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-    padding:19px 16px 17px;box-shadow:var(--shadow-sm);}
-  .band.white .step{background:var(--bg);}
-  .step.is-core{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft),var(--shadow-sm);}
-  .band.white .step.is-core{background:var(--panel);}
-  .step .lv{display:block;font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--accent);margin-bottom:9px;}
-  .step h3{font-size:15.5px;font-weight:800;letter-spacing:-.02em;margin:0 0 3px;}
-  .step .age{font-size:11.5px;color:var(--muted-2);margin:0 0 11px;}
-  .step p{font-size:12.5px;color:var(--muted);line-height:1.62;margin:0;}
-  .step .core{position:absolute;top:-10px;right:12px;font-size:10px;font-weight:800;letter-spacing:.02em;
-    color:#fff;background:var(--accent);border-radius:999px;padding:3px 10px;}
-  .steps-note{margin:20px 0 0;font-size:12.5px;color:var(--muted-2);line-height:1.75;max-width:70ch;}
-  .steps-note b{color:var(--muted);font-weight:700;}
+.s-cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 24px}
+/* ⚠ .lp 로 한 번 더 감싼다 — 위의 `.lp a{color:inherit}` 가 특이도 (0,1,1) 이라
+   한 클래스짜리 `.b1{color:#fff}`(0,1,0)을 이긴다. 그대로 두면 보라색 버튼 위에 먹색
+   글자가 찍혀 대비가 2:1 로 떨어진다(눈으로는 '좀 어둡네' 정도라 놓치기 쉽다). */
+.lp .b1{background:#3f3fbf;color:#fff;font-weight:700;font-size:15px;padding:13px 22px;
+  border-radius:12px;box-shadow:0 8px 20px rgba(63,63,191,.26)}
+/* 2차 버튼에도 바탕을 깐다 — 투명하면 바닥의 모눈이 버튼 안을 가로질러
+   '버튼'이 아니라 '테두리만 그린 영역'으로 읽힌다. 아래 '모든 유형 보러가기'와 같은 규칙. */
+.lp .b2{font-weight:700;font-size:15px;padding:13px 18px;border-radius:12px;color:#2d2d95;
+  background:#fff;border:1px solid #d7d7f2;transition:background .15s,border-color .15s}
+@media (hover:hover){ .lp .b2:hover{background:#ecebfb;border-color:#b9b9ea} }
+.s-cta small{font-size:12.5px;color:#8a95a6;font-weight:500}
 
-  /* ---------- 문제 유형 칩 ---------- */
-  .qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
-  .qchip{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-    padding:15px 17px;box-shadow:var(--shadow-sm);}
-  .band.white .qchip{background:var(--bg);}
-  .qchip b{display:block;font-size:14.5px;font-weight:800;letter-spacing:-.015em;margin-bottom:4px;}
-  .qchip span{font-size:12.5px;color:var(--muted);line-height:1.55;}
-  .qfoot{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:20px;}
-  .qfoot .more{font-size:13.5px;color:var(--muted);}
-  .qfoot .more b{color:var(--ink);font-weight:800;}
+/* ── 세 갈래: 지그재그 3단(1,410px) 대신 한 줄 ──────────────── */
+/* 세 갈래는 **하나의 면**이다 — 카드 세 장이 아니라 칸 세 개.
+   모눈 바닥 위에 본문이 바로 앉으면 결이 글자 뒤로 지나가 마감이 덜 된 것처럼 읽힌다.
+   그렇다고 각각을 카드로 만들면 '전부 카드'로 되돌아가므로, 면 하나에 구분선만 넣는다.
+   히어로 작업판(순백 + 그림자)보다 한 단 낮게 — 종속 관계가 보이도록 그림자는 주지 않는다. */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin:40px 0 0;
+  background:#fbfcfe;border:1px solid #e5eaf1;border-radius:14px;overflow:hidden}
+.pillar{padding:20px 22px 22px;border-right:1px solid #eef2f7;display:flex;flex-direction:column}
+.pillar:last-child{border-right:0}
+/* 세 칸의 제목 줄을 맞추려고 최소 높이를 준다 — 문구 길이가 제각각이라 안 주면 어긋난다. */
+.pillar .n{font-size:20px;font-weight:800;letter-spacing:-.03em;color:#2d2d95;
+  display:block;line-height:1.32;min-height:2.64em}
+.pillar h3{margin:10px 0 7px;font-size:15px;font-weight:800;letter-spacing:-.02em}
+.pillar h3 a{color:#2d2d95;border-bottom:1.5px solid #c9c9ee;padding-bottom:1px}
+.pillar p{margin:0;font-size:13.5px;color:#6a7789;line-height:1.62}
+.pillar p b{color:#182233;font-weight:700}
 
-  /* ---------- 대상별 ---------- */
-  .aud{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;}
-  .acard{border-radius:var(--r-lg);padding:30px 28px;position:relative;overflow:hidden;}
-  .acard.teacher{background:linear-gradient(155deg,#f3f2fe,#ecebfb);border:1px solid #ddd9f5;}
-  .acard.parent{background:linear-gradient(155deg,#eaf6ef,#e2f3ea);border:1px solid #cfe9d9;}
-  .acard .tag{font-size:11.5px;font-weight:800;letter-spacing:.04em;margin-bottom:12px;
-    display:inline-block;padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.7);}
-  .acard.teacher .tag{color:var(--accent-ink);}
-  .acard.parent .tag{color:#0b7a45;}
-  .acard h3{font-size:19px;font-weight:800;letter-spacing:-.02em;margin:0 0 10px;}
-  .acard p{font-size:14px;color:#41506a;line-height:1.7;margin:0;}
-  .acard ul{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:9px;}
-  .acard li{display:flex;gap:9px;font-size:13.5px;color:#3a4863;align-items:flex-start;}
-  .acard li svg{width:17px;height:17px;flex:0 0 auto;margin-top:1px;}
-  .acard.teacher li svg{color:var(--accent);}
-  .acard.parent li svg{color:var(--add);}
-  .acard .sec-cta{margin-top:18px;background:rgba(255,255,255,.82);border-color:transparent;}
-  .acard .sec-cta:hover{background:#fff;}
-  .acard.parent .sec-cta{color:#0b7a45;}
+/* ── 학년: 카드 5장이 아니라 실제 눈금 ─────────────────────── */
+.s-sec{padding:58px 0 0}
+.s-sec h2{margin:0 0 10px;font-size:clamp(21px,3.2vw,27px);font-weight:800;letter-spacing:-.035em;
+  line-height:1.25;text-wrap:balance}
+.s-sec > .wrap > p.d{margin:0 0 26px;font-size:14.5px;color:#6a7789;max-width:560px;line-height:1.7}
 
-  /* ---------- final CTA ---------- */
-  .final{background:linear-gradient(160deg,#2f2f9e 0%,#3f3fbf 60%,#4a45c8 100%);color:#fff;
-    text-align:center;border-radius:0;position:relative;overflow:hidden;}
-  .final::before{content:"";position:absolute;inset:0;opacity:.16;
-    background-image:linear-gradient(rgba(255,255,255,.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.5) 1px,transparent 1px);
-    background-size:38px 38px;
-    -webkit-mask-image:radial-gradient(circle at 50% 30%,#000,transparent 72%);mask-image:radial-gradient(circle at 50% 30%,#000,transparent 72%);}
-  .final .wrap{position:relative;padding:clamp(56px,9vw,96px) var(--gutter);}
-  .final h2{font-size:clamp(26px,4.6vw,40px);font-weight:800;letter-spacing:-.03em;margin:0 0 14px;line-height:1.16;}
-  .final p{font-size:clamp(14.5px,2.2vw,17px);color:#d6d6f5;margin:0 auto 30px;max-width:44ch;line-height:1.7;}
-  .btn-onaccent{background:#fff;color:var(--accent-ink);box-shadow:0 10px 30px rgba(0,0,0,.24);}
-  .btn-onaccent:hover{background:#f3f3ff;transform:translateY(-1px);}
+.axis{position:relative;margin:0 0 18px;padding:0 0 4px}
+.axis .rule{position:relative;height:3px;background:#d7dfea;border-radius:2px;margin:0 0 0}
+.axis .fill{position:absolute;left:0;top:0;height:3px;width:100%;border-radius:2px;
+  background:linear-gradient(90deg,#c9d3e2,#3f3fbf)}
+.marks{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:-6px}
+.mark{padding-top:16px;position:relative}
+.mark::before{content:"";position:absolute;top:-2px;left:0;width:11px;height:11px;border-radius:50%;
+  background:#fff;border:3px solid #c9d3e2}
+.mark.core::before{border-color:#3f3fbf;box-shadow:0 0 0 4px #ecebfb}
+.mark .age{font-size:11.5px;font-weight:700;color:#8a95a6;font-variant-numeric:tabular-nums}
+.mark h3{margin:1px 0 4px;font-size:15px;font-weight:800;letter-spacing:-.02em}
+.mark p{margin:0;font-size:12.5px;color:#6a7789;line-height:1.55}
+.mark .chip{display:inline-block;font-size:10.5px;font-weight:800;color:#2d2d95;background:#ecebfb;
+  border-radius:6px;padding:1px 6px;margin-left:5px;vertical-align:1px}
+
+/* 단계 섹션의 마무리 — **이 페이지에서 유일한 어두운 면**이다.
+   종전엔 왼쪽에 보라 선 하나를 둔 흰 카드였는데, 그건 본문 중간의 '참고' 상자처럼 읽혔다.
+   이 블록은 참고가 아니라 **섹션의 결론**이라, 흰 카드가 이어지는 흐름을 한 번 끊어 준다.
+   ⚠ 방향색(위·앞·옆)은 쓰지 않는다 — 장식으로 쓰면 방향의 뜻이 흐려진다. 액센트 계열만 쓴다. */
+/* 단계 섹션의 마무리 — **이 페이지에서 유일한 어두운 면**이다.
+   종전엔 왼쪽에 보라 선 하나를 둔 흰 카드였는데, 그건 본문 중간의 '참고' 상자처럼 읽혔다.
+   이 블록은 참고가 아니라 **섹션의 결론**이라, 흰 카드가 이어지는 흐름을 한 번 끊어 준다.
+   사진은 카드 안에 얌전히 든 네모가 아니라 **밴드 전체에 깔고**, 글이 놓일 오른쪽만
+   어두운 그라디언트로 덮는다 — 액자에 넣으면 '삽입한 이미지'로, 깔면 '이 장면'으로 읽힌다.
+   ⚠ 방향색(위·앞·옆)은 쓰지 않는다 — 장식으로 쓰면 방향의 뜻이 흐려진다. */
+.evidence{position:relative;overflow:hidden;margin:30px 0 0;padding:32px 34px;border:0;
+  border-radius:16px;color:#fff;background:#1b2436;min-height:340px;
+  display:grid;grid-template-columns:52% minmax(0,1fr);gap:26px;align-items:center}
+/* ⚠ 사진 폭을 밴드 전체로 두면 **가로 3.3 : 세로 1** 로 늘어나 원본(1.7:1)이 과하게 잘린다 —
+     태블릿 화면이 통째로 날아갔다. 왼쪽 52%(≈1.6:1)만 차지하게 해 장면을 보존한다. */
+.evidence-ph{position:absolute;left:0;top:0;bottom:0;width:62%;z-index:0}
+.evidence-ph img{display:block;width:100%;height:100%;object-fit:cover;object-position:42% 46%}
+/* 오른쪽 가장자리를 밴드 색으로 녹인다 — 액자 테두리를 그리면 '붙여 넣은 사진'이 된다.
+   ⚠ 구간을 좁게 잡으면 경계선이 보인다. 절반 넘게 깔아 자연스럽게 넘긴다. */
+.evidence-ph::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(97deg,
+    rgba(17,23,37,.06) 0%, rgba(17,23,37,.18) 30%, rgba(19,26,41,.58) 56%,
+    rgba(21,28,44,.92) 78%, #1b2436 100%)}
+.evidence-txt{position:relative;z-index:1;grid-column:2;min-width:0}
+/* 조판 — 제목은 직접 끊고(<br>) 본문은 흘린다.
+   제목을 자동 줄바꿈에 맡기면 '아이일수록,' 뒤의 쉼표가 줄 가운데 떠서 문장이 두 동강 난다. */
+.evidence-txt h3{margin:0;font-size:21px;font-weight:800;letter-spacing:-.032em;
+  line-height:1.42;color:#fff;text-shadow:0 1px 10px rgba(0,0,0,.35)}
+.evidence-txt h3 br{display:block}
+.evidence-txt p{margin:12px 0 0;font-size:14.5px;color:#b3c0d5;line-height:1.85;text-wrap:pretty}
+.evidence-txt p b{color:#fff;font-weight:700}
+
+/* ── 유형: 글자 칩 9개가 아니라 진짜 문제 ───────────────────── */
+.qgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.q{margin:0;background:#fff;border:1px solid #e5eaf1;border-radius:14px;overflow:hidden;
+  display:flex;flex-direction:column}
+.q figcaption{padding:11px 13px 13px;border-top:1px solid #eef2f7;background:#fbfcfe}
+.q figcaption b{display:block;font-size:13.5px;font-weight:800;letter-spacing:-.015em;margin:0 0 3px}
+/* 심화 표식 — 교과 밖인 두 장에만 붙는다. 캡션이 아니라 **그림 모서리**에 두는 이유:
+   캡션에 두면 뱃지가 있는 칸만 제목 줄이 내려가 한 줄 안에서 어긋난다.
+   ⚠ 색은 방향색(위 #3f8fd0 · 앞 #4fae72 · 옆 #d0546f)과 겹치면 안 된다 — 방향의 뜻이 흐려진다.
+      옆(분홍빛 빨강)과 구별되도록 **주황빛 빨강**을 쓴다. 흰 글자 대비 5.1:1. */
+.qthumb{position:relative}
+.qbadge{position:absolute;top:8px;right:8px;z-index:1;
+  font-size:10.5px;font-weight:800;letter-spacing:-.01em;line-height:1;
+  padding:5px 8px;border-radius:999px;background:#c8401a;color:#fff;
+  box-shadow:0 2px 6px rgba(200,64,26,.32)}
+/* 발문은 3줄까지 — 2줄로 자르면 '한 변이 3개…'처럼 뜻이 사라진 채 끊긴다.
+   세 칸의 캡션 높이를 맞추려 최소 높이를 3줄로 고정한다. */
+.q figcaption .qd{font-size:12.5px;color:#8a95a6;line-height:1.55;min-height:4.65em;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden}
+/* 격자 아래 마감 — 왼쪽 끝에 붙은 작은 링크는 아홉 장을 다 본 눈이 지나친다.
+   가운데로 모아 '다음 행동'을 분명히 둔다. */
+/* 격자 아래 마감 — "10종이 더 있다"를 문장으로 말하는 대신 **카드가 이어지다 흐려지게** 둔다.
+   잘린 카드는 '더 있다'를 설명 없이 알린다. 오른쪽 마스크가 그 역할을 하므로 가로 스크롤은 없다. */
+.qmore{margin:14px 0 0;text-align:center}
+/* ⚠ 폭을 `.qgrid` 와 **같은 식으로** 계산한다 — 카드가 작아지면 '격자가 이어진다'가 아니라
+     '다른 띠가 하나 더 있다'로 읽힌다. 한 줄로 흘려 오른쪽으로 넘기고, 넘친 부분은
+     overflow 로 자르고 마스크로 흐린다(가로 스크롤 없음). */
+.qmore-strip{display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 28px)/3);gap:14px;
+  margin:0 0 20px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(to right,#000 0,#000 52%,rgba(0,0,0,.10) 100%);
+          mask-image:linear-gradient(to right,#000 0,#000 52%,rgba(0,0,0,.10) 100%);
+  pointer-events:none;user-select:none}
+.qmore-strip .q{min-width:0;text-align:left}
+/* 1차 버튼과 같은 바탕 — 이 섹션의 다음 행동이다.
+   ⚠ 하늘색(#3f8fd0)을 쓰지 않는다. 그건 '위' 방향색이라 장식으로 쓰면 뜻이 흐려진다. */
+.qmore > a{display:inline-block;font-weight:700;font-size:15px;color:#fff;background:#3f3fbf;
+  border-radius:12px;padding:13px 24px;box-shadow:0 8px 20px rgba(63,63,191,.26);
+  transition:background .15s}
+@media (hover:hover){ .qmore > a:hover{background:#3535a8} }
+
+/* 썸네일 치수 — /quiz 랜딩(quiz/index.html:121-151)에서 검증된 규칙을 그대로 가져왔다.
+   ⚠ 렌더러 SVG 는 viewBox 만 있고 고유 폭이 없다. 아래 규칙이 장식이 아닌 이유는 CLAUDE.md 참고. */
+.qthumb{width:100%;height:128px;padding:8px;display:grid;align-items:stretch;justify-items:center;overflow:hidden}
+.qthumb .viewer{width:100%;height:100%;background:none;border:0;padding:0;margin:0;
+  display:flex;flex-direction:row;align-items:center;justify-content:center;gap:8px;min-height:0}
+.qthumb .isofig{flex:1 1 auto;min-width:0;min-height:0;height:100%;display:grid;place-items:center}
+.qthumb .isofig svg{display:block;width:100%;height:100%}
+.qthumb .pv{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px}
+.qthumb .pv svg{display:block;width:48px;height:48px}
+.qthumb .pv span{font-size:9px;font-weight:800;color:#8a95a6;line-height:1;white-space:nowrap}
+.qthumb .viewer > .pv > span{font-size:0}
+.qthumb .viewer > .pv > span::after{content:'위';font-size:9px}
+.qthumb .threeviews{flex:1 1 auto;min-width:0;margin:0;display:flex;gap:6px;
+  align-items:center;justify-content:center;flex-wrap:nowrap}
+.qthumb .threeviews .pv{flex:1 1 0;min-width:0;max-width:58px}
+.qthumb .threeviews .pv svg{width:100%;height:auto;max-height:88px}
+.qthumb .viewer > svg{width:auto;height:100%;max-width:100%}
+.qthumb .pcleg{flex:none;margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px}
+.qthumb .pcleg li{display:flex;align-items:center;gap:4px;line-height:1;white-space:nowrap;
+  font-size:9.5px;font-weight:800;color:#7a8698}
+.qthumb .pcleg i{flex:none;width:10px;height:10px;border-radius:3px;border:1px solid rgba(0,0,0,.14)}
+.qthumb .opts,.qthumb .rotcap{display:none}
+
+/* ── 약속: 카드 4장이 아니라 조용한 목록 ───────────────────── */
+.promise{border-top:1px solid #dde4ee;margin-top:6px}
+.promise > div{display:grid;grid-template-columns:minmax(0,15rem) minmax(0,1fr);gap:8px 28px;
+  padding:18px 0;border-bottom:1px solid #e5eaf1}
+.promise h3{margin:0;font-size:15px;font-weight:800;letter-spacing:-.02em}
+.promise p{margin:0;font-size:13.5px;color:#6a7789;line-height:1.7}
+.promise p b{color:#182233;font-weight:700}
+
+/* ── 마감: 보라 밴드 없이 ───────────────────────────────────── */
+.s-end{padding:56px 0 64px;text-align:center}
+.s-end h2{margin:0 0 10px;font-size:clamp(20px,3vw,26px);font-weight:800;letter-spacing:-.035em}
+.s-end p{margin:0 auto 22px;font-size:14.5px;color:#6a7789;max-width:560px}
+.s-end .s-cta{justify-content:center}
+
+/* ── 반응형 ─────────────────────────────────────────────────── */
+/* 헤더는 배포본과 같이 동작시킨다 — ≤640px 에서 워드마크를 숨기고 메뉴는 가로 스크롤(261020). */
+@media (max-width:860px){
+  .bench-main{grid-template-columns:1fr}
+  .bench-3d{border-right:0;border-bottom:1px solid #eef2f7}
+  .views{flex-direction:row;flex-wrap:wrap}
+  .views > p{width:100%}
+  .pillars{grid-template-columns:1fr}
+  .pillar{border-right:0;border-bottom:1px solid #dde4ee}
+  .pillar:last-child{border-bottom:0}
+  .qgrid{grid-template-columns:repeat(2,1fr)}
+  .qmore-strip{grid-auto-columns:calc((100% - 14px)/2)}
+  .marks{grid-template-columns:repeat(2,1fr);gap:18px 10px}
+  .axis .rule{display:none}
+  .mark{padding-top:0}
+  .mark::before{display:none}
+  .promise > div{grid-template-columns:1fr;gap:4px}
+  /* 좁은 화면에선 사진 위에 글을 얹을 자리가 없다 — 사진을 위로 올리고 글을 아래로 내린다.
+     덮개 그라디언트도 가로가 아니라 **세로**로 바꿔 사진 아래쪽이 본문 바탕으로 이어지게 한다. */
+  .evidence{grid-template-columns:1fr;gap:0;padding:0;min-height:0}
+  /* ⚠ 데스크톱의 width:62% 를 반드시 되돌린다 — 안 하면 사진 오른쪽에 빈 어둠이 남는다 */
+  .evidence-ph{position:relative;left:auto;top:auto;bottom:auto;width:100%;aspect-ratio:16/9}
+  .evidence-ph img{object-position:34% 46%}
+  .evidence-ph::after{background:linear-gradient(180deg,
+    rgba(17,23,37,0) 52%, rgba(19,26,41,.55) 78%, #1b2436 100%)}
+  .evidence-txt{grid-column:1;padding:4px 22px 24px}
+  .evidence-txt h3{font-size:19px}
+  .evidence-txt h3 br{display:none}
+}
+@media (max-width:560px){
+    /* 휴대폰에서도 2열을 지킨다 — 1열로 떨어뜨리면 9장이 그대로 9화면이 된다.
+     /quiz 랜딩이 같은 폭에서 같은 썸네일로 이미 2열을 돌린다. */
+  .qgrid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .qmore-strip{grid-auto-columns:calc((100% - 10px)/2);gap:10px}
+  .qthumb{height:112px}
+  .q figcaption{padding:9px 10px 11px}
+  .q figcaption b{font-size:12.5px}
+  .q figcaption span{font-size:11px}
+  .marks{grid-template-columns:1fr}
+  .bench-vals{grid-template-columns:1fr}
+  .bench-vals div{border-right:0;border-bottom:1px solid #eef2f7}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* 히어로 작업판의 3D — 목업은 정적 겨냥도였지만 실물은 살아 있는 캔버스다.
+   제목이 '360° 돌려가며'라고 말하므로 그 자리에 돌아가는 물건이 있어야 한다.
+   ⚠ 캔버스는 고유 크기가 없다. 절대배치로 칸을 꽉 채우지 않으면 300×150 으로 앉는다. */
+.lp .bench-3d{position:relative;display:block;padding:0}
+.lp .bench-3d canvas{position:absolute;inset:0;width:100%;height:100%;display:block;
+  touch-action:none;cursor:grab}
+.lp .bench-3d .drag{transition:opacity .25s}
+.lp .bench-3d .drag.hide{opacity:0}
 
   /* ---------- footer ---------- */
   footer.foot{background:#1c2432;color:#c3ccdb;padding:clamp(40px,6vw,60px) 0 34px;}
@@ -310,76 +411,13 @@
   .fdot{margin:0 6px;opacity:.5;}
   .foot-biz{padding-top:10px;font-size:11px;color:#66738a;}
 
-  /* ---------- reveal on scroll ---------- */
-  .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease,transform .6s cubic-bezier(.2,.7,.3,1);}
-  .reveal.in{opacity:1;transform:none;}
-
   /* ---------- responsive ---------- */
-  @media (max-width:860px){
-    /* ── 히어로 모바일 세로 배치 (사용자 지정 260828) ──────────────────────
-       header → h1 → 3D 카드 → 태그 → 설명 → 버튼 → 노트
-
-       ⚠ .hero-copy / .hero-visual 에 display:contents 를 쓰는 이유:
-         order 는 **형제끼리만** 통한다. 위 순서는 두 래퍼의 자식을 서로 끼워 넣는
-         것이라(h1 은 .hero-copy 에서, 카드는 .hero-visual 에서) 래퍼가 살아 있으면
-         만들 수 없다. 두 래퍼는 레이아웃용 빈 div 라 없애도 의미 손실이 없다.
-         "정리"한다고 display:contents 를 지우면 순서가 통째로 무너진다.
-
-       ⚠ 여백은 gap 이 아니라 항목별 margin 으로 잡는다. 기존 margin 값들은
-         옛 순서 기준이라 순서가 바뀐 지금 gap 과 겹치면 이중 여백이 난다.
-
-       옮기는 단위가 #heroCanvas 가 아니라 .viewer-card 인 이유: 카드가
-       .viewer-hint 와 .viewer-stats 의 position:absolute 기준 상자다. */
-    /* ⚠ align-items 를 stretch 로 되돌린다. 데스크톱 그리드의 align-items:center 가
-       그대로 남으면 세로 flex 에서 '가로 가운데 + 내용 폭' 이 되어 버튼줄이 컨테이너를
-       못 채우고 가운데 뭉친다(320px 에서 280 자리에 211). 가운데로 둘 항목은
-       아래에서 align-self 로 따로 지정한다. */
-    .hero-grid{display:flex;flex-direction:column;align-items:stretch;gap:0;
-      padding-top:12px;padding-bottom:clamp(32px,6vw,60px);}
-    .hero-copy,.hero-visual{display:contents;}
-
-    .hero-h     {order:1;margin:0 0 14px;text-align:center;}
-    /* 카드는 원래 크기(340px·폭 92%) 그대로 둔다. 화면 높이로 줄이면 3D 가 작아져
-       히어로가 죽는다 — 세로가 짧은 기기만 아래 별도 블록에서 완만하게 깎는다. */
-    .viewer-card{order:2;align-self:center;width:min(340px,92%);margin:0 0 18px;}
-    /* CTA 를 카드 바로 아래에 붙인다(사용자 지정 260828). 태그·설명보다 앞이라
-       카드가 커져도 두 버튼이 첫 화면에 남는다 — 예전엔 설명 뒤라 카드를 깎아야만 했다. */
-    .hero-btns  {order:3;}
-    .hero-tag   {order:4;align-self:flex-start;margin:20px 0 0;}
-    .hero-sub   {order:5;max-width:none;margin:12px 0 0;line-height:1.6;}
-    .hero-note  {order:6;margin:14px 0 0;}
-    .fgrid,.fgrid.f4{grid-template-columns:1fr 1fr;}
-    .aud{grid-template-columns:1fr;}
-    .zrow{grid-template-columns:1fr;gap:20px;}
-    .zrow:nth-child(even) .zvis{order:0;}
-    .steps{grid-template-columns:repeat(2,1fr);}
-    .qgrid{grid-template-columns:repeat(2,1fr);}
-  }
-  /* 세로가 짧은 기기(구형 소형폰·가로 모드) — 카드와 글자를 한 단계만 낮춘다.
-     ⚠ 카드에 230px 바닥을 둔다. 그 아래로 내려가면 카드 안의 스탯 3칸(개수·부피·겉넓이)이
-       넘쳐 잘리고 3D 모델이 가려진다(136px 에서 실측 확인). 여기를 더 조이지 말 것 —
-       히어로가 깨지는 편이 스크롤 한 번보다 나쁘다.
-     svh 는 주소창이 보이는 상태의 높이라 '첫 화면' 계산에 정확하다. 미지원 브라우저를 위해
-     vh 판을 먼저 두고 svh 판으로 덮는다(min() 안의 미지원 단위는 선언 전체를 무효화하므로
-     한 줄에 섞으면 안 된다). */
-  @media (max-width:860px) and (max-height:610px){
-    .viewer-card{width:min(340px,92%,max(230px,40vh));}
-    .viewer-card{width:min(340px,92%,max(230px,40svh));}
-    h1.hero-h{font-size:26px;}
-    .hero-sub{font-size:14px;}
-  }
   @media (max-width:520px){
-    .fgrid,.fgrid.f4{grid-template-columns:1fr;}
-    .steps{grid-template-columns:1fr;}
-    .qgrid{grid-template-columns:1fr;}
     /* 푸터 브랜드 부제 — 헤더는 nav.css 의 640px 규칙이 따로 처리한다 */
     .foot-brand .t span{display:none;}
-    .hero-btns{gap:10px;}
-    .btn{flex:1 1 auto;}
   }
   @media (prefers-reduced-motion:reduce){
     html{scroll-behavior:auto;}
-    .reveal{opacity:1;transform:none;transition:none;}
     *{scroll-behavior:auto;}
   }
 </style>
@@ -408,343 +446,159 @@
   </div>
 </header>
 
-<main id="main">
+<main id="main" class="lp">
 
-<!-- ===================== HERO ===================== -->
-<section class="hero">
-  <div class="wrap hero-grid">
-    <div class="hero-copy">
-      <span class="hero-tag">
-        <img class="dot" src="assets/img/brand-glyph.svg" alt="" role="presentation">
-        유아부터 초등 6학년까지
-      </span>
-      <h1 class="hero-h">쌓고 돌려 보며 익히는 <span class="hl">쌓기나무</span></h1>
-      <p class="hero-sub">화면에서 직접 쌓고 돌려 보세요. 어느 방향에서 봐도 개수·부피·겉넓이가 곧바로 계산됩니다. 학년에 맞춘 <b>퀴즈 19종</b>과 인쇄용 <b>문제지</b>까지, 설치나 준비물 없이 브라우저 하나로.</p>
-      <div class="hero-btns">
-        <a data-cta="hero" class="btn btn-primary" id="heroCta" href="playground/">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
-          직접 쌓아보기
-        </a>
-        <!-- 보조 CTA — 앵커(#features)가 아니라 실제 기능으로 보낸다.
-             마스터가 랜딩에 부여한 임무가 '기능 바로가기'인데 예전엔 본문 진입점이 0개였다. -->
-        <a data-cta="hero2" class="btn btn-ghost" href="quiz/">퀴즈 풀어보기</a>
+<!-- 히어로 — 말보다 물건이 먼저 온다 -->
+  <section class="s-hero"><div class="wrap">
+    <h1>쌓은 모양을 <em>360° 돌려가며</em> <span class="nb">모든 방향에서</span> 입체로 관찰합니다</h1>
+    <p class="sub">앞도 옆도 뒤도, 보고 싶은 쪽으로 끌어서 돌려 보세요. 가려져 있던 자리까지 눈으로 확인할 수 있습니다. 개수·부피·겉넓이는 <b>바꾸는 즉시</b> 다시 계산됩니다.</p>
+
+    <div class="bench">
+      <div class="bench-main">
+        <div class="bench-3d">
+          <span class="live"><i></i>지금 이 모양</span>
+          <canvas id="heroCanvas" role="img" aria-label="쌓기나무로 만든 입체를 끌어서 돌려볼 수 있는 3D 화면"></canvas>
+          <span class="drag" id="viewerHint">끌어서 어느 쪽이든 →</span>
+        </div>
+        <div class="views">
+          <p>돌리지 않고 보는 세 방향</p>
+          <div class="view t"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/></svg><span><span class="vk">위</span><span class="vd">위에서 내려다본 칸</span></span></div>
+          <div class="view f"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/></svg><span><span class="vk">앞</span><span class="vd">정면에서 본 높이</span></span></div>
+          <div class="view s"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/></svg><span><span class="vk">옆</span><span class="vd">오른쪽에서 본 높이</span></span></div>
+        </div>
       </div>
-      <p class="hero-note">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        태블릿·휴대폰에서도 매끄럽게 · 학생은 로그인 없이 사용해요
-      </p>
+      <dl class="bench-vals" role="group" aria-label="이 입체의 개수·부피·겉넓이">
+        <div><dt>쌓기나무</dt><dd><span id="vsCount">10</span><span>개</span></dd></div>
+        <div><dt>부피</dt><dd><span id="vsVol">10</span><span>cm³</span></dd></div>
+        <div><dt>겉넓이</dt><dd><span id="vsSurf">36</span><span>cm²</span></dd></div>
+      </dl>
+    </div>
+    <p class="bench-note">모양을 바꾸면 세 방향 그림과 세 값이 함께 바뀝니다. 만든 모양은 주소 하나로 그대로 전달돼요.</p>
+
+    <div class="s-cta" style="margin-top:24px">
+      <a data-cta="hero" class="b1" id="heroCta" href="playground/">직접 쌓아보기</a>
+      <a data-cta="hero2" class="b2" href="quiz/">퀴즈 풀어보기</a>
+      <small>학생은 로그인하지 않아요 · 태블릿·휴대폰에서도</small>
     </div>
 
-    <div class="hero-visual">
-      <div class="viewer-card">
-        <canvas id="heroCanvas" role="img" aria-label="쌓기나무로 만든 입체를 끌어서 돌려볼 수 있는 3D 화면"></canvas>
-        <span class="viewer-hint" id="viewerHint">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3m13.5-6.5-2 2m-9 9 2-2m0-9-2-2m11 11-2-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          끌어서 돌려보기
-        </span>
-        <!-- 아래 10/10/36은 heroViewer()의 CELLS와 같은 모양의 초기값. CELLS를 바꾸면 이 세 값도 같이 바꿀 것 (stats() IIFE가 실행 즉시 덮어쓰지만, JS 실행 전/실패 시 폴백으로 노출됨). -->
-        <div class="viewer-stats" role="group" aria-label="이 입체의 개수·부피·겉넓이">
-          <div class="vs"><div class="k">개수</div><div class="v"><span id="vsCount">10</span><span class="u">개</span></div></div>
-          <div class="vs"><div class="k">부피</div><div class="v"><span id="vsVol">10</span><span class="u">cm³</span></div></div>
-          <div class="vs"><div class="k">겉넓이</div><div class="v"><span id="vsSurf">36</span><span class="u">cm²</span></div></div>
-        </div>
+    <div class="pillars">
+      <div class="pillar">
+        <span class="n">원하는 만큼 직접 쌓아보기</span>
+        <h3><a data-cta="pillar" href="playground/">쌓아보기</a></h3>
+        <p>문제에 나온 모양을 <b>손으로 만들어 보며 공간지각능력</b>을 키웁니다. 가로·세로·높이 10칸 안에서 자유롭게 쌓고 지울 수 있어요.</p>
+      </div>
+      <div class="pillar">
+        <span class="n">60만개 이상 문제</span>
+        <h3><a data-cta="pillar" href="quiz/">퀴즈 풀기</a></h3>
+        <p><b>학년·유형·난이도를 직접 골라</b> 풉니다. 돌려 보며 푸는 <b>3D 문제</b>와 그림만 보고 푸는 <b>2D 문제</b>가 함께 있어, 아이가 약한 곳만 집중해 연습시킬 수 있어요.</p>
+      </div>
+      <div class="pillar">
+        <span class="n">종이 문제지로 출력 가능</span>
+        <h3><a data-cta="pillar" href="worksheets/">문제지 만들기</a></h3>
+        <p><b>지면 시험을 대비합니다.</b> 화면으로 익힌 유형을 그대로 인쇄해 정답까지 확인하고, 함께 인쇄된 QR을 찍으면 그 문제를 <b>3D 입체로 돌려볼</b> 수 있어요.</p>
       </div>
     </div>
-  </div>
-</section>
+  </div></section>
 
-<!-- ===================== FEATURES ===================== -->
-<section class="band white" id="features">
-  <div class="wrap">
-    <div class="sec-head reveal">
-      <span class="eyebrow">할 수 있는 것</span>
-      <h2 class="sec">만들고, 풀고, 인쇄까지</h2>
-      <p class="lead">직접 쌓아 보는 도구, 학년에 맞춰 자동 채점되는 퀴즈, 종이로 뽑는 문제지 — 세 가지가 같은 쌓기나무 위에서 이어집니다.</p>
-    </div>
+  <!-- 학년 — 카드 5장이 아니라 눈금 하나 -->
+  <section class="s-sec" id="coverage"><div class="wrap">
+    <h2>교과부터 경시대회까지, 한 곳에서</h2>
+    <p class="d">유아부터 초6까지 다섯 단계, 단계마다 난이도 네 등급이 열립니다. 교과서에서 다루는 유형부터 경시대회에서 보는 추론 유형까지 한자리에 있어, <b>쉬우면 올리고 막히면 내리면 됩니다.</b> 처음에 잘못 골라도 괜찮아요.</p>
 
-    <div class="zig">
-      <!-- ① 도구 -->
-      <div class="zrow reveal">
-        <div class="zvis">
-          <svg width="200" height="150" viewBox="0 0 200 150" role="img" aria-label="쌓기나무를 여러 방향에서 돌려 보는 모습">
-            <g fill="#e6b980" stroke="#b9834a" stroke-width="1.6" stroke-linejoin="round">
-              <path d="M100 26 128 42 100 58 72 42Z"/><path d="M72 42v28l28 16V58Z" fill="#d8a76e"/><path d="M128 42v28l-28 16V58Z" fill="#c8965a"/>
-              <path d="M64 74 92 90 64 106 36 90Z"/><path d="M36 90v20l28 16v-20Z" fill="#d8a76e"/><path d="M92 90v20l-28 16v-20Z" fill="#c8965a"/>
-              <path d="M136 74 164 90 136 106 108 90Z"/><path d="M108 90v20l28 16v-20Z" fill="#d8a76e"/><path d="M164 90v20l-28 16v-20Z" fill="#c8965a"/>
-            </g>
-            <g stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".55">
-              <path d="M28 60a52 52 0 0 1 26-22"/><path d="M50 32l6 8-10 2Z" fill="var(--accent)" stroke="none"/>
-              <path d="M172 60a52 52 0 0 0-26-22"/><path d="M150 32l-6 8 10 2Z" fill="var(--accent)" stroke="none"/>
-            </g>
-          </svg>
-        </div>
-        <div class="ztxt">
-          <span class="ztag">쌓기나무 만들기</span>
-          <h3>손끝으로 돌려 보며 세어 봅니다</h3>
-          <p>블록을 놓고 지우면서 어느 방향에서든 살펴봐요. 뒤에 숨은 나무까지 직접 눈으로 확인할 수 있습니다.</p>
-          <ul class="zlist">
-            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>위·앞·옆에서 본 모양을 각각 확인</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>개수·부피·겉넓이가 바뀔 때마다 다시 계산, <b>계산 과정</b>까지 펼쳐서</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>만든 모양은 <b>링크 하나</b>로 그대로 전달</span></li>
-          </ul>
-          <a data-cta="sec-play" class="sec-cta" href="playground/">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
-            쌓아보기
-          </a>
-        </div>
-      </div>
-
-      <!-- ② 퀴즈 -->
-      <div class="zrow reveal">
-        <div class="zvis">
-          <svg width="210" height="150" viewBox="0 0 210 150" role="img" aria-label="문제를 풀고 자동으로 채점되는 모습">
-            <rect x="18" y="16" width="174" height="118" rx="12" fill="var(--panel)" stroke="var(--line)" stroke-width="1.6"/>
-            <rect x="34" y="34" width="72" height="9" rx="4.5" fill="var(--line-2)"/>
-            <g fill="#e6b980" stroke="#b9834a" stroke-width="1.3">
-              <rect x="34" y="54" width="22" height="22" rx="3"/><rect x="58" y="54" width="22" height="22" rx="3"/>
-              <rect x="34" y="78" width="22" height="22" rx="3"/>
-            </g>
-            <rect x="94" y="54" width="82" height="10" rx="5" fill="var(--line-2)"/>
-            <rect x="94" y="70" width="58" height="10" rx="5" fill="var(--line-2)"/>
-            <rect x="94" y="90" width="82" height="26" rx="8" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"/>
-            <path d="M108 103l6 6 12-13" stroke="var(--add)" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-            <text x="132" y="108" font-family="Pretendard, sans-serif" font-size="12" font-weight="800" fill="var(--accent-ink)">정답</text>
-          </svg>
-        </div>
-        <div class="ztxt">
-          <span class="ztag">자동채점 퀴즈</span>
-          <h3>학년에 맞는 문제가 매번 새로 나옵니다</h3>
-          <p>문제를 미리 만들어 두지 않아요. 풀 때마다 서버가 새로 만들기 때문에, 같은 학년·같은 난이도라도 매번 다른 문제를 만납니다.</p>
-          <ul class="zlist">
-            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>문항 유형 <b>19종</b> · 학년과 난이도를 골라서</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>화면에 바로 쓰는 <b>연습장</b>, 틀린 문제는 3D 해설로</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>새로고침해도 <b>풀던 자리에서</b> 이어서</span></li>
-          </ul>
-          <a data-cta="sec-quiz" class="sec-cta" href="quiz/">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 11.5 11 14l4.5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="4" width="17" height="16" rx="2.4" stroke="currentColor" stroke-width="1.7"/></svg>
-            퀴즈 풀어보기
-          </a>
-        </div>
-      </div>
-
-      <!-- ③ 문제지 -->
-      <div class="zrow reveal">
-        <div class="zvis">
-          <svg width="200" height="150" viewBox="0 0 200 150" role="img" aria-label="문제지를 인쇄하고 QR로 3D 화면에 연결하는 모습">
-            <rect x="26" y="12" width="104" height="126" rx="8" fill="var(--panel)" stroke="var(--line)" stroke-width="1.6"/>
-            <rect x="40" y="28" width="52" height="8" rx="4" fill="var(--line-2)"/>
-            <g fill="#e6b980" stroke="#b9834a" stroke-width="1.2">
-              <rect x="40" y="48" width="17" height="17" rx="2.5"/><rect x="59" y="48" width="17" height="17" rx="2.5"/><rect x="40" y="67" width="17" height="17" rx="2.5"/>
-            </g>
-            <rect x="40" y="96" width="76" height="7" rx="3.5" fill="var(--line-2)"/>
-            <rect x="40" y="108" width="60" height="7" rx="3.5" fill="var(--line-2)"/>
-            <g transform="translate(140,74)">
-              <rect x="0" y="0" width="46" height="46" rx="7" fill="var(--panel)" stroke="var(--accent)" stroke-width="1.7"/>
-              <g fill="var(--accent-ink)">
-                <rect x="7" y="7" width="12" height="12" rx="2"/><rect x="27" y="7" width="12" height="12" rx="2"/><rect x="7" y="27" width="12" height="12" rx="2"/>
-                <rect x="28" y="28" width="5" height="5"/><rect x="35" y="28" width="4" height="4"/><rect x="28" y="35" width="4" height="4"/><rect x="34" y="34" width="5" height="5"/>
-              </g>
-            </g>
-            <path d="M132 60c14-10 28-6 32 8" stroke="var(--accent)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".6"/>
-            <path d="M160 62l4 8 6-6Z" fill="var(--accent)" opacity=".6"/>
-          </svg>
-        </div>
-        <div class="ztxt">
-          <span class="ztag">문제지 만들기</span>
-          <h3>종이로 뽑고, 헷갈리면 QR로 돌려 봅니다</h3>
-          <p>유형과 문항 수를 골라 문제지와 정답지를 만들어 인쇄해요. 같은 주소를 다시 열면 같은 문제지가 그대로 나옵니다.</p>
-          <ul class="zlist">
-            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>문제지 + <b>정답지</b> 인쇄 · PDF 저장</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>종이에서 답이 하나로 안 정해지는 문항에만 <b>QR</b>을 붙여 3D로 연결</span></li>
-            <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span>퀴즈를 끝까지 푼 뒤 <b>푼 문제 그대로</b> 문제지로</span></li>
-          </ul>
-          <a data-cta="sec-sheet" class="sec-cta" href="worksheets/">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-            문제지 만들기
-          </a>
-        </div>
+    <div class="axis">
+      <div class="rule"><span class="fill"></span></div>
+      <div class="marks">
+        <div class="mark"><span class="age">만 5~7세</span><h3>유아</h3><p>세기와 위에서 본 모양, 딱 두 가지.</p></div>
+        <div class="mark"><span class="age">만 6~8세</span><h3>초 1~2</h3><p>같은 두 가지를 조금 더 크게, 앞에서 본 모양까지.</p></div>
+        <div class="mark"><span class="age">만 8~10세</span><h3>초 3~4</h3><p>교과에 입체도형이 거의 없는 구간. 공간지각능력을 쌓아 둡니다.</p></div>
+        <div class="mark"><span class="age">만 10~11세</span><h3>초 5</h3><p>겨냥도를 처음 배우는 학년. 그림 읽기부터.</p></div>
+        <div class="mark core"><span class="age">만 11~12세</span><h3>초 6<span class="chip">기본</span></h3><p>부피·겉넓이와 공간과 입체. 전 유형이 열립니다.</p></div>
       </div>
     </div>
 
-  </div>
-</section>
+    <div class="evidence">
+      <div class="evidence-ph"><img src="assets/img/landing-child-tablet.webp" width="1447" height="842" loading="lazy" decoding="async" alt="책상 위 태블릿으로 쌓기나무를 돌려 보는 모습"></div>
+      <div class="evidence-txt">
+      <h3>입체도형을 어려워하는 아이일수록, <br>직접 돌려 봐야 합니다</h3>
+      <p>종이에 그려진 입체는 머릿속에서 돌려야 보입니다. 그 과정을 손으로 대신해 주면 뒤쪽과 가려진 자리가 눈에 들어오고, 그만큼 <b>공간지각능력</b>이 자랍니다. 교실에서는 한 화면을 함께 돌려 보며 설명할 수 있어, 학생마다 교구를 나눠 줄 필요가 없습니다.</p>
+      </div>
+    </div>
+  </div></section>
 
-<!-- ===================== 학년 다섯 단계 =====================
-     ⚠ 카피 제약(.claude/quiz/cubenest_난이도_재설계_260818_v0_1.md §7):
-       · 초3~4(S2)를 "교과 보충"으로 팔지 말 것 — 그 학년 교과엔 입체도형이 거의 없다.
-         공간감각 훈련이자 초5~6 선행의 입구다.
-       · 겨냥도는 초5에서 처음 배운다 — S0~S3 를 겨냥도로 설명하면 미학습 표현이다(260910 경계 통일).
-          ⚠ 유형 설명에도 적용된다 — 아래 '위에서 본 수 쓰기'가 S2 에 열려 있으면서
-            '겨냥도를 보고'라 적어 이 제약을 어기고 있었다(260910 정정).
-       · 유아·초1~2 의 근거는 교과가 아니라 사고력 교재 시장이다. 그렇게 정직하게 쓴다.
-     스테이지 정의의 정본은 supabase/functions/_shared/cubenest-gen-config.js 다. -->
-<section class="band white" id="coverage">
-  <div class="wrap">
-    <div class="sec-head reveal">
-      <span class="eyebrow">학습 범위</span>
-      <h2 class="sec">유아부터 초등 6학년까지, 다섯 단계</h2>
-      <p class="lead">아이 나이에 맞는 단계를 고르면 그 단계에 맞는 유형과 크기로만 문제가 나옵니다. 단계끼리 조금씩 겹쳐 두어 학년이 바뀔 때 갑자기 어려워지지 않아요.</p>
-    </div>
-    <div class="steps">
-      <article class="step reveal">
-        <span class="lv">STEP 1</span>
-        <h3>유아</h3>
-        <p class="age">만 5~7세</p>
-        <p>몇 개인지 세기, 위에서 보면 어떤 모양인지 고르기 — 사고력 도형 교재가 내는 딱 두 가지.</p>
-      </article>
-      <article class="step reveal">
-        <span class="lv">STEP 2</span>
-        <h3>초 1~2</h3>
-        <p class="age">만 7~8세</p>
-        <p>같은 두 가지를 조금 더 크게. 위에 이어 앞에서 본 모양까지 넓힙니다.</p>
-      </article>
-      <article class="step reveal">
-        <span class="lv">STEP 3</span>
-        <h3>초 3~4</h3>
-        <p class="age">만 8~9세</p>
-        <p>교과에 입체도형이 거의 없는 구간이에요. 공간감각을 쌓아 두는 시기이자 초5~6으로 가는 입구입니다.</p>
-      </article>
-      <article class="step reveal">
-        <span class="lv">STEP 4</span>
-        <h3>초 5</h3>
-        <p class="age">만 10세</p>
-        <p>겨냥도를 처음 배우는 학년. 그림을 읽는 연습부터 시작해 초6을 준비합니다.</p>
-      </article>
-      <article class="step is-core reveal">
-        <span class="core">교과 핵심</span>
-        <span class="lv">STEP 5</span>
-        <h3>초 6</h3>
-        <p class="age">만 11세 · 기본 단계</p>
-        <p>6-1 부피·겉넓이, 6-2 공간과 입체. 안 보이는 나무와 최대·최소까지 전 유형이 열립니다.</p>
-      </article>
-    </div>
-    <p class="steps-note reveal">
-      <b>유아·초1~2는 교과 과정이 아닙니다.</b> 그 나이대 쌓기나무는 사고력 '도형' 교재에 나오는데, 시중 교재를 실제로 재어 보니 개수 2~8개·2층·바닥 2×2~3×3이 거의 전부였어요. 그 크기에 맞췄습니다.
-      <b>초3~4도 교과 보충이 아니라</b> 공간감각과 선행을 위한 구간입니다.
-    </p>
-  </div>
-</section>
+  <!-- 유형 — 설명 대신 진짜 문제 -->
+  <section class="s-sec" id="types"><div class="wrap">
+    <h2>같은 쌓기나무를 19가지로 묻습니다</h2>
+    <p class="d">세어 보기에서 시작해 위·앞·옆 그리기, 숨은 나무 찾기, 최대·최소까지. <b>묻는 방식이 바뀌면 아이가 어디서 막히는지</b> 드러납니다. 아래 여섯 개는 초6 단계에서 실제로 나오는 문항이에요.</p>
 
-<!-- ===================== 어떤 문제를 푸나 =====================
-     ⚠ 아래 유형 이름·설명은 quiz/index.html 의 TYPES 배열에서 그대로 가져왔다.
-        화면에 이미 노출 중인 문구다 — 여기서 새로 쓰지 말고 그쪽을 정본으로 볼 것.
-        유형이 늘거나 문구가 바뀌면 이 섹션과 아래 "그 밖에 N종" 숫자도 같이 고친다. -->
-<section class="band" id="types">
-  <div class="wrap">
-    <div class="sec-head reveal">
-      <span class="eyebrow">어떤 문제를 푸나</span>
-      <h2 class="sec">세기부터 안 보이는 나무까지, 19종</h2>
-      <p class="lead">한 가지를 반복하지 않아요. 같은 쌓기나무를 두고 세고, 그리고, 뒤집고, 숨은 것을 찾습니다.</p>
-    </div>
     <div class="qgrid">
-      <div class="qchip reveal"><b>개수 세기</b><span>쌓은 나무가 몇 개인지 세요.</span></div>
-      <div class="qchip reveal"><b>부피 구하기</b><span>한 모서리 길이로 부피를 구해요.</span></div>
-      <div class="qchip reveal"><b>겉넓이 구하기</b><span>바닥까지 포함해 겉넓이를 구해요.</span></div>
-      <div class="qchip reveal"><b>위·앞·옆 모양 고르기</b><span>맞는 앞/옆에서 본 모양을 골라요.</span></div>
-      <div class="qchip reveal"><b>위에서 본 수 쓰기</b><span>쌓은 모양을 보고 위 모양 각 칸에 수를 써요.</span></div>
-      <div class="qchip reveal"><b>위·앞·옆 그리기</b><span>세 방향에서 본 모양을 칸으로 칠해요.</span></div>
-      <div class="qchip reveal"><b>숨은 나무 칸 찾기</b><span>위에서 본 모양에서 나무가 숨은 칸을 모두 찾아요.</span></div>
-      <div class="qchip reveal"><b>삼면도 최대·최소</b><span>위·앞·옆 세 방향만 보고 가능한 개수의 범위를 찾아요.</span></div>
-      <div class="qchip reveal"><b>정육면체 완성</b><span>가장 작은 정육면체를 만들려면 몇 개가 더 필요한지 구해요.</span></div>
+      <figure class="q">
+        <div class="qthumb"><div class="viewer"><div class="isofig"><svg viewBox="-90 -102 180 192" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="-60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="20" y1="10" x2="-40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="40" y1="20" x2="-20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><line x1="0" y1="0" x2="60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="-20" y1="10" x2="40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="-40" y1="20" x2="20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="-60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><polygon points="0,0 60,30 0,60 -60,30" fill="none" stroke="#8a95a6" stroke-width="1.8" stroke-linejoin="round"/><g stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"><polygon points="-20,-14 0,-4 0,-28 -20,-38" fill="#d8a76e"/><polygon points="-20,-38 0,-28 0,-52 -20,-62" fill="#d8a76e"/><polygon points="0,-72 20,-62 0,-52 -20,-62" fill="#e6c9a0"/><polygon points="-40,20 -20,30 -20,6 -40,-4" fill="#d8a76e"/><polygon points="-20,-14 0,-4 -20,6 -40,-4" fill="#e6c9a0"/><polygon points="0,-4 20,6 20,-18 0,-28" fill="#d8a76e"/><polygon points="0,-28 20,-18 20,-42 0,-52" fill="#d8a76e"/><polygon points="40,-28 20,-18 20,-42 40,-52" fill="#c8965a"/><polygon points="20,-62 40,-52 20,-42 0,-52" fill="#e6c9a0"/><polygon points="0,-4 20,6 0,16 -20,6" fill="#e6c9a0"/><polygon points="60,30 40,40 40,16 60,6" fill="#c8965a"/><polygon points="20,6 40,16 40,-8 20,-18" fill="#d8a76e"/><polygon points="60,6 40,16 40,-8 60,-18" fill="#c8965a"/><polygon points="40,-28 60,-18 40,-8 20,-18" fill="#e6c9a0"/><polygon points="0,40 20,50 20,26 0,16" fill="#d8a76e"/><polygon points="40,40 20,50 20,26 40,16" fill="#c8965a"/><polygon points="20,6 40,16 20,26 0,16" fill="#e6c9a0"/><polygon points="-40,40 -20,50 -20,26 -40,16" fill="#d8a76e"/><polygon points="0,40 -20,50 -20,26 0,16" fill="#c8965a"/><polygon points="-20,6 0,16 -20,26 -40,16" fill="#e6c9a0"/></g><text x="0.0" y="-84.0" fill="#3f8fd0" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">위</text><text x="-69.8" y="28.9" fill="#4fae72" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">앞</text><text x="69.8" y="28.9" fill="#d0546f" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">옆</text></svg></div><div class="pv"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/></svg><span>위에서 본 모양</span></div></div></div>
+        <figcaption><b>개수 세기</b><span class="qd">쌓은 나무가 전부 몇 개인지 세요.</span></figcaption>
+      </figure>
+      <figure class="q">
+        <div class="qthumb"><div class="viewer"><div class="isofig"><svg viewBox="-90 -78 180 168" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="-60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="20" y1="10" x2="-40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="40" y1="20" x2="-20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><line x1="0" y1="0" x2="60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="-20" y1="10" x2="40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="-40" y1="20" x2="20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="-60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><polygon points="0,0 60,30 0,60 -60,30" fill="none" stroke="#8a95a6" stroke-width="1.8" stroke-linejoin="round"/><g stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"><polygon points="-20,-14 0,-4 0,-28 -20,-38" fill="#d8a76e"/><polygon points="0,-48 20,-38 0,-28 -20,-38" fill="#e6c9a0"/><polygon points="-20,-14 0,-4 -20,6 -40,-4" fill="#e6c9a0"/><polygon points="0,-4 20,6 20,-18 0,-28" fill="#d8a76e"/><polygon points="40,-4 20,6 20,-18 40,-28" fill="#c8965a"/><polygon points="20,-38 40,-28 20,-18 0,-28" fill="#e6c9a0"/><polygon points="-60,30 -40,40 -40,16 -60,6" fill="#d8a76e"/><polygon points="-40,-4 -20,6 -40,16 -60,6" fill="#e6c9a0"/><polygon points="0,-4 20,6 0,16 -20,6" fill="#e6c9a0"/><polygon points="60,30 40,40 40,16 60,6" fill="#c8965a"/><polygon points="40,-4 60,6 40,16 20,6" fill="#e6c9a0"/><polygon points="-40,40 -20,50 -20,26 -40,16" fill="#d8a76e"/><polygon points="-20,6 0,16 -20,26 -40,16" fill="#e6c9a0"/><polygon points="40,40 20,50 20,26 40,16" fill="#c8965a"/><polygon points="20,6 40,16 20,26 0,16" fill="#e6c9a0"/><polygon points="-20,50 0,60 0,36 -20,26" fill="#d8a76e"/><polygon points="20,50 0,60 0,36 20,26" fill="#c8965a"/><polygon points="0,16 20,26 0,36 -20,26" fill="#e6c9a0"/></g><text x="0.0" y="-60.0" fill="#3f8fd0" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">위</text><text x="-64.4" y="38.2" fill="#4fae72" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">앞</text><text x="64.4" y="38.2" fill="#d0546f" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">옆</text></svg></div><div class="pv"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/></svg><span>위에서 본 모양</span></div></div></div>
+        <figcaption><b>겉넓이 구하기</b><span class="qd">바닥까지 포함해 겉넓이를 구해요.</span></figcaption>
+      </figure>
+      <figure class="q">
+        <div class="qthumb"><div class="viewer"><div class="isofig"><svg viewBox="-90 -82 180 172" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="-60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="20" y1="10" x2="-40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="40" y1="20" x2="-20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><line x1="0" y1="0" x2="60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="-20" y1="10" x2="40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="-40" y1="20" x2="20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="-60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><polygon points="0,0 60,30 0,60 -60,30" fill="none" stroke="#8a95a6" stroke-width="1.8" stroke-linejoin="round"/><g stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"><polygon points="-40,-4 -20,6 -20,-18 -40,-28" fill="#d8a76e"/><polygon points="-20,-38 0,-28 -20,-18 -40,-28" fill="#e6c9a0"/><polygon points="20,30 0,40 0,16 20,6" fill="#c8965a"/><polygon points="20,6 0,16 0,-8 20,-18" fill="#c8965a"/><polygon points="-20,-18 0,-8 0,-32 -20,-42" fill="#d8a76e"/><polygon points="20,-18 0,-8 0,-32 20,-42" fill="#c8965a"/><polygon points="0,-52 20,-42 0,-32 -20,-42" fill="#e6c9a0"/><polygon points="-40,40 -20,50 -20,26 -40,16" fill="#d8a76e"/><polygon points="-40,16 -20,26 -20,2 -40,-8" fill="#d8a76e"/><polygon points="0,16 -20,26 -20,2 0,-8" fill="#c8965a"/><polygon points="-20,-18 0,-8 -20,2 -40,-8" fill="#e6c9a0"/><polygon points="-20,50 0,60 0,36 -20,26" fill="#d8a76e"/><polygon points="20,50 0,60 0,36 20,26" fill="#c8965a"/><polygon points="0,16 20,26 0,36 -20,26" fill="#e6c9a0"/></g><text x="0.0" y="-64.0" fill="#3f8fd0" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">위</text><text x="-64.4" y="36.2" fill="#4fae72" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">앞</text><text x="64.4" y="36.2" fill="#d0546f" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">옆</text></svg></div><div class="pv"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/></svg><span>위에서 본 모양</span></div></div></div>
+        <figcaption><b>숨은 나무 칸 찾기</b><span class="qd">위에서 본 모양 중 어느 자리에 나무가 숨어있는지 찾아봅니다.</span></figcaption>
+      </figure>
+      <figure class="q">
+        <div class="qthumb"><div class="viewer"><svg viewBox="0 0 90 90" width="90" height="90" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="26" height="26" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/><text x="16" y="16.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="var(--accent-ink)">1</text><rect x="32" y="3" width="26" height="26" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/><text x="45" y="16.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="var(--accent-ink)">1</text><rect x="61" y="3" width="26" height="26" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/><text x="74" y="16.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="var(--accent-ink)">3</text><rect x="3" y="32" width="26" height="26" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/><text x="16" y="45.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="var(--accent-ink)">2</text><rect x="32" y="32" width="26" height="26" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/><text x="45" y="45.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="var(--accent-ink)">1</text><rect x="61" y="32" width="26" height="26" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/><text x="74" y="45.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="var(--accent-ink)">1</text><rect x="3" y="61" width="26" height="26" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/><text x="16" y="74.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="var(--accent-ink)">2</text><rect x="32" y="61" width="26" height="26" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/><text x="45" y="74.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="var(--accent-ink)">1</text><rect x="61" y="61" width="26" height="26" rx="4" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1"/><text x="74" y="74.5" text-anchor="middle" dominant-baseline="central" font-size="14" font-weight="800" fill="var(--accent-ink)">1</text></svg></div></div>
+        <figcaption><b>개수 세기 (위에서 본 모양 + 수)</b><span class="qd">위에서 본 수를 보고 전체 개수를 세요.</span></figcaption>
+      </figure>
+      <figure class="q">
+        <div class="qthumb"><div class="viewer"><div class="threeviews"><div class="pv"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/></svg><span>위</span></div><div class="pv"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="44.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/><rect x="14.5" y="24.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/><rect x="34.5" y="44.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/><rect x="34.5" y="24.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/><rect x="54.5" y="44.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/><rect x="54.5" y="24.5" width="19.0" height="19.0" rx="2.5" fill="#4fae72"/></svg><span>앞</span></div><div class="pv"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="44.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="14.5" y="24.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="34.5" y="44.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="34.5" y="24.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="54.5" y="44.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="54.5" y="24.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/></svg><span>옆</span></div></div></div><span class="qbadge">사고력·심화</span></div>
+        <figcaption><b>삼면도 최대·최소 개수 세기</b><span class="qd">위·앞·옆 세 방향만 보고 가능한 개수의 범위를 찾아요.</span></figcaption>
+      </figure>
+      <figure class="q">
+        <div class="qthumb"><div class="viewer"><div class="isofig"><svg viewBox="-110 -126 220 236" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="-80" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="20" y1="10" x2="-60" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="40" y1="20" x2="-40" y2="60" stroke="#c3ccda" stroke-width="1"/><line x1="60" y1="30" x2="-20" y2="70" stroke="#c3ccda" stroke-width="1"/><line x1="80" y1="40" x2="0" y2="80" stroke="#c3ccda" stroke-width="1"/><line x1="0" y1="0" x2="80" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="-20" y1="10" x2="60" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="-40" y1="20" x2="40" y2="60" stroke="#c3ccda" stroke-width="1"/><line x1="-60" y1="30" x2="20" y2="70" stroke="#c3ccda" stroke-width="1"/><line x1="-80" y1="40" x2="0" y2="80" stroke="#c3ccda" stroke-width="1"/><polygon points="0,0 80,40 0,80 -80,40" fill="none" stroke="#8a95a6" stroke-width="1.8" stroke-linejoin="round"/><g stroke="#6c7585" stroke-width="1" stroke-linejoin="round"><polygon points="0,-96 20,-86 0,-76 -20,-86" fill="#cc8e91"/><polygon points="-20,-86 0,-76 -20,-66 -40,-76" fill="#8eadcc"/><polygon points="20,-86 40,-76 20,-66 0,-76" fill="#8eadcc"/><polygon points="-40,-76 -20,-66 -40,-56 -60,-66" fill="#8eadcc"/><polygon points="0,-76 20,-66 0,-56 -20,-66" fill="#aec894"/><polygon points="40,-76 60,-66 40,-56 20,-66" fill="#8eadcc"/><polygon points="-80,40 -60,50 -60,26 -80,16" fill="#bc5c61"/><polygon points="80,40 60,50 60,26 80,16" fill="#a94247"/><polygon points="-80,16 -60,26 -60,2 -80,-8" fill="#5c8cbc"/><polygon points="80,16 60,26 60,2 80,-8" fill="#4275a9"/><polygon points="-80,-8 -60,2 -60,-22 -80,-32" fill="#5c8cbc"/><polygon points="80,-8 60,2 60,-22 80,-32" fill="#4275a9"/><polygon points="-80,-32 -60,-22 -60,-46 -80,-56" fill="#bc5c61"/><polygon points="-60,-66 -40,-56 -60,-46 -80,-56" fill="#cc8e91"/><polygon points="-20,-66 0,-56 -20,-46 -40,-56" fill="#aec894"/><polygon points="20,-66 40,-56 20,-46 0,-56" fill="#aec894"/><polygon points="80,-32 60,-22 60,-46 80,-56" fill="#a94247"/><polygon points="60,-66 80,-56 60,-46 40,-56" fill="#cc8e91"/><polygon points="-60,50 -40,60 -40,36 -60,26" fill="#5c8cbc"/><polygon points="60,50 40,60 40,36 60,26" fill="#4275a9"/><polygon points="-60,26 -40,36 -40,12 -60,2" fill="#8cb566"/><polygon points="60,26 40,36 40,12 60,2" fill="#759e4e"/><polygon points="-60,2 -40,12 -40,-12 -60,-22" fill="#8cb566"/><polygon points="60,2 40,12 40,-12 60,-22" fill="#759e4e"/><polygon points="-60,-22 -40,-12 -40,-36 -60,-46" fill="#5c8cbc"/><polygon points="-40,-56 -20,-46 -40,-36 -60,-46" fill="#8eadcc"/><polygon points="0,-56 20,-46 0,-36 -20,-46" fill="#aec894"/><polygon points="60,-22 40,-12 40,-36 60,-46" fill="#4275a9"/><polygon points="40,-56 60,-46 40,-36 20,-46" fill="#8eadcc"/><polygon points="-40,60 -20,70 -20,46 -40,36" fill="#5c8cbc"/><polygon points="40,60 20,70 20,46 40,36" fill="#4275a9"/><polygon points="-40,36 -20,46 -20,22 -40,12" fill="#8cb566"/><polygon points="40,36 20,46 20,22 40,12" fill="#759e4e"/><polygon points="-40,12 -20,22 -20,-2 -40,-12" fill="#8cb566"/><polygon points="40,12 20,22 20,-2 40,-12" fill="#759e4e"/><polygon points="-40,-12 -20,-2 -20,-26 -40,-36" fill="#5c8cbc"/><polygon points="-20,-46 0,-36 -20,-26 -40,-36" fill="#8eadcc"/><polygon points="40,-12 20,-2 20,-26 40,-36" fill="#4275a9"/><polygon points="20,-46 40,-36 20,-26 0,-36" fill="#8eadcc"/><polygon points="-20,70 0,80 0,56 -20,46" fill="#bc5c61"/><polygon points="20,70 0,80 0,56 20,46" fill="#a94247"/><polygon points="-20,46 0,56 0,32 -20,22" fill="#5c8cbc"/><polygon points="20,46 0,56 0,32 20,22" fill="#4275a9"/><polygon points="-20,22 0,32 0,8 -20,-2" fill="#5c8cbc"/><polygon points="20,22 0,32 0,8 20,-2" fill="#4275a9"/><polygon points="-20,-2 0,8 0,-16 -20,-26" fill="#bc5c61"/><polygon points="20,-2 0,8 0,-16 20,-26" fill="#a94247"/><polygon points="0,-36 20,-26 0,-16 -20,-26" fill="#cc8e91"/></g><text x="0.0" y="-108.0" fill="#3f8fd0" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">위</text><text x="-89.4" y="36.7" fill="#4fae72" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">앞</text><text x="89.4" y="36.7" fill="#d0546f" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">옆</text></svg></div><ul class="pcleg"><li><i style="background:#bc5c61"></i>세 면</li><li><i style="background:#5c8cbc"></i>두 면</li><li><i style="background:#8cb566"></i>한 면</li></ul></div><span class="qbadge">사고력·심화</span></div>
+        <figcaption><b>색칠한 정육면체</b><span class="qd">겉면을 칠한 정육면체를 떼어냈을 때, 한 면만 칠해진 나무를 세요.</span></figcaption>
+      </figure>
     </div>
-    <div class="qfoot reveal">
-      <span class="more">그 밖에 <b>10종</b>이 더 있어요 — 층별 개수 세기, 더 쌓거나 빼낸 뒤 그리기, 색칠한 정육면체 등.</span>
-      <a data-cta="types" class="sec-cta" href="quiz/">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        유형 전체 보기
-      </a>
+    <div class="qmore">
+      <div class="qmore-strip" aria-label="사고력·심화 유형 더 보기">
+        <figure class="q">
+          <div class="qthumb"><div class="viewer"><div class="isofig"><svg viewBox="-90 -102 180 192" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="-60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="20" y1="10" x2="-40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="40" y1="20" x2="-20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><line x1="0" y1="0" x2="60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="-20" y1="10" x2="40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="-40" y1="20" x2="20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="-60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><polygon points="0,0 60,30 0,60 -60,30" fill="none" stroke="#8a95a6" stroke-width="1.8" stroke-linejoin="round"/><g stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"><polygon points="20,-38 0,-28 0,-52 20,-62" fill="#c8965a"/><polygon points="0,-72 20,-62 0,-52 -20,-62" fill="#e6c9a0"/><polygon points="-40,-4 -20,6 -20,-18 -40,-28" fill="#d8a76e"/><polygon points="40,-4 20,6 20,-18 40,-28" fill="#c8965a"/><polygon points="20,-38 40,-28 20,-18 0,-28" fill="#e6c9a0"/><polygon points="-40,-28 -20,-18 -20,-42 -40,-52" fill="#d8a76e"/><polygon points="0,-28 -20,-18 -20,-42 0,-52" fill="#c8965a"/><polygon points="-20,-62 0,-52 -20,-42 -40,-52" fill="#e6c9a0"/><polygon points="-60,30 -40,40 -40,16 -60,6" fill="#d8a76e"/><polygon points="-40,-4 -20,6 -40,16 -60,6" fill="#e6c9a0"/><polygon points="60,30 40,40 40,16 60,6" fill="#c8965a"/><polygon points="40,-4 60,6 40,16 20,6" fill="#e6c9a0"/><polygon points="-20,6 0,16 0,-8 -20,-18" fill="#d8a76e"/><polygon points="20,6 0,16 0,-8 20,-18" fill="#c8965a"/><polygon points="0,-28 20,-18 0,-8 -20,-18" fill="#e6c9a0"/><polygon points="-40,40 -20,50 -20,26 -40,16" fill="#d8a76e"/><polygon points="-20,6 0,16 -20,26 -40,16" fill="#e6c9a0"/><polygon points="40,40 20,50 20,26 40,16" fill="#c8965a"/><polygon points="20,6 40,16 20,26 0,16" fill="#e6c9a0"/><polygon points="-20,50 0,60 0,36 -20,26" fill="#d8a76e"/><polygon points="20,50 0,60 0,36 20,26" fill="#c8965a"/><polygon points="0,16 20,26 0,36 -20,26" fill="#e6c9a0"/></g><text x="0.0" y="-84.0" fill="#3f8fd0" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">위</text><text x="-69.8" y="28.9" fill="#4fae72" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">앞</text><text x="69.8" y="28.9" fill="#d0546f" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">옆</text></svg></div><div class="pv"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/></svg><span>위에서 본 모양</span></div></div><span class="qbadge">사고력·심화</span></div>
+          <figcaption><b>정육면체 완성하기</b><span class="qd">가장 작은 정육면체를 만들려면 몇 개가 더 필요한지 구해요.</span></figcaption>
+        </figure>
+        <figure class="q">
+          <div class="qthumb"><div class="viewer"><div class="isofig"><svg viewBox="-90 -68 180 158" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="-60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="20" y1="10" x2="-40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="40" y1="20" x2="-20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><line x1="0" y1="0" x2="60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="-20" y1="10" x2="40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="-40" y1="20" x2="20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="-60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><polygon points="0,0 60,30 0,60 -60,30" fill="none" stroke="#8a95a6" stroke-width="1.8" stroke-linejoin="round"/><g stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"><polygon points="-20,10 0,20 0,-4 -20,-14" fill="#d8a76e"/><polygon points="20,10 0,20 0,-4 20,-14" fill="#c8965a"/><polygon points="0,-24 20,-14 0,-4 -20,-14" fill="#e6c9a0"/><polygon points="0,20 20,30 20,6 0,-4" fill="#d8a76e"/><polygon points="40,20 20,30 20,6 40,-4" fill="#c8965a"/><polygon points="20,-14 40,-4 20,6 0,-4" fill="#e6c9a0"/><polygon points="-40,20 -20,30 -20,6 -40,-4" fill="#d84a5e" stroke="#7c1f2c"/><polygon points="0,20 -20,30 -20,6 0,-4" fill="#b83346" stroke="#7c1f2c"/><polygon points="-20,-14 0,-4 -20,6 -40,-4" fill="#ef7f8e" stroke="#7c1f2c"/><polygon points="0,-4 20,6 20,-18 0,-28" fill="#d8a76e"/><polygon points="40,-4 20,6 20,-18 40,-28" fill="#c8965a"/><polygon points="20,-38 40,-28 20,-18 0,-28" fill="#e6c9a0"/><polygon points="-40,-4 -20,6 -20,-18 -40,-28" fill="#d84a5e" stroke="#7c1f2c"/><polygon points="0,-4 -20,6 -20,-18 0,-28" fill="#b83346" stroke="#7c1f2c"/><polygon points="-20,-38 0,-28 -20,-18 -40,-28" fill="#ef7f8e" stroke="#7c1f2c"/><polygon points="20,30 40,40 40,16 20,6" fill="#d8a76e"/><polygon points="60,30 40,40 40,16 60,6" fill="#c8965a"/><polygon points="40,-4 60,6 40,16 20,6" fill="#e6c9a0"/><polygon points="-20,30 0,40 0,16 -20,6" fill="#d8a76e"/><polygon points="20,30 0,40 0,16 20,6" fill="#c8965a"/><polygon points="0,-4 20,6 0,16 -20,6" fill="#e6c9a0"/><polygon points="-60,30 -40,40 -40,16 -60,6" fill="#d8a76e"/><polygon points="-20,30 -40,40 -40,16 -20,6" fill="#c8965a"/><polygon points="-40,-4 -20,6 -40,16 -60,6" fill="#e6c9a0"/><polygon points="0,40 20,50 20,26 0,16" fill="#d8a76e"/><polygon points="40,40 20,50 20,26 40,16" fill="#c8965a"/><polygon points="20,6 40,16 20,26 0,16" fill="#e6c9a0"/><polygon points="-40,40 -20,50 -20,26 -40,16" fill="#d8a76e"/><polygon points="0,40 -20,50 -20,26 0,16" fill="#c8965a"/><polygon points="-20,6 0,16 -20,26 -40,16" fill="#e6c9a0"/><polygon points="-20,50 0,60 0,36 -20,26" fill="#d8a76e"/><polygon points="20,50 0,60 0,36 20,26" fill="#c8965a"/><polygon points="0,16 20,26 0,36 -20,26" fill="#e6c9a0"/></g><text x="0.0" y="-50.0" fill="#3f8fd0" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">위</text><text x="-64.4" y="43.2" fill="#4fae72" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">앞</text><text x="64.4" y="43.2" fill="#d0546f" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">옆</text></svg></div></div><span class="qbadge">사고력·심화</span></div>
+          <figcaption><b>빼낸 후 그리기</b><span class="qd">표시한 줄에서 빼낸 뒤 위·앞·옆 모양을 그려요.</span></figcaption>
+        </figure>
+        <figure class="q">
+          <div class="qthumb"><div class="viewer"><div class="threeviews"><div class="pv"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/></svg><span>위</span></div><div class="pv"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#d0546f"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/></svg><span>옆</span></div></div></div><span class="qbadge">사고력·심화</span></div>
+          <figcaption><b>위+한 방향 최대·최소 개수 세기</b><span class="qd">위 모양과 한 방향 모양만으로 최대·최소를 구해요.</span></figcaption>
+        </figure>
+        <figure class="q">
+          <div class="qthumb"><div class="viewer"><div class="isofig"><svg viewBox="-90 -82 180 172" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="-60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="20" y1="10" x2="-40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="40" y1="20" x2="-20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><line x1="0" y1="0" x2="60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="-20" y1="10" x2="40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="-40" y1="20" x2="20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="-60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><polygon points="0,0 60,30 0,60 -60,30" fill="none" stroke="#8a95a6" stroke-width="1.8" stroke-linejoin="round"/><g stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"><polygon points="0,-24 20,-14 0,-4 -20,-14" fill="#e6c9a0"/><polygon points="-20,-14 0,-4 -20,6 -40,-4" fill="#e6c9a0"/><polygon points="0,-4 20,6 20,-18 0,-28" fill="#d8a76e"/><polygon points="20,-38 40,-28 20,-18 0,-28" fill="#e6c9a0"/><polygon points="-60,30 -40,40 -40,16 -60,6" fill="#d8a76e"/><polygon points="-40,-4 -20,6 -40,16 -60,6" fill="#e6c9a0"/><polygon points="60,30 40,40 40,16 60,6" fill="#c8965a"/><polygon points="0,-4 20,6 0,16 -20,6" fill="#e6c9a0"/><polygon points="60,6 40,16 40,-8 60,-18" fill="#c8965a"/><polygon points="20,-18 40,-8 40,-32 20,-42" fill="#d8a76e"/><polygon points="60,-18 40,-8 40,-32 60,-42" fill="#c8965a"/><polygon points="40,-52 60,-42 40,-32 20,-42" fill="#e6c9a0"/><polygon points="0,40 20,50 20,26 0,16" fill="#d8a76e"/><polygon points="40,40 20,50 20,26 40,16" fill="#c8965a"/><polygon points="-40,40 -20,50 -20,26 -40,16" fill="#d8a76e"/><polygon points="0,40 -20,50 -20,26 0,16" fill="#c8965a"/><polygon points="-20,6 0,16 -20,26 -40,16" fill="#e6c9a0"/><polygon points="0,16 20,26 20,2 0,-8" fill="#d8a76e"/><polygon points="40,16 20,26 20,2 40,-8" fill="#c8965a"/><polygon points="20,-18 40,-8 20,2 0,-8" fill="#e6c9a0"/></g><text x="0.0" y="-64.0" fill="#3f8fd0" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">위</text><text x="-64.4" y="36.2" fill="#4fae72" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">앞</text><text x="64.4" y="36.2" fill="#d0546f" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">옆</text></svg></div><div class="pv"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/></svg><span>위에서 본 모양</span></div></div><span class="qbadge">사고력·심화</span></div>
+          <figcaption><b>몇 층 이상 세기</b><span class="qd">겨냥도를 보고 정해진 층수 이상 쌓인 칸을 세요.</span></figcaption>
+        </figure>
+        <figure class="q">
+          <div class="qthumb"><div class="viewer"><div class="isofig"><svg viewBox="-90 -72 180 162" xmlns="http://www.w3.org/2000/svg"><line x1="0" y1="0" x2="-60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="20" y1="10" x2="-40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="40" y1="20" x2="-20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><line x1="0" y1="0" x2="60" y2="30" stroke="#c3ccda" stroke-width="1"/><line x1="-20" y1="10" x2="40" y2="40" stroke="#c3ccda" stroke-width="1"/><line x1="-40" y1="20" x2="20" y2="50" stroke="#c3ccda" stroke-width="1"/><line x1="-60" y1="30" x2="0" y2="60" stroke="#c3ccda" stroke-width="1"/><polygon points="0,0 60,30 0,60 -60,30" fill="none" stroke="#8a95a6" stroke-width="1.8" stroke-linejoin="round"/><g stroke="#9c6b30" stroke-width="1" stroke-linejoin="round"><polygon points="-60,30 -40,40 -40,16 -60,6" fill="#d8a76e"/><polygon points="-40,-4 -20,6 -40,16 -60,6" fill="#e6c9a0"/><polygon points="0,-28 20,-18 0,-8 -20,-18" fill="#e6c9a0"/><polygon points="-40,40 -20,50 -20,26 -40,16" fill="#d8a76e"/><polygon points="0,40 -20,50 -20,26 0,16" fill="#c8965a"/><polygon points="0,40 20,50 20,26 0,16" fill="#d8a76e"/><polygon points="40,40 20,50 20,26 40,16" fill="#c8965a"/><polygon points="-40,16 -20,26 -20,2 -40,-8" fill="#d8a76e"/><polygon points="0,16 -20,26 -20,2 0,-8" fill="#c8965a"/><polygon points="0,16 20,26 20,2 0,-8" fill="#d8a76e"/><polygon points="40,16 20,26 20,2 40,-8" fill="#c8965a"/><polygon points="-40,-8 -20,2 -20,-22 -40,-32" fill="#d8a76e"/><polygon points="0,-8 -20,2 -20,-22 0,-32" fill="#c8965a"/><polygon points="-20,-42 0,-32 -20,-22 -40,-32" fill="#e6c9a0"/><polygon points="0,-8 20,2 20,-22 0,-32" fill="#d8a76e"/><polygon points="40,-8 20,2 20,-22 40,-32" fill="#c8965a"/><polygon points="20,-42 40,-32 20,-22 0,-32" fill="#e6c9a0"/></g><text x="0.0" y="-54.0" fill="#3f8fd0" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">위</text><text x="-64.4" y="41.2" fill="#4fae72" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">앞</text><text x="64.4" y="41.2" fill="#d0546f" font-size="13" font-weight="800" text-anchor="middle" dominant-baseline="central" paint-order="stroke" stroke="#fff" stroke-width="3.5" stroke-linejoin="round">옆</text></svg></div><div class="pv"><svg viewBox="0 0 88 88" xmlns="http://www.w3.org/2000/svg"><rect x="14.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="34.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="14.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/><rect x="14.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="34.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="14.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="34.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="#3f8fd0"/><rect x="54.5" y="54.5" width="19.0" height="19.0" rx="2.5" fill="var(--line-2)"/></svg><span>위에서 본 모양</span></div></div><span class="qbadge">사고력·심화</span></div>
+          <figcaption><b>여러 가지 종류</b><span class="qd">조건에 맞는 모양이 몇 가지인지 세요.</span></figcaption>
+        </figure>
+      </div>
+      <a data-cta="types" href="quiz/">유형 19가지 모두 보기</a>
     </div>
-  </div>
-</section>
+  </div></section>
 
-<!-- ===================== 대상별 ===================== -->
-<section class="band" id="for">
-  <div class="wrap">
-    <div class="sec-head reveal">
-      <span class="eyebrow">이렇게 쓰여요</span>
-      <h2 class="sec">교실에서도, 집에서도</h2>
+  <!-- 약속 — 카드 4장이 아니라 목록 -->
+  <section class="s-sec"><div class="wrap">
+    <h2>아이 정보는 받지 않고, 답은 아이가 냅니다</h2>
+    <div class="promise">
+      <div><h3>아이는 로그인하지 않습니다</h3><p>퀴즈도 도구도 가입 없이 바로 씁니다. 계정은 기록을 보관하려는 어른만 만들어요.</p></div>
+      <div><h3>30분 뒤 자동 계산이 잠깁니다</h3><p>계산이 계속 나오면 아이가 스스로 세어 보지 않게 됩니다. <b>먼저 세어 보고 그다음 확인하도록</b> 편집과 관찰은 그대로 두고 계산만 잠가요.</p></div>
+      <div><h3>정답은 답을 낸 뒤에 나옵니다</h3><p>풀기 전에는 정답도 해설도 보이지 않습니다. <b>먼저 스스로 풀고 그다음 확인하는</b> 순서가 지켜져요.</p></div>
+      <div><h3>베타 기간 무료</h3><p>지금은 모든 기능을 무료로 씁니다. 유료로 바뀌는 기능이 생기면 미리 알려드려요.</p></div>
     </div>
-    <div class="aud">
-      <article class="acard teacher reveal">
-        <span class="tag">교사용 · 수업 활용</span>
-        <h3>화면 하나로 함께 관찰</h3>
-        <p>모양을 만들어 큰 화면에 띄우고, 위·앞·옆을 함께 돌려 보며 설명해요. 만든 문제는 링크로 학생에게 그대로 배포할 수 있습니다.</p>
-        <ul>
-          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>설치 없이 브라우저로 바로 시연</li>
-          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>계산 과정 펼쳐 원리까지 설명</li>
-          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>모양 링크로 과제·문제 배포</li>
-        </ul>
-        <a data-cta="teacher" class="sec-cta" href="worksheets/">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 3h9l4 4v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v5h5M8.5 13h7M8.5 16.5h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
-          문제지 만들기
-        </a>
-      </article>
-      <article class="acard parent reveal">
-        <span class="tag">학부모용 · 집에서 학습</span>
-        <h3>아이와 함께, 준비물 없이</h3>
-        <p>태블릿이나 휴대폰만 있으면 돼요. 아이가 직접 쌓고 돌려 보며 스스로 개수를 세어 보고, 답이 맞는지 바로 확인합니다.</p>
-        <ul>
-          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>학생은 로그인·회원가입 없이 사용</li>
-          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>손으로 돌려 보며 공간 감각 연습</li>
-          <li><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>정답·계산을 그 자리에서 확인</li>
-        </ul>
-        <a data-cta="parent" class="sec-cta" href="quiz/">
-          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 11.5 11 14l4.5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><rect x="3.5" y="4" width="17" height="16" rx="2.4" stroke="currentColor" stroke-width="1.7"/></svg>
-          퀴즈 풀어보기
-        </a>
-      </article>
-    </div>
-  </div>
-</section>
+  </div></section>
 
-<!-- ===================== 안심 요소 =====================
-     ⚠ 과장 금지 두 곳 (CLAUDE.md):
-       · 정답 은닉은 2D 모드에서 성립하고 3D 모드 5종은 은닉 불가다(의도된 수용).
-         "모든 정답을 숨긴다"고 쓰지 말 것 — 아래는 "채점은 서버가 한다"로만 말한다.
-       · "베타 기간 무료"는 /account 화면 문구·약관 제19조와 셋이 일관해야 한다.
-         한쪽만 고치지 말 것. -->
-<section class="band white" id="trust">
-  <div class="wrap">
-    <div class="sec-head reveal">
-      <span class="eyebrow">안심하고 쓰도록</span>
-      <h2 class="sec">아이가 쓰는 도구라서, 이렇게 만들었어요</h2>
-    </div>
-    <div class="fgrid f4">
-      <article class="fcard g reveal">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 4 6v5c0 4.5 3.2 7.9 8 9 4.8-1.1 8-4.5 8-9V6l-8-3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
-        <h3>아이는 로그인하지 않아요</h3>
-        <p>퀴즈도 도구도 가입 없이 바로 씁니다. 계정은 기록을 보관하려는 어른만 만들어요.</p>
-      </article>
-      <article class="fcard reveal">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="10" width="16" height="10" rx="2.2" stroke="currentColor" stroke-width="1.7"/><path d="M8 10V7.5a4 4 0 0 1 8 0V10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></div>
-        <h3>채점은 서버가 합니다</h3>
-        <p>퀴즈 문제는 서버가 그때그때 만들고 채점해요. 정답과 해설은 답을 제출한 뒤에 옵니다.</p>
-      </article>
-      <article class="fcard w reveal">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
-        <h3>30분 뒤 자동 계산이 잠겨요</h3>
-        <p>계산이 계속 나오면 아이가 스스로 세어 보지 않게 됩니다. 먼저 세어 보고 그다음 확인하도록, 편집·관찰은 그대로 두고 계산만 잠급니다.</p>
-      </article>
-      <article class="fcard reveal">
-        <div class="ico"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 21s-7-4.3-7-9.5A4.5 4.5 0 0 1 12 8a4.5 4.5 0 0 1 7 3.5C19 16.7 12 21 12 21Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg></div>
-        <h3>베타 기간 무료</h3>
-        <p>지금은 모든 기능을 무료로 씁니다. 유료로 바뀌는 기능이 생기면 미리 알려드려요.</p>
-      </article>
-    </div>
-  </div>
-</section>
-
-<!-- ===================== FINAL CTA ===================== -->
-<section class="final">
-  <div class="wrap">
-    <h2>지금 바로 쌓아 보세요</h2>
-    <p>설치도 필요 없어요. 학생은 로그인 없이 브라우저에서 열어 첫 번째 나무를 놓아 보면 됩니다.</p>
-    <a data-cta="final" class="btn btn-onaccent" id="finalCta" href="playground/">
-      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 20 7.5 12 12 4 7.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M4 7.5 4 16.5 12 21 12 12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M20 7.5 20 16.5 12 21" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/></svg>
-      지금 쌓아보기
-    </a>
-  </div>
-</section>
+  <section class="s-end"><div class="wrap">
+    <h2>첫 번째 나무를 놓아 보세요</h2>
+    <p>설치도 가입도 없습니다. 브라우저에서 열면 바로 시작돼요.</p>
+    <div class="s-cta"><a data-cta="final" class="b1" id="finalCta" href="playground/">직접 쌓아보기</a></div>
+  </div></section>
 
 </main>
 
@@ -869,16 +723,6 @@ document.getElementById('yr').textContent = new Date().getFullYear();
   on(); window.addEventListener('scroll', on, {passive:true});
 })();
 
-/* 스크롤 등장 애니메이션 */
-(function(){
-  const items=document.querySelectorAll('.reveal');
-  if(!('IntersectionObserver' in window)){ items.forEach(el=>el.classList.add('in')); return; }
-  const io=new IntersectionObserver((es)=>{
-    es.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
-  },{threshold:.14, rootMargin:'0px 0px -8% 0px'});
-  items.forEach(el=>io.observe(el));
-})();
-
 /* ===== 히어로 3D 뷰어 — playground 렌더링 정본 재사용(직교·목재·조명) ===== */
 (function heroViewer(){
   const canvas = document.getElementById('heroCanvas');
@@ -953,9 +797,12 @@ document.getElementById('yr').textContent = new Date().getFullYear();
     cam.position.set(R*Math.sin(phi)*Math.sin(theta), R*Math.cos(phi), R*Math.sin(phi)*Math.cos(theta));
     cam.up.set(0,1,0); cam.lookAt(0,0,0);
   }
-  /* playground의 effInsets()/setOrthoFrustum()과 같은 방식: 위 힌트·아래 스탯 패널이 차지하는 여백만큼
-     비대칭 직교 프러스텀을 써서 모델이 그 영역과 겹치지 않고 안전한 콘텐츠 영역 안에 들어오게 한다. */
-  const TOP_INSET=44, BOTTOM_INSET=92;
+  /* playground의 effInsets()/setOrthoFrustum()과 같은 방식: 위아래 라벨이 차지하는 여백만큼
+     비대칭 직교 프러스텀을 써서 모델이 그 영역과 겹치지 않고 안전한 콘텐츠 영역 안에 들어오게 한다.
+     ⚠ 261024 재구성에서 값이 바뀌었다 — 개수·부피·겉넓이 세 값이 캔버스 **밖**(작업판 아래 줄)으로
+       나가서 아래 여백이 92 나 필요하지 않다. 남은 건 '지금 이 모양'(위)과 '끌어서 어느 쪽이든'(아래)뿐.
+       옛 값을 그대로 두면 모델이 위로 치우쳐 칸 아래가 비어 보인다. */
+  const TOP_INSET=40, BOTTOM_INSET=34;
   function resize(){
     const w=canvas.clientWidth||1, h=canvas.clientHeight||1;
     renderer.setSize(w,h,false);
