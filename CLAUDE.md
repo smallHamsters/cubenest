@@ -333,13 +333,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
       - 설명 3: `count` 에 '전부' 추가 · `hidden A-b` 를 `위에서 본 모양 중 어느 자리에…` 로 ·
         **`manip H-d` 는 양쪽을 '유형 전체'를 가리키는 말로 바꿨다**(`칠해진 면 수별로 몇 개인지 세요`).
         랜딩에 있던 '한 면만 칠해진'은 **한 변형만** 가리켜 좁았다 — 생성기는 `PAINT_K` 로 0·1·2·3면을 모두 묻는다.
-      - `edu` 5: `minmax G-a`·`minmax G-c`·`hidden A-f`·`manip H-c`·`manip H-d` → `['think']`.
-        교과서에 없는 경시·추론 유형인데 `curr` 가 붙어 있었다. 초6 교과 필터가 16→**11**가지가 되고
-        어느 학년도 0 이 되지 않는다(S0·S1 2 · S2 5 · S3 5/7 · S4 11). `edu` 는 **랜딩 카드 필터 전용**이라
+      - `edu` 6: `minmax G-a`·`G-c`·`hidden A-d`·`A-f`·`manip H-c`·`H-d` → `['think']`
+        (A-d 는 하루 뒤 사용자 판단으로 함께 옮겼다 — G-a 와 같은 최대·최소 계열이다).
+        교과서에 없는 경시·추론 유형인데 `curr` 가 붙어 있었다. 초6 교과 필터가 16→**10**가지가 되고
+        어느 학년도 0 이 되지 않는다(S0·S1 2 · S2 5 · S3 5/7 · S4 10). `edu` 는 **랜딩 카드 필터 전용**이라
         생성·gsig 에 영향이 없다(`gen` 이 `edu` 를 안 읽고 랜딩이 URL 에 싣지도 않는다).
-      - ⚠ **남은 불일치 1건:** `hidden A-d` 가 quiz `개수 세기 (삼면도 최대최소)` / worksheets `개수 세기 (삼면도)` 로
-        갈려 있고 `edu` 도 `curr` 다. 랜딩에 없는 유형이라 **이번엔 건드리지 않았다** — G-a 와 같은 최대·최소
-        계열이므로 심화로 옮기는 게 맞아 보이지만 제품 판단이 필요하다.
+        **결과: 교과 10 = 계산 3 + 삼면도 3 + 안 보이는 나무 4(A-a·A-b·A-c·A-e) / 심화 9 = minmax 3 + manip 4 + A-d·A-f.**
+      - `hidden A-d` 의 이름도 통일했다 — worksheets 가 `개수 세기 (삼면도)` 로 혼자 짧았다.
       - ⛔ **이름을 길게 한 대가로 `quiz/index.html` 의 필터 줄이 320px 에서 18px 넘쳤다.** `select` 는
         flex 기본 `min-width:auto` 라 **가장 긴 보기**만큼 벌어지고 줄지 않는다. **`.fsel` 과 `.fg` 둘 다**
         `min-width:0` 을 줘야 닫힌다(칸이 안 줄면 select 도 안 줄어든다). 이름 길이에 레이아웃이
