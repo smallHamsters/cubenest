@@ -295,18 +295,18 @@ function track(name,params){ try{ if(window.gtag) window.gtag('event',name,param
     {v:"facesMc",    t:"위·앞·옆 모양 고르기"},
     {v:"heightmap",  t:"위에서 본 수 쓰기"},
     {v:"facesDraw",  t:"위·앞·옆 그리기"},
-    {v:"minmax:G-a", t:"삼면도 최대·최소"},
-    {v:"minmax:G-b", t:"위+한 방향 최대·최소"},
+    {v:"minmax:G-a", t:"삼면도 최대·최소 개수 세기"},
+    {v:"minmax:G-b", t:"위+한 방향 최대·최소 개수 세기"},
     {v:"minmax:G-c", t:"몇 층 이상 세기"},
     {v:"hidden:A-a", t:"숨은 나무 판단"},
     {v:"hidden:A-b", t:"숨은 나무 칸 찾기"},
-    {v:"hidden:A-c", t:"개수 세기 (위+수)"},
+    {v:"hidden:A-c", t:"개수 세기 (위에서 본 모양 + 수)"},
     {v:"hidden:A-d", t:"개수 세기 (삼면도)"},
     {v:"hidden:A-e", t:"개수 세기 (층별)"},
     {v:"hidden:A-f", t:"여러 가지 종류"},
     {v:"manip:H-a",  t:"더 쌓은 후 그리기"},
     {v:"manip:H-b",  t:"빼낸 후 그리기"},
-    {v:"manip:H-c",  t:"정육면체 완성"},
+    {v:"manip:H-c",  t:"정육면체 완성하기"},
     {v:"manip:H-d",  t:"색칠한 정육면체"}
   ];
   var LEVELS=["하","중","상","최상"], LVCODE={"하":"1","중":"2","상":"3","최상":"4"}, CODELV={"1":"하","2":"중","3":"상","4":"최상"};
