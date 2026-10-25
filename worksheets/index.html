@@ -172,6 +172,10 @@
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     body{background:#fff;}
     .site-top,.bar,.noprint{display:none !important;}
+    /* 동의 배너는 `.noprint` 가 아니라 `#consent` 다 — 아직 동의/거부를 안 누른 사람이
+       인쇄하면 문제지 PDF 하단에 배너가 그대로 찍혔다(푸터와 같은 사고, 261025 발견).
+       `consent.css` 는 10페이지 공용이고 무버전이라 거기 말고 **인쇄 페이지인 여기**서 막는다. */
+    #consent{display:none !important;}
     .page{max-width:none;padding:0;}
     .sheet{border:none;border-radius:0;box-shadow:none;padding:0;margin:0;}
     .sheet + .sheet{break-before:page;page-break-before:always;}
