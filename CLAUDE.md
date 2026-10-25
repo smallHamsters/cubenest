@@ -376,6 +376,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
       앞 두 장은 **생성기·렌더러 산출물**이고, 문제지 한 장은 **실제 인쇄 PDF 의 사진**이다
       (`assets/img/landing-worksheet.webp` 5KB · 274×314 · 알파). 처음엔 손으로 그린 모형이었는데
       "실제 pdf로 찍히는 이미지로 교체"(코멘트 261025) — 모형과 실물이 갈라질 자리를 아예 없앴다.
+      - **담는 것은 문항 2개다**(261025, "사진이 너무 작아 무엇인지 파악하기 어렵다"). 10문항 A4 전장은
+        썸네일에서 문항 하나가 30×17px 라 못 읽었다 — `n=2` 로 뽑아 **내용 끝까지 잘라 쓴다**
+        (`-fuzz 3% -trim` 으로 잰 뒤 위 여백만큼 아래를 남긴다, 1242×909 → 453×332).
+        칸 높이도 104→**128px**(모바일 88→110 · 320 84→96)로 키웠다. 문서 높이 +24/+96/+36.
+        ⛔ **정답지는 뺐다** — 뒤에 겹쳐 두면 앞장이 그만큼 좁아지는데, 정작 보이는 건 빈 여백뿐이었다.
+      - ⚠ **`.pfig > img` 에 `height:100%` 를 주지 말 것.** 가로로 긴 사진이 좁은 칸에서 `max-width` 에
+        걸리는 순간 높이만 100% 로 남아 **찌그러진다**(390px 에서 94×94 로 눌린 것을 실측). `object-fit:contain`
+        이라 비율도 지키고, 지연 로딩이라 아직 안 받은 상태에서도 칸 크기가 확정이다(레이아웃 흔들림 0).
       - **만드는 법은 리포 안에서 닫힌다**(서버·로그인 없이): `_shared/gen-adapter.ts` 를
         `node --experimental-strip-types` 로 불러 `worksheet/index.ts` 의 루프를 그대로 돌려 페이로드를 만들고,
         `/worksheets/` 를 띄워 `auth.isLoggedIn`·`api.worksheet` 두 개만 갈아 끼운 뒤 `page.pdf({format:'A4'})`

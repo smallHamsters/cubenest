@@ -197,11 +197,15 @@
    세 장이 같은 모양(히어로 CELLS 10개)을 쌓고·묻고·인쇄하는 순서라, 세 칸이 한 줄기로 읽힌다.
    ⚠ 렌더러 SVG 는 고유 폭이 없다 — 높이를 주고 폭을 auto 로 둬야 찌그러지지 않는다
       (/quiz 카드 `.qthumb` 와 같은 함정). */
-.pfig{height:104px;margin:0 0 15px;border-radius:12px;background:#f7f9fc;border:1px solid #eef2f7;
+.pfig{height:128px;margin:0 0 15px;border-radius:12px;background:#f7f9fc;border:1px solid #eef2f7;
   display:flex;align-items:center;justify-content:center;padding:9px}
 /* ⚠ `>` 가 중요하다 — 문제지 모형 안에 겨냥도 4장이 **중첩 svg** 로 들어 있어서,
      자손 선택자로 쓰면 그 넷까지 height:100% 가 되어 칸 밖으로 튀어나간다. */
-.pfig > svg,.pfig > img{display:block;height:100%;width:auto;max-width:100%}
+.pfig > svg{display:block;height:100%;width:auto;max-width:100%}
+/* ⚠ 사진은 `height:100%` 로 두면 안 된다 — 가로로 긴 문제지가 좁은 칸(모바일)에서
+   `max-width` 에 걸리는 순간 높이만 100% 로 남아 **찌그러진다**(390px 에서 94×94 로 눌렸다).
+   최대치 둘만 주고 치수는 비율대로 맡긴다. */
+.pfig > img{display:block;width:100%;height:100%;object-fit:contain}
 /* 세 칸의 제목 줄을 맞추려고 최소 높이를 준다 — 문구 길이가 제각각이라 안 주면 어긋난다. */
 .pillar .n{font-size:20px;font-weight:800;letter-spacing:-.03em;color:#2d2d95;
   display:block;line-height:1.32;min-height:2.64em}
@@ -396,8 +400,8 @@
   .pillars{grid-template-columns:1fr}
   /* 한 단으로 내려오면 그림 세 장이 세로로 312px 를 더 먹는다 — 칸을 가로로 접어
      그림을 왼쪽에 세운다(모바일 면적은 작업판과 같은 이유로 아낀다). */
-  .pillar{display:grid;grid-template-columns:88px 1fr;column-gap:14px;align-items:start}
-  .pfig{grid-row:1/4;grid-column:1;height:88px;margin:3px 0 0;padding:7px}
+  .pillar{display:grid;grid-template-columns:110px 1fr;column-gap:14px;align-items:start}
+  .pfig{grid-row:1/4;grid-column:1;height:110px;margin:3px 0 0;padding:7px}
   .pillar .n{grid-column:2;min-height:0}
   .pillar h3{grid-column:2}
   .pillar p{grid-column:2}
@@ -429,7 +433,7 @@
   /* 320px 급 — 가로로 접으면 글 칸이 116px(한 줄 6~8자)라 읽기가 나빠진다. 그림을 다시
      위로 올리되 높이를 84px 로 낮춘다(세로 세 장 = +288px 로, 가로 배치와 높이는 거의 같다). */
   .pillar{display:flex;flex-direction:column}
-  .pfig{height:84px;margin:0 0 12px}
+  .pfig{height:96px;margin:0 0 12px}
 }
 @media (max-width:560px){
   /* 요일 칸이 35px 라 '10문항'(48px)이 안 들어간다 — 단위만 접는다(숫자는 남는다) */
@@ -593,7 +597,7 @@
         <p><b>학년·유형·난이도를 직접 골라</b> 풉니다. 돌려 보며 푸는 <b>3D 문제</b>와 그림만 보고 푸는 <b>2D 문제</b>가 함께 있어, 아이가 약한 곳만 집중해 연습시킬 수 있어요.</p>
       </div>
       <div class="pillar">
-        <div class="pfig"><img src="assets/img/landing-worksheet.webp" width="274" height="314" loading="lazy" decoding="async" alt="실제로 인쇄되는 문제지와 정답지 — 문항·겨냥도·QR이 들어간 A4 두 장"></div>
+        <div class="pfig"><img src="assets/img/landing-worksheet.webp" width="453" height="332" loading="lazy" decoding="async" alt="실제로 인쇄되는 문제지 — 문항 두 개와 겨냥도·답란, 휴대폰으로 여는 QR"></div>
         <span class="n">종이 문제지로 출력 가능</span>
         <h3><a data-cta="pillar" href="worksheets/">문제지 만들기 <span class="ar" aria-hidden="true">&rarr;</span></a></h3>
         <p><b>지면 시험을 대비합니다.</b> 화면으로 익힌 유형을 그대로 인쇄해 정답까지 확인하고, 함께 인쇄된 QR을 찍으면 그 문제를 <b>3D 입체로 돌려볼</b> 수 있어요.</p>
